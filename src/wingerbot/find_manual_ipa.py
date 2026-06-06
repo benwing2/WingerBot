@@ -26,7 +26,7 @@ def process_text_on_page(p):
 
 
 parser = blib.create_argparser(
-    "Find manual pronunciations using {{IPA|LANG}}", include_pagefile=True, include_stdin=True
+    "Find manual pronunciations using {{IPA|LANG}}"
 )
 parser.add_argument(
     "--sort-by",

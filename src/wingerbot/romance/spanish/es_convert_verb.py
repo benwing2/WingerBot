@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 
-import pywikibot, re, sys, argparse
+import pywikibot, re, sys
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, tname, pname, msg, site
+from wingerbot.blib import getparam, rmparam, tname, pname, msg
 
 remove_stress = {
     "á": "a",
@@ -380,7 +380,7 @@ def process_text_on_page(p):
 
 
 parser = blib.create_argparser(
-    "Convert {{es-verb}} templates to new format and remove redundant args", include_pagefile=True, include_stdin=True
+    "Convert {{es-verb}} templates to new format and remove redundant args"
 )
 parser.add_argument("--add-attn", action="store_true", help="Add attn=1 to verbs missing args")
 args = parser.parse_args()

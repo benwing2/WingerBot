@@ -33,7 +33,7 @@ def process_text_on_page(p):
 
 
 parser = blib.create_argparser(
-    "Find Russian perfective verbs with explicit past passive participles", include_pagefile=True, include_stdin=True
+    "Find Russian perfective verbs with explicit past passive participles"
 )
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)

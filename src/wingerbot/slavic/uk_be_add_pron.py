@@ -6,7 +6,7 @@ import pywikibot, re
 from dataclasses import dataclass
 
 from wingerbot import blib
-from wingerbot.blib import errandmsg, getparam, rmparam, msg, site, tname
+from wingerbot.blib import errandmsg, getparam, rmparam, msg, tname, site
 from wingerbot.slavic.belarusian import belib
 from wingerbot.slavic.bulgarian import bglib
 from wingerbot.slavic.ukrainian import uklib
@@ -1297,8 +1297,6 @@ def read_pages(filename, start, end):
 
 parser = blib.create_argparser(
     "Add pronunciation sections to Ukrainian, Belarusian or Bulgarian Wiktionary entries",
-    include_pagefile=True,
-    include_stdin=True,
 )
 parser.add_argument(
     "--lemma-file", help="File containing lemmas to process, one per line; non-lemma forms will be done"

@@ -127,7 +127,7 @@ def process_text_on_page(p):
 
 
 parser = blib.create_argparser(
-    "Create 'Japanese terms with FOO replaced by daiyōji BAR' categories", include_pagefile=True, include_stdin=True
+    "Create 'Japanese terms with FOO replaced by daiyōji BAR' categories"
 )
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)

@@ -24,8 +24,6 @@ from wingerbot.arabic.arlib import (
     reorder_shadda,
 )
 
-site = pywikibot.Site()
-
 
 # Classes have the following fields:
 # *********** For the cardinal itself ***********
@@ -713,13 +711,12 @@ def do_pages(createfn, iterfn=iter_pages):
             msg("Text for %s: [[%s]]" % (pagename, text))
             msg("Changelog = %s" % changelog)
         else:
-            page = pywikibot.Page(site, pagetitle)
-            if page.exists():
-                msg("Page %s %s: WARNING, page already exists, skipping" % (index, pagename))
-            else:
-                def save_text(p):
+            def save_text(p):
+                if blib.safe_page_exists(p.page, p.errandmsg):
+                    p.msg("WARNING: page already exists, skipping")
+                else:
                     return text, changelog
-                blib.do_edit(args, index, page, save_text)
+            blib.do_edit(args, index, pagetitle, save_text, msg_title=pagename)
 
 
 if args.lemmas:

@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 
-import pywikibot, re, sys, argparse
+import pywikibot, re, sys
 from collections import defaultdict
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, msg, site, tname
+from wingerbot.blib import getparam, rmparam, msg, tname
 
 inflection_of_templates = ["inflection of", "noun form of", "verb form of", "adj form of", "participle of"]
 
@@ -23,8 +23,6 @@ def process_text_on_page(p):
 
 parser = blib.create_argparser(
     "Find occurrences of multiple 'inflection of' tags in a single subsection",
-    include_pagefile=True,
-    include_stdin=True,
 )
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)

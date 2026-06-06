@@ -1,38 +1,27 @@
 #!/usr/bin/env python3
 
-import pywikibot, re
+import re
 
 from wingerbot import blib
-from wingerbot.blib import errandmsg, getparam, tname, msg, site
+from wingerbot.blib import getparam, tname, msg
 from wingerbot.latin import lalib
 
 
-def investigate_possible_adj(index, adj_pagename, adv, adv_defns):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, adj_pagename, txt))
-    def errandpagemsg(txt):
-        errandmsg("Page %s %s: %s" % (index, adj_pagename, txt))
-
-    pagemsg("Trying for adverb %s" % adv)
-    page = pywikibot.Page(site, adj_pagename)
-    if not blib.safe_page_exists(page, errandpagemsg):
-        pagemsg("Doesn't exist for adverb %s" % adv)
-        return
-    text = blib.safe_page_text(page, errandpagemsg)
-
-    modsec = blib.find_modifiable_lang_section(text, "Latin", pagemsg)
+def investigate_possible_adj(p, adv, adv_defns):
+    p.msg("Trying for adverb %s" % adv)
+    modsec = blib.find_modifiable_lang_section(p.text, "Latin", p.msg)
     if modsec is None:
         return
     secbody = modsec.secbody
 
-    subsecs = blib.split_text_into_subsections(secbody, pagemsg)
+    subsecs = blib.split_text_into_subsections(secbody, p.msg)
     subsections = subsecs.subsections
     for k, header in subsecs.header_list:
         parsed = blib.parse_text(subsections[k])
         for t in parsed.filter_templates():
             tn = tname(t)
             if tn in ["la-adj", "la-part"]:
-                adj = lalib.la_get_headword_from_template(t, adj_pagename, pagemsg)[0]
+                adj = lalib.la_get_headword_from_template(t, p.title, p.msg)[0]
                 adj_defns = blib.find_defns(subsections[k], "la")
                 msg("%s /// %s /// %s /// %s" % (adv, adj, ";".join(adv_defns), ";".join(adj_defns)))
 
@@ -79,11 +68,13 @@ def process_text_on_page(p):
                 if adv.endswith("iē"):
                     possible_adjs.append(stem + "ius")
                 for possible_adj in possible_adjs:
-                    investigate_possible_adj(p.index, possible_adj, adv, adv_defns)
+                    def do_investigate_possible_adj(p):
+                        return investigate_possible_adj(p, adv, adv_defns)
+                    blib.do_edit(args, p.index, possible_adj, do_investigate_possible_adj, must_exist=True)
 
 
 parser = blib.create_argparser(
-    "Find corresponding adjectives for Latin adverbs", include_pagefile=True, include_stdin=True
+    "Find corresponding adjectives for Latin adverbs"
 )
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)

@@ -124,8 +124,6 @@ From {{m|la|%s}}.
 
 parser = blib.create_argparser(
     "Fix Latin forms wrongly specified as infinitives that should be participles or gerunds",
-    include_pagefile=True,
-    include_stdin=True,
 )
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)

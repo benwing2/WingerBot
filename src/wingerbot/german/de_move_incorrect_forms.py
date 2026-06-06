@@ -16,13 +16,13 @@ comment = args.comment or "Move erroneously-created non-lemma form"
 
 endings = ["e", "en", "er", "em", "es"]
 
-for i, line in blib.iter_items_from_file(args.direcfile, start, end):
+for lineno, line in blib.iter_items_from_file(args.direcfile, start, end):
     frombase, tobase = line.split("///")
     for ending in endings:
         page = pywikibot.Page(site, frombase + ending)
 
         def pagemsg(txt):
-            msg("Page %s %s: %s" % (i, page.title(), txt))
+            msg("Page %s %s: %s" % (lineno, page.title(), txt))
 
         topagename = tobase + ending
         if page.exists():

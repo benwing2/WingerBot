@@ -14,10 +14,10 @@
 # 6. (DONE) Allow control of processing lemmas or non-lemmas.
 # 7. (MOSTLY DONE) Proper handling of multiword non-lemmas.
 
-import pywikibot, re
+import re
 
 from wingerbot import blib
-from wingerbot.blib import getparam, msg, site, tname
+from wingerbot.blib import getparam, msg, tname
 
 from wingerbot.slavic.russian import rulib
 from wingerbot.slavic.russian import runounlib
@@ -28,7 +28,7 @@ pages_pos = {}
 # Split page title or phonetic value into words the same way that ru-pron
 # does. Do not include ‿ in the split characters because the module doesn't
 # split on that symbol.
-def split_words(pagename, capture_delims):
+def split_words(pagename: str, capture_delims: bool) -> list[str]:
     pagename = re.sub(r"\s*([,–—])\s*", r" \1 ", pagename)
     return re.split("([ -]+)" if capture_delims else "[ -]+", re.sub("[!?]$", "", pagename))
 
@@ -83,7 +83,10 @@ def find_noun_word_types_of_decl(lemma, decl_template, pagemsg):
 
     if len(words) != len(per_word_info):
         if len(per_word_info) == 1:
-            pos = get_per_word_info(lemma, per_word_info)[0]
+            retval = get_per_word_info(lemma, per_word_info)
+            if retval is None: # Manually-declined noun
+                return None
+            pos = retval[0]
             per_word_types = []
             for i in range(0, len(words) - 1):
                 per_word_types.append("inv")
@@ -101,34 +104,34 @@ def find_noun_word_types_of_decl(lemma, decl_template, pagemsg):
 
 # For the given multiword noun lemma (possibly with accents), figure out
 # whether each word is declined as a noun, adjective or invariable.
-def find_noun_word_types(lemma, pagemsg):
-    declpage = pywikibot.Page(site, lemma)
-
-    if not declpage.exists():
-        pagemsg("WARNING: Page doesn't exist when looking up declension, skipping")
+def find_noun_word_types(p, lemma):
+    pp = blib.create_process_page_params(
+        args, p.index, lemma, must_exist="WARNING: Page doesn't exist when looking up declension, skipping",
+        msg_title="%s: %s" % (p.title, lemma)
+    )
+    if pp is None:
         return None
-
-    parsed = blib.parse_text(declpage.text)
+    parsed = blib.parse_text(pp.text)
     decl_templates = []
     for t in parsed.filter_templates():
         tn = tname(t)
         if tn in ["ru-noun-table", "ru-decl-adj"]:
-            pagemsg("find_noun_word_types: Found decl template: %s" % str(t))
+            p.msg("find_noun_word_types: Found decl template: %s" % str(t))
             decl_templates.append(t)
 
     if not decl_templates:
-        pagemsg("WARNING: Found no decl templates, skipping")
+        p.msg("WARNING: Found no decl templates, skipping")
         return None
 
-    per_word_types = find_noun_word_types_of_decl(lemma, decl_templates[0], pagemsg)
+    per_word_types = find_noun_word_types_of_decl(lemma, decl_templates[0], p.msg)
     if not per_word_types:
         return None
     for decl in decl_templates[1:]:
-        other_per_word_types = find_noun_word_types_of_decl(lemma, decl, pagemsg)
+        other_per_word_types = find_noun_word_types_of_decl(lemma, decl, p.msg)
         if not other_per_word_types:
             return None
         if other_per_word_types != per_word_types:
-            pagemsg(
+            p.msg(
                 "WARNING: Found word types %s for decl %s, not same as word types %s for decl %s on same page"
                 % (",".join(other_per_word_types), str(decl), ",".join(per_word_types), str(decl_templates[0]))
             )
@@ -459,7 +462,7 @@ def process_text_on_page(p):
                         )
                         continue
                     lemma = list(lemma)[0]
-                    retval = find_noun_word_types(lemma, p.msg)
+                    retval = find_noun_word_types(p, lemma)
                     if not retval:
                         continue
                     word_types, seen_pos_specs = retval
@@ -562,14 +565,14 @@ def process_text_on_page(p):
                     phonwords = split_words(phon, True)
                     mismatched_phon_title = len(phonwords) != len(titlewords)
                     for i in range(0, len(phonwords), 2):
-                        titleword = not mismatched_phon_title and titlewords[i]
+                        titleword = not mismatched_phon_title and titlewords[i] or None
                         phonword = phonwords[i]
                         lphonword = phonword.lower()
                         wordno = i // 2 + 1
 
                         if rulib.is_monosyllabic(phonword):
                             pass  # Already output msg
-                        elif mismatched_phon_title:
+                        elif titleword is None:  # same as `mismatched_phon_title is True`
                             pass  # Can't canonicalize template
                         elif not titleword.endswith("е"):
                             pass  # Already output msg
@@ -671,7 +674,7 @@ def process_text_on_page(p):
 
 
 parser = blib.create_argparser(
-    "Add pos= to final -е ru-IPA, fix use of phonetic -и/-я", include_pagefile=True, include_stdin=True
+    "Add pos= to final -е ru-IPA, fix use of phonetic -и/-я"
 )
 parser.add_argument(
     "--posfile",

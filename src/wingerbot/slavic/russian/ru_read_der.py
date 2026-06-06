@@ -1,14 +1,12 @@
 #!/usr/bin/env python3
 
-import pywikibot, re, sys, argparse, json
+import re
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, site, tname, pname
+from wingerbot.blib import getparam, tname, pname
 
 
 def process_text_on_page(p):
-    notes = []
-
     def process_line(line, aspect, output):
         if not line.startswith("* "):
             p.msg("WARNING: Unrecognized term line, doesn't start with '* ': %s" % line)
@@ -131,18 +129,14 @@ def process_text_on_page(p):
     else:
         if not p.title.startswith("-"):
             hyphen_pagetitle = "-" + p.title
-            hyphen_page = pywikibot.Page(site, hyphen_pagetitle)
-            hyphen_text = blib.safe_page_text(hyphen_page, p.errandmsg)
-            if hyphen_text:
-                process_text_on_page(blib.ProcessPageParams(args, p.index, hyphen_pagetitle, hyphen_text))
-            else:
-                p.msg("WARNING: Couldn't find derived terms on page")
+            pp = blib.create_process_page_params(args, p.index, hyphen_pagetitle, must_exist="WARNING: Couldn't find derived terms on page")
+            if pp is None:
+                return
+            return process_text_on_page(pp)
 
 
 parser = blib.create_argparser(
     "Read derived terms from Russian term and convert to input format for infer_ru_derverb_prefixes.py",
-    include_pagefile=True,
-    include_stdin=True,
 )
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)

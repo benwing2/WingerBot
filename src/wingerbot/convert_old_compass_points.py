@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 
-import pywikibot, re, sys, argparse
+import pywikibot, re, sys
 
 from wingerbot import blib, lang_utils
-from wingerbot.blib import getparam, rmparam, msg, site, tname, pname
+from wingerbot.blib import getparam, rmparam, msg, tname, pname
 from wingerbot.convert_col_top_topN_to_col import simplify_link, convert_one_line
 
 lang_data = lang_utils.get_lang_data()
@@ -168,7 +168,7 @@ def process_text_on_page(p):
 
 
 parser = blib.create_argparser(
-    "Convert old-style {{compass}} calls to use [[Module:topic list]]", include_pagefile=True, include_stdin=True
+    "Convert old-style {{compass}} calls to use [[Module:topic list]]"
 )
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)

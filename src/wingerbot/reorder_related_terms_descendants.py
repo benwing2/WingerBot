@@ -40,7 +40,7 @@ def process_text_on_page(p):
 
 
 parser = blib.create_argparser(
-    "Reorder ==Descendants== after ==Related terms==", include_pagefile=True, include_stdin=True
+    "Reorder ==Descendants== after ==Related terms=="
 )
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)

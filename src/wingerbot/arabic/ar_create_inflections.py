@@ -3,7 +3,7 @@
 import pywikibot, re
 
 from wingerbot import blib, lang_utils
-from wingerbot.blib import getparam, addparam, msg, errandmsg, site, remove_links, tname
+from wingerbot.blib import getparam, addparam, msg, errandmsg, remove_links, tname
 from wingerbot.arabic.arlib import (
     ALIF,
     ALIF_WASLA,
@@ -2425,23 +2425,13 @@ def create_elatives(elfile, start, end):
         )
         for arpositive in arpositives:
 
-            def add_elative_param(index, page):
-                pagetitle = page.title()
-                def pagemsg(txt):
-                    msg("Page %s %s: %s" % (index, pagetitle, txt))
-                def errandpagemsg(txt):
-                    errandmsg("Page %s %s: %s" % (index, pagetitle, txt))
-
-                if not page.exists():
-                    pagemsg("WARNING, positive %s not found for elative %s (page nonexistent)" % (arpositive, elative))
-                    return
-                text = blib.safe_page_text(page, errandpagemsg)
-                parsed = blib.parse_text(text)
+            def add_elative_param(p):
+                parsed = blib.parse_text(p.text)
                 found_positive = False
                 for t in parsed.filter_templates():
                     if tname(t) in ["ar-adj", "ar-adj-sound", "ar-adj-in", "ar-adj-an"]:
                         if reorder_shadda(getparam(t, "1")) != reorder_shadda(arpositive):
-                            pagemsg(
+                            p.msg(
                                 "Skipping, found adjective template with wrong positive, expecting %s: %s"
                                 % (arpositive, str(t))
                             )
@@ -2450,27 +2440,26 @@ def create_elatives(elfile, start, end):
                         existingel = getparam(t, "el")
                         if existingel:
                             if reorder_shadda(existingel) == reorder_shadda(elative):
-                                pagemsg("Skipping template with elative already in it: %s" % (str(t)))
+                                p.msg("Skipping template with elative already in it: %s" % (str(t)))
                             else:
-                                pagemsg(
+                                p.msg(
                                     "Strange, template has elative already in it but not expected %s: %s"
                                     % (elative, str(t))
                                 )
                         else:
-                            pagemsg("Adding elative %s to template: %s" % (elative, str(t)))
+                            p.msg("Adding elative %s to template: %s" % (elative, str(t)))
                             addparam(t, "el", elative)
                 if not found_positive:
-                    pagemsg(
+                    p.msg(
                         "WARNING, positive %s not found for elative %s (page exists but couldn't find appropriate template)"
                         % (arpositive, elative)
                     )
                 return str(parsed), "Add el=%s to adjective %s" % (elative, arpositive)
 
-            page = pywikibot.Page(site, remove_diacritics(arpositive))
-            blib.do_edit(args, index, page, add_elative_param)
+            blib.do_edit(args, index, remove_diacritics(arpositive), add_elative_param, must_exist=True, msg_title=arpositive)
 
 
-parser = blib.create_argparser("Create Arabic inflection entries", include_pagefile=True, include_stdin=True)
+parser = blib.create_argparser("Create Arabic inflection entries")
 parser.add_argument("-p", "--plural", action="store_true", help="Do plural inflections")
 parser.add_argument("-f", "--feminine", action="store_true", help="Do feminine inflections")
 parser.add_argument("--verbal-noun", action="store_true", help="Do verbal noun inflections")

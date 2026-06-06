@@ -79,7 +79,7 @@ def process_text_on_page(p):
     return str(parsed), notes
 
 
-parser = blib.create_argparser("Fix up class-7b arguments", include_pagefile=True, include_stdin=True)
+parser = blib.create_argparser("Fix up class-7b arguments")
 parser.add_argument("--direcfile", help="File containing pages to fix and directives.")
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)

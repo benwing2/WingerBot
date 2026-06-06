@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 
-import pywikibot, re, sys, argparse
+import pywikibot, re, sys
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, site, tname
+from wingerbot.blib import getparam, rmparam, tname
 
 sv_verb_templates_with_plural_of = [
     "sv-verb-form-imp",
@@ -174,8 +174,6 @@ def process_text_on_page(p):
 
 parser = blib.create_argparser(
     "Clean up various form-of templates needing text moved outside of template into separate template",
-    include_pagefile=True,
-    include_stdin=True,
 )
 parser.add_argument("--move-dot", help="Move .= outside of template", action="store_true")
 args = parser.parse_args()

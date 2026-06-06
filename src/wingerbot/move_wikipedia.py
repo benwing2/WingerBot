@@ -74,7 +74,7 @@ def process_text_on_page(p):
 
 
 parser = blib.create_argparser(
-    "Move {{wikipedia}} lines to top of etym section", include_pagefile=True, include_stdin=True
+    "Move {{wikipedia}} lines to top of etym section"
 )
 parser.add_argument("--langname", help="Only do this language name (optional).")
 args = parser.parse_args()

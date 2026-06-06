@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 
-import pywikibot, re, sys, argparse, copy
+import pywikibot, re, sys, copy
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, tname, msg, site
+from wingerbot.blib import getparam, rmparam, tname, msg
 
 from wingerbot.slavic.russian import rulib
 
@@ -382,7 +382,7 @@ def process_text_on_page(p):
 
 
 parser = blib.create_argparser(
-    "Fix up verb conjugations to use the infinitive", include_pagefile=True, include_stdin=True
+    "Fix up verb conjugations to use the infinitive"
 )
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)

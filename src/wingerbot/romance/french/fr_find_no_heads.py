@@ -119,7 +119,7 @@ def process_text_on_page(p):
 
 
 parser = blib.create_argparser(
-    "Find French terms without a proper headword line", include_pagefile=True, include_stdin=True
+    "Find French terms without a proper headword line"
 )
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)

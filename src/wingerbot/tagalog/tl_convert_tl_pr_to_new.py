@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 
-import pywikibot, re, sys, argparse, unicodedata
+import pywikibot, re, sys, unicodedata
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, msg, site, tname, pname, rsub_repeatedly
+from wingerbot.blib import getparam, rmparam, msg, tname, pname, rsub_repeatedly
 
 recogized_poses = {
     "noun": "n",
@@ -128,7 +128,7 @@ def process_text_on_page(p):
     return str(parsed), notes
 
 
-parser = blib.create_argparser("Convert {{tl-pr}} to new format", include_pagefile=True, include_stdin=True)
+parser = blib.create_argparser("Convert {{tl-pr}} to new format")
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 

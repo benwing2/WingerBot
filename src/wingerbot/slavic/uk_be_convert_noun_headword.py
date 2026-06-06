@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 
-import pywikibot, re, sys, argparse
+import pywikibot, re, sys
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, msg, site, tname
+from wingerbot.blib import getparam, rmparam, msg, tname
 
 from wingerbot.slavic.ukrainian import uklib as uk
 from wingerbot.slavic.belarusian import belib as be
@@ -106,7 +106,7 @@ def process_text_on_page(p):
 
 
 parser = blib.create_argparser(
-    "Convert {{uk-noun}}/{{be-noun}} to new style", include_pagefile=True, include_stdin=True
+    "Convert {{uk-noun}}/{{be-noun}} to new style"
 )
 parser.add_argument("--lang", required=True, help="Language (uk or be)")
 args = parser.parse_args()

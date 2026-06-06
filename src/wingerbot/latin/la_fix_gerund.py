@@ -23,7 +23,7 @@ def process_text_on_page(p):
 
 
 parser = blib.create_argparser(
-    "Fix calls to {{la-gerund}} to include final -um", include_pagefile=True, include_stdin=True
+    "Fix calls to {{la-gerund}} to include final -um"
 )
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)

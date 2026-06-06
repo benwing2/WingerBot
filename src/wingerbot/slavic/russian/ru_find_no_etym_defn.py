@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 
-import pywikibot, re, sys, argparse
+import pywikibot, re, sys
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, msg, site
+from wingerbot.blib import getparam, rmparam, msg
 
 from wingerbot.slavic.russian import rulib
 
@@ -28,8 +28,6 @@ def process_text_on_page(p):
 # Pages specified using --pages or --pagefile may have accents, which will be stripped.
 parser = blib.create_argparser(
     "Fetch definitions of specified Russian terms",
-    include_pagefile=True,
-    include_stdin=True,
 )
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)

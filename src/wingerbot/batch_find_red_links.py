@@ -8,7 +8,7 @@ import pywikibot, re
 from wingerbot import blib
 from wingerbot.blib import msg, site
 
-parser = blib.create_argparser("Batch-find red links in a particular language", include_pagefile=True, no_include_stdin=True)
+parser = blib.create_argparser("Batch-find red links in a particular language", no_include_stdin=True)
 parser.add_argument("--column-file", help="Column-oriented file containing pages to check, separated by tabs or spaces")
 parser.add_argument("--langname", help="Language of terms", required=True)
 parser.add_argument("--field", help="Field containing terms from --column-file, one-based", type=int, default=1)

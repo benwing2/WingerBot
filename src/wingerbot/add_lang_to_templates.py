@@ -83,7 +83,7 @@ def process_text_on_page(p):
 
 
 parser = blib.create_argparser(
-    "Add language to templates, based on the section they're within", include_pagefile=True, include_stdin=True
+    "Add language to templates, based on the section they're within"
 )
 parser.add_argument(
     "--from",

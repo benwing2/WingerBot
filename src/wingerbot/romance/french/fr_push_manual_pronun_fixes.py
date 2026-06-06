@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 
-import pywikibot, re, sys, argparse
+import pywikibot, re, sys
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, tname, pname, msg, errandmsg, site
+from wingerbot.blib import getparam, rmparam, tname, pname, msg, errandmsg
 
 
 def process_text_on_page(p):
@@ -73,7 +73,7 @@ def process_text_on_page(p):
 
 
 parser = blib.create_argparser(
-    "Push manual {{fr-IPA}} replacements for {{IPA|fr}}", include_pagefile=True, include_stdin=True
+    "Push manual {{fr-IPA}} replacements for {{IPA|fr}}"
 )
 parser.add_argument("--direcfile", help="File of directives", required=True)
 args = parser.parse_args()

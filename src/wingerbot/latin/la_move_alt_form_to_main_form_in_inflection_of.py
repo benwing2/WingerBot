@@ -38,7 +38,7 @@ def process_text_on_page(p):
 
 
 parser = blib.create_argparser(
-    "Move alt form to main form in Latin {{inflection of}}", include_pagefile=True, include_stdin=True
+    "Move alt form to main form in Latin {{inflection of}}"
 )
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)

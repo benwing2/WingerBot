@@ -1,13 +1,14 @@
 #!/usr/bin/env python3
 
-import re, sys, argparse, unicodedata
+import re
 from collections import defaultdict
 
-from wingerbot.blib import msg
 from wingerbot import blib
+from wingerbot.blib import msg
 from wingerbot.slavic.russian import rulib
 
-parser = argparse.ArgumentParser(description="Infer prefixes from derived verb tables without them.")
+parser = blib.create_argparser("Infer prefixes from derived verb tables without them.",
+                               no_include_pagefile=True, no_include_stdin=True, suppress_start_end=True)
 parser.add_argument("files", nargs="*", help="Files containing directives.")
 parser.add_argument("--suffixes", help="Extra suffixes, of the format FILE=SUFFIX,SUFFIX,...;FILE=SUFFIX,SUFFIX,...")
 parser.add_argument("--direcfile", help="File containing input in find_regex format.")

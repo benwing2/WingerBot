@@ -37,7 +37,7 @@ def process_text_on_page(p):
     return "".join(sections), "add lang code to audio templates"
 
 
-parser = blib.create_argparser("Add lang code to audio templates", include_pagefile=True, include_stdin=True)
+parser = blib.create_argparser("Add lang code to audio templates")
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 

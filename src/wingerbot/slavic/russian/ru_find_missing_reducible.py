@@ -2,10 +2,10 @@
 
 # Find places where a reducible * notation is likely missing in Russian nouns.
 
-import pywikibot, re, sys, argparse
+import pywikibot, re, sys
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, msg, site, tname
+from wingerbot.blib import getparam, rmparam, msg, tname
 
 
 def process_text_on_page(p):
@@ -37,8 +37,6 @@ def process_text_on_page(p):
 
 parser = blib.create_argparser(
     "Find places where reduciible * notation is likely missing in Russian noun declensions",
-    include_pagefile=True,
-    include_stdin=True,
 )
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)

@@ -1,15 +1,15 @@
 #!/usr/bin/env python3
 
-import pywikibot, re, sys, argparse
+import re
 
 from wingerbot import blib
-from wingerbot.blib import getparam, msg, errandmsg, site, tname, pname
+from wingerbot.blib import getparam, tname, pname
 
 # Value is one of:
 # "pl-p-respelling": if page has any {{pl-p}} with respelling
 # "pl-p-no-respelling": if page has only {{pl-p}} without respelling
 # "no-pl-p": if page does not have {{pl-p}}
-pages_with_pl_p = {}
+pages_with_pl_p: dict[str, tuple[str, list[str] | None]] = {}
 
 infl_templates = ["inflection of", "infl of"]
 
@@ -19,32 +19,31 @@ pronun_templates = ["IPA", "pl-IPA", "pl-p", "pl-pronunciation"]
 def get_pl_p_property(index, pagetitle):
     if pagetitle in pages_with_pl_p:
         return pages_with_pl_p[pagetitle]
-    page = pywikibot.Page(site, pagetitle)
-    def errandpagemsg(txt):
-        errandmsg("Page %s %s: %s" % (index, pagetitle, txt))
-
-    pagetext = blib.safe_page_text(page, errandpagemsg)
-    parsed = blib.parse_text(pagetext)
-    saw_pl_p = False
-    respellings = []
-    for t in parsed.filter_templates():
-        tn = tname(t)
-        if tn in ["pl-p", "pl-pronunciation"]:
-
-            def getp(param):
-                return getparam(t, param)
-
-            saw_pl_p = True
-            for pno in range(1, 11):
-                respelling = getp(str(pno))
-                if respelling and respelling not in respellings:
-                    respellings.append(respelling)
-    if respellings:
-        retval = ("pl-p-respelling", respellings)
-    elif saw_pl_p:
-        retval = ("pl-p-no-respelling", None)
-    else:
+    p = blib.create_process_page_params(args, index, pagetitle)
+    if not p:
         retval = ("no-pl-p", None)
+    else:
+        parsed = blib.parse_text(p.text)
+        saw_pl_p = False
+        respellings = []
+        for t in parsed.filter_templates():
+            tn = tname(t)
+            if tn in ["pl-p", "pl-pronunciation"]:
+
+                def getp(param: str) -> str:
+                    return getparam(t, param)
+
+                saw_pl_p = True
+                for pno in range(1, 11):
+                    respelling = getp(str(pno))
+                    if respelling and respelling not in respellings:
+                        respellings.append(respelling)
+        if respellings:
+            retval = ("pl-p-respelling", respellings)
+        elif saw_pl_p:
+            retval = ("pl-p-no-respelling", None)
+        else:
+            retval = ("no-pl-p", None)
     pages_with_pl_p[pagetitle] = retval
     return retval
 
@@ -139,6 +138,8 @@ def process_text_on_page(p):
             p.msg("WARNING: Lemma page %s has no {{pl-p}}, not sure what to do, skipping" % lemma)
             return
         elif pl_p_prop == "pl-p-respelling":
+            # get_pl_p_property() only assigns lists as the second tuple member when the first is "pl-p-respelling"
+            assert type(pl_p_respellings) is list
             p.msg("WARNING: Lemma page %s has respelling(s) %s, skipping" % (lemma, ",".join(pl_p_respellings)))
             return
         else:
@@ -227,7 +228,7 @@ def process_text_on_page(p):
     return modsec.rebuild(secbody="".join(subsections)), notes
 
 
-parser = blib.create_argparser("Add Polish non-lemma pronunciations", include_pagefile=True, include_stdin=True)
+parser = blib.create_argparser("Add Polish non-lemma pronunciations")
 parser.add_argument(
     "--ignore-lemma-respelling", action="store_true", help="Add {{pl-p}} to nonlemmas irrespective of lemma respelling."
 )

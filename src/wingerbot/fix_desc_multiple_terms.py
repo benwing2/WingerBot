@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 
-import pywikibot, re, sys, argparse
+import pywikibot, re, sys
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, tname, pname, msg, site
+from wingerbot.blib import getparam, rmparam, tname, pname, msg
 
 from wingerbot import lang_utils
 
@@ -306,8 +306,6 @@ def process_text_on_page(p):
 
 parser = blib.create_argparser(
     "Use {{desc}} with multiple terms in place of {{desc|...}}, {{l|...}}, ...",
-    include_pagefile=True,
-    include_stdin=True,
 )
 parser.add_argument("--do-all-sections", action="store_true", help="Do all sections, not only Descendants sections")
 args = parser.parse_args()

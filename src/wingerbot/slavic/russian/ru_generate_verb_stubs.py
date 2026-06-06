@@ -1,16 +1,17 @@
 #!/usr/bin/env python3
 
-import re, sys, argparse
+import re
 from typing import NoReturn
 
+from wingerbot import blib, generate_pos
 from wingerbot.blib import msg, errmsg
 from wingerbot.slavic.russian import rulib
-from wingerbot import generate_pos
 
-parser = argparse.ArgumentParser(description="Generate verb stubs.")
+parser = blib.create_argparser("Generate verb stubs.", no_include_pagefile=True, no_include_stdin=True)
 parser.add_argument("--reqdef", help="Require a definition.", action="store_true")
 parser.add_argument("--direcfile", help="File containing directives.", required=True)
 args = parser.parse_args()
+start, end = blib.parse_start_end(args.start, args.end)
 
 
 # Split text on a separator, but not if separator is preceded by

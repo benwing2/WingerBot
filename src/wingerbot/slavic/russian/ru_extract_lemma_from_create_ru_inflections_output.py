@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-import re, sys, argparse
+import re, sys
 
 from wingerbot import blib
 from wingerbot.blib import errmsg

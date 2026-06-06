@@ -22,10 +22,10 @@
 #
 # where the volume is based on the book.
 
-import pywikibot, re, sys, argparse
+import pywikibot, re, sys
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, set_template_name, msg, errmsg, site
+from wingerbot.blib import getparam, rmparam, set_template_name, msg, errmsg
 
 replace_templates = ["RQ:Brmnghm Gsmr", "RQ:Fielding Tom Jones"]
 
@@ -88,7 +88,7 @@ def process_text_on_page(p):
 
 if __name__ == "__main__":
     parser = blib.create_argparser(
-        "Reformat {{RQ:Brmnghm Gsmr}} and {{RQ:Fielding Tom Jones}}", include_pagefile=True, include_stdin=True
+        "Reformat {{RQ:Brmnghm Gsmr}} and {{RQ:Fielding Tom Jones}}"
     )
     args = parser.parse_args()
     start, end = blib.parse_start_end(args.start, args.end)

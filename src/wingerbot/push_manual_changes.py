@@ -2,14 +2,9 @@
 
 import re
 
-import pywikibot
-
 from wingerbot import blib
 from wingerbot.blib import msg
 from collections import defaultdict
-
-site = pywikibot.Site()
-
 
 def form_repl_curr(repl, curr):
     return (undo_slash_newline(repl, repl=True), undo_slash_newline(curr))
@@ -253,7 +248,7 @@ def process_text_on_page_pushing_split_manual_changes(p):
     return text, combine_notes_with_comment(notes)
 
 
-params = blib.create_argparser("Push manual changes to Wiktionary", include_pagefile=True, include_stdin=True)
+params = blib.create_argparser("Push manual changes to Wiktionary")
 params.add_argument(
     "--direcfile",
     help="File containing templates to change, as output by various scripts with --from-to",

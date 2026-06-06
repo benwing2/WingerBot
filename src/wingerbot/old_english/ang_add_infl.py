@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 
-import pywikibot, re, sys, argparse
+import pywikibot, re, sys
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, msg, site, tname
+from wingerbot.blib import getparam, rmparam, msg, tname
 
 pos_to_headword_template = {
     "noun": "ang-noun",
@@ -173,7 +173,7 @@ def process_text_on_page(p):
 
 
 parser = blib.create_argparser(
-    "Find Old English noun/verb/adjective inflections or add new ones", include_pagefile=True, include_stdin=True
+    "Find Old English noun/verb/adjective inflections or add new ones"
 )
 parser.add_argument("--pos", help="Part of speech (noun, proper noun, verb, adjective)")
 parser.add_argument("--new-infls", help="File of new inflections")

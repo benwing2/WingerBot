@@ -53,8 +53,6 @@ def process_text_on_page(p):
 
 parser = blib.create_argparser(
     "Remove inline=, converting ux|ru to uxi|ru as necessary, canonicalize two-part links and remove redundant translit",
-    include_pagefile=True,
-    include_stdin=True,
 )
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)

@@ -54,7 +54,7 @@ def process_text_on_page(p):
 
 
 parser = blib.create_argparser(
-    "Fix raw Latin triple-quote headwords based on section header", include_pagefile=True, include_stdin=True
+    "Fix raw Latin triple-quote headwords based on section header"
 )
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)

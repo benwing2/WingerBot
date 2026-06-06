@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 
-import pywikibot, re, sys, argparse
+import pywikibot, re, sys
 
 from wingerbot import blib, lang_utils
-from wingerbot.blib import getparam, rmparam, msg, site, tname
+from wingerbot.blib import getparam, rmparam, msg, tname
 
 lang_data = lang_utils.get_lang_data()
 etym_lang_data = lang_utils.get_etym_lang_data()
@@ -29,7 +29,7 @@ def process_text_on_page(p):
 
 
 parser = blib.create_argparser(
-    "Generate 'Terms with LANG translations' categories", include_pagefile=True, include_stdin=True
+    "Generate 'Terms with LANG translations' categories"
 )
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)

@@ -112,8 +112,7 @@ def process_er_verb(p):
                      msg_title="%s: %s" % (p.title, form))
 
 
-parser = blib.create_argparser("Delete erroneously created French -er verb forms", include_pagefile=True,
-                               include_stdin=True)
+parser = blib.create_argparser("Delete erroneously created French -er verb forms")
 parser.add_argument(
     "--all-suffixes",
     action="store_true",

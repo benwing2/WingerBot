@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 
-import pywikibot, re, sys, argparse
+import pywikibot, re, sys
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, msg, site
+from wingerbot.blib import getparam, rmparam, msg
 
 
 def process_text_on_page(p):
@@ -28,7 +28,7 @@ def process_text_on_page(p):
 
 
 parser = blib.create_argparser(
-    "Replace manual alt-ё specification with {{ru-pos-alt-ё}}", include_pagefile=True, include_stdin=True
+    "Replace manual alt-ё specification with {{ru-pos-alt-ё}}"
 )
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)

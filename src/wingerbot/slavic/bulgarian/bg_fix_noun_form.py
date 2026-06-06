@@ -1,10 +1,9 @@
 #!/usr/bin/env python3
 
-import pywikibot, re, sys, argparse
+import re
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, msg, site, tname, pname
-
+from wingerbot.blib import getparam, rmparam, tname, pname
 from wingerbot.slavic.bulgarian import bglib
 
 nouns_to_accents_and_forms = {}
@@ -24,51 +23,44 @@ def snarf_noun_accents_and_forms(p, noun):
     if pagetitle in nouns_to_accents_and_forms:
         return nouns_to_accents_and_forms[pagetitle]
 
-    def pagemsg(txt):
-        p.msg("Noun %s: %s" % (noun, txt))
-    def errandpagemsg(txt):
-        p.errandmsg("Noun %s: %s" % (noun, txt))
-
-    page = pywikibot.Page(site, pagetitle)
-    text = blib.safe_page_text(page, errandpagemsg)
-    parsed = blib.parse_text(text)
+    pp = blib.create_process_page_params(args, p.index, pagetitle, msg_title="%s: Noun %s" % (p.title, noun))
+    if pp is None:
+        nouns_to_accents_and_forms[pagetitle] = (None, None)
+        return (None, None)
+    parsed = blib.parse_text(pp.text)
     lemma = None
     for t in parsed.filter_templates():
         if tname(t) in ["bg-noun", "bg-proper noun"]:
             if lemma:
-                pagemsg("WARNING: Saw two {{bg-noun}} invocations without intervening {{bg-ndecl}}: %s" % str(t))
+                pp.msg("WARNING: Saw two {{bg-noun}} invocations without intervening {{bg-ndecl}}: %s" % str(t))
             lemma = getparam(t, "1")
             if not lemma:
-                pagemsg("WARNING: Missing headword in noun: %s" % str(t))
+                pp.msg("WARNING: Missing headword in noun: %s" % str(t))
                 continue
             if bglib.needs_accents(lemma):
-                pagemsg("WARNING: Noun %s missing an accent: %s" % (lemma, str(t)))
+                pp.msg("WARNING: Noun %s missing an accent: %s" % (lemma, str(t)))
                 lemma = False
                 continue
         if tname(t) == "bg-ndecl":
             if lemma is False:
-                pagemsg("WARNING: Skipping %s because noun missing an accent" % str(t))
+                pp.msg("WARNING: Skipping %s because noun missing an accent" % str(t))
                 continue
             if lemma is None:
-                pagemsg("WARNING: Skipping %s because no preceding {{bg-noun}}" % str(t))
+                pp.msg("WARNING: Skipping %s because no preceding {{bg-noun}}" % str(t))
                 continue
             if pagetitle in nouns_to_accents_and_forms:
-                pagemsg("WARNING: Saw two {{bg-ndecl}} on the same page: %s" % str(t))
+                pp.msg("WARNING: Saw two {{bg-ndecl}} on the same page: %s" % str(t))
                 nouns_to_accents_and_forms[pagetitle] = (None, None)
                 return (None, None)
             generate_template = re.sub(r"^\{\{bg-ndecl\|", "{{bg-generate-noun-forms|", str(t))
-
-            def expand_text(tempcall):
-                return blib.expand_text(tempcall, pagetitle, pagemsg, args.verbose)
-
-            generate_result = expand_text(generate_template)
+            generate_result = pp.expand_text(generate_template)
             if not generate_result:
                 nouns_to_accents_and_forms[pagetitle] = (None, None)
                 return (None, None)
             nouns_to_accents_and_forms[pagetitle] = (lemma, blib.split_generate_args(generate_result))
     if pagetitle in nouns_to_accents_and_forms:
         return nouns_to_accents_and_forms[pagetitle]
-    pagemsg("WARNING: Couldn't find both lemma and declension")
+    pp.msg("WARNING: Couldn't find both lemma and declension")
     nouns_to_accents_and_forms[pagetitle] = (None, None)
     return (None, None)
 
@@ -342,7 +334,7 @@ def process_text_on_page(p):
 
 
 parser = blib.create_argparser(
-    "Convert Bulgarian noun forms to standard templates", include_pagefile=True, include_stdin=True
+    "Convert Bulgarian noun forms to standard templates"
 )
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)

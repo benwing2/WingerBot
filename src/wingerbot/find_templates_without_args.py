@@ -19,7 +19,7 @@ def process_text_on_page(p):
                 p.msg("Found %s template without parts: %s" % (tn, str(t)))
 
 
-parser = blib.create_argparser("Find templates without any parts", include_pagefile=True, include_stdin=True)
+parser = blib.create_argparser("Find templates without any parts")
 parser.add_argument("--templates", help="""Comma-separated list of names of template to check for.""")
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)

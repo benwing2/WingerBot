@@ -1,16 +1,7 @@
 #!/usr/bin/env python3
 
-import re
-import pywikibot
-
+# FIXME: This script is no longer relevant now that we handle categories automatically in [[Module:category tree/lang/ru]].
 from wingerbot import blib
-from wingerbot.blib import site, msg, errandmsg
-
-dosave = True
-overwrite = False
-donouns = False
-doadjs = False
-doverbs = True
 
 stress_patterns = ["a", "b", "b'", "c", "d", "d'", "e", "f", "f'", "f''"]
 genders = ["masculine", "feminine", "neuter"]
@@ -230,32 +221,43 @@ numbers = ["singular", "plural"]
 extra_cases = ["locative", "partitive", "vocative"]
 
 
-def create_cat(cat, args, adj=False, verb=False):
+next_index = 0
+def create_cat(cat, catargs, adj=False, verb=False):
+    global next_index
+    next_index += 1
     if verb:
         cat = "Category:Russian " + cat.replace("~", "verbs")
         text = "{{ruverbcatboiler}}"
     elif adj:
         cat = "Category:Russian " + cat.replace("~", "adjectives")
-        text = "{{ruadjcatboiler|%s}}" % "|".join(args)
+        text = "{{ruadjcatboiler|%s}}" % "|".join(catargs)
     else:
         cat = "Category:Russian " + cat.replace("~", "nouns")
-        text = "{{runouncatboiler|%s}}" % "|".join(args)
-    page = pywikibot.Page(site, cat)
-    if not overwrite and page.exists():
-        msg("Page %s already exists, not overwriting" % cat)
-        return
-    page.text = str(text)
-    changelog = "Creating '%s' with text '%s'" % (cat, text)
-    msg("Changelog = %s" % changelog)
-    if dosave:
-        blib.safe_page_save(page, changelog, errandmsg)
+        text = "{{runouncatboiler|%s}}" % "|".join(catargs)
+    def write_cat(p):
+        if not args.overwrite and p.page.exists():
+            p.msg("Page already exists, not overwriting")
+            return
+        changelog = "Creating '%s' with text '%s'" % (p.title, text)
+        p.msg("Changelog = %s" % changelog)
+        return str(text), changelog
+    blib.do_edit(args, next_index, "Category:" + cat, write_cat)
 
 
-def create_adj_cat(cat, args):
-    create_cat(cat, args, adj=True)
+parser = blib.create_argparser("Create Russian noun/verb/adjective categories",
+                               no_include_pagefile=True, no_include_stdin=True)
+parser.add_argument("--overwrite", help="Overwrite categories", action="store_true")
+parser.add_argument(
+    "--pos", help="Part of speech of categories to create", choices=["noun", "verb", "adj"], required=True
+)
+args = parser.parse_args()
+start, end = blib.parse_start_end(args.start, args.end)
 
 
-if donouns:
+def create_adj_cat(cat, catargs):
+    create_cat(cat, catargs, adj=True)
+
+if args.pos == "noun":
     for s in stress_patterns:
         create_cat("~ with accent pattern %s" % s, ["stress", s])
     for c in extra_cases:
@@ -319,7 +321,7 @@ adj_patterns = [
     ("short", "possessive", "a consonant (-ъ old style)", "-а", "-о", "-ы"),
 ]
 
-if doadjs:
+if args.pos == "adj":
     for stress, expl in short_adj_stress_patterns:
         create_adj_cat("~ with short accent pattern " + stress, ["shortaccent", expl])
 
@@ -404,7 +406,7 @@ if doadjs:
     # Russian proper-name adjectives
     # Russian short-form-only adjectives
 
-if doverbs:
+if args.pos == "verb":
     for subclass in [
         "1a",
         "2a",

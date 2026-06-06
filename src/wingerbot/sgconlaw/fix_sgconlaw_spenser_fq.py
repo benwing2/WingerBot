@@ -9,10 +9,10 @@
 #
 # * {{RQ:Spenser Faerie Queene|book=III|canto=II|stanza=8|passage=of which great worth and '''worship''' may be won}}
 
-import pywikibot, re, sys, argparse
+import pywikibot, re, sys
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, msg, errmsg, site
+from wingerbot.blib import getparam, rmparam, msg, errmsg
 
 arabic_to_roman_form = {
     "1": "I",
@@ -265,7 +265,7 @@ def process_text_on_page(p):
     return curtext.rstrip("\n"), notes
 
 
-parser = blib.create_argparser("Reformat {{RQ:Spenser FQ}}", include_pagefile=True, include_stdin=True)
+parser = blib.create_argparser("Reformat {{RQ:Spenser FQ}}")
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 

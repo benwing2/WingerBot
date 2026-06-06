@@ -3,7 +3,7 @@
 import pywikibot, re
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, tname, msg, site
+from wingerbot.blib import getparam, rmparam, tname, site
 from wingerbot.latin import lalib
 
 
@@ -165,7 +165,7 @@ def process_text_on_page(p):
 
 
 parser = blib.create_argparser(
-    "Fix headword of Latin comparative and superlative adverbs", include_pagefile=True, include_stdin=True
+    "Fix headword of Latin comparative and superlative adverbs"
 )
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)

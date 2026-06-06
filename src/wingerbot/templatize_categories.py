@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 
-import pywikibot, re, sys, argparse
+import pywikibot, re, sys
 
 from wingerbot import blib, lang_utils
-from wingerbot.blib import getparam, rmparam, tname, pname, msg, site
+from wingerbot.blib import getparam, rmparam, tname, pname, msg
 
 
 def process_text_on_page(p, langcode, langname, topicstemp):
@@ -136,7 +136,7 @@ def process_text_on_page(p, langcode, langname, topicstemp):
 
 
 if __name__ == "__main__":
-    parser = blib.create_argparser("Templatize categories", include_pagefile=True, include_stdin=True)
+    parser = blib.create_argparser("Templatize categories")
     parser.add_argument("--langcode", help="Code of language to templatize")
     parser.add_argument("--langname", help="Name of language to templatize")
     parser.add_argument("--topics-template", help="Name of topics template to use", default="C")

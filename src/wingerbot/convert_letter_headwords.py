@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 
-import pywikibot, re, sys, argparse
+import pywikibot, re, sys
 
 from wingerbot import blib, lang_utils
-from wingerbot.blib import getparam, rmparam, tname, pname, msg, site
+from wingerbot.blib import getparam, rmparam, tname, pname, msg
 
 lang_data = lang_utils.get_lang_data()
 
@@ -382,8 +382,6 @@ def process_text_on_page(p):
 
 parser = blib.create_argparser(
     "Convert {{head|LANG|letter}} to {{letter|LANG}} and letter definitions to {{letter def}}",
-    include_pagefile=True,
-    include_stdin=True,
 )
 parser.add_argument("--letter-def", default="letter def", help="Template to use in letter definitions")
 args = parser.parse_args()

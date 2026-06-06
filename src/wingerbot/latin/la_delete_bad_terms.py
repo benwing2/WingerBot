@@ -87,7 +87,7 @@ def process_text_on_page(p):
     return text, notes
 
 
-parser = blib.create_argparser("Delete bad Latin terms", include_pagefile=True, include_stdin=True)
+parser = blib.create_argparser("Delete bad Latin terms")
 parser.add_argument("--headtemp", required=True, help="Name(s) of expected headword template(s).")
 parser.add_argument("--output-pages-to-delete", help="File to write pages to delete.")
 args = parser.parse_args()

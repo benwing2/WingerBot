@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 
-import pywikibot, re, sys, argparse
+import e
 
 from wingerbot import blib, lang_utils
-from wingerbot.blib import getparam, rmparam, msg, site, tname, pname
+from wingerbot.blib import getparam, tname, pname
 
 accent_templates = ["a", "accent"]
 
@@ -292,8 +292,6 @@ def process_text_on_page(p):
 
 parser = blib.create_argparser(
     "Add language to {{a}} and {{accent}} templates, based on the section it's within",
-    include_pagefile=True,
-    include_stdin=True,
 )
 parser.add_argument(
     "--skip-already-done", action="store_true", help="Skip if it looks like the lang code has already been added."

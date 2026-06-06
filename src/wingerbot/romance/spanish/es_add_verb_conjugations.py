@@ -154,7 +154,7 @@ def process_text_on_page_for_single_word(p):
 
 
 parser = blib.create_argparser(
-    "Add conjugations to Spanish verbs lacking them", include_pagefile=True, include_stdin=True
+    "Add conjugations to Spanish verbs lacking them"
 )
 parser.add_argument("--direcfile", help="File of conjugated verbs")
 parser.add_argument(

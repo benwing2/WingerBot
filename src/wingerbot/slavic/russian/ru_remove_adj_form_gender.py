@@ -31,7 +31,7 @@ def process_text_on_page(p):
     return modsec.rebuild(secbody=str(parsed)), notes
 
 
-parser = blib.create_argparser("Remove gender from Russian adjective forms", include_pagefile=True, include_stdin=True)
+parser = blib.create_argparser("Remove gender from Russian adjective forms")
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 

@@ -96,7 +96,7 @@ def process_text_on_page(p):
 
 
 parser = blib.create_argparser(
-    "Add language to quote-* templates, based on the section it's within", include_pagefile=True, include_stdin=True
+    "Add language to quote-* templates, based on the section it's within"
 )
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)

@@ -40,22 +40,18 @@
 # 11. (DONE) Adding declension to proper nouns, should use n=sg if proper noun
 #    is singular-only
 
-import pywikibot, re
-from dataclasses import dataclass
+import re
+from typing import NamedTuple
 
 from wingerbot import blib
-from wingerbot.blib import getparam, site, tname, pname
+from wingerbot.blib import getparam, tname, pname
 from wingerbot.slavic.russian import rulib, runounlib
 
-@dataclass
-class PluralInfo:
+class PluralInfo(NamedTuple):
     singular_ending: str
     plural_ending: str
     gender: str
     requires_special_case: bool  # requires special case (1)
-
-    def props(self):
-        return self.singular_ending, self.plural_ending, self.gender, self.requires_special_case
 
 pl_data = [
    PluralInfo("", "ы", "m", False),
@@ -207,6 +203,12 @@ all_parts_declined = [
 keep_locative = ["социальная сеть", "Западный берег реки Иордан", "Западный берег"]
 
 
+class FindDeclArgsRetval(NamedTuple):
+    args: list[tuple[str, str]]
+    is_adj: bool
+    n: str | None
+    a: str | None
+
 def process_text_on_page(p):
     subpagetitle = re.sub("^.*:", "", p.title)
 
@@ -219,40 +221,44 @@ def process_text_on_page(p):
     # four items: a list of (NAME, VALUE) tuples for the arguments, whether
     # the word is an adjective, the value of n= (if given), and the value
     # of a= (if given).
-    def find_decl_args(lemma, infl, wordind):
-        declpage = pywikibot.Page(site, lemma)
+    def find_decl_args(lemma, infl, wordind) -> FindDeclArgsRetval | None:
+        pp = blib.create_process_page_params(args, p.index, lemma, msg_title="%s: %s" % (p.title, lemma))
+        if pp is None:
+            # Can't validate page title
+            return
+        assert pp.page is not None  # create_process_page_params never sets pp.page to None
         if rulib.remove_accents(infl) == lemma:
             wordlink = "[[%s]]" % infl
         else:
             wordlink = "[[%s|%s]]" % (lemma, infl)
 
-        if not declpage.exists():
+        if not pp.page.exists():
             if lemma in is_short_adj or re.search("(ий|ый|ой)$", lemma):
-                p.msg(
+                pp.msg(
                     "WARNING: Page doesn't exist, assuming word #%s adjectival: lemma=%s, infl=%s"
                     % (wordind, lemma, infl)
                 )
-                return [("1", wordlink), ("2", "+")], True, None, None
+                return FindDeclArgsRetval([("1", wordlink), ("2", "+")], True, None, None)
             else:
-                p.msg(
+                pp.msg(
                     "WARNING: Page doesn't exist, can't locate decl for word #%s, skipping: lemma=%s, infl=%s"
                     % (wordind, lemma, infl)
                 )
-                return None
-        parsed = blib.parse_text(declpage.text)
+                return
+        parsed = blib.parse_text(pp.text)
         decl_templates = []
         headword_templates = []
         decl_z_templates = []
         for t in parsed.filter_templates():
             tn = tname(t)
             if tn in ["ru-noun-table", "ru-decl-adj"]:
-                p.msg("find_decl_args: Found decl template: %s" % str(t))
+                pp.msg("find_decl_args: Found decl template: %s" % str(t))
                 decl_templates.append(t)
             if tn in ["ru-noun", "ru-proper noun"]:
-                p.msg("find_decl_args: Found headword template: %s" % str(t))
+                pp.msg("find_decl_args: Found headword template: %s" % str(t))
                 headword_templates.append(t)
             if tn in ["ru-decl-noun-z"]:
-                p.msg("find_decl_args: Found z-decl template: %s" % str(t))
+                pp.msg("find_decl_args: Found z-decl template: %s" % str(t))
                 decl_z_templates.append(t)
 
         if not decl_templates:
@@ -260,46 +266,46 @@ def process_text_on_page(p):
                 # {{ru-decl-noun-z|звезда́|f-in|d|ё}}
                 # {{ru-decl-noun-z|ёж|m-inan|b}}
                 if len(decl_z_templates) > 1:
-                    p.msg(
+                    pp.msg(
                         "WARNING: Multiple decl-z templates during decl lookup for word #%s, skipping: lemma=%s, infl=%s"
                         % (wordind, lemma, infl)
                     )
-                    return None
+                    return
                 else:
                     decl_z_template = decl_z_templates[0]
                     headword_template = None
-                    p.msg("find_decl_args: Using z-decl template: %s" % str(decl_z_template))
+                    pp.msg("find_decl_args: Using z-decl template: %s" % str(decl_z_template))
                     if len(headword_templates) == 0:
-                        p.msg(
+                        pp.msg(
                             "WARNING: find_decl_args: No headword templates for use with z-decl template conversion during decl lookup for word #%s: lemma=%s, infl=%s, zdecl=%s"
                             % (wordind, lemma, infl, str(decl_z_template))
                         )
                     elif len(headword_templates) > 1:
-                        p.msg(
+                        pp.msg(
                             "WARNING: find_decl_args: Multiple headword templates for use with z-decl template conversion during decl lookup for word #%s, ignoring: lemma=%s, infl=%s, zdecl=%s"
                             % (wordind, lemma, infl, str(decl_z_template))
                         )
                     else:
                         headword_template = headword_templates[0]
-                        p.msg(
+                        pp.msg(
                             "find_decl_args: For word #%s, lemma=%s, infl=%s, using headword template %s for use with z-decl template %s"
                             % (wordind, lemma, infl, str(headword_template), str(decl_z_template))
                         )
                     decl_template = runounlib.convert_zdecl_to_ru_noun_table(
-                        decl_z_template, subpagetitle, p.msg, headword_template=headword_template
+                        decl_z_template, subpagetitle, pp.msg, headword_template=headword_template
                     )
                     decl_templates = [decl_template]
 
-            elif "[[Category:Russian indeclinable nouns]]" in declpage.text or [
+            elif "[[Category:Russian indeclinable nouns]]" in pp.text or [
                 x for x in headword_templates if getparam(x, "3") == "-"
             ]:
-                return [("1", wordlink), ("2", "$")], False, None, None
+                return FindDeclArgsRetval([("1", wordlink), ("2", "$")], False, None, None)
             else:
-                p.msg(
+                pp.msg(
                     "WARNING: No decl template during decl lookup for word #%s, skipping: lemma=%s, infl=%s"
                     % (wordind, lemma, infl)
                 )
-                return None
+                return
 
         if len(decl_templates) == 1:
             decl_template = decl_templates[0]
@@ -307,7 +313,7 @@ def process_text_on_page(p):
             # Multiple decl templates
             for t in decl_templates:
                 if tname(t) == "ru-decl-adj" and re.search("(ий|ый|ой)$", lemma):
-                    p.msg(
+                    pp.msg(
                         "WARNING: Multiple decl templates during decl lookup for word #%s, assuming adjectival: lemma=%s, infl=%s"
                         % (wordind, lemma, infl)
                     )
@@ -316,7 +322,7 @@ def process_text_on_page(p):
             else:
                 if lemma in use_given_decl:
                     overriding_decl = use_given_decl[lemma]
-                    p.msg(
+                    pp.msg(
                         "WARNING: Multiple decl templates during decl lookup for word #%s and not adjectival, using overriding declension %s: lemma=%s, infl=%s"
                         % (wordind, overriding_decl, lemma, infl)
                     )
@@ -324,30 +330,30 @@ def process_text_on_page(p):
                 elif p.title in use_given_page_decl:
                     overriding_decl = use_given_page_decl[p.title].get(lemma, None)
                     if not overriding_decl:
-                        p.msg(
+                        pp.msg(
                             "WARNING: Missing entry for ambiguous-decl lemma for word #%s, skipping: lemma=%s, infl=%s"
                             % (wordind, lemma, infl)
                         )
                         return
                     else:
-                        p.msg(
+                        pp.msg(
                             "WARNING: Multiple decl templates during decl lookup for word #%s and not adjectival, using overriding declension %s: lemma=%s, infl=%s"
                             % (wordind, overriding_decl, lemma, infl)
                         )
                         decl_template = blib.parse_text(overriding_decl).filter_templates()[0]
                 else:
-                    p.msg(
+                    pp.msg(
                         "WARNING: Multiple decl templates during decl lookup for word #%s and not adjectival, skipping: lemma=%s, infl=%s"
                         % (wordind, lemma, infl)
                     )
-                    return None
+                    return
 
-        p.msg("find_decl_args: Using decl template: %s" % str(decl_template))
+        pp.msg("find_decl_args: Using decl template: %s" % str(decl_template))
         if str(decl_template.name) == "ru-decl-adj":
             if re.search(r"\bь\b", getparam(decl_template, "2"), re.U):
-                return [("1", wordlink), ("2", "+ь")], True, None, None
+                return FindDeclArgsRetval([("1", wordlink), ("2", "+ь")], True, None, None)
             else:
-                return [("1", wordlink), ("2", "+")], True, None, None
+                return FindDeclArgsRetval([("1", wordlink), ("2", "+")], True, None, None)
 
         # ru-noun-table
         assert str(decl_template.name) == "ru-noun-table"
@@ -373,11 +379,11 @@ def process_text_on_page(p):
             if i == highest_numbered_param + 1:
                 end_arg_set = True
             elif val == "_" or val == "-" or re.search("^join:", val):
-                p.msg(
+                pp.msg(
                     "WARNING: Found multiword decl during decl lookup for word #%s, skipping: lemma=%s, infl=%s"
                     % (wordind, lemma, infl)
                 )
-                return None
+                return
             elif val == "or":
                 end_arg_set = True
 
@@ -395,7 +401,7 @@ def process_text_on_page(p):
         found_gender: str | None = None
         if canon_infl != canon_lemma:
             for pl_info in pl_data:
-                sgend, plend, gender, is_sc1 = pl_info.props()
+                sgend, plend, gender, is_sc1 = pl_info
                 if sgend:
                     check_sgend = sgend
                 else:
@@ -406,11 +412,11 @@ def process_text_on_page(p):
                     need_sc1 = is_sc1
                     break
             else:
-                p.msg(
+                pp.msg(
                     "WARNING: For word#%s, inflection not same as lemma, not recognized as plural, can't handle, skipping: lemma=%s, infl=%s"
                     % (wordind, lemma, infl)
                 )
-                return None
+                return
 
         # Substitute the wordlink for any lemmas in the declension.
         # If plural, also add gender and verify special case (1) as necessary.
@@ -439,12 +445,12 @@ def process_text_on_page(p):
             ):
                 arg_set[lemma_arg] = wordlink + manualtr
             else:
-                p.msg(
+                pp.msg(
                     "WARNING: Can't sub word link %s into decl lemma %s%s"
                     % (wordlink, arg_set[lemma_arg], ispl and ", skipping" or "")
                 )
                 if ispl:
-                    return None
+                    return
 
             if ispl:
                 # Add the gender
@@ -456,26 +462,26 @@ def process_text_on_page(p):
                 m = re.search("(3f|[mfn])", declarg)
                 if found_gender == "mf":
                     if not m:
-                        p.msg(
+                        pp.msg(
                             "WARNING: For singular in -ь and plural in -и, need gender in singular and don't have it, word #%s, skipping: lemma=%s, infl=%s"
                             % (wordind, lemma, infl)
                         )
-                        return None
+                        return
                     decl_gender = m.group(1)
                     if decl_gender == "n":
-                        p.msg(
+                        pp.msg(
                             "WARNING: For singular in -ь and plural in -и, can't have neuter gender for word #%s, skipping: lemma=%s, infl=%s"
                             % (wordind, lemma, infl)
                         )
-                        return None
+                        return
                     elif decl_gender in ["m", "3f"]:
-                        p.msg(
+                        pp.msg(
                             "Singular in -ь and plural in -и, already found gender %s in decl for word #%s, taking no action: lemma=%s, infl=%s"
                             % (decl_gender, wordind, lemma, infl)
                         )
                     else:
                         assert gender == "f"
-                        p.msg(
+                        pp.msg(
                             "Singular in -ь and plural in -и, replacing f with 3f so singular will be recognized for word #%s: lemma=%s, infl=%s"
                             % (wordind, lemma, infl)
                         )
@@ -487,18 +493,18 @@ def process_text_on_page(p):
                     if m:
                         decl_gender = m.group(1)
                         if decl_gender == found_gender:
-                            p.msg(
+                            pp.msg(
                                 "Already found gender %s in decl for word #%s, taking no action: lemma=%s, infl=%s"
                                 % (found_gender, wordind, lemma, infl)
                             )
                         else:
-                            p.msg(
+                            pp.msg(
                                 "WARNING: Found wrong gender %s in decl for word #%s, forcibly replacing with lemma-form-derived gender %s: lemma=%s, infl=%s"
                                 % (decl_gender, wordind, found_gender, lemma, infl)
                             )
                             declarg = re.sub("(3f|[mfn])", found_gender, declarg, 1)
                     else:
-                        p.msg(
+                        pp.msg(
                             "No gender in decl for word #%s, adding gender %s: lemma=%s, infl=%s"
                             % (wordind, found_gender, lemma, infl)
                         )
@@ -507,17 +513,17 @@ def process_text_on_page(p):
                 # Now check special case 1
                 if need_sc1 != ("(1)" in declarg):
                     if need_sc1:
-                        p.msg(
+                        pp.msg(
                             "WARNING: Irregular plural calls for special case (1), but not present in decl arg for word #%s, skipping: declarg=%s, lemma=%s, infl=%s"
                             % (wordind, declarg, lemma, infl)
                         )
-                        return None
+                        return
                     else:
-                        p.msg(
+                        pp.msg(
                             "WARNING: Special case (1) present in decl arg but plural for word #%s is regular, skipping: declarg=%s, lemma=%s, infl=%s"
                             % (wordind, declarg, lemma, infl)
                         )
-                        return None
+                        return
 
                 arg_set[lemma_arg + 1] = declarg
 
@@ -540,7 +546,7 @@ def process_text_on_page(p):
             elif pn == "notes":
                 params.append((pn, val))
             elif pn == "title":
-                p.msg(
+                pp.msg(
                     "WARNING: Found explicit title= for word #%s, ignoring: lemma=%s, infl=%s, title=%s"
                     % (wordind, lemma, infl, val)
                 )
@@ -550,38 +556,38 @@ def process_text_on_page(p):
                 keepparam = True
                 if pn == "loc":
                     if p.title in keep_locative:
-                        p.msg(
+                        pp.msg(
                             "Keeping locative for word #%s because page in keep_locative: loc=%s, lemma=%s, infl=%s"
                             % (wordind, val, lemma, infl)
                         )
                     else:
-                        p.msg(
+                        pp.msg(
                             "WARNING: Discarding locative for word #%s: loc=%s, lemma=%s, infl=%s"
                             % (wordind, val, lemma, infl)
                         )
                         keepparam = False
                 if pn == "par":
-                    p.msg(
+                    pp.msg(
                         "WARNING: Discarding partitive for word #%s: par=%s, lemma=%s, infl=%s"
                         % (wordind, val, lemma, infl)
                     )
                     keepparam = False
                 if pn == "voc":
-                    p.msg(
+                    pp.msg(
                         "WARNING: Discarding vocative for word #%s: voc=%s, lemma=%s, infl=%s"
                         % (wordind, val, lemma, infl)
                     )
                     keepparam = False
                 if keepparam:
                     if pn == "loc" and re.search(r"^(на|в)\b", val, re.U):
-                        p.msg(
+                        pp.msg(
                             "WARNING: на or в found in loc= for word #%s, may not work in multi-word lemma: loc=%s, lemma=%s, infl=%s"
                             % (wordind, val, lemma, infl)
                         )
                     pn += str(wordind)
                     params.append((pn, val))
 
-        return params, False, num, anim
+        return FindDeclArgsRetval(params, False, num, anim)
 
     headword_template = None
     see_template = None
@@ -785,7 +791,7 @@ def process_text_on_page(p):
                 if genders_include_pl and not saw_noun and not reached_uninflected:
                     # Check for plural inflection
                     for pl_info in pl_data:
-                        sgend, plend, gender, is_sc1 = pl_info.props()
+                        sgend, plend, gender, is_sc1 = pl_info
                         if sgend:
                             check_sgend = sgend
                         else:
@@ -1092,8 +1098,6 @@ def process_text_on_page(p):
 
 parser = blib.create_argparser(
     "Convert ru-noun to ru-noun+, ru-proper noun to ru-proper noun+ for multiword nouns",
-    include_pagefile=True,
-    include_stdin=True,
 )
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)

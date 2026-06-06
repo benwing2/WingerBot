@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 
-import pywikibot, re, sys, argparse, unicodedata, json
+import pywikibot, re, sys, unicodedata, json
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, msg, site, tname, pname, rsub_repeatedly
+from wingerbot.blib import getparam, rmparam, msg, tname, pname, rsub_repeatedly
 
 langs = ["pl", "csb", "szl", "zlw-slv"]
 pl_lects = [
@@ -172,8 +172,6 @@ def process_text_on_page(p):
 
 parser = blib.create_argparser(
     "Convert {{pl-pr/old}} to {{pl-pr}} and similarly for other Lechitic langs",
-    include_pagefile=True,
-    include_stdin=True,
 )
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)

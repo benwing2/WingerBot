@@ -1,9 +1,8 @@
 #!/usr/bin/env python3
 
-import pywikibot, re, sys, argparse
+import re
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, msg, site, tname
 
 
 def process_text_on_page(p):
@@ -15,8 +14,7 @@ def process_text_on_page(p):
     either_quote_string_re_no_parens = '".*?"|' + "'.*?'"
     either_quote_string_re = "(%s)" % either_quote_string_re_no_parens
 
-    for lineind, line in enumerate(lines):
-        lineno = lineind + 1
+    for lineno, line in enumerate(lines, start=1):
         origline = line
 
         def linemsg(txt):
@@ -177,7 +175,7 @@ def process_text_on_page(p):
 
 
 parser = blib.create_argparser(
-    "Convert 'topic cat' data modules to new structure", include_pagefile=True, include_stdin=True
+    "Convert 'topic cat' data modules to new structure"
 )
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)

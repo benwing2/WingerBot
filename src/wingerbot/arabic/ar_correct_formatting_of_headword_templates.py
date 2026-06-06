@@ -229,7 +229,7 @@ def correct_one_page_link_formatting(p):
     return text, "incorporated translit/gender into links: %s" % ", ".join(linkschanged)
 
 
-parser = blib.create_argparser("Correct formatting of headword templates or incorporate translit/gender into links", include_pagefile=True, include_stdin=True)
+parser = blib.create_argparser("Correct formatting of headword templates or incorporate translit/gender into links")
 parser.add_argument("--links", action="store_true", help="Incorporate translit/gender into Arabic links")
 
 args = parser.parse_args()

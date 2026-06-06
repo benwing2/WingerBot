@@ -3,10 +3,10 @@
 # Go through Russian lemmas looking for pages with missing phon= or missing translit.
 # Currently we just look for э in the ru-IPA call but not in the page title.
 
-import pywikibot, re, sys, argparse
+import pywikibot, re, sys
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, msg, site, tname
+from wingerbot.blib import getparam, rmparam, msg, tname
 
 from wingerbot.slavic.russian import runounlib
 
@@ -110,7 +110,7 @@ def process_text_on_page(p):
 
 
 parser = blib.create_argparser(
-    "Find missing phon= or transit in Russian lemmas", include_pagefile=True, include_stdin=True
+    "Find missing phon= or transit in Russian lemmas"
 )
 parser.add_argument("--fix-star", action="store_true", help="Fix pronun lines missing * at beginning")
 args = parser.parse_args()

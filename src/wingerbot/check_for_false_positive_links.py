@@ -37,8 +37,7 @@ def process_line(index, line):
             pagemsg("Possible false positive for [[%s]] in %s: %s" % (linkpage, lang, fromtext))
 
 
-parser = blib.create_argparser("Check for likely false-positive links converted from raw links",
-                               include_pagefile=True, include_stdin=True)
+parser = blib.create_argparser("Check for likely false-positive links converted from raw links")
 parser.add_argument("--direcfile", help="File of output from fix_links.py")
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)

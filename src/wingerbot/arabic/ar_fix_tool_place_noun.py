@@ -22,8 +22,7 @@ def fix_one_page_tool_place_noun(p):
     return str(parsed), changelog
 
 
-parser = blib.create_argparser("Fix lc vs. cap in tool/place noun etym templates",
-                               include_pagefile=True, include_stdin=True)
+parser = blib.create_argparser("Fix lc vs. cap in tool/place noun etym templates")
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 

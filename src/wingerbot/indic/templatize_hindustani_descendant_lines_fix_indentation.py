@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 
-import pywikibot, re, sys, argparse
+import pywikibot, re, sys
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, tname, pname, msg, site
+from wingerbot.blib import getparam, rmparam, tname, pname, msg
 
 
 def process_text_on_page(p):
@@ -111,7 +111,7 @@ def process_text_on_page(p):
 
 
 parser = blib.create_argparser(
-    "Templatize 'Hindustani' in Descendants sections and fix indentation", include_pagefile=True, include_stdin=True
+    "Templatize 'Hindustani' in Descendants sections and fix indentation"
 )
 parser.add_argument("--langname", help="Only do this language name (optional).")
 args = parser.parse_args()

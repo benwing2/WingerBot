@@ -4,7 +4,7 @@ import pywikibot, re
 import unicodedata
 
 from wingerbot import blib
-from wingerbot.blib import getparam, msg, site, tname
+from wingerbot.blib import getparam, tname, site
 
 allowed_reading_types = ["goon", "kanon", "toon", "soon", "kanyoon", "on", "kun", "nanori"]
 
@@ -231,8 +231,6 @@ def process_text_on_page(p):
 
 parser = blib.create_argparser(
     "Create 'Japanese terms spelled/prefixed/suffixed with FOO read as BAR' categories",
-    include_pagefile=True,
-    include_stdin=True,
 )
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)

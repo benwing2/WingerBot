@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 
-import pywikibot, re, sys, argparse
+import pywikibot, re
 
 from wingerbot import blib, lang_utils
-from wingerbot.blib import getparam, rmparam, tname, pname, msg, errandmsg, site
+from wingerbot.blib import getparam, tname, site
 
 lang_data = lang_utils.get_lang_data()
 etym_lang_data = lang_utils.get_etym_lang_data()
@@ -346,18 +346,11 @@ def get_params_from_zh_l(t):
 
 
 def find_southern_min_types(p, linkt, linkpage, linkglosses, all_types=False):
-    def make_msg_txt(txt):
-        return "Link page %s%s in %s: %s" % (
-            link_term(linkpage),
-            linkglosses and " (glossed as '%s')" % "; ".join(linkglosses) or "",
-            str(linkt),
-            txt,
-        )
-    def pagemsg(txt):
-        p.msg(make_msg_txt(txt))
-    def errandpagemsg(txt):
-        p.errandmsg(make_msg_txt(txt))
-
+    p.title_suffix = ": Link page %s%s in %s" % (
+        link_term(linkpage),
+        linkglosses and " (glossed as '%s')" % "; ".join(linkglosses) or "",
+        str(linkt),
+    )
     canon_pagename = re.sub("//.*", "", blib.remove_links(linkpage))
     page = pywikibot.Page(site, canon_pagename)
     linkmsg = "synonym/antonym %s (template %s%s)" % (
@@ -365,12 +358,12 @@ def find_southern_min_types(p, linkt, linkpage, linkglosses, all_types=False):
         str(linkt),
         linkglosses and ", glossed as '%s'" % "; ".join(linkglosses) or "",
     )
-    if not blib.safe_page_exists(page, errandpagemsg):
+    if not blib.safe_page_exists(page, p.errandmsg):
         return "Found %s but page doesn't exist" % linkmsg
-    text = blib.safe_page_text(page, errandpagemsg)
+    text = blib.safe_page_text(page, p.errandmsg)
     if not text:
         return "Error fetching text for %s" % linkmsg
-    modsec = blib.find_modifiable_lang_section(text, "Chinese", pagemsg)
+    modsec = blib.find_modifiable_lang_section(text, "Chinese", p.msg)
     if modsec is None:
         return
     secbody = modsec.secbody
@@ -406,7 +399,7 @@ def find_southern_min_types(p, linkt, linkpage, linkglosses, all_types=False):
         all_defns = find_defns(text)
         all_defns_matching_gloss = find_defns_matching_linkglosses(all_defns)
         if not all_defns_matching_gloss:
-            pagemsg("WARNING: Can't find any definitions matching link glosses")
+            p.msg("WARNING: Can't find any definitions matching link glosses")
             use_all_defns = True
 
     def find_section_min_types(sectext):
@@ -490,7 +483,7 @@ def find_southern_min_types(p, linkt, linkpage, linkglosses, all_types=False):
                             add("Hokkien")
                         elif "Hokkien" in label:
                             add("Hokkien")
-                            pagemsg(
+                            p.msg(
                                 "WARNING: Saw label '%s' with Hokkien in it, treating as Hokkien, needs review: %s"
                                 % (label, str(t))
                             )
@@ -514,7 +507,7 @@ def find_southern_min_types(p, linkt, linkpage, linkglosses, all_types=False):
                 if canon_name not in canon_lects_seen:
                     canon_lects_seen.append(canon_name)
             if canon_lects_seen != lects_seen:
-                pagemsg(
+                p.msg(
                     "Canonicalizing derived lect(s) %s to %s"
                     % (",".join(lects_to_canonicalize), ",".join(canon_lects_seen))
                 )
@@ -529,7 +522,7 @@ def find_southern_min_types(p, linkt, linkpage, linkglosses, all_types=False):
                     if code.startswith("nan-"):
                         pared_lects_seen.append(lect)
                 if pared_lects_seen != lects_seen:
-                    pagemsg(
+                    p.msg(
                         "Paring derived lect(s) %s to Southern-Min-only %s"
                         % (",".join(lects_seen), ",".join(pared_lects_seen))
                     )
@@ -553,7 +546,7 @@ def find_southern_min_types(p, linkt, linkpage, linkglosses, all_types=False):
         return lects_seen or [], saw_zh_pron, saw_zh_label
 
     if "Etymology 1" in secbody or "Pronunciation 1" in secbody:
-        subsecs = blib.split_text_into_subsections(secbody, pagemsg)
+        subsecs = blib.split_text_into_subsections(secbody, p.msg)
         subsections = subsecs.subsections
         etym_pron_sectext = []
         index_of_secbegin = None
@@ -576,7 +569,7 @@ def find_southern_min_types(p, linkt, linkpage, linkglosses, all_types=False):
         for stage in [1, 2]:
             for secheader, sectext in etym_pron_sectext:
                 if stage == 1 and linkglosses and not linkglosses_in_text(sectext):
-                    pagemsg(
+                    p.msg(
                         "Stage 1 processing section header %s, skipping because bare link glosses not found in section text"
                         % secheader
                     )
@@ -629,7 +622,7 @@ def find_southern_min_types(p, linkt, linkpage, linkglosses, all_types=False):
             tn = tname(t)
             if tn == "zh-see":
                 canon = getparam(t, "1")
-                pagemsg(
+                p.msg(
                     "WARNING (may be ignorable): Couldn't identify any Southern Min lect from scraping page (%s), but saw %s, redirecting"
                     % ("; ".join(saw_msgs), str(t))
                 )
@@ -965,7 +958,7 @@ def process_text_on_page(p):
 
 
 parser = blib.create_argparser(
-    "Convert 'Min Nan' and 'Southern Min' in qualifiers to appropriate lects", include_pagefile=True, include_stdin=True
+    "Convert 'Min Nan' and 'Southern Min' in qualifiers to appropriate lects"
 )
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)

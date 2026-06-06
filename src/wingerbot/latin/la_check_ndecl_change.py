@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 
-import pywikibot, re, sys, argparse
+import pywikibot, re, sys
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, tname, msg, site
+from wingerbot.blib import getparam, rmparam, tname, msg
 from wingerbot.latin import lalib
 
 
@@ -44,7 +44,7 @@ def process_text_on_page(p):
 
 
 parser = blib.create_argparser(
-    "Check potential changes to {{la-ndecl}} or {{la-adecl}} implementation", include_pagefile=True, include_stdin=True
+    "Check potential changes to {{la-ndecl}} or {{la-adecl}} implementation"
 )
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)

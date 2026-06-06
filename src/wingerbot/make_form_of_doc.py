@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 
 from wingerbot import blib
-from wingerbot.blib import msg, errandmsg, site
-import pywikibot, re
+from wingerbot.blib import msg, errandmsg
+import re
 
 parser = blib.create_argparser("Generate form-of documentation pages.",
                                no_include_pagefile=True, no_include_stdin=True)
@@ -16,28 +16,14 @@ in_multiline = False
 nextpage = 0
 
 
-def save_template_doc(tempname, doc, save):
-    global nextpage
+def save_template_doc(p, tempname, doc):
     msg("For [[Template:%s]]:" % tempname)
     msg("------- begin text --------")
     msg(doc.rstrip("\n"))
     msg("------- end text --------")
     comment = "Update form-of template documentation"
-    nextpage += 1
 
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (nextpage, tempname, txt))
-
-    def errandpagemsg(txt):
-        errandmsg("Page %s %s: %s" % (nextpage, tempname, txt))
-
-    if save:
-        page = pywikibot.Page(site, "Template:%s/documentation" % tempname)
-        pagemsg("Saving with comment = %s" % comment)
-        page.text = doc
-        blib.safe_page_save(page, comment, errandpagemsg)
-    else:
-        pagemsg("Would save with comment = %s" % comment)
+    return doc, comment
 
 
 while True:
@@ -47,7 +33,10 @@ while True:
         break
     if in_multiline and re.search("^-+ end text -+$", line):
         in_multiline = False
-        save_template_doc(tempname, "".join(templines), args.save)
+        nextpage += 1
+        def do_save_template_doc(p):
+            return save_template_doc(p, tempname, "".join(templines))
+        blib.do_edit(args, nextpage, "Template:%s/documentation" % tempname, do_save_template_doc)
     elif in_multiline:
         if line.rstrip("\n").endswith(":"):
             errandmsg("WARNING: Possible missing ----- end text -----: %s" % line.rstrip("\n"))
@@ -113,4 +102,7 @@ while True:
             if "grammar" in params:
                 doclines.append("[[Category:Grammar form-of templates]]")
             doclines.append("</includeonly>")
-            save_template_doc(tempname, "\n".join(doclines) + "\n", args.save)
+            nextpage += 1
+            def do_save_template_doc(p):
+                return save_template_doc(p, tempname, "\n".join(doclines) + "\n")
+            blib.do_edit(args, nextpage, "Template:%s/documentation" % tempname, do_save_template_doc)

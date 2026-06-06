@@ -23,7 +23,7 @@ def process_page(p):
                 return oldtext, "Undo faulty addition of period after back-formation template"
 
 
-parser = blib.create_argparser("Undo extraneously-added periods after back-formation templates", include_pagefile=True, no_include_stdin=True)
+parser = blib.create_argparser("Undo extraneously-added periods after back-formation templates", no_include_stdin=True)
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 

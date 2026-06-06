@@ -771,7 +771,7 @@ def process_text_on_page(p):
 
 
 parser = blib.create_argparser(
-    "Convert =Synonyms= sections to inline synonyms", include_pagefile=True, include_stdin=True
+    "Convert =Synonyms= sections to inline synonyms"
 )
 parser.add_argument("--langcode", required=True, help="Lang code of language to do.")
 parser.add_argument("--langname", required=True, help="Lang name of language to do.")

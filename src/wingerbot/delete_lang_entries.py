@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-import pywikibot, re, sys, argparse
+import pywikibot, re, sys
 
 from wingerbot import blib
 from wingerbot.blib import getparam, rmparam, msg, tname, pname
@@ -36,7 +36,7 @@ def process_text_on_page(p):
     return
 
 
-parser = blib.create_argparser("Delete entries for a given language.", include_pagefile=True, include_stdin=True)
+parser = blib.create_argparser("Delete entries for a given language.")
 parser.add_argument("--langname", help="Language name of language entries to delete.", required=True)
 parser.add_argument("--comment", help="Comment to add to page when modifying.")
 parser.add_argument("--output-pages-to-delete", help="File to write pages to delete.")

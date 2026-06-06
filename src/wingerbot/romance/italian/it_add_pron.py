@@ -389,7 +389,7 @@ def process_text_on_page(p):
 
 
 parser = blib.create_argparser(
-    "Add Italian pronunciations based on file of directives", include_pagefile=True, include_stdin=True
+    "Add Italian pronunciations based on file of directives"
 )
 parser.add_argument(
     "--direcfile", required=True, help="File containing pronunciations, as output from it_snarf_pron.py and modified"

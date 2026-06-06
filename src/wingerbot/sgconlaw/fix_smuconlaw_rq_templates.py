@@ -2,10 +2,10 @@
 
 # Move text outside of certain RQ: templates inside the templates.
 
-import pywikibot, re, sys, argparse
+import pywikibot, re, sys
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, set_template_name, msg, errmsg, site
+from wingerbot.blib import getparam, rmparam, set_template_name, msg, errmsg
 
 replace_templates = ["RQ:RBrtn AntmyMlncly", "RQ:Flr Mntgn Essays"]
 
@@ -77,7 +77,7 @@ def process_text_on_page(p):
 
 if __name__ == "__main__":
     parser = blib.create_argparser(
-        "Fix title and entry in a couple of reference templates", include_pagefile=True, include_stdin=True
+        "Fix title and entry in a couple of reference templates"
     )
     args = parser.parse_args()
     start, end = blib.parse_start_end(args.start, args.end)

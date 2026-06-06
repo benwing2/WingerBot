@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 
-import pywikibot, re, sys, argparse
+import pywikibot, re, sys
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, tname, pname, msg, site
+from wingerbot.blib import getparam, rmparam, tname, pname, msg
 
 from wingerbot.slavic.ukrainian import uklib
 
@@ -69,7 +69,7 @@ def process_text_on_page(p):
     return str(parsed), notes
 
 
-parser = blib.create_argparser("Split multi-stressed Ukrainian noun forms", include_pagefile=True, include_stdin=True)
+parser = blib.create_argparser("Split multi-stressed Ukrainian noun forms")
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 

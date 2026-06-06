@@ -2,9 +2,9 @@
 
 from typing import NoReturn
 
-import pywikibot, re
+import re
 from wingerbot import blib
-from wingerbot.blib import site, msg, errmsg, errandmsg, group_notes
+from wingerbot.blib import msg, errmsg
 from wingerbot.slavic.russian import rulib
 
 # Examples of lines in the --direcfile:
@@ -214,7 +214,7 @@ def process_line(lineno, line):
 
 
 parser = blib.create_argparser(
-    "Add etymologies to Russian pages based on directives", include_pagefile=True, include_stdin=True
+    "Add etymologies to Russian pages based on directives"
 )
 parser.add_argument("--direcfile", help="File containing directives.")
 parser.add_argument("--add-passive-of", action="store_true", help="Add {{passive of|ru|...}} to defn.")

@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 
-import pywikibot, re, sys, argparse
+import pywikibot, re, sys
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, getrmparam, tname, msg, site
+from wingerbot.blib import getparam, rmparam, getrmparam, tname, msg
 
 # FIXME: Out of date script, not needed any more, might not still work.
 
@@ -295,7 +295,7 @@ def process_text_on_page(p):
 
 
 parser = blib.create_argparser(
-    "Convert Latin verb conj templates to new form", include_pagefile=True, include_stdin=True
+    "Convert Latin verb conj templates to new form"
 )
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)

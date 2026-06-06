@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 
-import pywikibot, re, sys, argparse
+import pywikibot, re, sys
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, msg, site, tname, pname
+from wingerbot.blib import getparam, rmparam, msg, tname, pname
 
 dont_singularize = {
     "Browns",
@@ -284,7 +284,7 @@ def process_text_on_page(p):
 
 
 parser = blib.create_argparser(
-    "Convert {{head|en|verb}} to {{en-verb}} with specified conjugation", include_pagefile=True, include_stdin=True
+    "Convert {{head|en|verb}} to {{en-verb}} with specified conjugation"
 )
 parser.add_argument("--direcfile", help="File of conjugated verbs")
 parser.add_argument(

@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 
-import pywikibot, re, sys, argparse
+import pywikibot, re, sys
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, msg, site
+from wingerbot.blib import getparam, rmparam, msg
 
 parser = blib.create_argparser("Delete subcats of [[Category:Swedish compound words]]",
                                no_include_pagefile=True, no_include_stdin=True)

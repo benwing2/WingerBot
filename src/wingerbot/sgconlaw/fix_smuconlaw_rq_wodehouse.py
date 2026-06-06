@@ -36,7 +36,7 @@ def process_text_on_page(p):
 
 if __name__ == "__main__":
     parser = blib.create_argparser(
-        "Fix params in RQ:Wodehouse Offing templates", include_pagefile=True, include_stdin=True
+        "Fix params in RQ:Wodehouse Offing templates"
     )
     args = parser.parse_args()
     start, end = blib.parse_start_end(args.start, args.end)

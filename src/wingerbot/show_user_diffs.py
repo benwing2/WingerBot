@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 
-import pywikibot, re, sys, argparse, time
+import pywikibot, re, sys
 import difflib
 from wingerbot import blib
-from wingerbot.blib import site, msg, errandmsg, group_notes, iter_items
+from wingerbot.blib import site, msg, errandmsg
 
 seen_page_changes = {}
 seen_pages = []

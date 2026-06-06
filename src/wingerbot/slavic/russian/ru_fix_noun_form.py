@@ -95,7 +95,7 @@ def process_text_on_page(p):
 
 
 parser = blib.create_argparser(
-    "Canonicalize {{head|ru|noun form}} and {{ru-noun form}}", include_pagefile=True, include_stdin=True
+    "Canonicalize {{head|ru|noun form}} and {{ru-noun form}}"
 )
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)

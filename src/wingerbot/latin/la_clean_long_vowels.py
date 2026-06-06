@@ -364,11 +364,11 @@
 
 from dataclasses import dataclass
 
-import pywikibot, re
+import re
 from mwparserfromhell.nodes import Template
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, msg, errandmsg, site, tname, Index, PagemsgCallback
+from wingerbot.blib import getparam, rmparam, msg, errandmsg, tname, Index, PagemsgCallback
 
 from wingerbot.latin import lalib
 from wingerbot.latin.lalib import flatten_slot_formvals, remove_macrons, PronunSection
@@ -1543,6 +1543,7 @@ if __name__ == "__main__":
         blib.do_edit(
             args,
             lemma_index,
-            pywikibot.Page(site, remove_macrons(lemma)),
+            remove_macrons(lemma),
             handler,
+            msg_title=lemma,
         )

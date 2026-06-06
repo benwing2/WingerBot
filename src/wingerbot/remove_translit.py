@@ -311,7 +311,7 @@ def process_text_on_page(p):
     return str(parsed), changelog
 
 
-parser = blib.create_argparser("Remove translit, sc= from hy, xcl, ka, el, grc templates", include_pagefile=True, include_stdin=True)
+parser = blib.create_argparser("Remove translit, sc= from hy, xcl, ka, el, grc templates")
 parser.add_argument("--langs", default="all", help="Languages to do, a comma-separated list or 'all'")
 parser.add_argument("--do-head", action="store_true", help="""Remove tr= in {{head|..}}""")
 args = parser.parse_args()

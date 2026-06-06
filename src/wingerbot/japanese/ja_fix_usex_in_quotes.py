@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 
-import pywikibot, re, sys, argparse
+import pywikibot, re, sys
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, msg, site, tname
+from wingerbot.blib import getparam, rmparam, msg, tname
 
 quote_templates = [
     "quote-book",
@@ -66,7 +66,7 @@ def process_text_on_page(p):
     return newtext, notes
 
 
-parser = blib.create_argparser("Move ja-usex calls outside of quote-*", include_pagefile=True, include_stdin=True)
+parser = blib.create_argparser("Move ja-usex calls outside of quote-*")
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 

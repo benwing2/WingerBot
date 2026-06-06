@@ -5,7 +5,7 @@ from wingerbot.canon_foreign import canon_one_page_links
 from wingerbot.slavic.bulgarian import bg_translit
 
 parser = blib.create_argparser(
-    "Change grave to acute in Bulgarian headwords", include_pagefile=True, include_stdin=True
+    "Change grave to acute in Bulgarian headwords"
 )
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)

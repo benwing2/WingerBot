@@ -426,7 +426,7 @@ def process_text_on_page(p):
     canon_one_page_headwords(p.index, p.title, p.text)
 
 
-parser = blib.create_argparser("Clean up Arabic transliterations", include_pagefile=True, include_stdin=True)
+parser = blib.create_argparser("Clean up Arabic transliterations")
 parser.add_argument("--direcfile", help="File containing output from find_regex.py, to process")
 parser.add_argument("--overall-comment", help="Overall comment to add to final changelog msg")
 args = parser.parse_args()

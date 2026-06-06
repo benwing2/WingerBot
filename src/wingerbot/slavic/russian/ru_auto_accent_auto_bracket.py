@@ -1326,8 +1326,7 @@ def auto_accent_auto_bracket_russian(find_accents, accent_hidden, cattype, direc
         )
 
 
-parser = blib.create_argparser("Auto-accent and auto-bracket Russian terms",
-                               include_pagefile=True, include_stdin=True)
+parser = blib.create_argparser("Auto-accent and auto-bracket Russian terms")
 parser.add_argument("--cattype", default="vocab", help="Categories to examine ('vocab', 'borrowed', 'translation')")
 parser.add_argument("--file", help="File containing output from parse_log_file.py")
 parser.add_argument("--semi-verbose", action="store_true", help="More info but not as much as --verbose")

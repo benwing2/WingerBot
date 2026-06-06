@@ -17,7 +17,7 @@ def process_text_on_page(p):
     return str(parsed), "ar-nisba: head= -> 1="
 
 
-parser = blib.create_argparser("Rewrite ar-nisba, changing head= to 1=", include_pagefile=True, include_stdin=True)
+parser = blib.create_argparser("Rewrite ar-nisba, changing head= to 1=")
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 

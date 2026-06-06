@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 
-import argparse
 from wingerbot import blib
 
 parser = blib.create_argparser("Create input file for running find_misformatted_sections.py on multiple languages",

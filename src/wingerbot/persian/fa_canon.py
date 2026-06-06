@@ -7,7 +7,7 @@ from wingerbot.blib import getparam, addparam, tname, msg
 from wingerbot.canon_foreign import canon_one_page_links, show_failure
 from wingerbot.persian import fa_translit
 
-parser = blib.create_argparser("Clean up Persian transliterations", include_pagefile=True, include_stdin=True)
+parser = blib.create_argparser("Clean up Persian transliterations")
 parser.add_argument("--direcfile", help="File containing output from find_regex.py, to process")
 parser.add_argument("--test", help="Test fa_translit.py", action="store_true")
 parser.add_argument("--convert-g-breve", help="Convert ğ and ǧ to ġ", action="store_true")

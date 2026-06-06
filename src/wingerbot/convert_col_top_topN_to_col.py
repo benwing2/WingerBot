@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 
-import pywikibot, re, sys, argparse, json
+import pywikibot, re, sys, json
 
 from wingerbot import blib, lang_utils
-from wingerbot.blib import getparam, rmparam, msg, site, tname, pname
+from wingerbot.blib import getparam, rmparam, msg, tname, pname
 from collections import defaultdict
 from typing import cast
 
@@ -1221,7 +1221,7 @@ no_sort_lists = defaultdict(list)
 
 if __name__ == "__main__":
     parser = blib.create_argparser(
-        "Convert {{col-top}}/{{col-bottom}} to {{col}} when possible", include_pagefile=True, include_stdin=True
+        "Convert {{col-top}}/{{col-bottom}} to {{col}} when possible"
     )
     parser.add_argument("--do-top", action="store_true", help="Do {{top2}} through {{top6}}.")
     parser.add_argument("--do-col-top", action="store_true", help="Do {{col-top}}.")

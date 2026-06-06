@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 
-import pywikibot, re, sys, argparse, unicodedata
+import pywikibot, re
 from dataclasses import dataclass
 from typing import Any
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, tname, msg, site
+from wingerbot.blib import getparam, rmparam, tname, site
 
 
 def singularize(text):
@@ -283,7 +283,7 @@ def process_text_on_page(p):
             def is_english(term):
                 page = pywikibot.Page(site, term)
                 content = blib.safe_page_text(page, p.errandmsg)
-                if content and "==English==\n" in content:
+                if content and re.search(r"==[ \t]*English[ \t]*==\n", content):
                     return True
                 return False
 
@@ -443,7 +443,7 @@ def process_text_on_page(p):
 
 
 parser = blib.create_argparser(
-    "Remove redundant head parameters from {{en-*}}", include_pagefile=True, include_stdin=True
+    "Remove redundant head parameters from {{en-*}}"
 )
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)

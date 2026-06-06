@@ -18,8 +18,7 @@ def process_page(p):
     return text, notes
 
 
-parser = blib.create_argparser("Change German ordinal numeral form headwords from adjective to numeral",
-                               include_pagefile=True, include_stdin=True)
+parser = blib.create_argparser("Change German ordinal numeral form headwords from adjective to numeral")
 
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)

@@ -2,10 +2,10 @@
 
 # FIXME: Out of date. Use push_find_regex_changes.py.
 
-import pywikibot, re, sys, argparse
+import pywikibot, re, sys
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, tname, msg, site
+from wingerbot.blib import getparam, rmparam, tname, msg
 from wingerbot.latin import lalib
 
 
@@ -31,7 +31,7 @@ def process_text_on_page(p):
 
 
 parser = blib.create_argparser(
-    "Push manual changes for Latin sections to Wiktionary.", include_pagefile=True, include_stdin=True
+    "Push manual changes for Latin sections to Wiktionary."
 )
 parser.add_argument(
     "--textfile",

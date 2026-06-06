@@ -187,8 +187,6 @@ def process_text_on_page(p, nowarn=False):
 
 parser = blib.create_argparser(
     "Canonicalize various participle definition lines and fix headword and section header",
-    include_pagefile=True,
-    include_stdin=True,
 )
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)

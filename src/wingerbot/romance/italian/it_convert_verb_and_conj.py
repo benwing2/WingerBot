@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 
-import pywikibot, re, sys, argparse, json, unicodedata
+import pywikibot, re, sys, json, unicodedata
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, tname, pname, msg, site
+from wingerbot.blib import getparam, rmparam, tname, pname, msg
 
 AC = "\u0301"
 GR = "\u0300"
@@ -224,8 +224,6 @@ def process_text_on_page(p):
 
 parser = blib.create_argparser(
     "Convert {{it-verb-old}}/{{it-verb}}/{{it-conj-*}} to {{it-verb}}/{{it-conj}}",
-    include_pagefile=True,
-    include_stdin=True,
 )
 parser.add_argument("--ending", choices=["are", "ere", "ire", "rre"], help="Verb ending to process.")
 parser.add_argument("--all-diffs", action="store_true", help="Show all differences between old and new.")

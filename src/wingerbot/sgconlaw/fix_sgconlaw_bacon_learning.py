@@ -9,10 +9,10 @@
 #
 ##* {{RQ:Bacon Learning|passage='''Policying''' of cities.}}
 
-import pywikibot, re, sys, argparse
+import pywikibot, re, sys
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, msg, errmsg, site
+from wingerbot.blib import getparam, rmparam, msg, errmsg
 
 
 def process_text_on_page(p):
@@ -43,7 +43,7 @@ def process_text_on_page(p):
 
 
 parser = blib.create_argparser(
-    "Reformat {{RQ:Bacon The Advancement of Learning}}", include_pagefile=True, include_stdin=True
+    "Reformat {{RQ:Bacon The Advancement of Learning}}"
 )
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)

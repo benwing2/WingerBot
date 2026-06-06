@@ -90,8 +90,6 @@ def process_text_on_page(p):
 
 parser = blib.create_argparser(
     "Add comp/sup to {{la-adj}} headword params based on comparative/superlative entries",
-    include_pagefile=True,
-    include_stdin=True,
 )
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)

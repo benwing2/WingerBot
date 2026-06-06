@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 
-import pywikibot, re, sys, argparse
+import pywikibot, re, sys
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, set_template_name, msg, errmsg, site, tname
+from wingerbot.blib import getparam, rmparam, set_template_name, msg, errmsg, tname
 
 northern_kurdish_lemmas = set()
 for i, art in blib.cat_articles("Northern Kurdish lemmas"):
@@ -144,8 +144,6 @@ def process_text_on_page(p):
 
 parser = blib.create_argparser(
     "Convert 'Kurdish' translations to Northern Kurdish or Central Kurdish as possible",
-    include_pagefile=True,
-    include_stdin=True,
 )
 parser.add_argument("--known-kmr", help="File of known Northern Kurdish terms")
 parser.add_argument("--known-ckb", help="File of known Central Kurdish terms")

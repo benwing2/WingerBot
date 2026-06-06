@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 
-import pywikibot, re, sys, argparse
+import pywikibot, re, sys
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, tname, msg, site
+from wingerbot.blib import getparam, rmparam, tname, msg
 from wingerbot.latin import lalib
 
 
@@ -25,7 +25,7 @@ def process_text_on_page(p):
 
 
 parser = blib.create_argparser(
-    "Fix Vulgar Latin verb entries to use new-style {{la-verb}}", include_pagefile=True, include_stdin=True
+    "Fix Vulgar Latin verb entries to use new-style {{la-verb}}"
 )
 parser.add_argument("--direcfile", help="List of directives to process.", required=True)
 args = parser.parse_args()

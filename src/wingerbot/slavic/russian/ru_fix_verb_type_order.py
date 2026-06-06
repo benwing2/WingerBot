@@ -39,7 +39,7 @@ def process_text_on_page(p):
     return str(parsed), notes
 
 
-parser = blib.create_argparser("Move verb type from arg 2 to arg 1", include_pagefile=True, include_stdin=True)
+parser = blib.create_argparser("Move verb type from arg 2 to arg 1")
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 

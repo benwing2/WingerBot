@@ -231,8 +231,6 @@ def process_text_on_page(p):
 
 parser = blib.create_argparser(
     "Replace German {{inflected form of}} with proper call to {{inflection of}}",
-    include_pagefile=True,
-    include_stdin=True,
 )
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)

@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 
-import pywikibot, re, sys, argparse
+import pywikibot, re, sys
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, msg, site, tname
+from wingerbot.blib import getparam, rmparam, msg, tname
 
 pos_to_headword_template = {
     "noun": "ka-noun",
@@ -172,7 +172,7 @@ def process_text_on_page(p, pos):
 
 
 parser = blib.create_argparser(
-    "Add Georgian noun/verb/adjective inflections", include_pagefile=True, include_stdin=True
+    "Add Georgian noun/verb/adjective inflections"
 )
 parser.add_argument("--pos", help="Part of speech (noun, proper noun, verb, adjective)", required=True)
 args = parser.parse_args()

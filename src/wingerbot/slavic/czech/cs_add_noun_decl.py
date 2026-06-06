@@ -4,7 +4,7 @@ import pywikibot, re
 from dataclasses import dataclass
 
 from wingerbot import blib
-from wingerbot.blib import getparam, msg, site, tname
+from wingerbot.blib import getparam, tname, site
 
 cons_re = "[bcdfghjklmnprřqstvwxzčňšžďť]"
 
@@ -511,7 +511,7 @@ def process_text_on_page(p):
     return None
 
 
-parser = blib.create_argparser("Infer declensions for multiword Czech nouns", include_pagefile=True, include_stdin=True)
+parser = blib.create_argparser("Infer declensions for multiword Czech nouns")
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 

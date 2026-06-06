@@ -2,10 +2,10 @@
 
 # Remove adj= and shto= from ru-ux.
 
-import pywikibot, re, sys, argparse
+import pywikibot, re, sys
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, msg, site
+from wingerbot.blib import getparam, rmparam, msg
 
 
 def process_text_on_page(p):
@@ -16,7 +16,7 @@ def process_text_on_page(p):
     return "#REDIRECT [[Module:ru-verb/documentation]]", "redirect to [[Module:ru-verb/documentation]]"
 
 
-parser = blib.create_argparser("Redirect ru-conj-* documentation pages", include_pagefile=True, include_stdin=True)
+parser = blib.create_argparser("Redirect ru-conj-* documentation pages")
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 

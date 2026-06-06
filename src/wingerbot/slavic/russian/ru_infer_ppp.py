@@ -179,7 +179,7 @@ def process_text_on_page(p):
 
 
 parser = blib.create_argparser(
-    "Infer the past passive participle variant from the actual PPP", include_pagefile=True, include_stdin=True
+    "Infer the past passive participle variant from the actual PPP"
 )
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)

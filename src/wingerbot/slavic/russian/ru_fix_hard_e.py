@@ -56,7 +56,7 @@ def process_text_on_page(p):
     return str(parsed), notes
 
 
-parser = blib.create_argparser("Fix hard-е nouns according to directives", include_pagefile=True, include_stdin=True)
+parser = blib.create_argparser("Fix hard-е nouns according to directives")
 parser.add_argument("--direcfile", help="File listing directives to apply to nouns", required=True)
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)

@@ -4,7 +4,7 @@ import pywikibot, re
 from collections import defaultdict
 
 from wingerbot import blib
-from wingerbot.blib import getparam, tname, msg, errandmsg, site
+from wingerbot.blib import getparam, tname, msg, errandmsg
 
 numbers = defaultdict(lambda: defaultdict(dict))
 
@@ -21,94 +21,84 @@ def print_valtr(valtr):
         return valtr
 
 
-def read_existing_number_data(langindex, lang):
-    modpagename = "Module:number list/data/%s" % lang
+def read_existing_number_data(p, langcode):
+    curnum = None
+    for lineno, line in enumerate(p.text.split("\n"), start=1):
+        def linemsg(txt):
+            msg("Line %s %s: %s" % (lineno, p.title, txt))
 
-    def errandpagemsg(text):
-        errandmsg("Page %s %s: %s" % (langindex, modpagename, text))
-
-    datapage = pywikibot.Page(site, modpagename)
-    if blib.safe_page_exists(datapage, errandpagemsg):
-        pagetext = blib.safe_page_text(datapage, errandpagemsg)
-        curnum = None
-        for lineindex, line in enumerate(pagetext.split("\n")):
-            lineno = lineindex + 1
-
-            def linemsg(text):
-                msg("Line %s %s: %s" % (lineno, modpagename, text))
-
-            if not line:
+        if not line:
+            continue
+        if line.startswith("local ") or line.startswith("return "):
+            continue
+        m = re.search(r"^numbers\[(\"?[0-9]+\"?)\] = \{$", line)
+        if m:
+            curnum = m.group(1)
+            continue
+        if line == "}":
+            curnum = None
+            continue
+        m = re.search(r"^\s*([a-zA-Z0-9_]+) = (.*?),?$", line)
+        if m:
+            if curnum is None:
+                linemsg("WARNING: Saw number type assignment outside of number object: %s" % line)
                 continue
-            if line.startswith("local ") or line.startswith("return "):
-                continue
-            m = re.search(r"^numbers\[(\"?[0-9]+\"?)\] = \{$", line)
+            numtype, numvals = m.groups()
+            m = re.search(r"^\{(.*?)\}$", numvals)
             if m:
-                curnum = m.group(1)
-                continue
-            if line == "}":
-                curnum = None
-                continue
-            m = re.search(r"^\s*([a-zA-Z0-9_]+) = (.*?),?$", line)
-            if m:
-                if curnum is None:
-                    linemsg("WARNING: Saw number type assignment outside of number object: %s" % line)
-                    continue
-                numtype, numvals = m.groups()
-                m = re.search(r"^\{(.*?)\}$", numvals)
-                if m:
-                    numvals = m.group(1)
-                numvals = re.split(r"\s*,\s*", numvals)
-                must_continue = False
-                parsed_numvals = []
-                for numval in numvals:
-                    m = re.search('^"(.*?)"$', numval)
-                    if not m:
-                        linemsg("WARNING: Unparsable number term '%s' for number %s: %s" % (numval, curnum, line))
+                numvals = m.group(1)
+            numvals = re.split(r"\s*,\s*", numvals)
+            must_continue = False
+            parsed_numvals = []
+            for numval in numvals:
+                m = re.search('^"(.*?)"$', numval)
+                if not m:
+                    linemsg("WARNING: Unparsable number term '%s' for number %s: %s" % (numval, curnum, line))
+                    must_continue = True
+                    break
+                inside = m.group(1)
+                term_and_modifiers = re.split("(<[^<>]*?>)", inside)
+                term = term_and_modifiers[0]
+                tr = None
+                q = None
+                for i in range(1, len(term_and_modifiers), 2):
+                    if i > 1 and term_and_modifiers[i - 1]:
+                        linemsg("WARNING: Extraneous text between modifiers for number %s: %s" % (numval, line))
                         must_continue = True
                         break
-                    inside = m.group(1)
-                    term_and_modifiers = re.split("(<[^<>]*?>)", inside)
-                    term = term_and_modifiers[0]
-                    tr = None
-                    q = None
-                    for i in range(1, len(term_and_modifiers), 2):
-                        if i > 1 and term_and_modifiers[i - 1]:
-                            linemsg("WARNING: Extraneous text between modifiers for number %s: %s" % (numval, line))
-                            must_continue = True
-                            break
-                        m = re.search("^<([a-z]+):(.*)>$", term_and_modifiers[i])
-                        if not m:
-                            linemsg(
-                                "WARNING: Unparsable modifier '%s' for number %s: %s"
-                                % (term_and_modifiers[i], numval, line)
-                            )
-                            must_continue = True
-                            break
-                        mod, modval = m.groups()
-                        if mod not in ["q", "tr"]:
-                            linemsg("WARNING: Unrecognized modifier '%s' for number %s: %s" % (mod, numval, line))
-                            must_continue = True
-                            break
-                        if mod == "q":
-                            q = modval
-                        else:
-                            tr = modval
-                    if must_continue:
-                        break  # outer loop will continue
-                    if tr or q:
-                        parsed = (term, tr, q)
+                    m = re.search("^<([a-z]+):(.*)>$", term_and_modifiers[i])
+                    if not m:
+                        linemsg(
+                            "WARNING: Unparsable modifier '%s' for number %s: %s"
+                            % (term_and_modifiers[i], numval, line)
+                        )
+                        must_continue = True
+                        break
+                    mod, modval = m.groups()
+                    if mod not in ["q", "tr"]:
+                        linemsg("WARNING: Unrecognized modifier '%s' for number %s: %s" % (mod, numval, line))
+                        must_continue = True
+                        break
+                    if mod == "q":
+                        q = modval
                     else:
-                        parsed = term
-                    parsed_numvals.append(parsed)
+                        tr = modval
                 if must_continue:
-                    continue
+                    break  # outer loop will continue
+                if tr or q:
+                    parsed = (term, tr, q)
+                else:
+                    parsed = term
+                parsed_numvals.append(parsed)
+            if must_continue:
+                continue
 
-                if len(parsed_numvals) == 1:
-                    parsed_numvals = parsed_numvals[0]
-                if numtype in numbers[lang][curnum]:
-                    linemsg("WARNING: Saw duplicate entry for number %s, type %s: %s" % (curnum, numtype, line))
-                    continue
-                numbers[lang][curnum][numtype] = parsed_numvals
+            if len(parsed_numvals) == 1:
+                parsed_numvals = parsed_numvals[0]
+            if numtype in numbers[langcode][curnum]:
+                linemsg("WARNING: Saw duplicate entry for number %s, type %s: %s" % (curnum, numtype, line))
+                continue
+            numbers[langcode][curnum][numtype] = parsed_numvals
 
 
 def process_text_on_page(p, langcodes):
@@ -227,14 +217,16 @@ def process_text_on_page(p, langcodes):
                     put(num, "wplink", wplink, None)
 
 
-parser = blib.create_argparser("Snarf numbers", include_pagefile=True, include_stdin=True)
-parser.add_argument("--langs", help="Do these language codes.", required=True)
+parser = blib.create_argparser("Snarf numbers")
+parser.add_argument("--langcodes", help="Do these language codes.", required=True)
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
-langcodes = args.langs.split(",")
-for langindex, langcode in enumerate(langcodes):
-    read_existing_number_data(langindex + 1, langcode)
+langcodes = args.langcodes.split(",")
+for langindex, langcode in enumerate(langcodes, start=1):
+    def do_process(p):
+        return read_existing_number_data(p, langcode)
+    blib.do_edit(args, langindex, "Module:number list/data/%s" % langcode, do_process, must_exist=True)
 
 
 def do_process_text_on_page(p):

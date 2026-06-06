@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 
-import pywikibot, re, sys, argparse
+import pywikibot, re, sys
 from wingerbot.romance import romance_utils
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, tname, pname, msg, site
+from wingerbot.blib import getparam, rmparam, tname, pname, msg
 
 remove_stress = {
     "á": "a",
@@ -546,8 +546,6 @@ def process_text_on_page(p):
 
 parser = blib.create_argparser(
     "Convert {{es-adj}} templates to new format or remove redundant args in {{es-noun}}",
-    include_pagefile=True,
-    include_stdin=True,
 )
 parser.add_argument("--remove-redundant-noun-args", action="store_true")
 parser.add_argument("--make-multiword-plural-explicit", action="store_true")

@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 
-import pywikibot, re, sys, argparse, unicodedata
+import pywikibot, re, sys, unicodedata
 
 from wingerbot import blib, lang_utils
-from wingerbot.blib import getparam, rmparam, msg, errmsg, site, tname
+from wingerbot.blib import getparam, rmparam, msg, errmsg, tname
 from collections import defaultdict
 
 lang_utils.init_fake_lang_data()
@@ -2632,7 +2632,7 @@ def process_text_on_page(p):
 
 
 parser = blib.create_argparser(
-    "Sort and reformat translations, correct misc translation table issues", include_pagefile=True, include_stdin=True
+    "Sort and reformat translations, correct misc translation table issues"
 )
 parser.add_argument("--rename-min", action="store_true", help="Rename Min Nan to Hokkien and change nan to nan-hbl")
 parser.add_argument(

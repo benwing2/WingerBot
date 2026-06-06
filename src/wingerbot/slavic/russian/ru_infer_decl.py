@@ -16,7 +16,7 @@ import re
 import traceback, sys
 
 from wingerbot import blib
-from wingerbot.blib import msg, rmparam, getparam, site, tname, ProcessPageRetval
+from wingerbot.blib import msg, rmparam, getparam, tname, ProcessPageRetval
 from wingerbot.slavic.russian.rulib import (
     AC,
     is_unstressed,
@@ -29,8 +29,7 @@ from wingerbot.slavic.russian.rulib import (
     add_hard_neuter,
 )
 
-# If true, use the old ru-noun-table template, instead of new
-# ru-decl-noun-new
+# If true, use the old ru-noun-table template, instead of new ru-decl-noun-new
 old_template = True
 
 if old_template:
@@ -116,17 +115,13 @@ def remove_duplicates(form):
     return ",".join(new_forms)
 
 
-def trymatch(forms, tempargs, pagemsg, multiword=False):
+def trymatch(p, forms, tempargs, multiword=False):
     if args.mockup:
         ok = True
     else:
         tempcall = "{{ru-generate-noun-forms|" + "|".join(tempargs) + "}}"
-        result = site.expand_text(tempcall)
-        if args.verbose:
-            pagemsg("%s = %s" % (tempcall, result))
-        if result.startswith('<strong class="error">'):
-            result = re.sub("<.*?>", "", result)
-            pagemsg("ERROR: %s" % result)
+        result = p.expand_text(tempcall)
+        if not result:
             return False
         pred_forms = {}
         for formspec in re.split(r"\|", result):
@@ -137,37 +132,37 @@ def trymatch(forms, tempargs, pagemsg, multiword=False):
             pred_form = pred_forms.get(case, "")
             real_form = forms.get(case, "")
             if pred_form and not real_form:
-                pagemsg("Missing actual form for case %s (predicted %s)" % (case, pred_form))
+                p.msg("Missing actual form for case %s (predicted %s)" % (case, pred_form))
                 ok = False
             elif real_form and not pred_form:
-                pagemsg("Actual has extra form %s=%s not in predicted" % (case, real_form))
+                p.msg("Actual has extra form %s=%s not in predicted" % (case, real_form))
                 ok = False
-            elif not compare_terms(case, real_form, pred_form, pagemsg):
-                if compare_terms(case, real_form, re.sub("//.*$", "", pred_form), pagemsg):
+            elif not compare_terms(case, real_form, pred_form, p.msg):
+                if compare_terms(case, real_form, re.sub("//.*$", "", pred_form), p.msg):
                     # Happens esp. in the gen sg of adjectival nominals
-                    pagemsg(
+                    p.msg(
                         "For case %s, predicted %s has manual translit and actual %s doesn't; allowed"
                         % (case, pred_form, real_form)
                     )
                 elif (
                     case == "ins_sg"
                     and "," in pred_form
-                    and compare_terms(case, real_form, re.sub(",.*$", "", pred_form), pagemsg)
+                    and compare_terms(case, real_form, re.sub(",.*$", "", pred_form), p.msg)
                 ):
-                    pagemsg(
+                    p.msg(
                         "For case ins_sg, predicted form %s has an alternate form not in actual form %s; allowed"
                         % (pred_form, real_form)
                     )
-                elif "," in real_form and compare_terms(case, remove_duplicates(real_form), pred_form, pagemsg):
-                    pagemsg(
+                elif "," in real_form and compare_terms(case, remove_duplicates(real_form), pred_form, p.msg):
+                    p.msg(
                         "For case %s, actual %s same as predicted %s but for duplicate words; allowed"
                         % (case, real_form, pred_form)
                     )
                 else:
-                    pagemsg("For case %s, actual %s differs from predicted %s" % (case, real_form, pred_form))
+                    p.msg("For case %s, actual %s differs from predicted %s" % (case, real_form, pred_form))
                     ok = False
     if ok:
-        pagemsg("Found a %smatch: {{%s|%s}}" % (multiword and "multiword " or "", decl_template, "|".join(tempargs)))
+        p.msg("Found a %smatch: {{%s|%s}}" % (multiword and "multiword " or "", decl_template, "|".join(tempargs)))
     return ok
 
 
@@ -263,9 +258,9 @@ def arg1_is_stress(arg1):
     return True
 
 
-def infer_decl(t, noungender, linked_headwords, pagemsg):
+def infer_decl(p, t, noungender, linked_headwords):
     if args.verbose:
-        pagemsg("Processing %s" % str(t))
+        p.msg("Processing %s" % str(t))
 
     tn = tname(t)
     forms = {}
@@ -305,7 +300,7 @@ def infer_decl(t, noungender, linked_headwords, pagemsg):
             # eliminate stress mark on ё
             form = re.sub(r"ё́", "ё", form)
             if "," in form:
-                pagemsg("WARNING: Comma in form, may not handle correctly: %s=%s" % (case, form))
+                p.msg("WARNING: Comma in form, may not handle correctly: %s=%s" % (case, form))
             forms[case] = form
         i += 1
 
@@ -319,7 +314,7 @@ def infer_decl(t, noungender, linked_headwords, pagemsg):
                 wordno = 0
                 for wordforms in words:
                     wordno += 1
-                    pagemsg(
+                    p.msg(
                         "Inferring word #%s: %s"
                         % (
                             wordno,
@@ -330,16 +325,16 @@ def infer_decl(t, noungender, linked_headwords, pagemsg):
                             ),
                         )
                     )
-                    tempargs = infer_word(wordforms, noungender, linked_headwords, number, numonly, True, pagemsg)
+                    tempargs = infer_word(p, wordforms, noungender, linked_headwords, number, numonly, True)
                     if not tempargs:
-                        pagemsg("Unable to infer word #%s: %s" % (wordno, str(t)))
+                        p.msg("Unable to infer word #%s: %s" % (wordno, str(t)))
                         return None
                     # If we have a gen_pl override, it needs to be for a specific word
                     numbered_args = [re.sub("^gen_pl=", "gen_pl%s=" % wordno, arg) for arg in tempargs]
                     argses.append(numbered_args)
                 animacies = [x for args in argses for x in args if x in ["a=in", "a=an"]]
                 if "a=in" in animacies and "a=an" in animacies:
-                    pagemsg("WARNING: Conflicting animacies in multi-word expression: %s" % str(t))
+                    p.msg("WARNING: Conflicting animacies in multi-word expression: %s" % str(t))
                     # FIXME, handle this better
                     return None
                 animacy = [animacies[0]] if animacies else []
@@ -359,14 +354,14 @@ def infer_decl(t, noungender, linked_headwords, pagemsg):
                             allargs.append("_")
                     allargs.extend(filterargs)
                 allargs += animacy + number
-                if trymatch(forms, allargs, pagemsg, multiword=True):
+                if trymatch(p, forms, allargs, multiword=True):
                     return allargs
                 else:
                     return None
         else:
-            tempargs = infer_word(forms, noungender, {}, number, numonly, False, pagemsg)
+            tempargs = infer_word(p, forms, noungender, {}, number, numonly, False)
             if not tempargs:
-                pagemsg("Unable to infer word: %s" % str(t))
+                p.msg("Unable to infer word: %s" % str(t))
                 return None
             return [x for x in tempargs if x != "a=in"]
 
@@ -430,7 +425,7 @@ def get_lemma(linked_headwords, lemma, multiword, pagemsg):
     return linked_lemma
 
 
-def infer_word(forms, noungender, linked_headwords, number, numonly, multiword, pagemsg):
+def infer_word(p, forms, noungender, linked_headwords, number, numonly, multiword):
     # Check for invariable word
     caseforms = [x for x in forms.values() if x]
     allsame = True
@@ -441,13 +436,13 @@ def infer_word(forms, noungender, linked_headwords, number, numonly, multiword, 
         else:
             numsame += 1
     if numsame > 6 and not allsame:
-        pagemsg("Found almost-invariable word %s: %s same" % (caseforms[0], numsame))
+        p.msg("Found almost-invariable word %s: %s same" % (caseforms[0], numsame))
     if allsame:
         lemma = caseforms[0]
-        pagemsg("Found invariable word %s" % lemma)
-        linked_lemma = get_lemma(linked_headwords, lemma, multiword, pagemsg)
+        p.msg("Found invariable word %s" % lemma)
+        linked_lemma = get_lemma(linked_headwords, lemma, multiword, p.msg)
         if is_monosyllabic(lemma) and not is_nonsyllabic(lemma) and not is_stressed(lemma):
-            pagemsg("Marking invariable word %s as unaccented" % lemma)
+            p.msg("Marking invariable word %s as unaccented" % lemma)
             linked_lemma = "*" + linked_lemma
         if old_template:
             return [linked_lemma, "$"]
@@ -468,17 +463,17 @@ def infer_word(forms, noungender, linked_headwords, number, numonly, multiword, 
     # Special case:
     if numonly == "pl" and nompl in ["острова́", "Острова́"]:
         tempargs = generate_template_args("c", nompl, "[[о́стров|%s]]" % nompl, "m(1)", None) + number
-        if trymatch(forms, tempargs, pagemsg):
+        if trymatch(p, forms, tempargs):
             return tempargs
 
     if numonly == "pl":
-        nomsgs = synthesize_singular(nompl, prepl, noungender, pagemsg)
+        nomsgs = synthesize_singular(nompl, prepl, noungender, p.msg)
     else:
         nomsgs = [try_to_stress(forms["nom_sg"])]
 
     for nomsg in nomsgs:
         lemma = nompl if numonly == "pl" else nomsg
-        linked_lemma = get_lemma(linked_headwords, lemma, multiword, pagemsg)
+        linked_lemma = get_lemma(linked_headwords, lemma, multiword, p.msg)
         if numonly == "sg":
             if try_to_stress(forms["acc_sg"]) == try_to_stress(forms["gen_sg"]):
                 anim = ["a=an"]
@@ -494,7 +489,7 @@ def infer_word(forms, noungender, linked_headwords, number, numonly, multiword, 
             elif try_to_stress(forms["acc_pl"]) == try_to_stress(forms["gen_pl"]):
                 anim = ["a=an"]
             else:
-                pagemsg(
+                p.msg(
                     "WARNING: Unable to determine animacy: nom_pl=%s, acc_pl=%s, gen_pl=%s"
                     % (forms["nom_pl"], forms["acc_pl"], forms["gen_pl"])
                 )
@@ -508,7 +503,7 @@ def infer_word(forms, noungender, linked_headwords, number, numonly, multiword, 
                 args = [linked_lemma, "+ь"] + anim + number
             else:
                 args = [linked_lemma + "+ь"] + anim + number
-            if trymatch(forms, args, pagemsg):
+            if trymatch(p, forms, args):
                 return args
 
         def adj_by_prep():
@@ -524,7 +519,7 @@ def infer_word(forms, noungender, linked_headwords, number, numonly, multiword, 
                 args = [linked_lemma, "+"] + anim + number
             else:
                 args = [linked_lemma + "+"] + anim + number
-            if trymatch(forms, args, pagemsg):
+            if trymatch(p, forms, args):
                 return args
 
         # I think these are always in -ов/-ев/-ёв/-ин/-ын.
@@ -535,7 +530,7 @@ def infer_word(forms, noungender, linked_headwords, number, numonly, multiword, 
                     args = [linked_lemma, adjpat] + anim + number
                 else:
                     args = [linked_lemma + adjpat] + anim + number
-                if trymatch(forms, args, pagemsg):
+                if trymatch(p, forms, args):
                     return args
 
         # Ending in -мя, nom pl in either -мена́.
@@ -548,7 +543,7 @@ def infer_word(forms, noungender, linked_headwords, number, numonly, multiword, 
                     args = ["c:" + linked_lemma]
             if args:
                 args += anim + number
-                if trymatch(forms, args, pagemsg):
+                if trymatch(p, forms, args):
                     return args
 
         stress = "any"
@@ -564,7 +559,7 @@ def infer_word(forms, noungender, linked_headwords, number, numonly, multiword, 
         ########## Check for feminine or neuter
         m = re.search(r"^(.*)([аяеоё])(́?)$", nomsg)
         if m:
-            pagemsg("Nom sg %s refers to feminine 1st decl or neuter 2nd decl" % nomsg)
+            p.msg("Nom sg %s refers to feminine 1st decl or neuter 2nd decl" % nomsg)
             # We use to call try_to_stress() here on the stem but that fails if
             # the stem has е and we stress it as е́ when it should be ё
             stem = m.group(1)
@@ -584,20 +579,20 @@ def infer_word(forms, noungender, linked_headwords, number, numonly, multiword, 
                     if is_unstressed(stem):
                         form = forms.get(formcase, "")
                         if not form:
-                            pagemsg("WARNING: Empty or missing %s" % formcase)
+                            p.msg("WARNING: Empty or missing %s" % formcase)
                             continue
                         mm = re.search(regex, form)
                         if not mm:
-                            pagemsg(
+                            p.msg(
                                 "WARNING: Don't recognize fem 1st-decl or neut 2nd-decl %s ending in form %s"
                                 % (formcase, form)
                             )
                         else:
                             formstem = mm.group(1)
                             if make_unstressed_once_ru(formstem) != stem:
-                                pagemsg("%s stem %s not accent-equiv to nom sg stem %s" % (formcase, formstem, stem))
+                                p.msg("%s stem %s not accent-equiv to nom sg stem %s" % (formcase, formstem, stem))
                             elif formstem != stem:
-                                pagemsg(
+                                p.msg(
                                     "Replacing unstressed stem %s with stressed %s stem %s" % (stem, formcase, formstem)
                                 )
                                 stem = formstem
@@ -613,7 +608,7 @@ def infer_word(forms, noungender, linked_headwords, number, numonly, multiword, 
                     else:
                         mm = re.search("^(.*?)((ья|[иы]|[яа])́?)$", nompl)
                     if not mm:
-                        pagemsg("WARNING: Strange nominative plural ending: %s" % nompl)
+                        p.msg("WARNING: Strange nominative plural ending: %s" % nompl)
                         return None
                     plstem = mm.group(1)
                     nomplending = mm.group(2)
@@ -624,7 +619,7 @@ def infer_word(forms, noungender, linked_headwords, number, numonly, multiword, 
                     ):
                         plstem = None
                     else:
-                        pagemsg("Found unusual plural stem: %s" % plstem)
+                        p.msg("Found unusual plural stem: %s" % plstem)
                     unomplending = make_unstressed_once_ru(nomplending)
                     if (
                         ending in ["а", "я"]
@@ -638,7 +633,7 @@ def infer_word(forms, noungender, linked_headwords, number, numonly, multiword, 
                     else:
                         strange_plural = "-" + unomplending
                     if strange_plural:
-                        pagemsg("Found unusual plural %s" % strange_plural)
+                        p.msg("Found unusual plural %s" % strange_plural)
 
                 # Look at gen pl to check for reducible and try to get a stressed stem;
                 possible_genpls = []
@@ -649,13 +644,13 @@ def infer_word(forms, noungender, linked_headwords, number, numonly, multiword, 
                     possible_genpls.append(genplstem + genpl_ending)
                     possible_unstressed_genpls.append(make_unstressed_once_ru(genplstem + genpl_ending))
                 if genpl in possible_genpls:
-                    pagemsg("Gen pl %s same as stem %s (modulo expected endings)" % (genpl, genplstem))
+                    p.msg("Gen pl %s same as stem %s (modulo expected endings)" % (genpl, genplstem))
                     genpls = ["", genpl]
                 elif make_unstressed_once_ru(genpl) not in possible_unstressed_genpls:
-                    pagemsg("Stem %s not accent-equiv to gen pl %s (modulo expected endings)" % (genplstem, genpl))
+                    p.msg("Stem %s not accent-equiv to gen pl %s (modulo expected endings)" % (genplstem, genpl))
                     genpls = ["*", "(2)", "", genpl]
                 elif is_unstressed(genplstem):
-                    pagemsg("Replacing unstressed stem %s with accent-equiv gen pl %s" % (stem, genpl))
+                    p.msg("Replacing unstressed stem %s with accent-equiv gen pl %s" % (stem, genpl))
                     # Don't do this; we automatically stress the gen pl stem if required.
                     # And in any case this is broken when expected gen pls includes "ьев".
                     # if plstem:
@@ -664,14 +659,14 @@ def infer_word(forms, noungender, linked_headwords, number, numonly, multiword, 
                     #  stem = re.sub("[ьй]$", "", genpl)
                     genpls = ["", genpl]
                 else:
-                    pagemsg("WARNING: Stem %s stressed one way, gen pl %s stressed differently" % (genplstem, genpl))
+                    p.msg("WARNING: Stem %s stressed one way, gen pl %s stressed differently" % (genplstem, genpl))
                     genpls = ["", genpl]
 
             # Auto-stress monosyllabic stem if necessary
             if is_unstressed(stem) and is_unstressed(ending):
                 trystress = try_to_stress(stem)
                 if trystress != stem:
-                    pagemsg("Replacing monosyllabic unstressed stem %s with stressed equiv %s" % (stem, trystress))
+                    p.msg("Replacing monosyllabic unstressed stem %s with stressed equiv %s" % (stem, trystress))
                     stem = trystress
 
             nomsg = stem + ending
@@ -686,7 +681,7 @@ def infer_word(forms, noungender, linked_headwords, number, numonly, multiword, 
                 if numonly != "pl":
                     m = re.search(r"^(.*)([аяи])(́?)$", gensg)
                     if not m:
-                        pagemsg("WARNING: Don't recognize gen sg ending in form %s" % gensg)
+                        p.msg("WARNING: Don't recognize gen sg ending in form %s" % gensg)
                         if ending == "ь":
                             genders = ["m", "f"]
                     else:
@@ -697,40 +692,40 @@ def infer_word(forms, noungender, linked_headwords, number, numonly, multiword, 
                         if is_unstressed(stem):
                             mm = re.search(r"^(.*)[аяыи]́?$", nompl)
                             if not mm:
-                                pagemsg("WARNING: Don't recognize nom pl ending in form %s" % nompl)
+                                p.msg("WARNING: Don't recognize nom pl ending in form %s" % nompl)
                             else:
                                 nomplstem = mm.group(1)
                                 if make_unstressed_once_ru(nomplstem) != stem:
-                                    pagemsg("Nom pl stem %s not accent-equiv to gen sg stem %s" % (nomplstem, stem))
+                                    p.msg("Nom pl stem %s not accent-equiv to gen sg stem %s" % (nomplstem, stem))
                                 elif nomplstem != stem:
-                                    pagemsg(
+                                    p.msg(
                                         "Replacing unstressed stem %s with stressed nom pl stem %s" % (stem, nomplstem)
                                     )
                                     stem = nomplstem
                         if ending == "ь":
                             if m.group(2) == "я":
-                                pagemsg("Found masculine soft-stem nom sg %s" % nomsg)
+                                p.msg("Found masculine soft-stem nom sg %s" % nomsg)
                                 genders = ["m"]
                             else:
-                                pagemsg("Found feminine soft-stem nom sg %s" % nomsg)
+                                p.msg("Found feminine soft-stem nom sg %s" % nomsg)
                                 genders = ["f"]
                         elif ending == "й":
-                            pagemsg("Found masculine palatal-stem nom sg %s" % nomsg)
+                            p.msg("Found masculine palatal-stem nom sg %s" % nomsg)
                         else:
-                            pagemsg("Found masculine consonant-stem nom sg %s" % nomsg)
+                            p.msg("Found masculine consonant-stem nom sg %s" % nomsg)
                         if m.group(3):
                             stress = "ending"
                         else:
                             stress = "stem"
                         if stem == nomsgstem:
-                            pagemsg("Nom sg stem %s same as stem" % nomsgstem)
+                            p.msg("Nom sg stem %s same as stem" % nomsgstem)
                         elif make_unstressed_once_ru(stem) != make_unstressed_once_ru(nomsgstem):
-                            pagemsg("Stem %s not accent-equiv to nom sg stem %s" % (stem, nomsgstem))
+                            p.msg("Stem %s not accent-equiv to nom sg stem %s" % (stem, nomsgstem))
                             bare = "*"
                         elif is_unstressed(stem):
-                            pagemsg("Replacing unstressed stem %s with accent-equiv nom sg stem %s" % (stem, nomsgstem))
+                            p.msg("Replacing unstressed stem %s with accent-equiv nom sg stem %s" % (stem, nomsgstem))
                         else:
-                            pagemsg("Stem %s stressed one way, nom sg stem %s stressed differently" % (stem, nomsgstem))
+                            p.msg("Stem %s stressed one way, nom sg stem %s stressed differently" % (stem, nomsgstem))
 
                 # Check for strange plural
                 if numonly != "sg":
@@ -738,7 +733,7 @@ def infer_word(forms, noungender, linked_headwords, number, numonly, multiword, 
                     if "," not in nompl:
                         mm = re.search("^(.*?)((ья|[иы]|[яа])́?)$", nompl)
                         if not mm:
-                            pagemsg("WARNING: Strange nominative plural ending: %s" % nompl)
+                            p.msg("WARNING: Strange nominative plural ending: %s" % nompl)
                             return None
                         plstem = mm.group(1)
                         nomplending = mm.group(2)
@@ -749,7 +744,7 @@ def infer_word(forms, noungender, linked_headwords, number, numonly, multiword, 
                         ):
                             plstem = None
                         else:
-                            pagemsg("Found unusual plural stem: %s" % plstem)
+                            p.msg("Found unusual plural stem: %s" % plstem)
                         unomplending = make_unstressed_once_ru(nomplending)
                         if unomplending in ["ы", "и"]:
                             # Not a strange plural
@@ -758,7 +753,7 @@ def infer_word(forms, noungender, linked_headwords, number, numonly, multiword, 
                         else:
                             strange_plural = "-" + unomplending
                         if strange_plural:
-                            pagemsg("Found unusual plural %s" % strange_plural)
+                            p.msg("Found unusual plural %s" % strange_plural)
 
                     # Check for unexpected genitive plural
                     genpls = ["", "(2)", genpl]
@@ -773,7 +768,7 @@ def infer_word(forms, noungender, linked_headwords, number, numonly, multiword, 
         if numonly == "pl":
             stress = "none"
         if stress == "any" or plstress == "any":
-            pagemsg("WARNING: Using all stress patterns")
+            p.msg("WARNING: Using all stress patterns")
             stress_patterns = all_stress_patterns
         else:
             stress_patterns = matching_stress_patterns[stress][plstress]
@@ -783,7 +778,7 @@ def infer_word(forms, noungender, linked_headwords, number, numonly, multiword, 
                 stress_patterns = [stress_patterns]
 
         if strange_plural and strange_plural != "-ья":
-            pagemsg("Replacing unusual plural marker %s with (1)" % (strange_plural))
+            p.msg("Replacing unusual plural marker %s with (1)" % (strange_plural))
             strange_plural = "(1)"
         if ("ё" in nomsg or "ё" in nompl or "ё" in genpl) and "ё" not in lemma:
             strange_plural += ";ё"
@@ -799,7 +794,7 @@ def infer_word(forms, noungender, linked_headwords, number, numonly, multiword, 
                     args = generate_template_args(stress, lemma, linked_lemma, declspec, plstem)
                     args += genplargs
                     args += anim + number
-                    if trymatch(forms, args, pagemsg):
+                    if trymatch(p, forms, args):
                         return args
 
     return None
@@ -857,7 +852,7 @@ def _process_text_on_page(p) -> ProcessPageRetval:
                     gender = genders[0]
             else:
                 gender = ""
-            args = infer_decl(t, gender, linked_headwords, p.msg)
+            args = infer_decl(p, t, gender, linked_headwords)
             if args:
                 inferred_decls.append("{{%s|%s}}" % (decl_template, "|".join(args)))
                 for i in range(15, 0, -1):
@@ -1467,8 +1462,7 @@ def test_infer():
         msg("comment = %s" % comment)
 
 
-parser = blib.create_argparser("Infer the declension of Russian nouns with manually-specified declensions",
-                               include_pagefile=True, include_stdin=True)
+parser = blib.create_argparser("Infer the declension of Russian nouns with manually-specified declensions")
 parser.add_argument("--mockup", action="store_true", help="Use mocked-up test code")
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)

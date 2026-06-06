@@ -63,7 +63,7 @@ def process_text_on_page(p):
 
 
 if __name__ == "__main__":
-    parser = blib.create_argparser("Search on pages", include_pagefile=True, include_stdin=True)
+    parser = blib.create_argparser("Search on pages")
     parser.add_argument("-e", "--regex", help="Regular expression to search for.")
     parser.add_argument(
         "--not",

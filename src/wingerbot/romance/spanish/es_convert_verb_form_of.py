@@ -3,7 +3,7 @@
 import pywikibot, re, json
 
 from wingerbot import blib
-from wingerbot.blib import getparam, msg, site, tname
+from wingerbot.blib import getparam, tname, site
 
 conj_table = {}
 
@@ -273,7 +273,7 @@ def process_text_on_page(p):
 
 
 parser = blib.create_argparser(
-    "Convert {{es-verb form of}} and {{es-compound of}} to new format", include_pagefile=True, include_stdin=True
+    "Convert {{es-verb form of}} and {{es-compound of}} to new format"
 )
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)

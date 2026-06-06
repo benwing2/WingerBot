@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 
-import pywikibot, re, sys, argparse
+import pywikibot, re, sys
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, tname, pname, msg, site
+from wingerbot.blib import getparam, rmparam, tname, pname, msg
 
 vowels = "aeiouyäöüAEIOUYÄÖÜ"
 capletters = "A-ZÄÖÜ"
@@ -627,7 +627,7 @@ def process_text_on_page(p):
 
 
 parser = blib.create_argparser(
-    "Convert {{de-adj}} and declensions to new format", include_pagefile=True, include_stdin=True
+    "Convert {{de-adj}} and declensions to new format"
 )
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)

@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 
 from collections import defaultdict
-import pywikibot, re, sys, argparse
+import re
 
 from wingerbot import blib, lang_utils
-from wingerbot.blib import getparam, rmparam, msg, site, tname
+from wingerbot.blib import getparam, msg, tname
 
 language_to_ancestors = lang_utils.get_language_to_ancestors()
 etym_language_to_parent = lang_utils.get_etym_language_to_parent()
@@ -112,7 +112,7 @@ def process_text_on_page(p):
     return newtext, notes
 
 
-parser = blib.create_argparser("Add |bor=1 to {{desc}} where appropriate", include_pagefile=True, include_stdin=True)
+parser = blib.create_argparser("Add |bor=1 to {{desc}} where appropriate")
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 

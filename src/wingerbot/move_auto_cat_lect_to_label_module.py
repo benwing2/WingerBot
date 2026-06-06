@@ -152,7 +152,7 @@ def process_text_on_page(p):
 
 
 parser = blib.create_argparser(
-    "Move lect data in {{auto cat}} calls to label data module", include_pagefile=True, include_stdin=True
+    "Move lect data in {{auto cat}} calls to label data module"
 )
 parser.add_argument("--label-data-module", help="File containing 'Module:labels/data/LANG'", required=True)
 parser.add_argument("--langname", help="Language name of label data module", required=True)

@@ -95,7 +95,7 @@ def process_text_on_page_for_verb(p):
     return str(parsed), "remove i3rab from verbal nouns for verb(s) %s" % (", ".join(verbids))
 
 
-parser = blib.create_argparser("Remove i3rab", include_pagefile=True, include_stdin=True)
+parser = blib.create_argparser("Remove i3rab")
 parser.add_argument("--verb", action="store_true", help="Do verbal nouns in verbs")
 parser.add_argument("--noun", action="store_true", help="Do arguments in nouns")
 args = parser.parse_args()

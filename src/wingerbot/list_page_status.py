@@ -9,14 +9,15 @@ from wingerbot.blib import site
 
 
 def process_text_on_page(p):
-    exists = not not p.text or blib.safe_page_exists(pywikibot.Page(site, p.title), p.msg)
+    exists = not not p.text or blib.safe_page_exists(pywikibot.Page(site, p.title), p.errandmsg)
     if not exists:
         outtext = "does not exist"
     else:
         if re.search("#redirect", p.text, re.I):
             outtext = "exists as redirect"
         elif args.lang:
-            if "==%s==" % args.lang in p.text:
+            secs = blib.split_text_into_sections(p.text, p.msg)
+            if args.lang in secs.sections_by_lang:
                 outtext = "exists in %s" % args.lang
             else:
                 outtext = "exists but not in %s" % args.lang
@@ -25,7 +26,7 @@ def process_text_on_page(p):
     p.msg(outtext)
 
 
-parser = blib.create_argparser("List whether pages exist", include_pagefile=True, include_stdin=True)
+parser = blib.create_argparser("List whether pages exist")
 parser.add_argument("--lang", help="Indicate whether the page contains an entry for the specified language")
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)

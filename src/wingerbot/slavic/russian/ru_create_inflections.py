@@ -290,13 +290,12 @@
 # 94. (DONE) Canonicalize tags to our preferred variants when combining.
 # 95. (DONE) Change saving code to use blib.do_edit() so --diff works.
 # 96. (DONE) Use blib.split_trailing_separator_and_categories().
-# 97. Standardize using include_pagefile=True.
+# 97. Standardize using blib.do_pagefile_cats_refs.
 # 98. Warn if both acc|p and {an,in}|acc|p occur in the same tag set or ideally
 #     in the same set of defn lines; same with acc|s and {an,in}|acc|s
 # 99. Use {{participle of|ru}} instead of {{ru-participle of}}.
 
-import pywikibot, re, sys, argparse, time
-import traceback
+import pywikibot, re
 import unicodedata
 
 from wingerbot import blib
@@ -4093,8 +4092,7 @@ def create_numeral_noun_forms(
     )
 
 
-parser = blib.create_argparser("Create Russian inflection entries",
-                               include_pagefile=True, include_stdin=True)
+parser = blib.create_argparser("Create Russian inflection entries")
 parser.add_argument(
     "--adj-form",
     help="""Do specified adjective-form inflections, a comma-separated list.

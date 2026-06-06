@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 
-import re, sys, argparse
+import re
 
+from wingerbot import blib
 from wingerbot.blib import msg, errmsg, remove_links
 from wingerbot.slavic.ukrainian import uklib
 from wingerbot.slavic.bulgarian import bglib
@@ -11,7 +12,8 @@ lang = None
 langname = None
 module = None
 
-parser = argparse.ArgumentParser(description="Generate various-language entries from specs.")
+parser = blib.create_argparser("Generate various-language entries from specs.",
+                               no_include_pagefile=True, no_include_stdin=True)
 parser.add_argument("--direcfile", help="File containing directives (specs).", required=True)
 parser.add_argument("--lang", help="Language: uk, bg, pt", choices=["uk", "bg", "pt"])
 parser.add_argument(

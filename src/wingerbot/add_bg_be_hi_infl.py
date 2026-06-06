@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 
-import pywikibot, re, sys, argparse
+import re
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, msg, site, tname
+from wingerbot.blib import getparam, tname
 
 pos_to_headword_template = {
     "noun": "%s-noun",
@@ -252,7 +252,7 @@ def process_text_on_page(p, pos):
 
 
 parser = blib.create_argparser(
-    "Add Bulgarian/Belarusian/Hindi noun/verb/adjective inflections", include_pagefile=True, include_stdin=True
+    "Add Bulgarian/Belarusian/Hindi noun/verb/adjective inflections"
 )
 parser.add_argument("--pos", required=True, help="Part of speech (noun, proper noun, verb, adjective)")
 parser.add_argument("--lang", required=True, help="Language (bg, be, hi)")

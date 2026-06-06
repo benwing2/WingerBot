@@ -157,7 +157,7 @@ def process_text_on_page(p):
 
 
 parser = blib.create_argparser(
-    "Convert use of alt1= in etyms to proper use of interfixes", include_pagefile=True, include_stdin=True
+    "Convert use of alt1= in etyms to proper use of interfixes"
 )
 parser.add_argument(
     "--etym-change",

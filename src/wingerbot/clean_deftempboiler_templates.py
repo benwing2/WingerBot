@@ -2,10 +2,10 @@
 
 # FIXME: Partly written, not working. No longer applies; {{deftempboiler}} was deleted in 2019.
 
-import pywikibot, re, sys, argparse
+import pywikibot, re, sys
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, msg, site, tname
+from wingerbot.blib import getparam, rmparam, msg, tname
 
 from wingerbot.form_of_templates import (
     language_specific_alt_form_of_templates,
@@ -45,8 +45,6 @@ def process_text_on_page(p):
 
 parser = blib.create_argparser(
     "Convert cap= to nocap= and empty dot= to nodot= in templates based on {{deftempboiler}}",
-    include_pagefile=True,
-    include_stdin=True,
 )
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)

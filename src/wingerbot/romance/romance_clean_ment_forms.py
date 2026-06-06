@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 
-import pywikibot, re, sys, argparse
+import pywikibot, re, sys
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, tname, pname, msg, site
+from wingerbot.blib import getparam, rmparam, tname, pname, msg
 from wingerbot.blib import ParseException
 
 
@@ -157,8 +157,6 @@ def process_text_on_page(p):
 
 parser = blib.create_argparser(
     "Add <id:nominal> or <id:verbal> to {{af}} or {{affix}} etymology as appropriate for Gallo-Romance terms ending in -ment",
-    include_pagefile=True,
-    include_stdin=True,
 )
 parser.add_argument(
     "--langname", help="Opional name of language whose section to fetch.",

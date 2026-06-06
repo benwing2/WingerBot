@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 
-import pywikibot, re, sys, argparse, unicodedata
+import pywikibot, re, sys, unicodedata
 
 from wingerbot import blib, lang_utils
-from wingerbot.blib import getparam, rmparam, tname, pname, msg, site
+from wingerbot.blib import getparam, rmparam, tname, pname, msg
 
 lang_data = lang_utils.get_lang_data()
 etym_lang_data = lang_utils.get_etym_lang_data()
@@ -133,7 +133,7 @@ def process_text_on_page(p):
 
 
 parser = blib.create_argparser(
-    "Convert {{zh-syn}}, {{zh-ant}} etc. to {{syn|zh}}, {{ant|zh}}, etc.", include_pagefile=True, include_stdin=True
+    "Convert {{zh-syn}}, {{zh-ant}} etc. to {{syn|zh}}, {{ant|zh}}, etc."
 )
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)

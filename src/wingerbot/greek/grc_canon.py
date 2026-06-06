@@ -9,8 +9,7 @@ from wingerbot.blib import msg
 from wingerbot.canon_foreign import canon_links
 from wingerbot.greek import grc_translit
 
-parser = blib.create_argparser("Canonicalize Greek and translit",
-                               include_pagefile=True, include_stdin=True)
+parser = blib.create_argparser("Canonicalize Greek and translit")
 parser.add_argument(
     "--cattype",
     default="borrowed",

@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
 
-from wingerbot.blib import getparam, rmparam, msg, errmsg, site
-import pywikibot, re, sys, argparse
+from wingerbot import blib, request_templates
+from wingerbot.blib import msg
 
-from wingerbot import request_templates
-
-parser = argparse.ArgumentParser(description="Generate table documenting request template variants.")
+parser = blib.create_argparser("Generate table documenting request template variants.",
+                               no_include_pagefile=True, no_include_stdin=True)
 parser.add_argument("--direcfile", help="File containing directives.")
 args = parser.parse_args()
+start, end = blib.parse_start_end(args.start, args.end)
 
 langparam_code_to_desc = {
     "no": "no",
@@ -20,7 +20,8 @@ langparam_code_to_desc = {
 
 msg('{|class="wikitable"')
 msg("! Template !! Aliases !! Description !! Categories !! Lang code in 1= !! Lang code in lang=")
-for template, props in sorted(request_templates.request_templates, key=lambda x: x[0]):
+for _, (template, props) in blib.iter_items(sorted(request_templates.request_templates, key=lambda x: x[0]),
+                                            start, end):
     aliases = props.get("aliases", [])
     desc = props.get("desc", "Unknown")
     cat = props.get("cat", [])

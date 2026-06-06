@@ -59,8 +59,6 @@ def process_text_on_page(p):
 
 parser = blib.create_argparser(
     "Fix up class-8 and irregular arguments to have class a as default past stress",
-    include_pagefile=True,
-    include_stdin=True,
 )
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)

@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 
-import pywikibot, re, sys, argparse
+import pywikibot, re, sys
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, tname, pname, msg, site
+from wingerbot.blib import getparam, rmparam, tname, pname, msg
 
 
 def process_text_on_page(p):
@@ -60,8 +60,6 @@ def process_text_on_page(p):
 
 parser = blib.create_argparser(
     "Rename {{cs-verb-old}}/{{sk-verb-old}} to {{cs-verb}}/{{sk-verb}} and clean/standardize parameters",
-    include_pagefile=True,
-    include_stdin=True,
 )
 parser.add_argument("--lang", choices=["cs", "sk"], help="Language of verbs (cs, sk).")
 args = parser.parse_args()

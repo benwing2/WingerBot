@@ -43,7 +43,7 @@ def process_text_on_page(p):
 
 
 parser = blib.create_argparser(
-    "Fix gender errors introduced by fix_ru_noun.py", include_pagefile=True, include_stdin=True
+    "Fix gender errors introduced by fix_ru_noun.py"
 )
 parser.add_argument("--direcfile", help="File containing pages and warnings to process", required=True)
 args = parser.parse_args()

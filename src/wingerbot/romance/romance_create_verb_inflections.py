@@ -539,7 +539,7 @@ def process_text_on_page(p):
 
 
 parser = blib.create_argparser(
-    "Create verb inflections for Spanish, Galician or Portuguese", include_pagefile=True, include_stdin=True
+    "Create verb inflections for Spanish, Galician or Portuguese"
 )
 parser.add_argument("--norm", choices=list(norm_to_name.keys()), required=True, help="Code of norm to do.")
 args = parser.parse_args()

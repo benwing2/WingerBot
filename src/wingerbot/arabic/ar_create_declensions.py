@@ -638,7 +638,7 @@ def create_declensions(pos, tempname, decltempname, sgnum, start, end, removepar
         create_declension(index, page, pos, tempname, decltempname, sgnum, removeparams, is_proper=is_proper)
 
 
-parser = blib.create_argparser("Create Arabic declensions", include_pagefile=True, include_stdin=True)
+parser = blib.create_argparser("Create Arabic declensions")
 
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)

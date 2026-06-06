@@ -646,7 +646,9 @@ def tag_set_to_slot(tag_set, groups, pagemsg):
     return "_".join(parts)
 
 
-def flatten_slot_formvals(outer_index: Index, lemma: str, inflargs: dict[str, str] | list[tuple[str, str]]) -> list[tuple[str, str, str, str]]:
+def flatten_slot_formvals(
+    outer_index: Index, lemma: str, inflargs: dict[str, str] | list[tuple[str, str]], slots_to_do: list[str] | None = None
+) -> list[tuple[str, str, str, str]]:
     """Convert a dictionary of comma-separated formvals, or a list of (slot, formvals), into a list of items to process.
     The return value is a list of tuples `(slotformind, slotformtitle, slot, formval)` where:
     * `slotformind` is a string describing the index of the lemma from which the forms were derived (coming from
@@ -662,11 +664,12 @@ def flatten_slot_formvals(outer_index: Index, lemma: str, inflargs: dict[str, st
         items_iterable = inflargs
     single_forms_to_process = []
     for slotind, (slot, formspec) in enumerate(items_iterable, start=1):
-        formlist = formspec.split(",")
-        for formind, formval in enumerate(formlist, start=1):
-            slotformind = "%s.%s" % (outer_index, "%s@%s" % (slotind, formind) if len(formlist) > 0 else slotind)
-            slotformtitle = "%s: %s=%s" % (lemma, slot, formval)
-            single_forms_to_process.append((slotformind, slotformtitle, slot, formval))
+        if slots_to_do is None or slot in slots_to_do:
+            formlist = formspec.split(",")
+            for formind, formval in enumerate(formlist, start=1):
+                slotformind = "%s.%s" % (outer_index, "%s@%s" % (slotind, formind) if len(formlist) > 0 else slotind)
+                slotformtitle = "%s: %s=%s" % (lemma, slot, formval)
+                single_forms_to_process.append((slotformind, slotformtitle, slot, formval))
     return single_forms_to_process
 
 

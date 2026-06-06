@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 
-import pywikibot, re, sys, argparse, json, unicodedata
+import pywikibot, re, sys, json, unicodedata
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, getrmparam, tname, pname, msg, site
+from wingerbot.blib import getparam, rmparam, getrmparam, tname, pname, msg
 
 
 def process_text_on_page(p):
@@ -53,7 +53,7 @@ def process_text_on_page(p):
     return str(parsed), notes
 
 
-parser = blib.create_argparser("Copy Galician verb conj to headword", include_pagefile=True, include_stdin=True)
+parser = blib.create_argparser("Copy Galician verb conj to headword")
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 

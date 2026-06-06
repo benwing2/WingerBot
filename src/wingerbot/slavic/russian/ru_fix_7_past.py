@@ -60,7 +60,7 @@ def process_text_on_page(p):
 
 
 parser = blib.create_argparser(
-    "Convert class-7 past overrides to past stress pattern", include_pagefile=True, include_stdin=True
+    "Convert class-7 past overrides to past stress pattern"
 )
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)

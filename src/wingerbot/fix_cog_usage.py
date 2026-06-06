@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 
-import pywikibot, re, sys, argparse
+import pywikibot, re, sys
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, msg, site
+from wingerbot.blib import getparam, rmparam, msg
 
 from wingerbot import lang_utils
 
@@ -235,7 +235,7 @@ def process_text_on_page(p):
 
 if __name__ == "__main__":
     parser = blib.create_argparser(
-        "Use {{cog}} for cognates in place of LANG {{m|CODE|...}}", include_pagefile=True, include_stdin=True
+        "Use {{cog}} for cognates in place of LANG {{m|CODE|...}}"
     )
     parser.add_argument(
         "--begin-end", help="""Output in begin-end format for use with push_manual_changes.py.""", action="store_true"

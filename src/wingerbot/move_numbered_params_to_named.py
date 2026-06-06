@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 
-import pywikibot, re, sys, argparse
+import pywikibot, re, sys
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, set_template_name, msg, errmsg, site, tname
+from wingerbot.blib import getparam, rmparam, set_template_name, msg, errmsg, tname
 
 
 def process_text_on_page(p):
@@ -64,8 +64,6 @@ def process_text_on_page(p):
 
 parser = blib.create_argparser(
     "Move 3=/4= in specified templates e.g. {{desc}}/{{desctree}} to alt=/t=, consolidate genders",
-    include_pagefile=True,
-    include_stdin=True,
 )
 parser.add_argument("--comment-annotation", help="Annotation to prepend to changelog comments")
 parser.add_argument(

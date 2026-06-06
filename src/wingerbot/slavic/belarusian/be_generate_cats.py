@@ -1,11 +1,7 @@
 #!/usr/bin/env python3
 
 # FIXME: This script is no longer relevant now that we handle categories automatically in [[Module:category tree/lang/be]].
-import re
-import pywikibot
-
 from wingerbot import blib
-from wingerbot.blib import msg, errandmsg, site
 
 noun_stress_patterns = ["a", "b", "c", "d", "e", "f"]
 adj_stress_patterns = ["a", "b"]
@@ -25,7 +21,10 @@ adj_stem_types = ["hard", "soft", "velar-stem", "possessive", "surname"]
 vowel_alts = ["а-е", "а-о", "а-во", "ы-о", "о-ы", "во-а"]
 
 
+next_index = 0
 def create_cat(cat, catargs, extratext=None):
+    global next_index
+    next_index += 1
     if args.pos == "verb":
         pos = "verb"
         shortpos = "verb"
@@ -44,16 +43,14 @@ def create_cat(cat, catargs, extratext=None):
     num_pages = len(list(blib.cat_articles(cat)))
     if num_pages == 0:
         return
-    cat = "Category:" + cat
-    page = pywikibot.Page(site, cat)
-    if not args.overwrite and page.exists():
-        msg("Page %s already exists, not overwriting" % cat)
-        return
-    page.text = str(text)
-    changelog = "Creating '%s' with text '%s'" % (cat, text)
-    msg("Changelog = %s" % changelog)
-    if args.save:
-        blib.safe_page_save(page, changelog, errandmsg)
+    def write_cat(p):
+        if not args.overwrite and p.page.exists():
+            p.msg("Page already exists, not overwriting")
+            return
+        changelog = "Creating '%s' with text '%s'" % (p.title, text)
+        p.msg("Changelog = %s" % changelog)
+        return str(text), changelog
+    blib.do_edit(args, next_index, "Category:" + cat, write_cat)
 
 
 parser = blib.create_argparser("Create Belarusian noun/verb/adjective categories",

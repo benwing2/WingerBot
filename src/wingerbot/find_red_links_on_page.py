@@ -7,7 +7,7 @@ import unicodedata
 import pywikibot, re, sys
 
 from wingerbot import blib, lang_utils
-from wingerbot.blib import getparam, site, tname
+from wingerbot.blib import getparam, tname, site
 
 
 punc_chars = "".join("\\" + chr(i) for i in range(sys.maxunicode) if unicodedata.category(chr(i)).startswith("P"))
@@ -91,7 +91,7 @@ def process_text_on_page(p):
         check_text(p.text)
 
 
-parser = blib.create_argparser("Find red/yellow links", include_pagefile=True, include_stdin=True)
+parser = blib.create_argparser("Find red/yellow links")
 parser.add_argument("--templates", help="Comma-separated list of templates to check")
 parser.add_argument("--check-raw-links", help="If true, check raw links", action="store_true")
 parser.add_argument("--check-only-defns", help="If true, check only defn lines", action="store_true")

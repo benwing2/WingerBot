@@ -100,7 +100,7 @@ def process_text_on_page(p):
 
 
 parser = blib.create_argparser(
-    "Fix raw self links to English terms on the same page", include_pagefile=True, include_stdin=True
+    "Fix raw self links to English terms on the same page"
 )
 parser.add_argument("--langname", help="Language to do (optional)")
 parser.add_argument(

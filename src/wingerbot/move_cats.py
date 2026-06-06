@@ -291,7 +291,7 @@ def process_text_on_page(p):
     return text, group_notes_across_lang(notes)
 
 
-parser = blib.create_argparser("Move categories based on a regex", include_pagefile=True, include_stdin=True)
+parser = blib.create_argparser("Move categories based on a regex")
 parser.add_argument(
     "--from",
     help="Old name of template; can be specified multiple times",

@@ -225,8 +225,6 @@ def snarf_diminutives(p):
 
 parser = blib.create_argparser(
     "Snarf Russian relational adjectives or diminutives or add to corresponding noun",
-    include_pagefile=True,
-    include_stdin=True,
 )
 parser.add_argument("--direcfile", help="File of adjectives/diminutives and nouns, from a previous run of same script")
 parser.add_argument("--pos", help="Part of speech ('reladj' or 'dim')", required=True)

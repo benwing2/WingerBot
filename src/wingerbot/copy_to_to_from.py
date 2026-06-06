@@ -39,7 +39,7 @@ def process_direcfile(direcfile, start, end):
             msg("".join(from_to_splits))
 
 
-params = blib.create_argparser("Copy TO to FROM in manual change direcfile", include_pagefile=True, include_stdin=True)
+params = blib.create_argparser("Copy TO to FROM in manual change direcfile")
 params.add_argument(
     "--direcfile",
     help="File containing templates to change, as output by various scripts with --from-to",

@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 
-import pywikibot, re, sys, argparse
+import pywikibot, re, sys
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, msg, site, tname
+from wingerbot.blib import getparam, rmparam, msg, tname
 
 # back_formation_templates = ["back-formation", "back-form", "backform", "bac", "bf"]
 # templates_to_move_lang = back_formation_templates + [
@@ -128,8 +128,6 @@ def process_text_on_page(p):
 
 parser = blib.create_argparser(
     "Clean up etymology-related templates, moving lang= to 1= and renaming some",
-    include_pagefile=True,
-    include_stdin=True,
 )
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)

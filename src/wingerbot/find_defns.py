@@ -18,7 +18,7 @@ def process_text_on_page(p):
 
 
 parser = blib.create_argparser(
-    "Find definitions for specified POS and head templates", include_pagefile=True, include_stdin=True
+    "Find definitions for specified POS and head templates"
 )
 parser.add_argument("--langname", help="Language name to check. If specified, only terms of the specified language will be done. Otherwise, the whole page (which may be a partial page without L2 headers) will be processed.")
 parser.add_argument("--langcode", help="Language code of language to check.", required=True)

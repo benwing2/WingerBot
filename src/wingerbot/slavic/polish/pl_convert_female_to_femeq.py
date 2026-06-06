@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 
-import pywikibot, re, sys, argparse, json, unicodedata
+import pywikibot, re, sys, json, unicodedata
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, tname, pname, msg, site
+from wingerbot.blib import getparam, rmparam, tname, pname, msg
 
 
 def split_line(line):
@@ -220,8 +220,6 @@ def process_text_on_page(p):
 
 parser = blib.create_argparser(
     "Convert raw Polish 'female' defns into {{femeq}} and remove 'male' from defns",
-    include_pagefile=True,
-    include_stdin=True,
 )
 parser.add_argument("--warn-on-woman", action="store_true", help="Warn if 'woman' seen in line.")
 args = parser.parse_args()

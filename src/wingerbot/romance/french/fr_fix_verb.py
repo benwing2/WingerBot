@@ -3,10 +3,10 @@
 # Convert fr-conj-* templates to fr-conj-auto, checking in the process that
 # the conjugation doesn't change.
 
-import pywikibot, re
+import re
 
 from wingerbot import blib
-from wingerbot.blib import getparam, msg, site, tname, pname
+from wingerbot.blib import getparam, tname, pname
 
 templates_to_change = [
     "fr-conj-er",
@@ -162,19 +162,18 @@ all_verb_props = [
 cached_template_calls = {}
 
 
-def find_old_template_props(template, pagemsg, errandpagemsg):
-    name = str(template.name)
-    if name in cached_template_calls:
-        template_text = cached_template_calls[name]
+def find_old_template_props(p, t):
+    tn = tname(t)
+    if tn in cached_template_calls:
+        template_text = cached_template_calls[tn]
     else:
-        template_page = pywikibot.Page(site, "Template:%s" % name)
-        if not template_page.exists():
-            pagemsg("WARNING: Can't locate template 'Template:%s'" % name)
+        pp = blib.create_process_page_params(args, p.index, "Template:%s" % tn, must_exist=True)
+        if not pp:
             return None
-        template_text = blib.safe_page_text(template_page, errandpagemsg)
-        cached_template_calls[name] = template_text
+        template_text = pp.text
+        cached_template_calls[tn] = template_text
     if args.verbose:
-        pagemsg("Found template text: %s" % template_text)
+        p.msg("Found template text: %s" % template_text)
     for t in blib.parse_text(template_text).filter_templates():
         tn = tname(t)
         if tn == "fr-conj" or tn == "#invoke:fr-conj" and getparam(t, "1").strip() == "frconj":
@@ -184,9 +183,9 @@ def find_old_template_props(template, pagemsg, errandpagemsg):
             debug_args = []
 
             def sub_template(val):
-                val = re.sub(r"\{\{\{1\|?\}\}\}", getparam(template, "1"), val)
-                val = re.sub(r"\{\{\{2\|?\}\}\}", getparam(template, "2"), val)
-                val = re.sub(r"\{\{\{pp\|(.*?)\}\}\}", lambda m: getparam(template, "pp") or m.group(1), val)
+                val = re.sub(r"\{\{\{1\|?\}\}\}", getparam(t, "1"), val)
+                val = re.sub(r"\{\{\{2\|?\}\}\}", getparam(t, "2"), val)
+                val = re.sub(r"\{\{\{pp\|(.*?)\}\}\}", lambda m: getparam(t, "pp") or m.group(1), val)
                 return val
 
             for pn, pv in tparams:
@@ -205,24 +204,21 @@ def find_old_template_props(template, pagemsg, errandpagemsg):
                     if pv and not re.search(r"—", pv):
                         debug_args.append("%s=%s" % (canonpname, pv))
                         conjargs[canonpname] = pv
-            pagemsg("Found args: %s" % "|".join(debug_args))
+            p.msg("Found args: %s" % "|".join(debug_args))
             return conjargs
-    pagemsg("WARNING: Can't find {{fr-conj}} in template definition for %s" % str(template))
+    p.msg("WARNING: Can't find {{fr-conj}} in template definition for %s" % str(t))
     return None
 
 
-def compare_conjugation(template, refl, pagemsg, errandpagemsg, expand_text):
+def compare_conjugation(p, t, refl):
     # Force reflexive templates to succeed since they don't use {{fr-conj}}
-    if str(template.name) in refl_templates_to_change:
+    if tname(t) in refl_templates_to_change:
         return []
-    generate_result = expand_text("{{fr-generate-verb-forms%s}}" % ("|refl=yes" if refl else ""))
+    generate_result = p.expand_text("{{fr-generate-verb-forms%s}}" % ("|refl=yes" if refl else ""))
     if not generate_result:
         return None
-    conjargs = {}
-    for arg in re.split(r"\|", generate_result):
-        name, value = re.split("=", arg)
-        conjargs[name] = re.sub("<!>", "|", value)
-    existing_args = find_old_template_props(template, pagemsg, errandpagemsg)
+    conjargs = blib.split_generate_args(generate_result)
+    existing_args = find_old_template_props(p, t)
     if existing_args is None:
         return None
     difvals = []
@@ -249,7 +245,7 @@ def process_text_on_page(p):
         tn = tname(t)
         if tn in templates_to_change or tn in refl_templates_to_change:
             refl = tn in refl_templates_to_change
-            difvals = compare_conjugation(t, refl, p.msg, p.errandmsg, p.expand_text)
+            difvals = compare_conjugation(p, t, refl)
             if difvals is None:
                 pass
             elif difvals:
@@ -298,7 +294,7 @@ def process_text_on_page(p):
     return str(parsed), notes
 
 
-parser = blib.create_argparser("Convert old fr-conj-* to fr-conj-auto", include_pagefile=True, include_stdin=True)
+parser = blib.create_argparser("Convert old fr-conj-* to fr-conj-auto")
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 

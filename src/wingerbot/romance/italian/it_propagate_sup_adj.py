@@ -72,7 +72,7 @@ def process_text_on_non_lemma_page(p):
 
 
 parser = blib.create_argparser(
-    "Add sup= to {{it-adj}} headword params based on superlative entries", include_pagefile=True, include_stdin=True
+    "Add sup= to {{it-adj}} headword params based on superlative entries"
 )
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)

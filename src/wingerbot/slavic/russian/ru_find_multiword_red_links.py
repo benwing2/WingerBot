@@ -5,12 +5,10 @@
 # ways: As we encounter each redlink (but only the first time encountered),
 # and sorted by number of occurrences.
 
-import pywikibot, re, sys, argparse
-import traceback
+import pywikibot, re
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, msg, site, tname
-
+from wingerbot.blib import getparam, msg, tname, site
 from wingerbot.slavic.russian import rulib
 
 # For each lemma seen, count of how many times seen
@@ -133,7 +131,7 @@ def process_text_on_page(p):
             p.msg("WARNING: Skipping ru-noun or ru-proper noun, can't handle yet: %s" % str(t))
 
 
-parser = blib.create_argparser("Find red links in multiword Russian lemmas", include_pagefile=True, include_stdin=True)
+parser = blib.create_argparser("Find red links in multiword Russian lemmas")
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 

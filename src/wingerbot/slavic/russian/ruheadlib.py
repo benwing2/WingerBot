@@ -4,7 +4,7 @@ import re
 import pywikibot
 
 from wingerbot import blib
-from wingerbot.blib import getparam, site, tname
+from wingerbot.blib import getparam, tname, site
 from wingerbot.slavic.russian import rulib
 
 # List of Russian templates referring to lemmas.

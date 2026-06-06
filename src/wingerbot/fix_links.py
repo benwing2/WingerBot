@@ -377,7 +377,7 @@ def process_text_on_page(p):
 
 
 if __name__ == "__main__":
-    parser = blib.create_argparser("Replace raw links with templated links", include_pagefile=True, include_stdin=True)
+    parser = blib.create_argparser("Replace raw links with templated links")
     parser.add_argument("--langs", help="Language codes for languages to do, comma-separated")
     parser.add_argument("--single-lang", help="Text is of this language, without header")
     parser.add_argument("--do-see-also", action="store_true", help="Do ==See also== sections even in Latin-text langs")

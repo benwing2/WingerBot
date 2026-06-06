@@ -15,7 +15,7 @@ def process_text_on_page(p):
             prefixes_by_length[i][prefix].append(p.title)
 
 
-parser = blib.create_argparser("Output page titles beginning with frequently occurring prefixes, for each length up through --max-prefix-length", include_pagefile=True, include_stdin=True)
+parser = blib.create_argparser("Output page titles beginning with frequently occurring prefixes, for each length up through --max-prefix-length")
 parser.add_argument("--max-prefix-length", type=int, default=10, help="Maximum length of prefixes to check for")
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)

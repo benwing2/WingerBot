@@ -5,8 +5,7 @@
 from wingerbot import blib
 from wingerbot.blib import msg
 
-parser = blib.create_argparser("Find pages among a list of pages", include_pagefile=True,
-                               include_stdin=True)
+parser = blib.create_argparser("Find pages among a list of pages")
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 

@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 
-import pywikibot, re, sys, argparse
+import pywikibot, re, sys
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, tname, msg, site
+from wingerbot.blib import getparam, rmparam, tname, msg
 from wingerbot.latin import lalib
 
 
@@ -68,8 +68,6 @@ def process_text_on_page(p):
 
 parser = blib.create_argparser(
     "Add Latin adverbs to adjectives based on the output of find_latin_adj_for_adv.py",
-    include_pagefile=True,
-    include_stdin=True,
 )
 parser.add_argument("--direcfile", required=True)
 args = parser.parse_args()

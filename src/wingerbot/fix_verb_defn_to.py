@@ -123,7 +123,7 @@ def process_text_on_page(p):
     return modsec.rebuild(secbody="".join(subsections)), notes
 
 
-parser = blib.create_argparser("Add 'to' to verb defns when missing", include_pagefile=True, include_stdin=True)
+parser = blib.create_argparser("Add 'to' to verb defns when missing")
 parser.add_argument("--langcode", required=True, help="Language code of language to do")
 parser.add_argument("--langname", required=True, help="Language name of language to do")
 args = parser.parse_args()

@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 
-import pywikibot, re, sys, argparse
+import pywikibot, re, sys
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, tname, pname, msg, site
+from wingerbot.blib import getparam, rmparam, tname, pname, msg
 
 cjk_chars = "[\u1100-\u11ff\u2e80-\ua4ff\uac00-\ud7ff\uff00-\uffef]|[\ud840-\ud8bf]."
 cjk_regex = "(%s|-notice-(zh|ja|ko)-)" % cjk_chars
@@ -40,7 +40,7 @@ def process_text_on_page(p):
 
 
 parser = blib.create_argparser(
-    "Extract specified entries or their converse from [[WT:RFVN]]", include_pagefile=True, include_stdin=True
+    "Extract specified entries or their converse from [[WT:RFVN]]"
 )
 parser.add_argument("--regex", help="Regex used to match headers.", required=True)
 parser.add_argument(

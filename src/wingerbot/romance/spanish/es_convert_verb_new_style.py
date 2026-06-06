@@ -131,7 +131,7 @@ def process_text_on_page(p):
 
 
 parser = blib.create_argparser(
-    "Convert {{es-verb}} templates to newest format that mirrors {{es-conj}}", include_pagefile=True, include_stdin=True
+    "Convert {{es-verb}} templates to newest format that mirrors {{es-conj}}"
 )
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)

@@ -361,7 +361,7 @@ def process_text_on_page(p):
 
 
 parser = blib.create_argparser(
-    "Convert Spanish verb conj templates to new form", include_pagefile=True, include_stdin=True
+    "Convert Spanish verb conj templates to new form"
 )
 parser.add_argument(
     "--ignore-differences",

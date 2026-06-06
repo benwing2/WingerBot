@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 
-import pywikibot, re, sys, argparse
+import pywikibot, re, sys
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, msg, site, tname
+from wingerbot.blib import getparam, rmparam, msg, tname
 
 request_templates = ["rfdatek", "rfquotek"]
 
@@ -55,7 +55,7 @@ def process_text_on_page(p):
 
 
 parser = blib.create_argparser(
-    "Add |lang=en to request templates missing |lang", include_pagefile=True, include_stdin=True
+    "Add |lang=en to request templates missing |lang"
 )
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)

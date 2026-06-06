@@ -459,7 +459,7 @@ def process_text_on_page(p):
     return modsec.rebuild(secbody="".join(sections)), notes
 
 
-parser = blib.create_argparser("Find misformatted sections of various sorts", include_pagefile=True, include_stdin=True)
+parser = blib.create_argparser("Find misformatted sections of various sorts")
 parser.add_argument("--correct", action="store_true", help="Correct errors as much as possible.")
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)

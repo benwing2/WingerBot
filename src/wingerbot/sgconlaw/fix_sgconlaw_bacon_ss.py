@@ -10,10 +10,10 @@
 #
 # #* {{RQ:Bacon Sylva Sylvarum|passage=The [[cion]] [[overrule]]th the '''stock''' quite.}}
 
-import pywikibot, re, sys, argparse
+import pywikibot, re, sys
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, set_template_name, msg, errmsg, site, tname
+from wingerbot.blib import getparam, rmparam, set_template_name, msg, errmsg, tname
 
 
 def process_text_on_page(p):
@@ -41,7 +41,7 @@ def process_text_on_page(p):
     return curtext.rstrip("\n"), notes
 
 
-parser = blib.create_argparser("Reformat {{RQ:Bacon SS}}", include_pagefile=True, include_stdin=True)
+parser = blib.create_argparser("Reformat {{RQ:Bacon SS}}")
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 

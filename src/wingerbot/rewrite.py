@@ -54,7 +54,7 @@ def process_text_on_page(p):
     return text, args.comment or "replace %s" % (", ".join("%s -> %s" % (f, t) for f, t in zipped_fromto))
 
 
-parser = blib.create_argparser("Search and replace on pages", include_pagefile=True, include_stdin=True)
+parser = blib.create_argparser("Search and replace on pages")
 parser.add_argument(
     "-f",
     "--from",

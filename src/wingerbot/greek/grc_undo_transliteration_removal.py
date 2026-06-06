@@ -2,12 +2,8 @@
 
 import re
 
-import pywikibot
-
 from wingerbot import blib
-from wingerbot.blib import msg, errandmsg, getparam, addparam
-
-site = pywikibot.Site()
+from wingerbot.blib import msg, getparam
 
 
 def undo_greek_removal(direcfile, start, end):

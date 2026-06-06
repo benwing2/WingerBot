@@ -145,8 +145,7 @@ def canon_links(cattype, lang, longlang, start, end, pages_to_do=[]):
     )
 
 
-parser = blib.create_argparser("Remove redundant foreign translit and script",
-                               include_pagefile=True, include_stdin=True)
+parser = blib.create_argparser("Remove redundant foreign translit and script")
 parser.add_argument("--lang", help="""Language to use when --cattype is 'vocab' or 'borrowed'.""")
 parser.add_argument(
     "--cattype",

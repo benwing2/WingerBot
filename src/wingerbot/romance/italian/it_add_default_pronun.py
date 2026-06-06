@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 
-import pywikibot, re, sys, argparse, json
+import pywikibot, re, sys, json
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, tname, pname, msg, site
+from wingerbot.blib import getparam, rmparam, tname, pname, msg
 import unicodedata
 
 AC = "\u0301"
@@ -141,7 +141,7 @@ def process_text_on_page(p):
 
 
 parser = blib.create_argparser(
-    "Add missing stress and z resolution to {{it-IPA}}", include_pagefile=True, include_stdin=True
+    "Add missing stress and z resolution to {{it-IPA}}"
 )
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)

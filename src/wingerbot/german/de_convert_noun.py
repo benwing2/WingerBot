@@ -854,7 +854,7 @@ def process_text_on_page(p):
 
 
 parser = blib.create_argparser(
-    "Convert {{de-noun}}/{{de-proper noun}} to new format", include_pagefile=True, include_stdin=True
+    "Convert {{de-noun}}/{{de-proper noun}} to new format"
 )
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)

@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 
 from collections import defaultdict
-import pywikibot, re, sys, argparse
+import pywikibot, re, sys
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, msg, site, tname, pname
+from wingerbot.blib import getparam, rmparam, msg, tname, pname
 
 sh_headwords = {
     "sh-adjective",
@@ -118,8 +118,6 @@ def process_text_on_page(p):
 
 parser = blib.create_argparser(
     "Move head= to 1= and g= to 2= in Serbo-Croatian headwords and rename headwords",
-    include_pagefile=True,
-    include_stdin=True,
 )
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)

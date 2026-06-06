@@ -328,8 +328,6 @@ def process_text_on_page(p):
 
 parser = blib.create_argparser(
     "Convert {{l}}/{{alter}} etc. in ==Alternative forms== sections to {{alt}}",
-    include_pagefile=True,
-    include_stdin=True,
 )
 parser.add_argument("--langname", help="Language name. If omitted, do all text on the page (which may be a partial page without L2 header).")
 args = parser.parse_args()

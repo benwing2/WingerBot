@@ -62,8 +62,6 @@ def process_text_on_page(p):
 
 parser = blib.create_argparser(
     "Convert {{User lang-N}} templates to the format needed for the new [[Module:Babel]]",
-    include_pagefile=True,
-    include_stdin=True,
 )
 parser.add_argument("--comment", help="Comment about source of data.")
 args = parser.parse_args()

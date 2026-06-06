@@ -11,7 +11,7 @@ def process_text_on_page(p):
     p.msg("Languages = %s" % ",".join(langs))
 
 
-parser = blib.create_argparser("Find languages on pages", include_pagefile=True, include_stdin=True)
+parser = blib.create_argparser("Find languages on pages")
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 

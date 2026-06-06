@@ -106,7 +106,7 @@ def canonicalize_one_page_verb_form(p):
     return str(parsed), notes
 
 
-parser = blib.create_argparser("Rewrite form= to 1= in verb headword templates", include_pagefile=True, include_stdin=True)
+parser = blib.create_argparser("Rewrite form= to 1= in verb headword templates")
 parser.add_argument("--headword", action="store_true", help="Rewrite form= to 1= in ar-verb and canonicalize")
 parser.add_argument(
     "--canonicalize", action="store_true", help="Canonicalize form in Arabic verb templates other than ar-verb"

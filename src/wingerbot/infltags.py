@@ -3,7 +3,7 @@
 import json, re
 
 from wingerbot import blib
-from wingerbot.blib import PagemsgCallback, site, getparam, tname
+from wingerbot.blib import PagemsgCallback, getparam, site, tname
 
 dump_form_of_data = False
 

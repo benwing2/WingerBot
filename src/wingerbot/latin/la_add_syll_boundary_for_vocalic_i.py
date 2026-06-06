@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 
-import pywikibot, re, sys, argparse
+import pywikibot, re, sys
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, tname, msg, site
+from wingerbot.blib import getparam, rmparam, tname, msg
 
 from wingerbot.latin import lalib
 
@@ -85,8 +85,6 @@ def process_text_on_page(p):
 
 parser = blib.create_argparser(
     "Add syllabic boundary to {{la-IPA}} for vocalic i that would be interpreted as consonantal",
-    include_pagefile=True,
-    include_stdin=True,
 )
 parser.add_argument("--add-dot-after-i", help="Add dot after 'i' to make sure it's syllabic", action="store_true")
 parser.add_argument("--convert-j", help="Convert 'j' back to 'i' after prefix", action="store_true")

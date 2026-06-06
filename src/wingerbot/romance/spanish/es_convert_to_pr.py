@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 
-import pywikibot, re, sys, argparse, unicodedata
+import pywikibot, re, sys, unicodedata
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, msg, site, tname, pname, rsub_repeatedly
+from wingerbot.blib import getparam, rmparam, msg, tname, pname, rsub_repeatedly
 
 AC = "\u0301"  # acute =  ́
 GR = "\u0300"  # grave =  ̀
@@ -599,7 +599,7 @@ def process_text_on_page(p):
     return modsec.rebuild(secbody="".join(subsections)), notes
 
 
-parser = blib.create_argparser("Convert {{es-IPA}} to {{es-pr}}", include_pagefile=True, include_stdin=True)
+parser = blib.create_argparser("Convert {{es-IPA}} to {{es-pr}}")
 parser.add_argument(
     "--allow-mismatching-nsyl",
     help="Comma-separated list of pages with known incorrect value for number of syllables in {{rhymes}} template.",

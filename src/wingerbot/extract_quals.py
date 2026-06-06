@@ -23,7 +23,7 @@ def process_text_on_page(p):
 
 
 parser = blib.create_argparser(
-    "Extract qualifiers from separate qualifier params", include_pagefile=True, include_stdin=True
+    "Extract qualifiers from separate qualifier params"
 )
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)

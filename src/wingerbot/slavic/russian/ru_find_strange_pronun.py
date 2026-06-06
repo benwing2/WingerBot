@@ -39,8 +39,7 @@ def process_text_on_page(p):
         return newtext, notes
 
 
-parser = blib.create_argparser("Find strange Russian pronun lines", include_pagefile=True,
-                               include_stdin=True)
+parser = blib.create_argparser("Find strange Russian pronun lines")
 parser.add_argument("--fix-star", action="store_true", help="Fix pronun lines missing * at beginning")
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)

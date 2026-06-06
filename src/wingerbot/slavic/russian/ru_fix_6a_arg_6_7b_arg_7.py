@@ -43,7 +43,7 @@ def process_text_on_page(p):
 
 
 parser = blib.create_argparser(
-    "Fix up class 6a arg 6 -> 4, class 7b arg 7 -> 6", include_pagefile=True, include_stdin=True
+    "Fix up class 6a arg 6 -> 4, class 7b arg 7 -> 6"
 )
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)

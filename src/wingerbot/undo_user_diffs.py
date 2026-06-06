@@ -2,9 +2,9 @@
 
 # FIXME: Not necessarily working. Current status unclear.
 
-import pywikibot, re, sys, argparse
+import pywikibot
 from wingerbot import blib
-from wingerbot.blib import site, msg
+from wingerbot.blib import site
 import logging
 
 
@@ -66,7 +66,7 @@ def process_text_on_page(p):
                 return newtext, "Undo bad change(s) by [[User:%s]]" % args.user
 
 
-parser = blib.create_argparser("Show contributions of a user", include_pagefile=True, include_stdin=True)
+parser = blib.create_argparser("Show contributions of a user")
 parser.add_argument("--user", help="User to do.", required=True)
 parser.add_argument("--direcfile", help="File with diffs.", required=True)
 parser.add_argument("--input-format", choices=["diff-match-patch", "patch-ng"])

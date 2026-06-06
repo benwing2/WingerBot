@@ -4,7 +4,7 @@ import re
 import traceback, sys
 
 from wingerbot import blib
-from wingerbot.blib import msg, rmparam, getparam, site, tname, Index, ProcessPageRetval
+from wingerbot.blib import msg, rmparam, getparam, tname, ProcessPageRetval
 from wingerbot.slavic.russian.rulib import (
     velar,
     sib,
@@ -24,25 +24,6 @@ short_adj_cases = ["short_m", "short_f", "short_n", "short_p"]
 short_adj_cases_params = [("short_m", "3"), ("short_f", "5"), ("short_n", "4"), ("short_p", "6")]
 
 all_stress_patterns = ["a", "a'", "b", "b'", "c", "c'", "c''"]
-
-
-def expand_text(tempcall, pagemsg):
-    if tempcall.startswith("{{ru-decl-adj"):
-        tempcall = re.sub(r"^\{\{ru-decl-adj", "{{ru-generate-adj-forms", tempcall)
-    elif tempcall.startswith("{{ru-adj-old"):
-        tempcall = re.sub(r"^\{\{ru-adj-old", "{{ru-generate-adj-forms", tempcall)
-        tempcall = re.sub(r"\}\}$", "|old=y}}", tempcall)
-    else:
-        pagemsg("WARNING: Unrecognized template call %s" % tempcall)
-        return False
-    result = site.expand_text(tempcall)
-    if result.startswith('<strong class="error">'):
-        result = re.sub("<.*?>", "", result)
-        pagemsg("ERROR: %s = %s" % (tempcall, result))
-        return False
-    elif args.verbose:
-        pagemsg("Expanding %s" % tempcall)
-    return result
 
 
 def get_forms(result):
@@ -67,11 +48,26 @@ def get_case_forms(formval):
     return forms
 
 
-def compare_results(oldt, newt, pagemsg):
+def compare_results(p, oldt, newt):
     oldt = str(oldt)
     newt = str(newt)
-    oldresult = expand_text(oldt, pagemsg)
-    newresult = expand_text(newt, pagemsg)
+
+    def decl_to_generate_template(declt):
+        if declt.startswith("{{ru-decl-adj"):
+            declt = re.sub(r"^\{\{ru-decl-adj", "{{ru-generate-adj-forms", declt)
+        elif declt.startswith("{{ru-adj-old"):
+            declt = re.sub(r"^\{\{ru-adj-old", "{{ru-generate-adj-forms", declt)
+            declt = re.sub(r"\}\}$", "|old=y}}", declt)
+        else:
+            p.msg("WARNING: Unrecognized template call %s" % declt)
+            return None
+
+    oldgent = decl_to_generate_template(oldt)
+    newgent = decl_to_generate_template(newt)
+    if not oldgent or not newgent:
+        return False
+    oldresult = p.expand_text(oldgent)
+    newresult = p.expand_text(newgent)
     if not oldresult or not newresult:
         return False
     old_forms = get_forms(oldresult)
@@ -82,19 +78,19 @@ def compare_results(oldt, newt, pagemsg):
         oldval = old_forms.get(case, "-")
         newval = new_forms.get(case, "-")
         if oldval and not newval:
-            pagemsg("WARNING: Missing value %s=%s in new template forms" % (case, oldval))
+            p.msg("WARNING: Missing value %s=%s in new template forms" % (case, oldval))
             ok = False
         elif newval and not oldval:
-            pagemsg("WARNING: Extra value %s=%s in new template forms" % (case, newval))
+            p.msg("WARNING: Extra value %s=%s in new template forms" % (case, newval))
             ok = False
         else:
             if get_case_forms(oldval) != get_case_forms(newval):
-                pagemsg("WARNING: For case %s, old value %s not same as new value %s" % (case, oldval, newval))
+                p.msg("WARNING: For case %s, old value %s not same as new value %s" % (case, oldval, newval))
                 ok = False
     return ok
 
 
-def trymatch(t, declargs, pagemsg):
+def trymatch(p, t, declargs):
     orig_template = str(t)
     tn = tname(t)
     new_arg_str = "|".join(declargs)
@@ -130,7 +126,7 @@ def trymatch(t, declargs, pagemsg):
     if new_named_param_str:
         new_named_param_str = "|" + new_named_param_str
     new_template = "{{%s%s%s}}" % (tn, new_arg_str, new_named_param_str)
-    return compare_results(orig_template, new_template, pagemsg)
+    return compare_results(p, orig_template, new_template)
 
 
 def detect_stem(stem, decl):
@@ -160,9 +156,9 @@ def combine_stem(stem, decl):
     return stem, decl
 
 
-def infer_decl(t, pagemsg):
+def infer_decl(p, t):
     if args.verbose:
-        pagemsg("Processing %s" % str(t))
+        p.msg("Processing %s" % str(t))
 
     forms = {}
 
@@ -181,68 +177,68 @@ def infer_decl(t, pagemsg):
     m = get_form("short_m")
     f = get_form("short_f")
     n = get_form("short_n")
-    p = get_form("short_p")
+    pl = get_form("short_p")
 
     specials = ["", m]
     explicit_msg = None
 
     stem = getparam(t, "1")
     decl = getparam(t, "2")
-    if not m and not f and not n and not p:
-        pagemsg("No short forms, skipping")
+    if not m and not f and not n and not pl:
+        p.msg("No short forms, skipping")
         return None
-    elif not m and f and n and p:
-        pagemsg("Missing short masculine but other short forms present, continuing")
-    elif m and not f and not n and not p:
-        pagemsg("Found only short m")
+    elif not m and f and n and pl:
+        p.msg("Missing short masculine but other short forms present, continuing")
+    elif m and not f and not n and not pl:
+        p.msg("Found only short m")
         stem, decl = combine_stem(stem, decl)
         declargs = [stem, decl] + ["short_m=%s" % m]
-        if trymatch(t, declargs, pagemsg):
+        if trymatch(p, t, declargs):
             return declargs
         else:
             return None
-    elif not m or not f or not n or not p:
-        pagemsg(
+    elif not m or not f or not n or not pl:
+        p.msg(
             "WARNING: Some short forms missing, skipping: m=%s, f=%s, n=%s, p=%s"
-            % (m or "blank", f or "blank", n or "blank", p or "blank")
+            % (m or "blank", f or "blank", n or "blank", pl or "blank")
         )
         return None
     if re.search("(^|:)[abc*]", decl):
-        pagemsg("WARNING: Decl spec %s already has short accent class but short forms present? Skipping ...")
+        p.msg("WARNING: Decl spec %s already has short accent class but short forms present? Skipping ...")
         return None
     if not decl:
         newstem, decl = detect_stem(stem, decl)
         if not decl:
-            pagemsg("WARNING: Unable to detect stem type for stem=%s" % stem)
+            p.msg("WARNING: Unable to detect stem type for stem=%s" % stem)
             return None
         stem = newstem
     if decl == "short" or decl == "mixed" or decl == "ьий":
-        if f or n or p:
-            pagemsg(
+        if f or n or pl:
+            p.msg(
                 "WARNING: Short forms found when not allowed: f=%s, n=%s, p=%s"
-                % (f or "blank", n or "blank", p or "blank")
+                % (f or "blank", n or "blank", pl or "blank")
             )
             return None
-        pagemsg("Skipping decl type %s, no short forms allowed" % decl)
+        p.msg("Skipping decl type %s, no short forms allowed" % decl)
         return None
     if "," in m:
-        pagemsg("WARNING: Multiple masculine forms, something wrong: m=%s" % m)
+        p.msg("WARNING: Multiple masculine forms, something wrong: m=%s" % m)
         return None
     f2 = "," in f
     n2 = "," in n
-    p2 = "," in p
+    pl2 = "," in pl
 
     def get_stressed_form(form, paramname):
         if "," not in form:
             return form
         forms = re.split(r"\s*,\s*", form)
         if len(forms) > 2:
-            pagemsg("WARNING: More than two forms in %s=%s" % (paramname, form))
+            p.msg("WARNING: More than two forms in %s=%s" % (paramname, form))
             return None
         for frm in forms:
             if not re.search(AC + "$", frm):
                 return frm
-        pagemsg("WARNING: Multiple forms but none stem-stressed: %s=%s" % (paramname, form))
+        p.msg("WARNING: Multiple forms but none stem-stressed: %s=%s" % (paramname, form))
         return forms[0]
 
     sf = get_stressed_form(f, "f")
@@ -251,27 +247,27 @@ def infer_decl(t, pagemsg):
     sn = get_stressed_form(n, "n")
     if sn is None:
         return None
-    sp = get_stressed_form(p, "p")
-    if sp is None:
+    spl = get_stressed_form(pl, "p")
+    if spl is None:
         return None
     fend = re.search(AC + "$", f)
     nend = re.search(AC + "$", n)
-    pend = re.search(AC + "$", p)
+    plend = re.search(AC + "$", pl)
     mm = re.search("^(.*)[ая]́?$", sf)
     if not mm:
-        pagemsg("WARNING: Unable to recognize feminine ending: %s" % sf)
+        p.msg("WARNING: Unable to recognize feminine ending: %s" % sf)
         return None
     fstem = mm.group(1)
     mm = re.search("^(.*)[оеё]́?$", sn)
     if not mm:
-        pagemsg("WARNING: Unable to recognize neuter ending: %s" % sn)
+        p.msg("WARNING: Unable to recognize neuter ending: %s" % sn)
         return None
     nstem = mm.group(1)
-    mm = re.search("^(.*)[ыи]́?$", sp)
+    mm = re.search("^(.*)[ыи]́?$", spl)
     if not mm:
-        pagemsg("WARNING: Unable to recognize plural ending: %s" % sp)
+        p.msg("WARNING: Unable to recognize plural ending: %s" % spl)
         return None
-    pstem = mm.group(1)
+    plstem = mm.group(1)
     mm = re.search("^(.*?)[ъьй]?$", m)
     assert mm
     mstem = mm.group(1)
@@ -280,8 +276,8 @@ def infer_decl(t, pagemsg):
         short_stem = fstem
     elif is_stressed(nstem):
         short_stem = nstem
-    elif is_stressed(pstem):
-        short_stem = pstem
+    elif is_stressed(plstem):
+        short_stem = plstem
     else:
         if make_unstressed_once_ru(fstem) == make_unstressed_once_ru(mstem):
             short_stem = mstem
@@ -291,36 +287,36 @@ def infer_decl(t, pagemsg):
     if stem == short_stem:
         short_stem = ""
     elif short_stem + "н" == stem and re.search("нн[иы]й$", stem + decl):
-        pagemsg("Found special (2): short stem %s, long stem %s" % (short_stem, stem))
+        p.msg("Found special (2): short stem %s, long stem %s" % (short_stem, stem))
         specials = ["(2)"]
         short_stem = ""
     else:
-        pagemsg("WARNING: Found short stem %s different from long stem %s" % (short_stem, stem))
+        p.msg("WARNING: Found short stem %s different from long stem %s" % (short_stem, stem))
     real_short_stem = short_stem or stem
     if specials != ["(2)"] and mstem != real_short_stem:
         if mstem + "н" == real_short_stem and re.search("нн$", real_short_stem):
-            pagemsg("Found special (1): short stem %s, masculine stem %s" % (real_short_stem, mstem))
+            p.msg("Found special (1): short stem %s, masculine stem %s" % (real_short_stem, mstem))
             specials = ["(1)"]
         elif make_unstressed_once_ru(stem) == mstem:
             # Can happen with monosyllabic masculines
             pass
         elif not m:
-            pagemsg("Missing short masculine singular")
+            p.msg("Missing short masculine singular")
             if real_short_stem.endswith("нн"):
                 specials = ["(1)"]
             explicit_msg = "-"
         else:
-            pagemsg("Masculine short stem %s differs from short stem %s, presumed reducible" % (mstem, real_short_stem))
+            p.msg("Masculine short stem %s differs from short stem %s, presumed reducible" % (mstem, real_short_stem))
             if "(1)" in specials or "(2)" in specials:
-                pagemsg("WARNING: Can't have reducible and special together")
+                p.msg("WARNING: Can't have reducible and special together")
                 return None
             specials = ["*", m]
     ff = f2 and "both" or fend and "end" or "stem"
     nn = n2 and "both" or nend and "end" or "stem"
-    pp = p2 and "both" or pend and "end" or "stem"
+    ppl = pl2 and "both" or plend and "end" or "stem"
 
-    def match(fval, nval, pval):
-        return ff == fval and nn == nval and pp == pval
+    def match(fval, nval, plval):
+        return ff == fval and nn == nval and ppl == plval
 
     stress = (
         match("stem", "stem", "stem")
@@ -340,13 +336,13 @@ def infer_decl(t, pagemsg):
         or None
     )
     if "*" in specials and not is_monosyllabic(m) and ((stress in ["b", "b'"]) != (not not is_ending_stressed(m))):
-        pagemsg(
+        p.msg(
             "WARNING: (De)reducible short masc sg %s has wrong stress for accent pattern %s, setting manual masc sg"
             % (m, stress)
         )
         explicit_msg = m
     if not stress:
-        pagemsg("WARNING: Unrecognized stress: m=%s f=%s n=%s p=%s" % (m, f, n, p))
+        p.msg("WARNING: Unrecognized stress: m=%s f=%s n=%s p=%s" % (m, f, n, pl))
         return None
 
     stem, decl = combine_stem(stem, decl)
@@ -356,7 +352,7 @@ def infer_decl(t, pagemsg):
                 if special == explicit_msg:
                     pass
                 else:
-                    pagemsg(
+                    p.msg(
                         "WARNING: Something wrong; trying to set explicit short masc sg %s when there's an existing setting %s"
                         % (special, explicit_msg)
                     )
@@ -370,9 +366,9 @@ def infer_decl(t, pagemsg):
         declargs = [stem, declspec]
         if explicit_msg:
             declargs.append("short_m=" + explicit_msg)
-        if trymatch(t, declargs, pagemsg):
+        if trymatch(t, declargs, p.msg):
             return declargs
-    pagemsg("WARNING: Unable to infer short accent")
+    p.msg("WARNING: Unable to infer short accent")
     return None
 
 
@@ -396,7 +392,7 @@ def _process_text_on_page(p) -> ProcessPageRetval:
                         break
                 new_template = str(t)
                 if orig_template != new_template:
-                    if not compare_results(orig_template, new_template, p.msg):
+                    if not compare_results(p, orig_template, new_template):
                         return None, None
             else:
                 for i in range(15, 0, -1):
@@ -462,8 +458,7 @@ def test_infer():
         msg("comment = %s" % comment)
 
 
-parser = blib.create_argparser("Convert manual Russian adjective declensions to {{ru-decl-adj}} and infer short accent pattern",
-                               include_pagefile=True, include_stdin=True)
+parser = blib.create_argparser("Convert manual Russian adjective declensions to {{ru-decl-adj}} and infer short accent pattern")
 parser.add_argument("--mockup", action="store_true", help="Use mocked-up test code")
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)

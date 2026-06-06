@@ -14,10 +14,10 @@
 #
 ##* {{RQ:Thackeray Vanity Fair|chapter=37|passage=His jaw was '''underhung''', and when he laughed, two white buckteeth protruded themselves and glistened savagely in the midst of the grin.}}
 
-import pywikibot, re, sys, argparse
+import pywikibot, re, sys
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, set_template_name, msg, errmsg, site
+from wingerbot.blib import getparam, rmparam, set_template_name, msg, errmsg
 
 
 def process_text_on_page(p):
@@ -49,7 +49,7 @@ def process_text_on_page(p):
 
 
 parser = blib.create_argparser(
-    "Reformat {{RQ:Addison Freeholder}} and {{RQ:Thackeray VF}}", include_pagefile=True, include_stdin=True
+    "Reformat {{RQ:Addison Freeholder}} and {{RQ:Thackeray VF}}"
 )
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)

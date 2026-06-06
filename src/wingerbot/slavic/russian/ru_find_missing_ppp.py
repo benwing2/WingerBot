@@ -62,7 +62,7 @@ def process_text_on_page(p):
 
 
 parser = blib.create_argparser(
-    "Find verbs with missing past passive participles", include_pagefile=True, include_stdin=True
+    "Find verbs with missing past passive participles"
 )
 parser.add_argument("--fix-pagefile", help="File containing pages to fix.")
 args = parser.parse_args()

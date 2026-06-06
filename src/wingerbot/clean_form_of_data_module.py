@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 
-import pywikibot, re, sys, argparse
+import pywikibot, re, sys
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, set_template_name, msg, site, tname
+from wingerbot.blib import getparam, rmparam, set_template_name, msg, tname
 
 
 def process_text_on_page(p):
@@ -16,8 +16,7 @@ def process_text_on_page(p):
 
     either_quote_string_re = '(".*?"|' + "'.*?')"
 
-    for lineind, line in enumerate(lines):
-        lineno = lineind + 1
+    for lineno, line in enumerate(lines, start=1):
         origline = line
 
         def linemsg(txt):
@@ -283,7 +282,7 @@ def process_text_on_page(p):
     return text, "clean data in form-of module"
 
 
-parser = blib.create_argparser("Clean form-of data modules", include_pagefile=True, include_stdin=True)
+parser = blib.create_argparser("Clean form-of data modules")
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 

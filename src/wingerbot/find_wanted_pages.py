@@ -131,7 +131,7 @@ def process_text_on_page(p):
         pass
 
 
-parser = blib.create_argparser("Find red links", include_pagefile=True, include_stdin=True)
+parser = blib.create_argparser("Find red links")
 parser.add_argument("--existing-pages", help="Gzipped file containing existing pages by language", required=True)
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)

@@ -30,7 +30,7 @@ def process_text_on_page(p):
 
 
 parser = blib.create_argparser(
-    "Convert German verb headwords to use new {{de-verb}}", include_pagefile=True, include_stdin=True
+    "Convert German verb headwords to use new {{de-verb}}"
 )
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)

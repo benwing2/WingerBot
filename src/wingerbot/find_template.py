@@ -109,7 +109,7 @@ def process_text_on_page(p):
             p.msg("Output %s lines" % lines_output)
 
 
-parser = blib.create_argparser("Find templates with specified params", include_pagefile=True, include_stdin=True)
+parser = blib.create_argparser("Find templates with specified params")
 parser.add_argument("--templates", help="""Comma-separated list of templates to check params of.""")
 parser.add_argument(
     "--params",

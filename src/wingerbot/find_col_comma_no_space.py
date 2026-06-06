@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 
-import pywikibot, re, sys, argparse
+import pywikibot, re, sys
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, msg, site, tname, pname
+from wingerbot.blib import getparam, rmparam, msg, tname, pname
 
 
 def process_text_on_page(p):
@@ -24,7 +24,7 @@ def process_text_on_page(p):
 
 
 parser = blib.create_argparser(
-    "Find column templates with comma not followed by space, or other regex", include_pagefile=True, include_stdin=True
+    "Find column templates with comma not followed by space, or other regex"
 )
 parser.add_argument("--regex", default=",[^ ]", help="Regex to search for.")
 args = parser.parse_args()

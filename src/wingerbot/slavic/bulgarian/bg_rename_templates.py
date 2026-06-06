@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 
-import pywikibot, re, sys, argparse
+import pywikibot, re, sys
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, msg, site, tname
+from wingerbot.blib import getparam, rmparam, msg, tname
 
 # col templates
 templates_to_rename = {
@@ -62,7 +62,7 @@ def process_text_on_page(p):
 
 
 parser = blib.create_argparser(
-    "Rename overly specific {{bg-*}} templates to more general ones", include_pagefile=True, include_stdin=True
+    "Rename overly specific {{bg-*}} templates to more general ones"
 )
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)

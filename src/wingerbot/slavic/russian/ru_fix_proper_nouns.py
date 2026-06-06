@@ -83,7 +83,7 @@ def process_text_on_page(p):
     return newtext, "Convert ru-adj11 to ru-decl-adj and fix up associated templates"
 
 
-parser = blib.create_argparser("Fix uses of ru-adj11", include_pagefile=True, include_stdin=True)
+parser = blib.create_argparser("Fix uses of ru-adj11")
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 

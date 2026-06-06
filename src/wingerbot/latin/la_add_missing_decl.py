@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 
-import pywikibot, re, sys, argparse
+import pywikibot, re, sys
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, tname, msg, site
+from wingerbot.blib import getparam, rmparam, tname, msg
 
 from wingerbot.latin import lalib
 
@@ -82,7 +82,7 @@ def process_text_on_page(p):
     return text, notes
 
 
-parser = blib.create_argparser("Add missing declension to Latin terms", include_pagefile=True, include_stdin=True)
+parser = blib.create_argparser("Add missing declension to Latin terms")
 parser.add_argument("--direcfile", help="File of output directives from make_latin_missing_decl.py", required=True)
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)

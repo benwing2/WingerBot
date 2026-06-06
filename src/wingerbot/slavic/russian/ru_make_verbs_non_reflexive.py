@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 
-import pywikibot, re, sys, argparse, copy
+import pywikibot, re, sys, copy
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, tname, msg, site
+from wingerbot.blib import getparam, rmparam, tname, msg
 
 
 def process_text_on_page(p):
@@ -27,7 +27,7 @@ def process_text_on_page(p):
 
 
 parser = blib.create_argparser(
-    "Fix up verb conjugations to not specify -refl", include_pagefile=True, include_stdin=True
+    "Fix up verb conjugations to not specify -refl"
 )
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)

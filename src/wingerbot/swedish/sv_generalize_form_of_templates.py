@@ -100,7 +100,7 @@ def process_text_on_page(p):
 
 
 parser = blib.create_argparser(
-    "Convert sv-* form-of templates to {{infl of}}", include_pagefile=True, include_stdin=True
+    "Convert sv-* form-of templates to {{infl of}}"
 )
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)

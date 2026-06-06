@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 
-import pywikibot, re, sys, argparse
+import pywikibot, re, sys
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, tname, pname, msg, site
+from wingerbot.blib import getparam, rmparam, tname, pname, msg
 
 prepositions = {
     "à ",
@@ -665,8 +665,6 @@ def process_text_on_page(p):
 
 parser = blib.create_argparser(
     "Remove redundant params in {{fr-noun}}/{{fr-adj}} or replace with shortcut(s)",
-    include_pagefile=True,
-    include_stdin=True,
 )
 parser.add_argument("--do-nouns", action="store_true")
 parser.add_argument("--do-adjectives", action="store_true")

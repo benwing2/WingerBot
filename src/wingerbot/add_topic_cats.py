@@ -97,7 +97,7 @@ def process_text_on_page(p, cats_to_add, japanese_sort_keys):
     return text, notes
 
 
-parser = blib.create_argparser("Add categories", include_pagefile=True, include_stdin=True)
+parser = blib.create_argparser("Add categories")
 parser.add_argument(
     "--direcfile",
     help="File containing pages and topic categories to add, e.g. 'Rus ||| cs:Male people|Nationalities,sh:Male people|Nationalities'",

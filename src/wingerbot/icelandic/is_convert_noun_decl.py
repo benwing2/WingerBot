@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 
-import pywikibot, re, sys, argparse, json, unicodedata
+import pywikibot, re, sys, json, unicodedata
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, getrmparam, tname, pname, msg, site
+from wingerbot.blib import getparam, rmparam, getrmparam, tname, pname, msg
 
 # Rules for converting old declension templates to new ones:
 # 1. Masculines:
@@ -731,7 +731,7 @@ def process_text_on_page(p):
 
 
 parser = blib.create_argparser(
-    "Convert Icelandic noun decl templates to new form", include_pagefile=True, include_stdin=True
+    "Convert Icelandic noun decl templates to new form"
 )
 parser.add_argument("--direcfile", help="File containing manually specified declensions")
 parser.add_argument(

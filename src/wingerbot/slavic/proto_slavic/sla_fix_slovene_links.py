@@ -5,7 +5,7 @@
 import pywikibot, re
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, msg, site, tname
+from wingerbot.blib import getparam, rmparam, msg, tname
 
 GRAVE = "\u0300"
 ACUTE = "\u0301"
@@ -50,20 +50,18 @@ def remove_slovene_accents(lemma):
     return lemma
 
 
-def look_up_tonal_form(pagename, pagemsg, errandpagemsg):
-    page = pywikibot.Page(site, pagename)
-    text = blib.safe_page_text(page, errandpagemsg)
-    parsed = blib.parse_text(text)
+def look_up_tonal_form(p, pagename):
+    pp = blib.create_process_page_params(args, p.index, pagename, msg_title = "%s: %s" % (p.title, pagename))
+    if pp is None:
+        return None
+    parsed = blib.parse_text(pp.text)
     tonal_forms = []
     for t in parsed.filter_templates():
         if tname(t) == "sl-tonal":
             if args.verbose:
-                pagemsg("look_up_tonal_form: For page %s, found tonal template %s" % (pagename, str(t)))
+                p.msg("look_up_tonal_form: Found tonal template %s" % str(t))
             if tonal_forms:
-                pagemsg(
-                    "WARNING: Found multiple {{sl-tonal}} calls for page %s: new one is %s; can't handle"
-                    % (pagename, str(t))
-                )
+                p.msg("WARNING: Found multiple {{sl-tonal}} calls: new one is %s; can't handle" % str(t))
                 return None
             tonal_forms.append(getparam(t, "1"))
             for param in ["2", "3", "4", "5", "6"]:
@@ -138,7 +136,7 @@ def process_text_on_page(p):
                         p.msg("WARNING: Found unexpected param %s in %s, skipping" % (pname, str(t)))
                         break
                 else:
-                    tonal_forms = look_up_tonal_form(remove_slovene_accents(linkpage), p.msg, p.errandmsg)
+                    tonal_forms = look_up_tonal_form(p, remove_slovene_accents(linkpage))
                     if tonal_forms:
                         if False:  # len(tonal_forms) > 1:
                             pass
@@ -191,7 +189,7 @@ def process_text_on_page(p):
 
 
 parser = blib.create_argparser(
-    "Convert Slovene links in Proto-Slavic pages to tonal form", include_pagefile=True, include_stdin=True
+    "Convert Slovene links in Proto-Slavic pages to tonal form"
 )
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)

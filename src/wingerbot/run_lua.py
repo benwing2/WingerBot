@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-import pywikibot, argparse
+import argparse, pywikibot
 
 parser = argparse.ArgumentParser(description="Upload a Lua file to Wiktionary and run an entry point.")
 parser.add_argument("--local-file", help="Local Lua file to upload.", required=True)

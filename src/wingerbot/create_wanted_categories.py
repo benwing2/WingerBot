@@ -60,7 +60,7 @@ def process_page(p):
             p.msg("Would create, comment = %s" % comment)
 
 
-params = blib.create_argparser("Create wanted categories with {{auto cat}}", include_pagefile=True,
+params = blib.create_argparser("Create wanted categories with {{auto cat}}",
                                no_include_stdin=True)
 params.add_argument("--allow-empty", help="Proceed even when category is empty.", action="store_true")
 params.add_argument("--overwrite", help="Overwrite existing text.", action="store_true")

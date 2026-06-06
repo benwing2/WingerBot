@@ -8,7 +8,7 @@ import pywikibot, re
 from wingerbot import blib
 from wingerbot.blib import msg, errandmsg, site
 
-parser = blib.create_argparser("Find Bulgarian red links", include_pagefile=True, no_include_stdin=True)
+parser = blib.create_argparser("Find Bulgarian red links", no_include_stdin=True)
 parser.add_argument("--direcfile", help="File containing pages to check and frequencies")
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)

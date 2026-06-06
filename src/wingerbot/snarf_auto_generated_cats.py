@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 
-import pywikibot, re, sys, argparse
+import pywikibot, re, sys
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, tname, pname, msg, site
+from wingerbot.blib import getparam, rmparam, tname, pname, msg
 
 
 def process_text_on_page(p):
@@ -42,7 +42,7 @@ def process_text_on_page(p):
 
 
 if __name__ == "__main__":
-    parser = blib.create_argparser("Find categories to snarf", include_pagefile=True, include_stdin=True)
+    parser = blib.create_argparser("Find categories to snarf")
     parser.add_argument(
         "--templates-to-expand", default="rhymes,rhyme", help="Templates to look for rhymes categories in"
     )

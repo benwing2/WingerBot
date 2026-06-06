@@ -3,10 +3,10 @@
 # Given the file from ruwikt of words where е is pronounced hard, check
 # the words in enwikt to see their pronunciations.
 
-import pywikibot, re
+import re
 
 from wingerbot import blib
-from wingerbot.blib import getparam, msg, site, tname
+from wingerbot.blib import getparam, msg, tname
 
 
 def process_text_on_page(p):
@@ -17,12 +17,12 @@ def process_text_on_page(p):
         p.msg("WARNING: Can't find properties for page")
         return
     phon, softphon, variant = props
-    if not p.text and not blib.safe_page_exists(pywikibot.Page(site, p.title), p.errandmsg):
+    if not p.text and p.page is not None and not blib.safe_page_exists(p.page, p.errandmsg):
         p.msg(
             "Page doesn't exist, should have pron phon=%s%s" % (phon, variant and " with variant %s" % variant or "")
         )
         return
-    if "==Russian==" not in p.text:
+    if not re.search(r"==[ \t]*Russian[ \t]*==", p.text):
         p.msg(
             "Page doesn't have Russian section, should have pron phon=%s%s"
             % (phon, variant and " with variant %s" % variant or "")
@@ -78,7 +78,7 @@ def process_text_on_page(p):
 
 
 parser = blib.create_argparser(
-    "Check for words in enwikt that should have hard е", include_pagefile=True, include_stdin=True
+    "Check for words in enwikt that should have hard е"
 )
 parser.add_argument(
     "--direcfile",

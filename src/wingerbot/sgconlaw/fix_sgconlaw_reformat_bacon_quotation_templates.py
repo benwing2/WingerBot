@@ -12,10 +12,10 @@
 #
 # If 'RQ:Bacon Of The True Greatness' occurs without raw passage text following, we just replace with 'RQ:Bacon Essayes|chapter=Of the True Greatness of Kingdoms and Estates'.
 
-import pywikibot, re, sys, argparse
+import pywikibot, re, sys
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, set_template_name, msg, errmsg, site, tname
+from wingerbot.blib import getparam, rmparam, set_template_name, msg, errmsg, tname
 
 
 def process_text_on_page(p):
@@ -67,7 +67,7 @@ def process_text_on_page(p):
 
 
 parser = blib.create_argparser(
-    "Rename and reformat Bacon quotation templates for [[User:Sgconlaw]]", include_pagefile=True, include_stdin=True
+    "Rename and reformat Bacon quotation templates for [[User:Sgconlaw]]"
 )
 parser.add_argument(
     "--direcfile",

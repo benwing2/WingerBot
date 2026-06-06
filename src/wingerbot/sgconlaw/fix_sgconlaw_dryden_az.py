@@ -10,10 +10,10 @@
 #
 # #* {{RQ:Dryden Aureng-zebe|passage=We are both love's captives, but with fates so '''cross''', / One must be happy by the other's loss.}}
 
-import pywikibot, re, sys, argparse
+import pywikibot, re, sys
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, set_template_name, msg, errmsg, site
+from wingerbot.blib import getparam, rmparam, set_template_name, msg, errmsg
 
 
 def process_text_on_page(p):
@@ -35,7 +35,7 @@ def process_text_on_page(p):
 
 
 parser = blib.create_argparser(
-    "Reformat {{RQ:Dryden AZ}} and {{RQ:Dryden Aureng-zebe}}", include_pagefile=True, include_stdin=True
+    "Reformat {{RQ:Dryden AZ}} and {{RQ:Dryden Aureng-zebe}}"
 )
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)

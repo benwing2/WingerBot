@@ -34,7 +34,7 @@ def process_text_on_page(p):
 
 
 parser = blib.create_argparser(
-    "Use {{bg-ndecl}}/{{bg-adecl}} for Bulgarian declensions", include_pagefile=True, include_stdin=True
+    "Use {{bg-ndecl}}/{{bg-adecl}} for Bulgarian declensions"
 )
 parser.add_argument("--adj", help="Do adjectives instead of nouns", action="store_true")
 args = parser.parse_args()

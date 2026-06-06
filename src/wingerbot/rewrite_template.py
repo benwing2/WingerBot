@@ -6,7 +6,7 @@ from typing import cast
 import pywikibot, re
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, msg, errandmsg, site, tname, pname
+from wingerbot.blib import getparam, rmparam, msg, errandmsg, tname, pname, site
 from wingerbot.rename import rename_page
 
 templates_to_rename = set()
@@ -378,8 +378,6 @@ renaming their references (they are renamed first so that the template with the 
 the references are renamed and the page saved). If an error occurs during renaming the template itself, its references
 will not be changed unless the template is among those given in `--ignore-rename-errors` (use the value 'all' to ignore
 all rename errors).""",
-    include_pagefile=True,
-    include_stdin=True,
 )
 parser.add_argument("-t", "--template", help="Name of template; separate with a comma for multiple templates.")
 parser.add_argument("-n", "--new-name", help="New name of template; separate with a comma for multiple templates.")

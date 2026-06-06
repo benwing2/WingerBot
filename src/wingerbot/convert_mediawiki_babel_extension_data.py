@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-import argparse, json, re, os
+import argparse, json, re
 
 parser = argparse.ArgumentParser(description="Convert MediaWiki Babel extension data to a Lua data file.")
 parser.add_argument("--directory", help="Directory containing JSON JSON files.", required=True)

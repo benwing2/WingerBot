@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 
-import pywikibot, re, sys, argparse
+import pywikibot, re, sys
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, msg, site, tname
+from wingerbot.blib import getparam, rmparam, msg, tname
 
 templates_to_add_en = [
     #  "standard form of",
@@ -46,7 +46,7 @@ def process_text_on_page(p):
     return str(parsed), notes
 
 
-parser = blib.create_argparser("Add |en to templates missing it", include_pagefile=True, include_stdin=True)
+parser = blib.create_argparser("Add |en to templates missing it")
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 

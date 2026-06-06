@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 
-import pywikibot, re, sys, argparse
+import pywikibot, re, sys
 import traceback, pprint
 
 from wingerbot import blib
-from wingerbot.blib import PagemsgCallback, getparam, rmparam, msg, errandmsg, site, tname
+from wingerbot.blib import PagemsgCallback, getparam, rmparam, msg, errandmsg, tname
 from mwparserfromhell.nodes import Template
 from dataclasses import dataclass
 
@@ -7042,7 +7042,7 @@ def process_text_on_page_for_check_ignore(p):
 
 
 parser = blib.create_argparser(
-    "Rename various lang-specific form-of templates to more general variants", include_pagefile=True, include_stdin=True
+    "Rename various lang-specific form-of templates to more general variants"
 )
 parser.add_argument("--do-all", help="Do all templates instead of default list", action="store_true")
 parser.add_argument("--do-specified", help="Do specified comma-separated templates instead of default list")

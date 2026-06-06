@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 
-import pywikibot, re, sys, argparse
+import pywikibot, re, sys
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, set_template_name, msg, errmsg, site, tname, pname
+from wingerbot.blib import getparam, rmparam, set_template_name, msg, errmsg, tname, pname
 from collections import defaultdict
 
 TEMP_BOLDFACE = "\ufff0"
@@ -2212,7 +2212,7 @@ def process_text_on_page(p):
     return str(parsed), notes
 
 
-parser = blib.create_argparser("rename {{quote-*}} params", include_pagefile=True, include_stdin=True)
+parser = blib.create_argparser("rename {{quote-*}} params")
 parser.add_argument("--check-unhandled-params", action="store_true", help="Check for unhandled params")
 parser.add_argument(
     "--check-compound-pages", action="store_true", help="Check for possible compound pages like page=12-81"

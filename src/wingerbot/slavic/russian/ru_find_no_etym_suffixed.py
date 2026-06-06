@@ -260,8 +260,6 @@ def process_text_on_page(p):
 # Pages specified using --pages or --pagefile may have accents, which will be stripped.
 parser = blib.create_argparser(
     "Find etymologies for adjectives and nouns with common suffixes",
-    include_pagefile=True,
-    include_stdin=True,
 )
 parser.add_argument("--nouns", action="store_true", help="Do derived nouns instead of adjectives")
 parser.add_argument("--adverbs", action="store_true", help="Do derived adverbs")

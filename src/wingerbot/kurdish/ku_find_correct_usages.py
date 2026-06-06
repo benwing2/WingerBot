@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 
-import pywikibot, re, sys, argparse
+import pywikibot, re, sys
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, set_template_name, msg, errmsg, site, tname
+from wingerbot.blib import getparam, rmparam, set_template_name, msg, errmsg, tname
 
 arabic_charset = "؀-ۿݐ-ݿࢠ-ࣿﭐ-﷽ﹰ-ﻼ"
 
@@ -55,7 +55,7 @@ def process_text_on_page(p):
 
 
 parser = blib.create_argparser(
-    "Find or correct usages of language code 'ku'", include_pagefile=True, include_stdin=True
+    "Find or correct usages of language code 'ku'"
 )
 parser.add_argument("--find", action="store_true", help="Find usages only")
 args = parser.parse_args()

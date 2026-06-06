@@ -24,7 +24,7 @@ def process_text_on_page(p):
         p.msg("Missing adj headword template%s" % (notes and "; " + ",".join(notes)))
 
 
-parser = blib.create_argparser("Find missing Russian adjective headwords", include_pagefile=True, include_stdin=True)
+parser = blib.create_argparser("Find missing Russian adjective headwords")
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 

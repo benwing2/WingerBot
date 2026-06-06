@@ -5,7 +5,7 @@ from dataclasses import dataclass
 from mwparserfromhell.nodes import Template
 
 from wingerbot import blib
-from wingerbot.blib import getparam, site, tname
+from wingerbot.blib import getparam, tname, site
 from wingerbot.latin import lalib, la_clean_long_vowels
 
 heads_and_defns_cache = {}
@@ -823,7 +823,7 @@ def process_text_on_page(p):
 
 
 parser = blib.create_argparser(
-    "Check for Latin forms that don't match headword", include_pagefile=True, include_stdin=True
+    "Check for Latin forms that don't match headword"
 )
 parser.add_argument("--fix-macrons", help="Correct macron differences.", action="store_true")
 args = parser.parse_args()

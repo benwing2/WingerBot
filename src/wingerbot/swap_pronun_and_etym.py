@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 
 from collections import defaultdict
-import pywikibot, re, sys, argparse
+import pywikibot, re, sys
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, msg, site, tname
+from wingerbot.blib import getparam, rmparam, msg, tname
 
 
 def process_text_on_page(p):
@@ -14,7 +14,7 @@ def process_text_on_page(p):
     return newtext, "put Etymology before Pronunciation"
 
 
-parser = blib.create_argparser("Put Etymology before Pronunciation", include_pagefile=True, include_stdin=True)
+parser = blib.create_argparser("Put Etymology before Pronunciation")
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 

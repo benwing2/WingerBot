@@ -1,13 +1,15 @@
 #!/usr/bin/env python3
 
-import re, argparse
+import re
 
-from wingerbot import form_of_templates
+from wingerbot import blib, form_of_templates
 from wingerbot.blib import msg
 
-parser = argparse.ArgumentParser(description="Generate table documenting form-of template variants.")
+parser = blib.create_argparser("Generate table documenting form-of template variants.",
+                               no_include_pagefile=True, no_include_stdin=True)
 parser.add_argument("--direcfile", help="File containing directives.")
 args = parser.parse_args()
+start, end = blib.parse_start_end(args.start, args.end)
 
 if not args.direcfile:
     msg('{|class="wikitable"')
@@ -48,8 +50,10 @@ else:
     msg(
         "! Template !! Category !! Takes inflection tags !! Initial capital !! Final period !! Supports from=, from2=, ... || Supports p=/POS="
     )
-    for line in open(args.direcfile, "r", encoding="utf-8"):
-        direcs = line.rstrip("\n").split(",")
+    for lineno, line in blib.iter_items_from_file(args.direcfile, start, end):
+        def linemsg(txt):
+            msg("Line %s: %s" % (lineno, txt))
+        direcs = line.split(",")
         template = direcs[0]
         withtags = False
         withcap = False
@@ -71,7 +75,12 @@ else:
             elif direc.startswith("cat="):
                 cats = re.sub("^cat=", "", direc).split(",")
             else:
-                assert False, "Unrecognized directive %s" % direc
+                linemsg("WARNING: Unrecognized directive %s" % direc)
+                continue
+
+        if cats is None:
+            linemsg("WARNING: No categories specified on line: %s" % line)
+            continue
 
         def dobool(val):
             return val and "'''yes'''" or "no"

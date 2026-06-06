@@ -28,7 +28,7 @@ def process_text_on_page(p):
 
 
 parser = blib.create_argparser(
-    "Change verb type *-impers-refl to *-refl-impers", include_pagefile=True, include_stdin=True
+    "Change verb type *-impers-refl to *-refl-impers"
 )
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)

@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 
-import pywikibot, re, sys, argparse
+import pywikibot, re, sys
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, msg, site, tname
+from wingerbot.blib import getparam, rmparam, msg, tname
 
 positive_ending_tags = {
     "en": ["str//wk|nom//acc|m|s", "wk|dat|m//n|s", "str//wk|dat|p"],
@@ -130,7 +130,7 @@ def process_text_on_page(p):
 
 
 parser = blib.create_argparser(
-    "Replace {{lb-inflected form of}} with proper call to {{inflection of}}", include_pagefile=True, include_stdin=True
+    "Replace {{lb-inflected form of}} with proper call to {{inflection of}}"
 )
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)

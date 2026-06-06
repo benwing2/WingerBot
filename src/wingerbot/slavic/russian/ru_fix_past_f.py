@@ -26,7 +26,7 @@ def process_text_on_page(p):
     return str(parsed), notes
 
 
-parser = blib.create_argparser("Convert 4th param to past_f", include_pagefile=True, include_stdin=True)
+parser = blib.create_argparser("Convert 4th param to past_f")
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 

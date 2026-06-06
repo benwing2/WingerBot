@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 
-import pywikibot, re, sys, argparse, json
+import pywikibot, re, sys, json
 from collections import defaultdict
 
 from wingerbot import blib, lang_utils
-from wingerbot.blib import getparam, rmparam, msg, site, tname, pname
+from wingerbot.blib import getparam, rmparam, msg, tname, pname
 from wingerbot.remove_redundant_sc import check_script_agrees
 
 from dataclasses import dataclass, field
@@ -2120,8 +2120,6 @@ def process_text_on_page(p):
 if __name__ == "__main__":
     parser = blib.create_argparser(
         "Convert translation lines to new-syntax {{t}}",
-        include_pagefile=True,
-        include_stdin=True,
     )
     args = parser.parse_args()
     start, end = blib.parse_start_end(args.start, args.end)

@@ -490,7 +490,7 @@ def process_text_on_page(p):
         p.errandmsg("WARNING: Not overwriting existing Russian section")
         return
 
-parser = blib.create_argparser("Save Russian numbers to Wiktionary", include_pagefile=True, include_stdin=True)
+parser = blib.create_argparser("Save Russian numbers to Wiktionary")
 parser.add_argument("--offline", help="Operate offline, outputting text of new pages", action="store_true")
 parser.add_argument(
     "--overwrite-page",

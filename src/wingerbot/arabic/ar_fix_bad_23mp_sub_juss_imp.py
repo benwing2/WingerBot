@@ -3,7 +3,7 @@
 import pywikibot, re
 
 from wingerbot import blib
-from wingerbot.blib import getparam, msg, errandmsg, site, tname, pname
+from wingerbot.blib import getparam, tname, pname, site
 
 recognized_tag_sets = [
     "2|m|p|non-past|actv|subj",
@@ -292,7 +292,7 @@ def process_text_on_page(p):
 
 
 parser = blib.create_argparser(
-    "Fix misspelling in Arabic 2nd/3rd masc pl non-past subj/juss forms", include_pagefile=True, include_stdin=True
+    "Fix misspelling in Arabic 2nd/3rd masc pl non-past subj/juss forms"
 )
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)

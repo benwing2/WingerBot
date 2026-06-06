@@ -72,7 +72,7 @@ def process_text_on_page(p):
 
 
 parser = blib.create_argparser(
-    "Convert ru-conj-* to ru-conj and move variant", include_pagefile=True, include_stdin=True
+    "Convert ru-conj-* to ru-conj and move variant"
 )
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)

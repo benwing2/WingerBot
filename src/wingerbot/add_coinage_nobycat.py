@@ -59,7 +59,7 @@ def add_remove_nobycat(p):
 
 
 parser = blib.create_argparser(
-    "Add or remove nobycat= as necessary to/from {{coinage}}", include_pagefile=True, include_stdin=True
+    "Add or remove nobycat= as necessary to/from {{coinage}}"
 )
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)

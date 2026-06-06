@@ -79,7 +79,7 @@ def process_text_on_page(p):
     return str(parsed), "Replace ru-decl-noun-z with ru-noun-table"
 
 
-parser = blib.create_argparser("Convert ru-decl-noun-z into ru-noun-table", include_pagefile=True, include_stdin=True)
+parser = blib.create_argparser("Convert ru-decl-noun-z into ru-noun-table")
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 

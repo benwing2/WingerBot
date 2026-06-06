@@ -140,7 +140,7 @@ def process_text_on_page(p):
     return text, notes
 
 
-parser = blib.create_argparser("Split regional label data module", include_pagefile=True, include_stdin=True)
+parser = blib.create_argparser("Split regional label data module")
 parser.add_argument("--regional-data-module", help="File containing 'Module:labels/data/regional'", required=True)
 parser.add_argument(
     "--regional-data-module-name", help="Name of regional data module", default="Module:labels/data/regional"

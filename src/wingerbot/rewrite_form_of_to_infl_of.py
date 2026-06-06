@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 
-import pywikibot, re, sys, argparse
+import pywikibot, re, sys
 from collections import defaultdict
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, msg, site, tname, pname
+from wingerbot.blib import getparam, rmparam, msg, tname, pname
 
 templates = {
     #  "genitive singular definite of": ["def", "gen", "s"],
@@ -77,7 +77,7 @@ def process_text_on_page(p):
 
 
 parser = blib.create_argparser(
-    "Rewrite more specific form-of templates to use {{inflection of}}", include_pagefile=True, include_stdin=True
+    "Rewrite more specific form-of templates to use {{inflection of}}"
 )
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)

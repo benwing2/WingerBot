@@ -54,7 +54,7 @@ def process_text_on_page(p):
     return str(parsed), comment
 
 
-parser = blib.create_argparser("Make neuter nouns be inanimate", include_pagefile=True, include_stdin=True)
+parser = blib.create_argparser("Make neuter nouns be inanimate")
 parser.add_argument("--fix-indeclinable", action="store_true", help="Make non-indeclinables be indeclinable")
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)

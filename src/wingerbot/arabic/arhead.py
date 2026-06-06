@@ -33,7 +33,7 @@ def process_text_on_page(p):
     return str(parsed), "ar headword: head= > 1="
 
 
-parser = blib.create_argparser("Convert head= to 1= in Arabic headwords", include_pagefile=True, include_stdin=True)
+parser = blib.create_argparser("Convert head= to 1= in Arabic headwords")
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 

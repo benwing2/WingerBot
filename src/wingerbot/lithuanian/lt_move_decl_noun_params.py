@@ -155,7 +155,7 @@ def process_text_on_page(p):
 
 
 parser = blib.create_argparser(
-    "Convert {{lt-decl-noun-stress}} to {{lt-decl-noun}}", include_pagefile=True, include_stdin=True
+    "Convert {{lt-decl-noun-stress}} to {{lt-decl-noun}}"
 )
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)

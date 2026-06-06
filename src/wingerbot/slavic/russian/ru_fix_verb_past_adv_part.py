@@ -36,7 +36,7 @@ def process_text_on_page(p):
 
 
 parser = blib.create_argparser(
-    "Fix past_adv_part_short to use dash instead of blank", include_pagefile=True, include_stdin=True
+    "Fix past_adv_part_short to use dash instead of blank"
 )
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)

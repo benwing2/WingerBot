@@ -196,7 +196,7 @@ def vocalize_links(cattype, start, end):
     return blib.process_links("ar", "Arabic", cattype, start, end, process_param, join_actions)
 
 
-parser = blib.create_argparser("Correct vocalization and translit", include_pagefile=True, include_stdin=True)
+parser = blib.create_argparser("Correct vocalization and translit")
 parser.add_argument("-l", "--links", action="store_true", help="Vocalize links")
 parser.add_argument("--cattype", default="borrowed", help="Categories to examine ('vocab', 'borrowed', 'translation')")
 

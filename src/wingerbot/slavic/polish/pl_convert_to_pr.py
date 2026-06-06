@@ -652,7 +652,7 @@ def process_text_on_page(p):
     return modsec.rebuild(secbody=str(parsed)), notes
 
 
-parser = blib.create_argparser("Convert {{pl-p}} to {{pl-pr}}", include_pagefile=True, include_stdin=True)
+parser = blib.create_argparser("Convert {{pl-p}} to {{pl-pr}}")
 parser.add_argument(
     "--dont-compare-pronuns",
     action="store_true",

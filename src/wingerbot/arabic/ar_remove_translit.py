@@ -221,7 +221,7 @@ def process_links(cattype, start, end):
     )
 
 
-parser = blib.create_argparser("Remove redundant translit", include_pagefile=True, include_stdin=True)
+parser = blib.create_argparser("Remove redundant translit")
 parser.add_argument("-l", "--links", action="store_true", help="Vocalize links")
 parser.add_argument("--cattype", default="borrowed", help="Categories to examine ('vocab', 'borrowed', 'translation')")
 

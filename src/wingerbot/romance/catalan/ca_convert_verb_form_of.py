@@ -3,7 +3,7 @@
 import pywikibot, re
 
 from wingerbot import blib
-from wingerbot.blib import getparam, msg, site, tname
+from wingerbot.blib import getparam, tname, site
 
 conj_table = {}
 
@@ -242,7 +242,7 @@ def process_text_on_page(p):
     return modsec.rebuild(secbody="".join(subsections)), notes
 
 
-parser = blib.create_argparser("Convert {{ca-verb form of}} to new format", include_pagefile=True, include_stdin=True)
+parser = blib.create_argparser("Convert {{ca-verb form of}} to new format")
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 

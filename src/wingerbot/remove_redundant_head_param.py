@@ -136,7 +136,7 @@ def process_text_on_page(p):
     return text, notes
 
 
-parser = blib.create_argparser("Remove redundant head parameters", include_pagefile=True, include_stdin=True)
+parser = blib.create_argparser("Remove redundant head parameters")
 parser.add_argument("--langs", required=True)
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)

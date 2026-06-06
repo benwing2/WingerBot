@@ -61,7 +61,7 @@ def process_text_on_page(p):
 
 
 parser = blib.create_argparser(
-    "Rewrite class 8b verbs to correspond to module changes", include_pagefile=True, include_stdin=True
+    "Rewrite class 8b verbs to correspond to module changes"
 )
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)

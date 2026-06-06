@@ -4,7 +4,7 @@
 
 from collections.abc import Generator, Iterable, Callable
 
-import pywikibot, mwparserfromhell, re, sys, urllib, datetime, argparse, time, itertools
+import pywikibot, mwparserfromhell, argparse, re, sys, urllib, datetime, time, itertools
 from pywikibot import Page, Category
 from mwparserfromhell.nodes import Template
 from mwparserfromhell.nodes.extras import Parameter
@@ -603,10 +603,17 @@ def expand_text(
     return result
 
 
-def do_edit(args: argparse.Namespace, index: Index, page: Page | str, process: NewProcessTextOnPageCallback,
-            no_fetch_text: bool = False, must_exist: bool = False, msg_index: str | None = None,
-            msg_title: str | None = None) -> None:
-
+def create_process_page_params(
+    args: argparse.Namespace, index: Index, page: Page | str, no_fetch_text: bool = False, must_exist: bool | str = False,
+    msg_index: str | None = None, msg_title: str | None = None
+) -> ProcessPageParams | None:
+    """Create a ProcessPageParams object in the same way that do_edit() does it. `page` can be a string (a page title)
+    or a Pywikibot Page object. This validates the page title, returning None if the page title is invalid. If
+    `must_exist` is specified, the page must exist or None is returned. If `must_exist` is a string, that string is
+    displayed (using p.msg) if the page doesn't exist; otherwise a generic message is displayed. The text in the
+    returned ProcessPageParams object will be correctly initialized unless `no_fetch_text` is set, in which case it
+    will be set to an empty string. If a ProcessPageParams object is returned, the `.page` property will never be None,
+    but since Pylance doesn't know that, you may have to assert this."""
     if type(page) is str:
         pagetitle = page
         pwpage = pywikibot.Page(site, page)
@@ -625,11 +632,22 @@ def do_edit(args: argparse.Namespace, index: Index, page: Page | str, process: N
         return
     p.title = validated_pagetitle
     if must_exist and not safe_page_exists(pwpage, p.errandmsg):
-        p.msg("Skipping; page doesn't exist")
+        p.msg(must_exist if type(must_exist) is str else "Skipping; page doesn't exist")
         return
     if not no_fetch_text:
         p.text = safe_page_text(page, p.errandmsg)
+    return p
 
+
+def do_edit(args: argparse.Namespace, index: Index, page: Page | str, process: NewProcessTextOnPageCallback,
+            no_fetch_text: bool = False, must_exist: bool = False, msg_index: str | None = None,
+            msg_title: str | None = None) -> None:
+    p = create_process_page_params(args, index, page, no_fetch_text=no_fetch_text, must_exist=must_exist,
+                                   msg_index=msg_index, msg_title=msg_title)
+    if p is None:
+        return
+    pwpage = p.page
+    assert pwpage is not None  # never None in return value of create_process_page_params()
     try:
         if args.verbose:
             p.msg("Begin processing")
@@ -1232,8 +1250,7 @@ starttime = time.time()
 
 
 def create_argparser(
-    desc, include_pagefile=False, include_stdin=False, no_beginning_line=False, suppress_start_end=False,
-    no_include_pagefile=False, no_include_stdin=False,
+    desc, no_beginning_line=False, suppress_start_end=False, no_include_pagefile=False, no_include_stdin=False,
 ):
     if not no_beginning_line:
         msg("Beginning at %s" % time.ctime(starttime))
@@ -1244,7 +1261,7 @@ def create_argparser(
     parser.add_argument("-s", "--save", action="store_true", help="Save results")
     parser.add_argument("-v", "--verbose", action="store_true", help="More verbose output")
     parser.add_argument("-d", "--diff", action="store_true", help="Show diff of changes")
-    if include_pagefile:
+    if not no_include_pagefile:
         parser.add_argument("--pagefile", help="File listing pages to process.")
         parser.add_argument("--pages", help="List of pages to process, comma-separated.")
         parser.add_argument(
@@ -1337,7 +1354,7 @@ def create_argparser(
         # Not implemented yet.
         # parser.add_argument("--parallel", help="Do in parallel.", action="store_true")
         # parser.add_argument("--num-workers", help="Number of workers for use with --parallel.", type=int, default=5)
-    if include_stdin:
+    if not no_include_stdin:
         parser.add_argument("--find-regex", help="Read find_regex.py output from stdin.", action="store_true")
         parser.add_argument(
             "--begin-end", help="Read per-line <begin> ... <end> output from stdin.", action="store_true"
@@ -1346,7 +1363,7 @@ def create_argparser(
         parser.add_argument(
             "--only-lang", help="Only process the section of a page for this language (a canonical language name)."
         )
-    if include_pagefile or include_stdin:
+    if not (no_include_pagefile and no_include_stdin):
         parser.add_argument(
             "--ignore-embedded-page-indices",
             help="When processing output from find_regex.py, begin-end output or other similar output from stdin or '--pages-from-find-regex', ignore associated page indices and increment sequentially.",
@@ -1437,7 +1454,7 @@ def do_handle_stdin_retval(args, retval, text, prev_comment, pagemsg, output_for
 # --refs, or (if --stdin is given) from a Wiktionary dump or find_regex.py output read from stdin. A typical workflow is
 # like this:
 #
-# parser = blib.create_argparser("DESCRIPTION OF WHAT SCRIPT DOES", include_pagefile=True, include_stdin=True)
+# parser = blib.create_argparser("DESCRIPTION OF WHAT SCRIPT DOES")
 # parser.add_argument("--argument", help="DESCRIPTION OF ARGUMENT.")
 # parser.add_argument("--flag", action="store_true", help="DESCRIPTION OF BOOLEAN FLAG.")
 # args = parser.parse_args()

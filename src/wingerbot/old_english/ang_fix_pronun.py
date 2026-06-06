@@ -180,7 +180,7 @@ def process_text_on_page_for_modification(p):
 
 
 parser = blib.create_argparser(
-    "Find Old English heads and pronuns or fix them", include_pagefile=True, include_stdin=True
+    "Find Old English heads and pronuns or fix them"
 )
 parser.add_argument("--new-pronuns", help="File containing new pronuns.")
 args = parser.parse_args()

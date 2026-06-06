@@ -1,10 +1,9 @@
 #!/usr/bin/env python3
 
-import pywikibot, re
+import re
 
 from wingerbot import blib
-from wingerbot.blib import getparam, msg, site, tname
-
+from wingerbot.blib import getparam, msg, tname
 from wingerbot.slavic.russian import rulib
 
 nouns = []
@@ -31,17 +30,17 @@ def process_text_on_page(p):
             if len(heads) > 1:
                 p.msg("Skipping adjective with multiple heads: %s" % ",".join(heads))
                 continue
-            noun_page = pywikibot.Page(site, noun)
-            noun_text = blib.safe_page_text(noun_page, p.errandmsg)
-            if not noun_text:
-                p.msg("Page %s doesn't exist or is empty" % noun)
+            pp = blib.create_process_page_params(
+                args, p.index, noun, must_exist=True, msg_index="%s: %s" % (p.title, noun)
+            )
+            if pp is None:
                 continue
-            modsec = blib.find_modifiable_lang_section(noun_text, "Russian", p.msg)
+            modsec = blib.find_modifiable_lang_section(pp.text, "Russian", pp.msg)
             if modsec is None:
                 continue
             nounsection = modsec.secbody
             if "==Etymology" in nounsection:
-                p.msg("Noun %s already has etymology" % noun)
+                pp.msg("Noun %s already has etymology" % noun)
                 continue
             tr = getparam(t, "tr")
             if tr:
@@ -53,8 +52,6 @@ def process_text_on_page(p):
 # Pages specified using --pages or --pagefile may have accents, which will be stripped.
 parser = blib.create_argparser(
     "Try to construct etymologies of nouns in -ость from adjectives",
-    include_pagefile=True,
-    include_stdin=True,
 )
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)

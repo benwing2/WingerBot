@@ -19,11 +19,11 @@
 #
 # #* {{RQ:Byron Childe Harold|canto=III|stanza=I|passage=When last I saw thy young blue eyes, they '''smiled'''.}}
 
-import pywikibot, re, sys, argparse
+import pywikibot, re, sys
 import mwparserfromhell as mw
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, set_template_name, msg, errmsg, site
+from wingerbot.blib import getparam, rmparam, set_template_name, msg, errmsg
 
 arabic_to_roman_form = {
     "1": "I",
@@ -302,7 +302,7 @@ def process_text_on_page(p):
 
 
 parser = blib.create_argparser(
-    "Reformat {{RQ:Dryden Meta}} and {{RQ:Byron Harold}}", include_pagefile=True, include_stdin=True
+    "Reformat {{RQ:Dryden Meta}} and {{RQ:Byron Harold}}"
 )
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)

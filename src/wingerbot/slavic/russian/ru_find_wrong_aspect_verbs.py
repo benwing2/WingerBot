@@ -67,7 +67,7 @@ def process_text_on_page(p):
     return str(parsed), notes
 
 
-parser = blib.create_argparser("Find incorrect Russian verb aspects", include_pagefile=True, include_stdin=True)
+parser = blib.create_argparser("Find incorrect Russian verb aspects")
 parser.add_argument("--fix", action="store_true", help="Fix errors by copying aspect from headword to conjugation")
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)

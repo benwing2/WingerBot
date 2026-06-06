@@ -50,7 +50,7 @@ def process_text_on_page(p):
     return text, notes
 
 
-parser = blib.create_argparser("Move entries from one language to another", include_pagefile=True, include_stdin=True)
+parser = blib.create_argparser("Move entries from one language to another")
 parser.add_argument("--fromlang", required=True, help="Existing language to rename.")
 parser.add_argument("--tolang", required=True, help="New name of language.")
 parser.add_argument("--comment-tag", help="Tag to add to changelog message indicating reason for renaming.")

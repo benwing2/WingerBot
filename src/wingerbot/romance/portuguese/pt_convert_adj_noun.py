@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 
-import pywikibot, re, sys, argparse
+import pywikibot, re, sys
 from wingerbot.romance import romance_utils
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, tname, pname, msg, site
+from wingerbot.blib import getparam, rmparam, tname, pname, msg
 
 unaccented_vowel = "aeiouà"
 accented_vowel = "áéíóúýâêô"
@@ -1081,7 +1081,7 @@ def process_text_on_page(p):
 
 
 parser = blib.create_argparser(
-    "Convert {{pt-noun}} or {{pt-adj}} templates to new syntax", include_pagefile=True, include_stdin=True
+    "Convert {{pt-noun}} or {{pt-adj}} templates to new syntax"
 )
 parser.add_argument("--do-nouns", action="store_true")
 parser.add_argument("--do-old-nouns", action="store_true", help="Only do nouns with old=1")

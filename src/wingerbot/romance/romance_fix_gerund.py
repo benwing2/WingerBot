@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 
-import pywikibot, re, sys, argparse, json
+import pywikibot, re, sys, json
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, tname, pname, msg, site
+from wingerbot.blib import getparam, rmparam, tname, pname, msg
 
 lang_to_name = {
     "es": "Spanish",
@@ -80,8 +80,6 @@ def process_text_on_page(p):
 
 parser = blib.create_argparser(
     "Fix Spanish, Galician or Portuguese gerunds to have {{head|LANG|gerund}}",
-    include_pagefile=True,
-    include_stdin=True,
 )
 parser.add_argument("--lang", choices=list(lang_to_name.keys()), required=True, help="Code of lang to do.")
 args = parser.parse_args()

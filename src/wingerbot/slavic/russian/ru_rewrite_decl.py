@@ -377,7 +377,7 @@ def process_text_on_page_noun(p):
     return str(parsed), comment
 
 
-parser = blib.create_argparser("Rewrite Russian old declension templates", include_pagefile=True, include_stdin=True)
+parser = blib.create_argparser("Rewrite Russian old declension templates")
 parser.add_argument("--adjectives", action="store_true", help="Rewrite old adjective templates")
 parser.add_argument("--nouns", action="store_true", help="Rewrite old noun templates")
 args = parser.parse_args()

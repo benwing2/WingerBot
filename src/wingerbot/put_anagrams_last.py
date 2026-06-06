@@ -22,7 +22,7 @@ def process_text_on_page(p):
     return modsec.rebuild(secbody="".join(subsections)), notes
 
 
-parser = blib.create_argparser("put Anagrams last", include_pagefile=True, include_stdin=True)
+parser = blib.create_argparser("put Anagrams last")
 parser.add_argument("--langname", required=True, help="Language name.")
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)

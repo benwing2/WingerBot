@@ -183,7 +183,7 @@ def process_text_on_page(p):
     return str(parsed), notes
 
 
-parser = blib.create_argparser("Convert head|fr|* to fr-*", include_pagefile=True, include_stdin=True)
+parser = blib.create_argparser("Convert head|fr|* to fr-*")
 parser.add_argument(
     "--fix-missing-plurals",
     action="store_true",

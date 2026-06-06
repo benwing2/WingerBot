@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 
-import pywikibot, re, sys, argparse
+import pywikibot, re, sys
 import unicodedata
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, tname, pname, msg, site
+from wingerbot.blib import getparam, rmparam, tname, pname, msg
 
 GR = "\u0300"
 unaccented_vowel = "aeiouöüy"
@@ -413,7 +413,7 @@ def process_text_on_page(p):
 
 
 if __name__ == "__main__":
-    parser = blib.create_argparser("Snarf Italian pronunciations for fixing", include_pagefile=True, include_stdin=True)
+    parser = blib.create_argparser("Snarf Italian pronunciations for fixing")
     parser.add_argument(
         "--include-defns", action="store_true", help="Include defns of snarfed terms (helps with multi-etym sections)."
     )

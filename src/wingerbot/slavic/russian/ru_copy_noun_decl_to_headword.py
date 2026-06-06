@@ -272,8 +272,6 @@ def process_page_section(index, pagetitle, section):
 
 parser = blib.create_argparser(
     "Copy the declension in ru-noun-table to ru-noun+, preserving any m=, f=, g=, etc. in the latter.",
-    include_pagefile=True,
-    include_stdin=True,
 )
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)

@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 
 from collections import defaultdict
-import pywikibot, re, sys, argparse
+import pywikibot, re, sys
 
 from wingerbot import blib, lang_utils
-from wingerbot.blib import getparam, rmparam, msg, site, tname
+from wingerbot.blib import getparam, rmparam, msg, tname
 
 lang_data = lang_utils.get_lang_data()
 
@@ -32,7 +32,7 @@ def process_text_on_page(p):
 
 
 parser = blib.create_argparser(
-    "Replace LANGCODE with appropriate language code", include_pagefile=True, include_stdin=True
+    "Replace LANGCODE with appropriate language code"
 )
 parser.add_argument(
     "--langcode-var", help="Metasyntactic variable specifying the language code; default 'LANGCODE'", default="LANGCODE"

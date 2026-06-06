@@ -1,9 +1,12 @@
 #!/usr/bin/env python3
 
-import pywikibot, re, unicodedata
+from collections.abc import Callable
+from dataclasses import dataclass
+
+import re, unicodedata
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, tname, pname, msg, site
+from wingerbot.blib import getparam, rmparam, tname, pname, Index
 from wingerbot.latin import lalib
 from wingerbot.latin.lalib import remove_macrons, remove_non_macron_accents
 
@@ -56,109 +59,89 @@ def number_of_macrons(term):
     return len([x for x in term if x == MACRON])
 
 
-def verify_suffix(lemma, suffix, pagemsg, errandpagemsg):
-    pagename = remove_macrons(lemma)
-    lemma_page = pywikibot.Page(site, pagename)
-    if lemma_page:
-        pagetext = blib.safe_page_text(lemma_page, errandpagemsg)
-        parsed = blib.parse_text(pagetext)
-        saw_long_suffix = None
-        saw_short_suffix = None
-        for t in parsed.filter_templates():
-            if lalib.la_template_is_head(t):
-                headwords = lalib.la_get_headword_from_template(t, pagename, pagemsg)
-                for headword in headwords:
-                    if headword.endswith(suffix):
-                        saw_long_suffix = headword
-                    elif headword.endswith(remove_macrons(suffix)):
-                        saw_short_suffix = headword
-                    elif remove_macrons(headword).endswith(remove_macrons(suffix)) and number_of_macrons(
-                        headword[-len(suffix) :]
-                    ) > number_of_macrons(suffix):
-                        pagemsg(
-                            "For lemma %s with suffix -%s, suffix of headword %s has more macrons than suffix, ignoring"
-                            % (lemma, suffix, headword)
-                        )
-                    else:
-                        pagemsg(
-                            "WARNING: For lemma %s with supposed suffix -%s, headword %s doesn't end with suffix"
-                            % (lemma, suffix, headword)
-                        )
-        if saw_long_suffix and saw_short_suffix:
-            pagemsg(
-                "WARNING: For lemma %s and suffix -%s, saw headwords %s and %s both with and without matching macrons, not adding macrons but needs manual verification"
-                % (lemma, suffix, saw_long_suffix, saw_short_suffix)
-            )
-            return False
-        if saw_short_suffix:
-            pagemsg(
-                "For lemma %s and suffix -%s, saw headword %s without matching macrons, not adding macrons"
-                % (lemma, suffix, saw_short_suffix)
-            )
-            return False
-        if saw_long_suffix:
-            pagemsg(
-                "For lemma %s and suffix -%s, saw headword %s with matching macrons, adding macrons"
-                % (lemma, suffix, saw_long_suffix)
-            )
-            return True
-        pagemsg(
-            "For lemma %s and suffix -%s, found page but didn't see any Latin headwords, assuming OK to add add macrons"
-            % (lemma, suffix)
-        )
+def verify_suffix(index, romance_term, latin_lemma, suffix):
+    p = blib.create_process_page_params(args, index, remove_macrons(latin_lemma), msg_title="%s: Latin lemma=%s, suffix=-%s" % (romance_term, latin_lemma, suffix))
+    if p is None:
+        # Bad page title
+        return False
+    if not blib.safe_page_exists(p.page, p.errandmsg):
+        p.msg("Latin lemma doesn't exist, assuming OK to add macrons")
         return True
-    pagemsg("For lemma %s and suffix -%s, didn't find page, assuming OK to add macrons" % (lemma, suffix))
-    return True
-
-
-def verify_latin1_verb(lemma, pagemsg):
-    lemma_page = pywikibot.Page(site, remove_macrons(lemma))
-    if lemma_page:
-        pagetext = blib.safe_page_text(lemma_page, pagemsg)
-        parsed = blib.parse_text(pagetext)
-        saw_non_1 = None
-        saw_1 = None
-        for t in parsed.filter_templates():
-            tn = tname(t)
-            if tn == "la-verb":
-                if getparam(t, "1").startswith("1"):
-                    saw_1 = str(t)
+    parsed = blib.parse_text(p.text)
+    saw_long_suffix = None
+    saw_short_suffix = None
+    for t in parsed.filter_templates():
+        if lalib.la_template_is_head(t):
+            headwords = lalib.la_get_headword_from_template(t, p.title, p.msg)
+            for headword in headwords:
+                if headword.endswith(suffix):
+                    saw_long_suffix = headword
+                elif headword.endswith(remove_macrons(suffix)):
+                    saw_short_suffix = headword
+                elif remove_macrons(headword).endswith(remove_macrons(suffix)) and number_of_macrons(
+                    headword[-len(suffix) :]
+                ) > number_of_macrons(suffix):
+                    p.msg("Suffix of headword %s has more macrons than suffix, ignoring" % headword)
                 else:
-                    saw_non_1 = str(t)
-        if saw_non_1 and saw_1:
-            pagemsg(
-                "WARNING: For lemma %s, saw both class-1 verb %s and non-class-1 verb %s, not adding -āre/-ārī etymon but needs manual verification"
-                % (lemma, saw_1, saw_non_1)
-            )
-            return False
-        if saw_non_1:
-            pagemsg("For lemma %s, saw non-class-1 verb, not adding -āre/-ārī etymon: %s" % (lemma, saw_non_1))
-            return False
-        if saw_1:
-            pagemsg("For lemma %s, saw class-1 verb, adding -āre/-ārī etymon: %s" % (lemma, saw_1))
-            return True
-        pagemsg("For lemma %s, found page but didn't see any verb, assuming OK to add -āre/-ārī etymon" % lemma)
+                    p.msg("WARNING: Headword %s doesn't end with supposed suffix" % headword)
+    if saw_long_suffix and saw_short_suffix:
+        p.msg(
+            "WARNING: Saw headwords %s and %s both with and without matching macrons, not adding macrons but needs manual verification"
+            % (saw_long_suffix, saw_short_suffix)
+        )
+        return False
+    if saw_short_suffix:
+        p.msg("Saw headword %s without matching macrons, not adding macrons" % saw_short_suffix)
+        return False
+    if saw_long_suffix:
+        p.msg("Saw headword %s with matching macrons, adding macrons" % saw_long_suffix)
         return True
-    pagemsg("For lemma %s, didn't find page, assuming OK to add -āre/-ārī etymon" % lemma)
+    p.msg("Found page but didn't see any Latin headwords, assuming OK to add add macrons")
     return True
 
 
-class Suffix(object):
-    def __init__(
-        self,
-        romance_suffix_dict,
-        latin_lemma_suffix,
-        latin_form_suffix=None,
-        canonicalize_to_form_re=None,
-        latin_deny_re=None,
-        verify_lemma=None,
-    ):
-        self.romance_suffix_dict = romance_suffix_dict
-        self.latin_lemma_suffix = latin_lemma_suffix
-        self.latin_form_suffix = latin_form_suffix
-        self.canonicalize_to_form_re = canonicalize_to_form_re
-        self.latin_deny_re = latin_deny_re
-        self.verify_lemma = verify_lemma
+def verify_latin1_verb(index, romance_term, latin_lemma):
+    p = blib.create_process_page_params(args, index, remove_macrons(latin_lemma), msg_title="%s: Latin lemma=%s" % (romance_term, latin_lemma))
+    if p is None:
+        # Bad page title
+        return False
+    if not blib.safe_page_exists(p.page, p.errandmsg):
+        p.msg("Latin lemma doesn't exist, assuming OK to add -āre/-ārī etymon")
+        return True
+    parsed = blib.parse_text(p.text)
+    saw_non_1 = None
+    saw_1 = None
+    for t in parsed.filter_templates():
+        tn = tname(t)
+        if tn == "la-verb":
+            if getparam(t, "1").startswith("1"):
+                saw_1 = str(t)
+            else:
+                saw_non_1 = str(t)
+    if saw_non_1 and saw_1:
+        p.msg(
+            "WARNING: Saw both class-1 verb %s and non-class-1 verb %s, not adding -āre/-ārī etymon but needs manual verification"
+            % (saw_1, saw_non_1)
+        )
+        return False
+    if saw_non_1:
+        p.msg("Saw non-class-1 verb, not adding -āre/-ārī etymon: %s" % saw_non_1)
+        return False
+    if saw_1:
+        p.msg("Saw class-1 verb, adding -āre/-ārī etymon: %s" % saw_1)
+        return True
+    p.msg("Found page but didn't see any verb, assuming OK to add -āre/-ārī etymon")
+    return True
+
+
+@dataclass
+class Suffix:
+    romance_suffix_dict: dict[str, str | list[str]]
+    latin_lemma_suffix: str
+    latin_form_suffix: str | None = None
+    canonicalize_to_form_re: list[str| tuple[str, str]] | None = None
+    latin_deny_re: str | None = None
+    verify_lemma: Callable[[Index, str, str], bool] | None = None
 
 
 romance_suffixes_to_latin_etym_suffixes = [
@@ -624,10 +607,12 @@ def process_text_on_page(p):
                                     if suffix.latin_form_suffix:
                                         if alt:
                                             if suffix.canonicalize_to_form_re:
-                                                for refrom in suffix.canonicalize_to_form_re:
-                                                    if type(refrom) is tuple:
+                                                for canon_re in suffix.canonicalize_to_form_re:
+                                                    if type(canon_re) is tuple:
                                                         refrom, reto = refrom
                                                     else:
+                                                        assert type(canon_re) is str  # Type guard due to Pylance stupidity.
+                                                        refrom = canon_re
                                                         reto = suffix.latin_form_suffix
                                                     newalt = re.sub(refrom, reto, alt)
                                                     if newalt != alt:
@@ -669,7 +654,7 @@ def process_text_on_page(p):
                                             addparam_after(t, "4", alt, "3")
                                         else:
                                             if suffix.verify_lemma:
-                                                verified = suffix.verify_lemma(lemma, p.msg)
+                                                verified = suffix.verify_lemma(p.index, p.title, lemma)
                                             else:
                                                 verified = True
                                             if verified:
@@ -684,10 +669,12 @@ def process_text_on_page(p):
                                     else:
                                         if alt:
                                             if suffix.canonicalize_to_form_re:
-                                                for refrom in suffix.canonicalize_to_form_re:
-                                                    if type(refrom) is tuple:
+                                                for canon_re in suffix.canonicalize_to_form_re:
+                                                    if type(canon_re) is tuple:
                                                         refrom, reto = refrom
                                                     else:
+                                                        assert type(canon_re) is str  # Type guard due to Pylance stupidity.
+                                                        refrom = canon_re
                                                         reto = suffix.latin_form_suffix or suffix.latin_lemma_suffix
                                                     newalt = re.sub(refrom, reto, alt)
                                                     if newalt != alt:
@@ -723,7 +710,7 @@ def process_text_on_page(p):
                                                 lemma[: -len(suffix.latin_lemma_suffix)] + suffix.latin_lemma_suffix
                                             )
                                             if newlemma != lemma:
-                                                if verify_suffix(lemma, suffix.latin_lemma_suffix, p.msg, p.errandmsg):
+                                                if verify_suffix(p.index, p.title, lemma, suffix.latin_lemma_suffix):
                                                     notes.append(
                                                         "add missing long vowels in suffix -%s to Latin lemma %s in {{%s|%s}}"
                                                         % (suffix.latin_lemma_suffix, lemma, tn, args.langcode)
@@ -792,7 +779,7 @@ def process_text_on_page(p):
     return modsec.rebuild(secbody="".join(subsections)), notes
 
 
-parser = blib.create_argparser("Clean up Latin etyma in Romance etymologies", include_pagefile=True, include_stdin=True)
+parser = blib.create_argparser("Clean up Latin etyma in Romance etymologies")
 parser.add_argument("--langcode", required=True, help="Language code of language to do")
 parser.add_argument("--langname", required=True, help="Language name of language to do")
 args = parser.parse_args()

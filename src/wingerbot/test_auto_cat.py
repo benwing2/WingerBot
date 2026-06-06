@@ -10,7 +10,7 @@ def process_text_on_page(p):
     p.msg("Returned: <%s>" % result)
 
 
-parser = blib.create_argparser("Test {{auto cat}}", include_pagefile=True, include_stdin=True)
+parser = blib.create_argparser("Test {{auto cat}}")
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 

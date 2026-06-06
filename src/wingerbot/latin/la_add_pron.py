@@ -5,7 +5,7 @@ from dataclasses import dataclass
 import pywikibot, re
 
 from wingerbot import blib
-from wingerbot.blib import getparam, msg, site, tname, pname
+from wingerbot.blib import getparam, msg, tname, pname, site
 from wingerbot.latin import lalib
 
 skip_pages = []
@@ -906,7 +906,7 @@ def process_lemma(p, lemma):
 
 
 parser = blib.create_argparser(
-    "Add pronunciation sections to Latin Wiktionary entries", include_pagefile=True, include_stdin=True
+    "Add pronunciation sections to Latin Wiktionary entries"
 )
 parser.add_argument(
     "--lemma-file", help="File containing lemmas to process, one per line; non-lemma forms will be done"

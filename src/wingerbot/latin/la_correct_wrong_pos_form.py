@@ -149,8 +149,6 @@ def process_text_on_page(p):
 
 parser = blib.create_argparser(
     "Correct headers/headwords of non-lemma forms with the wrong part of speech",
-    include_pagefile=True,
-    include_stdin=True,
 )
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)

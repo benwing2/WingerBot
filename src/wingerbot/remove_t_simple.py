@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 
-import pywikibot, re, sys, argparse
+import pywikibot, re, sys
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, msg, site, tname, pname
+from wingerbot.blib import getparam, rmparam, msg, tname, pname
 
 
 def process_text_on_page(p):
@@ -56,7 +56,7 @@ def process_text_on_page(p):
     return str(parsed), notes
 
 
-parser = blib.create_argparser("Convert {{t-simple}} to {{t}} or {{t+}}", include_pagefile=True, include_stdin=True)
+parser = blib.create_argparser("Convert {{t-simple}} to {{t}} or {{t+}}")
 parser.add_argument(
     "--no-remove-redundant-translit", help="Don't remove redundant transliterations", action="store_true"
 )

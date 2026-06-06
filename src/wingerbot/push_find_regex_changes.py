@@ -120,7 +120,7 @@ def process_text_on_page(p, contents, prev_comment, origcontents):
 
 if __name__ == "__main__":
     parser = blib.create_argparser(
-        "Push changes made to find_regex.py output files", include_pagefile=True, include_stdin=True
+        "Push changes made to find_regex.py output files"
     )
     parser.add_argument("--direcfile", help="File containing directives.")
     parser.add_argument("--origfile", help="File containing unchanged directives.")

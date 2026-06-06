@@ -3,7 +3,7 @@
 import pywikibot, re
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, msg, site, tname
+from wingerbot.blib import getparam, rmparam, msg, tname
 
 from wingerbot.slavic.russian import rulib
 
@@ -62,38 +62,45 @@ def process_text_on_page(p):
                     for oldform in oldforms:
                         if oldform not in newforms:
                             formpagename = rulib.remove_accents(oldform)
-                            formpage = pywikibot.Page(site, formpagename)
-                            if not formpage.exists():
-                                p.msg("WARNING: Form page %s doesn't exist, skipping" % formpagename)
-                            elif formpagename == p.title:
-                                p.msg("WARNING: Attempt to delete dictionary form, skipping")
+                            pp = blib.create_process_page_params(
+                                args, p.index, formpagename, must_exist="WARNING: Form page doesn't exist, skipping",
+                                msg_title="%s: %s" % (p.title, oldform))
+                            if pp is None:
+                                continue
+                            assert pp.page is not None  # guaranteed by create_process_page_params
+                            if formpagename == p.title:
+                                pp.msg("WARNING: Attempt to delete dictionary form, skipping")
+                                continue
+                            secs = blib.split_text_into_sections(pp.text, pp.msg)
+                            langs_seen = set(lang for _, lang in secs.lang_list)
+                            if "Russian" not in langs_seen:
+                                pp.msg("WARNING: Didn't see Russian section, skipping form")
+                                continue
+                            if len(langs_seen) > 1:
+                                non_russian_langs = langs_seen - {"Russian"}
+                                pp.msg("WARNING: Found entry for non-Russian language(s) %s, skipping form" % ",".join(non_russian_langs))
+                                continue
+                            if "Etymology 1" in pp.text:
+                                pp.msg("WARNING: Found 'Etymology 1', skipping form")
+                                continue
+                            numinfls = len(re.findall(r"\{\{inflection of\|", pp.text))
+                            if numinfls < 1:
+                                pp.msg(
+                                    "WARNING: Something wrong, no 'inflection of' templates on page for form %s"
+                                    % formpagename
+                                )
+                            elif numinfls > 1:
+                                pp.msg(
+                                    "WARNING: Multiple 'inflection of' templates on page for form %s, skipping"
+                                    % formpagename
+                                )
                             else:
-                                text = blib.safe_page_text(formpage, p.errandmsg)
-                                if "Etymology 1" in p.text:
-                                    p.msg("WARNING: Found 'Etymology 1', skipping form %s" % formpagename)
-                                elif "----" in p.text:
-                                    p.msg(
-                                        "WARNING: Multiple languages apparently in form, skippin form %s" % formpagename
-                                    )
+                                comment = "Delete erroneously created long form of %s" % p.title
+                                pp.msg("Existing text for form %s: [[%s]]" % (formpagename, pp.text))
+                                if args.save:
+                                    pp.page.delete(comment)
                                 else:
-                                    numinfls = len(re.findall(r"\{\{inflection of\|", text))
-                                    if numinfls < 1:
-                                        p.msg(
-                                            "WARNING: Something wrong, no 'inflection of' templates on page for form %s"
-                                            % formpagename
-                                        )
-                                    elif numinfls > 1:
-                                        p.msg(
-                                            "WARNING: Multiple 'inflection of' templates on page for form %s, skipping"
-                                            % formpagename
-                                        )
-                                    else:
-                                        comment = "Delete erroneously created long form of %s" % p.title
-                                        p.msg("Existing text for form %s: [[%s]]" % (formpagename, text))
-                                        if args.save:
-                                            formpage.delete(comment)
-                                        else:
-                                            p.msg("Would delete page %s with comment=%s" % (formpagename, comment))
+                                    pp.msg("Would delete page %s with comment=%s" % (formpagename, comment))
 
             notes.append("fix 3olda -> %s" % direc)
         newt = str(t)
@@ -103,7 +110,7 @@ def process_text_on_page(p):
     return str(parsed), notes
 
 
-parser = blib.create_argparser("Fix up class 3a", include_pagefile=True, include_stdin=True)
+parser = blib.create_argparser("Fix up class 3a")
 parser.add_argument("--direcfile", help="File containing pages to fix and directives.", required=True)
 parser.add_argument("--delete-bad", action="store_true", help="Delete bad forms.")
 args = parser.parse_args()

@@ -1,8 +1,7 @@
 #!/usr/bin/env python3
 
-import pywikibot, re, sys, argparse
+import re
 from wingerbot import blib
-from wingerbot.blib import site
 
 
 def process_text_on_page(p):
@@ -23,7 +22,7 @@ def process_text_on_page(p):
 
 
 if __name__ == "__main__":
-    parser = blib.create_argparser("Put attributive label first", include_pagefile=True, include_stdin=True)
+    parser = blib.create_argparser("Put attributive label first")
     args = parser.parse_args()
     start, end = blib.parse_start_end(args.start, args.end)
 

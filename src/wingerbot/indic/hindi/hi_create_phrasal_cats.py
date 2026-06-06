@@ -3,10 +3,7 @@
 # FIXME: Completely obsolete, should be deleted. Use create_wanted_categories.py to create categories with
 # {{auto cat}} as the text.
 
-import pywikibot
-
 from wingerbot import blib
-from wingerbot.blib import msg, errandmsg, site
 
 cats = [
     "आना",
@@ -73,15 +70,11 @@ parser = blib.create_argparser("Create Hindi phrasal verb categories",
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
-for cat in cats:
-    pagename = "Category:Hindi phrasal verbs with particle (%s)" % cat
-    page = pywikibot.Page(site, pagename)
-    if page.exists():
-        msg("Page %s already exists, not overwriting" % pagename)
-        continue
-    text = "[[Category:Hindi phrasal verbs|%s]]" % cat
-    page.text = text
-    changelog = "Create '%s' with text '%s'" % (pagename, text)
-    msg("Changelog = %s" % changelog)
-    if args.save:
-        blib.safe_page_save(page, changelog, errandmsg)
+for catno, cat in enumerate(cats, start=1):
+    def save_cat(p):
+        if p.page.exists():
+            p.msg("Page already exists, not overwriting")
+            return
+        text = "[[Category:Hindi phrasal verbs|%s]]" % cat
+        return text, "Create '%s' with text '%s'" % (p.title, text)
+    blib.do_edit(args, catno, "Category:Hindi phrasal verbs with particle (%s)" % cat, save_cat)

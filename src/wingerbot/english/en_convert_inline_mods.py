@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 
-import pywikibot, re, sys, argparse
+import pywikibot, re, sys
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, tname, pname, msg, site
+from wingerbot.blib import getparam, rmparam, tname, pname, msg
 from collections import defaultdict
 
 all_quals = defaultdict(int)
@@ -552,7 +552,7 @@ def process_text_on_page(p):
 
 
 parser = blib.create_argparser(
-    "Convert {{en-noun}} and {{en-verb}} to use inline modifiers", include_pagefile=True, include_stdin=True
+    "Convert {{en-noun}} and {{en-verb}} to use inline modifiers"
 )
 parser.add_argument(
     "--check-qual-canon", help="Instead of converting, canonicalize and output qualifiers", action="store_true"

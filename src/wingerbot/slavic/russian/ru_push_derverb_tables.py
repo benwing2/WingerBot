@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, msg, errmsg, site
+from wingerbot.blib import getparam, rmparam, msg, errmsg
 
-import pywikibot, re, sys, argparse
+import pywikibot, re, sys
 from wingerbot.slavic.russian import rulib
 
 
@@ -134,8 +134,6 @@ pagetitle_to_props = {}
 if __name__ == "__main__":
     parser = blib.create_argparser(
         "Push new Russian derived-verb tables from infer_ru_derverb_prefixes.py",
-        include_pagefile=True,
-        include_stdin=True,
     )
     parser.add_argument("--files", help="Comma-separated list of files containing text.")
     parser.add_argument("--direcfile", help="File containing find-regex-style file text.")

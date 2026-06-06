@@ -40,8 +40,6 @@ def process_text_on_page(p):
 
 parser = blib.create_argparser(
     "Replace {{PAGENAME}} and {{SUBPAGENAME}} with {{pagename}} in specified templates",
-    include_pagefile=True,
-    include_stdin=True,
 )
 parser.add_argument(
     "--templates",

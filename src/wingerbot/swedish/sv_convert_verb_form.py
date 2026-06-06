@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 
-import pywikibot, re, sys, argparse, unicodedata
+import pywikibot, re, sys, unicodedata
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, tname, pname, site
+from wingerbot.blib import getparam, rmparam, tname, pname
 
 templates_to_tags = {
     "sv-verb-form-imp": ["imp"],
@@ -64,8 +64,6 @@ def process_text_on_page(p):
 
 parser = blib.create_argparser(
     "Convert {{sv-verb-form-*}} optionally with |plural of= param to generic equivalents",
-    include_pagefile=True,
-    include_stdin=True,
 )
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)

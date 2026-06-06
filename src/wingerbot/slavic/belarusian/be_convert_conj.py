@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 
-import re, argparse
+import re
 import traceback, sys
 import pywikibot
 
 from wingerbot import blib
-from wingerbot.blib import rmparam, getparam, msg, site, tname
+from wingerbot.blib import rmparam, getparam, msg, tname
 
 from wingerbot.slavic.belarusian import belib as be
 
@@ -156,7 +156,7 @@ def process_text_on_page(p):
 
 
 parser = blib.create_argparser(
-    "Replace Belarusian manual conjugations with automatic ones", include_pagefile=True, include_stdin=True
+    "Replace Belarusian manual conjugations with automatic ones"
 )
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)

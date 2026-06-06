@@ -93,8 +93,6 @@ def process_text_on_page(p):
 
 parser = blib.create_argparser(
     "Fix Latin impersonal passive participles and output deletion lines for non-impersonal variants",
-    include_pagefile=True,
-    include_stdin=True,
 )
 parser.add_argument("--ignore", help="Comma-separated pages to ignore.")
 args = parser.parse_args()

@@ -40,7 +40,7 @@ def process_text_on_page(p):
         )
 
 
-parser = blib.create_argparser("Find templates transcluding a given page", include_pagefile=True, include_stdin=True)
+parser = blib.create_argparser("Find templates transcluding a given page")
 parser.add_argument("--redirects-only", help="""Only output redirects.""", action="store_true")
 parser.add_argument("--table-of-uses", action="store_true", help="""Output in table_of_uses.py input format.""")
 args = parser.parse_args()

@@ -216,8 +216,6 @@ def process_text_on_page(p):
 # Pages specified using --pages or --pagefile may have accents, which will be stripped.
 parser = blib.create_argparser(
     "Find analyses for Russian verbs without declension",
-    include_pagefile=True,
-    include_stdin=True,
 )
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)

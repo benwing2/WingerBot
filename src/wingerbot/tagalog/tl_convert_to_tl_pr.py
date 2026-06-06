@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 
-import pywikibot, re, sys, argparse, unicodedata, json
+import pywikibot, re, sys, unicodedata, json
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, msg, site, tname, pname, rsub_repeatedly
+from wingerbot.blib import getparam, rmparam, msg, tname, pname, rsub_repeatedly
 
 
 def process_text_on_page(p):
@@ -488,7 +488,7 @@ def process_text_on_page(p):
     return modsec.rebuild(secbody="".join(subsections)), notes
 
 
-parser = blib.create_argparser("Convert {{tl-IPA}} to {{tl-pr}}", include_pagefile=True, include_stdin=True)
+parser = blib.create_argparser("Convert {{tl-IPA}} to {{tl-pr}}")
 parser.add_argument(
     "--allow-mismatching-nsyl",
     help="Comma-separated list of pages with known incorrect value for number of syllables in {{rhymes}} template.",

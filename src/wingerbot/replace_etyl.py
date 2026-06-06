@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 
-import pywikibot, re, sys, argparse
+import pywikibot, re, sys
 
 from wingerbot import blib, lang_utils
-from wingerbot.blib import getparam, rmparam, msg, site
+from wingerbot.blib import getparam, rmparam, msg
 
 family_data = lang_utils.get_family_data()
 etym_lang_data = lang_utils.get_etym_lang_data()
@@ -124,7 +124,7 @@ def process_text_on_page(p):
 
 
 if __name__ == "__main__":
-    parser = blib.create_argparser("Replace {{etyl}} with {{uder}}", include_pagefile=True, include_stdin=True)
+    parser = blib.create_argparser("Replace {{etyl}} with {{uder}}")
     args = parser.parse_args()
     start, end = blib.parse_start_end(args.start, args.end)
 

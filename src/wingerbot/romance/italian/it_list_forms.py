@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 
-import pywikibot, re, sys, argparse, json, unicodedata
+import pywikibot, re, sys, json, unicodedata
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, tname, pname, msg, errandmsg, site
+from wingerbot.blib import getparam, rmparam, tname, pname, msg, errandmsg
 
 AC = "\u0301"
 GR = "\u0300"
@@ -57,7 +57,7 @@ def process_text_on_page(p):
             list_forms(getparam(t, "1"), p.errandmsg, expand_text)
 
 
-parser = blib.create_argparser("List all forms of a verb", include_pagefile=True, include_stdin=True)
+parser = blib.create_argparser("List all forms of a verb")
 parser.add_argument("--direcfile", help="File listing conjugations.")
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)

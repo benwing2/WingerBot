@@ -18,7 +18,7 @@ def process_text_on_page(p):
             p.msg("Ends with -iyya, no appropriate etym template%s" % (" (has suffix template)" if suffix else ""))
 
 
-parser = blib.create_argparser("Find Arabic -iyya nouns without etymology", include_pagefile=True, include_stdin=True)
+parser = blib.create_argparser("Find Arabic -iyya nouns without etymology")
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 

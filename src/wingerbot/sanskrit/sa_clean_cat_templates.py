@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 
-import pywikibot, re, sys, argparse
+import pywikibot, re
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, msg, site, tname
+from wingerbot.blib import msg, site
 
 templates = [
     "sa-ima1s",
@@ -38,7 +38,7 @@ def process_text_on_page(p):
 
 
 parser = blib.create_argparser(
-    "Remove unnecessary {{sa-*}} category templates", include_pagefile=True, include_stdin=True
+    "Remove unnecessary {{sa-*}} category templates"
 )
 parser.add_argument("--delete-templates", action="store_true")
 parser.add_argument("--remove-manual-cats", action="store_true")

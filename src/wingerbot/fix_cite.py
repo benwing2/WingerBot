@@ -273,7 +273,7 @@ def process_text_on_page(p):
 
 
 if __name__ == "__main__":
-    parser = blib.create_argparser("Fix old cite/quote/reference templates", include_pagefile=True, include_stdin=True)
+    parser = blib.create_argparser("Fix old cite/quote/reference templates")
     args = parser.parse_args()
     start, end = blib.parse_start_end(args.start, args.end)
 

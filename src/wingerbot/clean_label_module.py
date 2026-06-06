@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
 
-import pywikibot, re, sys, argparse
+import pywikibot, re, sys
 from dataclasses import dataclass, field
 from collections import defaultdict
 from typing import Any, Callable
 
 from wingerbot import blib, lang_utils
-from wingerbot.blib import getparam, rmparam, set_template_name, msg, errandmsg, site, tname
+from wingerbot.blib import getparam, rmparam, set_template_name, msg, errandmsg, tname
 
 lang_data = lang_utils.get_lang_data()
 
@@ -142,8 +142,7 @@ def process_text_on_page_for_label_objects(p):
     either_quote_string_re = '(".*?"|' + "'.*?')"
     true_false_or_either_quote_string_re = '(true|false|".*?"|' + "'.*?')"
 
-    for lineind, line in enumerate(lines):
-        lineno = lineind + 1
+    for lineno, line in enumerate(lines, start=1):
 
         def linemsg(txt):
             p.msg("Line %s: %s" % (lineno, txt))
@@ -696,7 +695,7 @@ def process_text_on_page(p):
 
 
 if __name__ == "__main__":
-    parser = blib.create_argparser("Clean label modules", include_pagefile=True, include_stdin=True)
+    parser = blib.create_argparser("Clean label modules")
     parser.add_argument("--regional-data-module", help="File containing 'Module:labels/data/regional'")
     parser.add_argument("--alt-data-modules", help="{{alt}} data modules to merge")
     args = parser.parse_args()

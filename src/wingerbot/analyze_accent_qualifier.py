@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 
-import pywikibot, re, sys, argparse, unicodedata
+import pywikibot, re, sys, unicodedata
 
 from wingerbot import blib, lang_utils
-from wingerbot.blib import getparam, rmparam, msg, errmsg, site, tname
+from wingerbot.blib import getparam, rmparam, msg, errmsg, tname
 from collections import defaultdict
 import json
 
@@ -92,7 +92,7 @@ def process_text_on_page(p):
 
 
 parser = blib.create_argparser(
-    "Analyze usage of qualifiers in {{a}}/{{accent}}", include_pagefile=True, include_stdin=True
+    "Analyze usage of qualifiers in {{a}}/{{accent}}"
 )
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)

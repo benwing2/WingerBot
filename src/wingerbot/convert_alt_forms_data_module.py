@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 
-import pywikibot, re, sys, argparse
+import pywikibot, re, sys
 from dataclasses import dataclass
 
 from wingerbot import blib, lang_utils
-from wingerbot.blib import getparam, rmparam, set_template_name, msg, site, tname
+from wingerbot.blib import getparam, rmparam, set_template_name, msg, tname
 
 
 @dataclass
@@ -62,8 +62,7 @@ def process_text_on_page(p):
     either_quote_string_re = '("[^"]*?"|' + "'[^']*?')"
     true_or_either_quote_string_re = '(true|"[^"]*?"|' + "'[^']*?')"
 
-    for lineind, line in enumerate(lines):
-        lineno = lineind + 1
+    for lineno, line in enumerate(lines, start=1):
 
         def linemsg(txt):
             p.msg("Line %s: %s" % (lineno, txt))
@@ -326,7 +325,7 @@ def process_text_on_page(p):
 
 
 parser = blib.create_argparser(
-    "Convert dialectal data module to labels data module", include_pagefile=True, include_stdin=True
+    "Convert dialectal data module to labels data module"
 )
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
