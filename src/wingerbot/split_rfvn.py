@@ -3,7 +3,7 @@
 import re
 
 from wingerbot import blib
-from wingerbot.blib import tname, pname
+from wingerbot.blib import pname
 
 cjk_chars = "[\u1100-\u11ff\u2e80-\ua4ff\uac00-\ud7ff\uff00-\uffef]|[\ud840-\ud8bf]."
 cjk_regex = "(%s|-notice-(zh|ja|ko)-)" % cjk_chars

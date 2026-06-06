@@ -3,7 +3,6 @@
 import re
 
 from wingerbot import blib
-from wingerbot.blib import tname
 
 templates = ["RQ:Schuster Hepaticae", "RQ:Harry Potter"]
 

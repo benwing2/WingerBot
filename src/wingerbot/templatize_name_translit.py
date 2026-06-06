@@ -3,7 +3,7 @@
 import re
 
 from wingerbot import blib, lang_utils
-from wingerbot.blib import getparam, tname, pname
+from wingerbot.blib import getparam, pname
 
 lang_data = lang_utils.get_lang_data()
 

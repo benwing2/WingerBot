@@ -3,7 +3,7 @@
 import re
 
 from wingerbot import blib
-from wingerbot.blib import tname, pname
+from wingerbot.blib import pname
 
 no_split_etym = {
     "arroge",

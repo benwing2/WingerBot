@@ -3,7 +3,7 @@
 import re
 
 from wingerbot import blib, lang_utils
-from wingerbot.blib import tname, pname, msg
+from wingerbot.blib import pname, msg
 
 
 def process_text_on_page(p, langcode, langname, topicstemp):

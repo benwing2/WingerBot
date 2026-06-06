@@ -2,7 +2,7 @@
 
 
 from wingerbot import blib
-from wingerbot.blib import tname, pname, msg
+from wingerbot.blib import pname, msg
 from collections import defaultdict
 
 pages_by_num_ar_verb_forms = defaultdict(list)
