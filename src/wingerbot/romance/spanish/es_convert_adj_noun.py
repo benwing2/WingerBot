@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-import re, sys
+import re
 from wingerbot.romance import romance_utils
 
 from wingerbot import blib

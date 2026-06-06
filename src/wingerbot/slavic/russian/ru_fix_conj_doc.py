@@ -2,7 +2,7 @@
 
 # Remove adj= and shto= from ru-ux.
 
-import re, sys
+import re
 
 from wingerbot import blib
 from wingerbot.blib import getparam, rmparam, msg

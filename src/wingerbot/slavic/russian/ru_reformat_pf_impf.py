@@ -2,7 +2,7 @@
 
 # Reformat corresponding (im)perfective specs using {{pf}} or {{impf}}
 
-import re, sys
+import re
 
 from wingerbot import blib
 from wingerbot.blib import msg

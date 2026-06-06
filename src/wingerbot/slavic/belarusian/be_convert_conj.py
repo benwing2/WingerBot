@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 import re
-import traceback, sys
+import traceback
 
 from wingerbot import blib
 from wingerbot.blib import rmparam, getparam, msg, tname

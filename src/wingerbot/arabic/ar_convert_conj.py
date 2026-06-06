@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-import re, sys, json
+import re, json
 from dataclasses import dataclass, field
 
 from wingerbot import blib

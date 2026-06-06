@@ -9,7 +9,7 @@
 #
 ##* {{RQ:Bacon Learning|passage='''Policying''' of cities.}}
 
-import re, sys
+import re
 
 from wingerbot import blib
 from wingerbot.blib import getparam, rmparam, msg, errmsg

@@ -2,7 +2,7 @@
 
 # FIXME: Out of date. Use push_find_regex_changes.py.
 
-import re, sys
+import re
 
 from wingerbot import blib
 from wingerbot.blib import getparam, rmparam, tname, msg

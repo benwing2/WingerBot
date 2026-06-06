@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-import re, sys
+import re
 
 from wingerbot import blib
 from wingerbot.blib import getparam, rmparam, set_template_name, msg, tname

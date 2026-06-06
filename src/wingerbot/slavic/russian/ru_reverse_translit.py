@@ -3,7 +3,7 @@
 # This is used to reverse-convert transliterated Latin back to Russian,
 # so we can generate phon= for ru-IPA calls from the transliteration.
 
-import re, sys
+import re
 from wingerbot.slavic.russian import rulib
 
 latin_to_russian_tab_1_char = {

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-import re, sys
+import re
 from dataclasses import dataclass, field
 from collections import defaultdict
 from typing import Any, Callable

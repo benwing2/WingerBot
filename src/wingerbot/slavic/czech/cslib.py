@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-import re, sys
+import re
 
 TEMP_CH = "\ufff0"  # used to substitute ch temporarily in the default-reducible code
 TEMP_OU = "\ufff1"  # used to substitute ou temporarily in is_monosyllabic()

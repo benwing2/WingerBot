@@ -2,7 +2,7 @@
 
 # Find places where a reducible * notation is likely missing in Russian nouns.
 
-import re, sys
+import re
 
 from wingerbot import blib
 from wingerbot.blib import getparam, rmparam, msg, tname

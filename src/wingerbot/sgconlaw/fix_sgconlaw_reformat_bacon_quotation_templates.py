@@ -12,7 +12,7 @@
 #
 # If 'RQ:Bacon Of The True Greatness' occurs without raw passage text following, we just replace with 'RQ:Bacon Essayes|chapter=Of the True Greatness of Kingdoms and Estates'.
 
-import re, sys
+import re
 
 from wingerbot import blib
 from wingerbot.blib import getparam, rmparam, set_template_name, msg, errmsg, tname

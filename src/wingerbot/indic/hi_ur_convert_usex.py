@@ -2,7 +2,7 @@
 
 # Convert {{hi-usex}}/{{hi-x}} and {{ur-x}} to {{uxa}} (auto-inline), or sometimes {{ux}} or {{uxi}}.
 
-import re, sys
+import re
 
 from wingerbot import blib
 from wingerbot.blib import getparam, rmparam, tname, pname, msg

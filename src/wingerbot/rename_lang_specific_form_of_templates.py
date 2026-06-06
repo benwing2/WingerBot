@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-import re, sys
+import re
 import traceback, pprint
 
 from wingerbot import blib

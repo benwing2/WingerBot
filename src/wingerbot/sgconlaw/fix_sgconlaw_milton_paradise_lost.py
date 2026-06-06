@@ -2,7 +2,7 @@
 
 # Fix parameters in {{RQ:Milton Paradise Lost}}.
 
-import re, sys
+import re
 
 from wingerbot import blib
 from wingerbot.blib import getparam, rmparam, tname, msg

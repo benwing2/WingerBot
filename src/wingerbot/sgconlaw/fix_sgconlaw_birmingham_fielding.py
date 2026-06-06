@@ -22,7 +22,7 @@
 #
 # where the volume is based on the book.
 
-import re, sys
+import re
 
 from wingerbot import blib
 from wingerbot.blib import getparam, rmparam, set_template_name, msg, errmsg

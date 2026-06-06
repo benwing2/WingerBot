@@ -2,7 +2,7 @@
 
 # Convert "literally X" expressions in the definition of a proverb into etymologies.
 
-import re, sys
+import re
 
 from wingerbot import blib
 from wingerbot.blib import getparam, rmparam, msg

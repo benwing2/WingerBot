@@ -3,7 +3,7 @@
 # Convert la-verb old form (specifying all principal parts) to new form
 # (same as la-conj).
 
-import re, sys
+import re
 
 from wingerbot import blib
 from wingerbot.blib import getparam, rmparam, msg, tname

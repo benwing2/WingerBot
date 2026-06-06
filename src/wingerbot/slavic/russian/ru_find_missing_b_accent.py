@@ -2,7 +2,7 @@
 
 # Find places where accent b is likely missing in Russian noun declensions.
 
-import re, sys
+import re
 
 from wingerbot import blib
 from wingerbot.blib import getparam, rmparam, msg, tname

@@ -2,7 +2,7 @@
 
 # Move text outside of certain RQ: templates inside the templates.
 
-import re, sys
+import re
 
 from wingerbot import blib
 from wingerbot.blib import getparam, rmparam, set_template_name, msg, errmsg

@@ -3,7 +3,7 @@
 # Convert la-noun old form (specifying nominative, genitive, gender and
 # declension) to new form (same as la-ndecl).
 
-import re, sys
+import re
 
 from wingerbot import blib
 from wingerbot.blib import getparam, rmparam, msg, tname

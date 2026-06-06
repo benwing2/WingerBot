@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-import re, sys
+import re
 
 AC = "\u0301"
 GR = "\u0300"  # grave =  ̀
