@@ -50,6 +50,9 @@ local examples = [==[
 # : -> ː
 # I -> ɪ
 # Y -> ʏ
+# R -> r̥
+# L -> l̥
+# N -> n̥ 
 # [ptkc]h -> \1ʰ
 
 
@@ -116,7 +119,7 @@ dis[k]etta	+	ˈtɪskɛhta   diskette
 
 ### Words with affixes
 ráp-s	+	ˈrauːps
-lag-s	+	ˈlaːxs
+lag-s	+	ˈlaxs  (? or ˈlaːxs?)
 efld	+	ˈɛl(ˠ)t  strengthened (fem. nom. sg. strong)
 eflds	+	ˈɛl(ˠ)ts  strengthened (masc. gen. sg. strong)
 rö[v]ls   röfls    ˈrœvls   rambling, chattering (gen. sg.)   -   proscribed spelling
@@ -131,267 +134,272 @@ hafrar	+	ˈhavrar  oats
 á-klæði  +  ˈauːkʰlaiːðɪ   upholstery
 í-gerð	+  ˈiːcɛrð    abscess
 ó-farir  +   ˈoufaːrɪr   misfortunes, faiilures (pl.)
-fé-gjarn  +  ˈfjɛ:cartn̥   greedy for money; avaricious
-bú-staður  +  ˈpu:sta:ðʏr   dwelling, abode; cabin
+fé-gjarn  +  ˈfjɛːcartn̥   greedy for money; avaricious
+bú-staður  +  ˈpuːstaːðʏr   dwelling, abode; cabin
 ósköp  +   ˈouskœp    really, quite; heaps, loads    -       informal
 
 ## Second part begins with a vowel or an h + vowel
-mið-aldir  +  ˈmɪ:ðaltɪr   Middle Ages
-sam-eign   +  ˈsa:meikn̥   shared asset; communal space
-úr-illur   +  ˈu:rɪtlʏr   grumpy; sullen
-al-heimur  +  ˈa:lhei:mʏr   universe, cosmos (poetic)
-ljós-haf   +  ˈljou:sha:v   sea of light
+mið-aldir  +  ˈmɪːðaltɪr   Middle Ages
+sam-eign   +  ˈsaːmeikn̥   shared asset; communal space
+úr-illur   +  ˈuːrɪtlʏr   grumpy; sullen
+al-heimur  +  ˈaːlheiːmʏr   universe, cosmos (poetic)
+ljós-haf   +  ˈljouːshaːv   sea of light
 
 
-## First part ends in -p, -t, -k or -s and second part begins with a consonant or cluster (MANY EXCEPTɪONS)
-tap-rekstur  +  ˈtʰa:prɛkstʏr   loss-making business
-kaup-maður   +  ˈkœi:pma:ðʏr   merchant
-at-kvæði     +  ˈa:tkʰvai:ðɪ   syllable
-mót-læti     +  ˈmou:tlai:tɪ   adversity; misfortune
-bik-svartur  +  ˈpɪ:ksvar̥tʏr   pitch black
-sak-laus     +  ˈsa:klœi:s   innocent
-hús-maður    +  ˈhu:sma:ðʏr   farmhand (archaic)
-ís-lenskur   +  ˈi:slɛnskʏr   Icelandic
+## First part ends in -p, -t, -k or -s and second part begins with a consonant or cluster (MANY EXCEPTIONS)
+tap-rekstur  +  ˈtʰaːprɛkstʏr   loss-making business
+kaup-maður   +  ˈkœiːpmaːðʏr   merchant
+at-kvæði     +  ˈaːtkʰvaiːðɪ   syllable
+mót-læti     +  ˈmouːtlaiːtɪ   adversity; misfortune
+bik-svartur  +  ˈpɪːksvar̥tʏr   pitch black
+sak-laus     +  ˈsaːklœiːs   innocent
+hús-maður    +  ˈhuːsmaːðʏr   farmhand (archaic)
+ís-lenskur   +  ˈiːslɛnskʏr   Icelandic
 
 
 ## First part ends in another consonant (resonant, or fricative other than -s) and second part begins with a consonant or cluster
 að-ferð      +  ˈaðfɛrð      method          -
-af-greiða    +  ˈavkrei:ða   to serve; to deal with; to complete, to process      -
-af-mæli      +  ˈavmai:lɪ    birthday        -      [seemingly pronounced with /mː/ in https://enska.arnastofnun.is/en/ord/2617/tungumal/EN]
-lag-laus     +  ˈlaɣlœi:s    tone-deaf       -
-veg-sama     +  ˈvɛɣsa:ma    to praise, to glorify      -
-Dal-vík      +  ˈtalvi:k     [female given name]        -
+af-greiða    +  ˈavkreiːða   to serve; to deal with; to complete, to process      -
+af-mæli      +  ˈavmaiːlɪ    birthday        -      [seemingly pronounced with /mː/ in https://enska.arnastofnun.is/en/ord/2617/tungumal/EN]
+lag-laus     +  ˈlaɣlœiːs    tone-deaf       -
+veg-sama     +  ˈvɛɣsaːma    to praise, to glorify      -
+Dal-vík      +  ˈtalviːk     [female given name]        -
 kol-svartur  +  ˈkʰɔlsvar̥tʏr  coal black     -
-mál-tíð      +  ˈmaultʰi:ð    meal; mealtime     -
+mál-tíð      +  ˈmaultʰiːð    meal; mealtime     -
 stór-gerður  +  ˈstourcɛrðʏr  rugged, coarse-hewn (of facial features); coarse, crude     -
-vor-koma     +  ˈvɔr̥kʰɔ:ma    arrival of spring    -      note the devoiced r before written <k> in this case across compound boundaries
-frum-legur   +  ˈfrʏmlɛ:ɣʏr   original, novel      -
+vor-koma     +  ˈvɔr̥kʰɔːma    arrival of spring    -      note the devoiced r before written <k> in this case across compound boundaries
+frum-legur   +  ˈfrʏmlɛːɣʏr   original, novel      -
 vin-semd     +  ˈvɪnsɛmt      friendliness, kindness      -
-af-taka      +  ˈaftʰa:ka     to refuse; execution (killing)  -     note the devoiced f before written <t> in this case across compound boundaries; [pronounced with /v/ in https://enska.arnastofnun.is/en/ord/2721/tungumal/EN]
+af-taka      +  ˈaftʰaːka     to refuse; execution (killing)  -     note the devoiced f before written <t> in this case across compound boundaries; [pronounced with /v/ in https://enska.arnastofnun.is/en/ord/2721/tungumal/EN]
 
 ## First part ending in /d/ (after /l/ or /n/), drops before /d/ or /t/
-sand-dæla    +  ˈsantai:la    sand pump
-sund-tök     +  ˈsʏntʰœ:k     swimming strokes (pl.)
-hund-tík     +  ˈhʏntʰi:k     female dog, bitch
+sand-dæla    +  ˈsantaiːla    sand pump
+sund-tök     +  ˈsʏntʰœːk     swimming strokes (pl.)
+hund-tík     +  ˈhʏntʰiːk     female dog, bitch
 
 ## First part ending in /d/ (after /l/ or /n/), optionally drops before /s/; "tends to be dropped before /s/, especially in common words"
-and-skoti     +  ˈanskɔ:ti,ˈantskɔ:ti           devil fiend; fucking (adv.) [pronounced with [tʰ] and short [ɔ] in https://enska.arnastofnun.is/en/ord/3292/tungumal/EN]
-hand-sama     +  ˈhansa:ma,ˈhantsa:ma           to seize; to capture; to arrest
+and-skoti     +  ˈanskɔːti,ˈantskɔːti           devil fiend; fucking (adv.) [pronounced with [tʰ] and short [ɔ] in https://enska.arnastofnun.is/en/ord/3292/tungumal/EN]
+hand-sama     +  ˈhansaːma,ˈhantsaːma           to seize; to capture; to arrest
 hund-skamma   +  ˈhʏnskama,ˈhʏntskama          to scold severely, to chew out
-eld-spýta     +  ˈɛlspi:ta,ˈeltspi:ta          match (for flame)
+eld-spýta     +  ˈɛlspiːta,ˈeltspiːta          match (for flame)
 kvöld-skóli   +  ˈkʰvœlskoulɪ,ˈkʰvœltskoulɪ    night school
 
 ## First part endiing in /d/ (after /l/ or /n/), should not drop before /b/ (except in slopppy/colloquial language)
-kvöld-blað     +  ˈkʰvœltpla:ð    evening newspaper
-hand-börur     +  ˈhantpœ:rʏr     hand stretcher (pl.)? handcart?
-vald-boð       +  ˈvaltpɔ:ð       instruction, command
+kvöld-blað     +  ˈkʰvœltplaːð    evening newspaper
+hand-börur     +  ˈhantpœːrʏr     hand stretcher (pl.)? handcart?
+vald-boð       +  ˈvaltpɔːð       instruction, command
 
 ## First part endiing in /ð/, remains voiced even if aspirated consonant follows
 ## /ð/ tends to drop, especially between consonants (with devoicing of a preceding /r/ before an aspirated stop or voiceless fricative/approximant other than /h/ + vowel), but in fast speech even after a vowel (with lengthening of the vowel)
-bið-tími       +   ˈpɪðtʰi:mɪ     wait, waiting time
-við-tal        +   ˈvɪðtʰa:l      interview
+bið-tími       +   ˈpɪðtʰiːmɪ     wait, waiting time
+við-tal        +   ˈvɪðtʰaːl      interview
 varð-turn      +   ˈvarð-tʰʏrtn̥   watchtower
 að-krepptur    +   ˈað-kʰrɛftʏr   pressed (for time, money); cramped, confined
 ráð-kænska     +   ˈrauðcʰainska  resourcefulness, astuteness
-við-kvæði      +   ˈvɪðkʰvai:ðɪ   refrain, chorus
-að-koma        +   ˈaðkʰɔ:ma      situation; involvement; driveway
-borð-búnaður   +   ˈporðpu:naðʏr  tableware    -      [/u/ given as short but apparently a typo; compare treggáfaður below with long á]
-bragð-betri    +   ˈpraɣðpɛ:trɪ   tastier, more delicious
+við-kvæði      +   ˈvɪðkʰvaiːðɪ   refrain, chorus
+að-koma        +   ˈaðkʰɔːma      situation; involvement; driveway
+borð-búnaður   +   ˈporðpuːnaðʏr  tableware    -      [/u/ given as short but apparently a typo; compare treggáfaður below with long á]
+bragð-betri    +   ˈpraɣðpɛːtrɪ   tastier, more delicious
 harð-brjósta   +   ˈharðprjousta  heartless, callous
-orð-tak        +   ˈɔrðtʰa:k      expression, idiom
-við-tæki       +   ˈvɪðtʰai:cɪ    radio set; extensive, far-reaching (nom. masc. sg. weak)
+orð-tak        +   ˈɔrðtʰaːk      expression, idiom
+við-tæki       +   ˈvɪðtʰaiːcɪ    radio set; extensive, far-reaching (nom. masc. sg. weak)
 verð-myndun    +   ˈvɛrðmɪntʏn    price formation (?)
 verð-skulda    +   ˈverðskʏlta    to deserve, to merit
 
 ## Names with /ð/ at the end of a compound, which conventionally drops or assimilates
-Bárð-dælir     +   ˈpaurðtai:lɪr   [placename]
-Bár-dælir      Bárðdælir   ˈpaurtai:lɪr    [placename]     -       local pronunciation
+Bárð-dælir     +   ˈpaurðtaiːlɪr   [placename]
+Bár-dælir      Bárðdælir   ˈpaurtaiːlɪr    [placename]     -       local pronunciation
 Norð-fjörður   +   ˈnɔrðfjœrðʏr    [placename]
 Nor-fjörður   Norðfjörður   ˈnɔr̥fjœrðʏr     [placename]     -       local pronunciation
 Norð-lendingur  +  ˈnɔrðlɛntiŋkʏr  [placename]
 Nor-lendingur  Norðlendingur  ˈnɔrlɛntiŋkʏr   [placename]     -       local pronunciation
 Norð-lingar    +   ˈnɔrðliŋkʏr     [placename]
 Nor-lingar    Norðlingar   ˈnɔrliŋkʏr      [placename]     -       local pronunciation
-Breið-dalur    +   ˈpreiðta:lʏr    [placename]
-Breid[:]alur    Breiðdalur   ˈpreit:alʏr     [placename]     -       local pronunciation [why not long /a/?]
-Skrið-dalur    +   ˈskrɪðta:lʏr    [placename]
-Skrid[:]alur    Skriðdalur   ˈskrɪt:alʏr     [placename]     -       local pronunciation [why not long /a/?]
+Breið-dalur    +   ˈpreiðtaːlʏr    [placename]
+Breid[:]alur    Breiðdalur   ˈpreitːalʏr     [placename]     -       local pronunciation [why not long /a/?]
+Skrið-dalur    +   ˈskrɪðtaːlʏr    [placename]
+Skrid[:]alur    Skriðdalur   ˈskrɪtːalʏr     [placename]     -       local pronunciation [why not long /a/?]
 
 ## First part ending in /f/, which becomes [v] before a vowel, voiced sound, unaspirated stop or /h/ + vowel
-of-ætlun     +    ˈɔ:vaihtlʏn       insurmountable task
-af-dalur     +    ˈafta:lʏr         side valley; isolated valley
-raf-geymir   +    ˈravcei:mɪr       accumulator, storage battery
-haf-gola     +    ˈhavkɔ:la         sea breeze
-af-hausa     +    ˈavhœi:sa         to behead
-a-fausa     afhausa    ˈa:fœi:sa    to behead      -       with assimilation
-líf-láta     +      ˈlivlau:ta      to put to death, to execute; execution, murder (gen pl indef)
+of-ætlun     +    ˈɔːvaihtlʏn       insurmountable task
+af-dalur     +    ˈaftaːlʏr         side valley; isolated valley
+raf-geymir   +    ˈravceiːmɪr       accumulator, storage battery
+haf-gola     +    ˈhavkɔːla         sea breeze
+af-hausa     +    ˈavhœiːsa         to behead
+a-fausa     afhausa    ˈaːfœiːsa    to behead      -       with assimilation
+líf-láta     +      ˈlivlauːta      to put to death, to execute; execution, murder (gen pl indef)
 raf-neisti   +      ˈravneistɪ      electric spark
 raf-reiknir  +      ˈravreihknɪr    [electronic] calculator
 
 ## First part ending in /f/, which becomes [f] before a voiceless fricative or approximant or aspirated stop
 
-af-hjúpa      +    ˈafçu:pa       to unveil; to reveal
-af-hrak       +    ˈafr̥a:k        outcast, pariah
-af-kimi       +    ˈafcʰɪ:mɪ      nook, corner
-af-koma       +    ˈafkʰɔ:ma      profits, financial situation
-af-taka       +    ˈaftʰa:ka      to refuse; execution (killing)
-raf-tækni     +    ˈraftʰai:hknɪ  electronics
-Rif-tún       +    ˈrɪftʰu:na     [placename]
+af-hjúpa      +    ˈafçuːpa       to unveil; to reveal
+af-hrak       +    ˈafr̥aːk        outcast, pariah
+af-kimi       +    ˈafcʰɪːmɪ      nook, corner
+af-koma       +    ˈafkʰɔːma      profits, financial situation
+af-taka       +    ˈaftʰaːka      to refuse; execution (killing)
+raf-tækni     +    ˈraftʰaiːhknɪ  electronics
+Rif-tún       +    ˈrɪftʰuːna     [placename]
 af-skekktur   +    ˈafscɛxtʏr     remote, isolated, secluded
-af-staða      +    ˈafsta:ða      position, attitude, stance; location
-of-hleðsla    +    ˈɔfl̥:ɛðsla     overload
+af-staða      +    ˈafstaːða      position, attitude, stance; location
+of-hleðsla    +    ˈɔfl̥ːɛðsla     overload
 of-hvörf      +    ˈɔfkʰvœrv      excesses? hyperbole?
-of-sjónir     +    ˈɔfsjou:nɪr    hallucination(s)
+of-sjónir     +    ˈɔfsjouːnɪr    hallucination(s)
 
 ## First part ending in /f/, before a labial; it becomes [v] or (in everyday speech, but not formal speech) assimilates to the labial
 
-raf-magn      +    ˈravmakn,ˈram:akn[informal]      electricity
-af-bera       +    ˈavpɛ:ra,ˈap:ɛra[informal]       to tolerate, to bear
+raf-magn      +    ˈravmakn,ˈramːakn[informal]      electricity
+af-bera       +    ˈavpɛːra,ˈapːɛra[informal]       to tolerate, to bear
 af-bragð      +    ˈavpraɣð,ˈapraɣð[informal]       excellent thing/person
-of-boðs-legur  +   ˈɔvpɔðslɛ:ɣʏr,ˈɔp:ɔðslɛ:ɣʏr[informal]      	tremendous, enormous; terrible, awful
-o-boðs-legur  ofboðslegur   ˈɔ:pɔðslɛ:ɣʏr           tremendous, enormous; terrible, awful      -         alternative informal form
+of-boðs-legur  +   ˈɔvpɔðslɛːɣʏr,ˈɔpːɔðslɛːɣʏr[informal]      	tremendous, enormous; terrible, awful
+o-boðs-legur  ofboðslegur   ˈɔːpɔðslɛːɣʏr           tremendous, enormous; terrible, awful      -         alternative informal form
 
 
 
 ## First part ending in soft /g/, which becomes [ɣ] before a vowel, voiced sound, unaspirated stop or /h/ + vowel
 ## Commonly in fast speech, especially in common words, the [ɣ] is dropped before a consonant and the preceding vowel lengthened; not acceptable in formal speech.
 
-aug-ljós       +   ˈœiɣljou:s     obvious, apparent
-dag-blað       +   ˈtaɣpla:ð      newspaper
-dag-legur      +   ˈtaɣlɛ:ɣʏr     daily, everyday
+aug-ljós       +   ˈœiɣljouːs     obvious, apparent
+dag-blað       +   ˈtaɣplaːð      newspaper
+dag-legur      +   ˈtaɣlɛːɣʏr     daily, everyday
 dag-mamma      +   ˈtaɣmama       childminder, daycare provider, childcare provider
-fag-maður      +   ˈfaɣma:ðʏr     professional, expert
-hag-ræða       +   ˈhaɣrai:ða     get comfortable; adjust, sort out; economize; adapt, modify
+fag-maður      +   ˈfaɣmaːðʏr     professional, expert
+hag-ræða       +   ˈhaɣraiːða     get comfortable; adjust, sort out; economize; adapt, modify
 lag-hentur     +   ˈlaɣhɛn̥tʏr     handy, dexterous
 leg-bólga      +   ˈleɣpoulka     uterine inflammation
-nag-dýr        +   ˈnaɣti:r       rodent
-sog-æðar       +   ˈsɔɣai:ðar     lymphatic vessels
-treg-gáfaður   +   ˈtʰrɛɣkau:vaðʏr   slow-witted, dim
+nag-dýr        +   ˈnaɣtiːr       rodent
+sog-æðar       +   ˈsɔɣaiːðar     lymphatic vessels
+treg-gáfaður   +   ˈtʰrɛɣkauːvaðʏr   slow-witted, dim
 
 
 ## First part ending in soft /g/, which becomes [x] before a voiceless fricative or approximant or aspirated stop (other than /h/ + vowel)
 ## Alternatively ("also quite common"), pronounced as voiced.
 ## Not commonly dropped when voiceless even in fast speech (but sometimes when pronounced as voiced).
 
-dag-kaup       +   ˈtaxkʰœi:p,ˈtaɣkʰœi:p           daily wage
-dag-peningar   +   ˈtaxpʰɛ:niŋkar,ˈtaɣpʰɛ:niŋkar   daily allowance, per diem
+dag-kaup       +   ˈtaxkʰœiːp,ˈtaɣkʰœiːp           daily wage
+dag-peningar   +   ˈtaxpʰɛːniŋkar,ˈtaɣpʰɛːniŋkar   daily allowance, per diem
 hag-kerfi      +   ˈhaxcʰɛrvɪ,ˈhaɣcʰɛrvɪ           economic system, economy
-log-suða       +   ˈlɔxsʏ:ða,ˈlɔɣsʏ:ða             welding
+log-suða       +   ˈlɔxsʏːða,ˈlɔɣsʏːða             welding
 sag-tenntur    +   ˈsaxtʰɛn̥tʏr,ˈsaɣtʰɛn̥tʏr         serrate (of a leaf)
 veg-spotti     +   ˈvɛxspɔhtɪ,ˈvɛɣspɔhtɪ           stretch of road? short distance?
 veg-tylla      +   ˈvɛxtʰɪtla,ˈvɛɣtʰɪtla           honor, prestige; credit, kudos
-víg-hreiður    +   ˈvixr̥ei:ðʏr,ˈviɣr̥ei:ðʏr         pillbox, fortified bunker
+víg-hreiður    +   ˈvixr̥eiːðʏr,ˈviɣr̥eiːðʏr         pillbox, fortified bunker
 
 
 ## First part ending in soft /g/, which is dropped after á, ó, ú (as in non-compound words).
 
-lágnætti       +   ˈlau:naihtɪ        midnight (dated)
-skóglendi      +   ˈskou:lɛntɪ        woodland, wooded area
-drjúgvirkur    +   ˈtrju:vɪr̥kʏr       efficient, highly effective
+lágnætti       +   ˈlauːnaihtɪ        midnight (dated)
+skóglendi      +   ˈskouːlɛntɪ        woodland, wooded area
+drjúgvirkur    +   ˈtrjuːvɪr̥kʏr       efficient, highly effective
 
 
 ## First part ending in /k/: pre-aspirated in some common compound words
 
 einstakk-lingur    einstaklingur  ˈeinstahkliŋkʏr    individual, person
 klakk-laust        klaklaust      ˈkʰlahkœist        safe and sound (also spelled "klakklaust")
-líkk-legur         líklegur       ˈlihklɛ:ɣʏr        likely, probable
-lík-legur          +              ˈli:klɛ:ɣʏr        likely, probable        -        alternative pronunciation
+líkk-legur         líklegur       ˈlihklɛːɣʏr        likely, probable
+lík-legur          +              ˈliːklɛːɣʏr        likely, probable        -        alternative pronunciation
 
 ## First part ending in /k/: not pre-aspirated in less common compound words
 
-lak-lega        +    ˈla:klɛ:ɣa    poorly, insufficiently, substandardly
-lok-leysa       +    ˈlɔ:klei:sa   nonsense, rubbish
+lak-lega        +    ˈlaːklɛːɣa    poorly, insufficiently, substandardly
+lok-leysa       +    ˈlɔːkleiːsa   nonsense, rubbish
 
 
 ## First part ending in /k/: disappears before <g> and <k>
 
-bak-grunnur     +    ˈpa:krʏnʏr      background
-strák-kjáni     +    ˈstrau:cʰau:nɪ  silly/foolish boy, goofy lad
-blek-klessa     +    ˈplɛ:kʰlɛsa     ink blot
-þak-gluggi      +    ˈþa:klʏcɪ       skylight
+bak-grunnur     +    ˈpaːkrʏnʏr      background
+strák-kjáni     +    ˈstrauːcʰauːnɪ  silly/foolish boy, goofy lad
+blek-klessa     +    ˈplɛːkʰlɛsa     ink blot
+þak-gluggi      +    ˈþaːklʏcɪ       skylight
 
 
 ## mf, mv, ns (also in non-compound words): previous vowel nasalized; in fast and informal speech, the nasal consonant may disappear, leaving only a nasalized vowel
 
-fram-farir      +   ˈfrãmfa:rɪr    advancements, strides
+fram-farir      +   ˈfrãmfaːrɪr    advancements, strides
 fram-vinda      +   ˈfrãmvɪnta     progress; development
 sam-ferða       +   ˈsãmfɛrða      traveling with, accompanying (adj)
 um-ferð         +   ˈʏ̃mfɛrð        traffic, congestion; flow; cycle, round
-inn-sýn         +   ˈɪ̃nsi:n        insight, perception
+inn-sýn         +   ˈɪ̃nsiːn        insight, perception
 van-svefta      +   ˈvãnsvɛfta     sleep-deprived
 
 ## <ns>, <nns> in non-compound words:
-dansa           +   tãnsa          dance
-eins            +   e͠ins           identical; equal
-vinnsla         +   vɪ̃nsla         processing (noun)
+dansa           +   ˈtãnsa          dance
+eins            +   ˈe͠ins           identical; equal
+vinnsla         +   ˈvɪ̃nsla         processing (noun)
 
 ## <n-b> across a compound boundary informally becomes /mp/, <n-k> informally becomes /ŋkʰ/; in colloquial speech the <n> may drop but this is frowned on in formal speech
-eim-búi         einbúi       eimpu:I           loner, hermit, recluse                    -              informal
-eim-býlis-hús   einbýlishús  eimpi:lIshu:s 	   detached house, single-family home        -              informal   
-imm-bú          innbú        Impu:             household goods                           -              informal
-Imm-bær         Innbær       Impai:r           inner city                                -              informal
-innan-sleikjur  +            Inãnstlei:cYr     trifles
-undam-brögð     undanbrögð   Yntamprœɣð        excuses, pretexts                         -              informal
-undaŋ-koma      undankoma    Yntaŋkhɔ:ma       escape, way out                           -              informal
+eim-búi         einbúi       ˈeimpuːɪ           loner, hermit, recluse                    -              informal
+eim-býlis-hús   einbýlishús  ˈeimpiːlɪshuːs 	   detached house, single-family home        -              informal   
+imm-bú          innbú        ˈɪmpuː             household goods                           -              informal
+ɪmm-bær         Innbær       ˈɪmpaiːr           inner city                                -              informal
+innan-sleikjur  +            ˈɪnãnstleiːcʏr     trifles
+undam-brögð     undanbrögð   ˈʏntamprœɣð        excuses, pretexts                         -              informal
+undaŋ-koma      undankoma    ˈʏntaŋkʰɔːma       escape, way out                           -              informal
 
 
 ## <p> across a compound boundary disappears before <b>, <p>
-kaup-bætir      +           khœi:pai:ðYr       added bonus, something coming along "in the bargain"
-kaup-binding    +           khœi:pIntiŋk       wage freeze
-lop-band        +           lɔ:pant            band or ribbon of coarse wool yarn        -               book says [lɔp:and], probably a mistake
-upp-bót         +           Yhpou:t            supplement; compensation                  -               book says [Yhbout], probably a mistake
+kaup-bætir      +           ˈkʰœiːpaiːðʏr       added bonus, something coming along "in the bargain"
+kaup-binding    +           ˈkʰœiːpɪntiŋk       wage freeze
+lop-band        +           ˈlɔːpant            band or ribbon of coarse wool yarn        -               book says [lɔpːand], probably a mistake
+upp-bót         +           ˈʏhpouːt            supplement; compensation                  -               book says [ʏhbout], probably a mistake
 
-## <p> across a compound boundary especially in kaup- and upp- informally assimilates to a geminate /f:/ before <f>, with shortening of preceding and following vowels if long; not in formal speech
-kaup-fé-lag      +           khœi:pfjɛ:la:ɣ,khœif:jɛla:ɣ[informal]   (merchant) cooperative
-kau-fé-lag       kaupfélag   khœi:fjɛ:la:ɣ                           (merchant) cooperative        -     alternative informal pronunciation
-kaup-far         +           khœi:pfa:r,khœif:ar[informal]           merchant ship; trader
-kau-far          kaupfar     khœi:fa:r                               merchant ship; trader         -     alternative informal pronunciation
-upp‿fyrir        +           YhpfI:rIr,Yf:IrIr[informal]             above
-upp-fræða        +           Yhpfrai:ða,Yf:raiða[informal]           educate; inform               -     book has [Yf:rai:ða], probably a typo
+## <p> across a compound boundary especially in kaup- and upp- informally assimilates to a geminate /fː/ before <f>, witʰ shortening of preceding and following vowels if long; not in formal speecʰ
+kaup-fé-lag      +           ˈkʰœiːpfjɛːlaːɣ,kʰœifːjɛlaːɣ[informal]   (merchant) cooperative
+kau-fé-lag       kaupfélag   ˈkʰœiːfjɛːlaːɣ                           (merchant) cooperative        -     alternative informal pronunciation
+kaup-far         +           ˈkʰœiːpfaːr,kʰœifːar[informal]           merchant ship; trader
+kau-far          kaupfar     ˈkʰœiːfaːr                               merchant ship; trader         -     alternative informal pronunciation
+upp‿fyrir        +           ˈʏhpfɪːrɪr,ʏfːɪrɪr[informal]             above
+upp-fræða        +           ˈʏhpfraiːða,ʏfːraiða[informal]           educate; inform               -     book has [ʏfːraiːða], probably a typo
 
 ## <p> across a compound boundary sometimes becomes /f/ before <s> and <t> (with shortening of a preceding vowel if long), across a compound boundary
-kaup-sýsla       +           khœi:psistla,khœifsistla[informal]      trade, commerce
-kaup-tíð         +           khœi:pthi:ð,khœifthi:ð[informal]        trading season (historical)
-kaup-trygging    +           khœi:pthrIciŋk,khœifthrIciŋk[informal]  guaranteed minimum wage
+kaup-sýsla       +           ˈkʰœiːpsistla,kʰœifsistla[informal]      trade, commerce
+kaup-tíð         +           ˈkʰœiːptʰiːð,kʰœiftʰiːð[informal]        trading season (historical)
+kaup-trygging    +           ˈkʰœiːptʰrɪciŋk,kʰœiftʰrɪciŋk[informal]  guaranteed minimum wage
 
 ## <p> across a compound boundary may be aspirated before /m/
-kaup-maður       +           khœi:pma:ðYr,khœihpma:ðYr               merchant, trader
-kaup-mennska     +           khœi:pmɛnska,khœihpmɛnska               commerce, business
-Kaup-manna-höfn  +           khœi:pmanahœpn̥,khœihpmanahœpn̥           Copenhagen
+kaup-maður       +           ˈkʰœiːpmaːðʏr,kʰœihpmaːðʏr               merchant, trader
+kaup-mennska     +           ˈkʰœiːpmɛnska,kʰœihpmɛnska               commerce, business
+Kaup-manna-höfn  +           ˈkʰœiːpmanahœpn̥,kʰœihpmanahœpn̥           Copenhagen
 
 ## First part of compound ending in <r>, which becomes devoiced before a voiceless fricative or approximant or aspirated stop (other than /h/ + vowel)
 ## 1. Before <p>, <t>, <k>, <s>:
-kór-söngur       +           khouRsœiŋkYr        
-kyrr-stæður      +           chIRstai:ðYr
-leir-ker         +           leiRchɛ:r
-nær-pils         +           naiRphIls
-nær-tækur        +           naiRthai:kYr
-sér-stakur       +           sjɛRsta:kYr
-vor-kuldar       +           vɔRkhYltar
-úr-koma          +           uRkhɔ:ma
+kór-söngur       +           ˈkʰour̥sœiŋkʏr    choral singing      
+kyrr-stæður      +           ˈcʰɪr̥staiːðʏr    stationary, immobile
+leir-ker         +           ˈleir̥cʰɛːr       ceramic pot
+nær-pils         +           ˈnair̥pʰɪls       slip (woman's garment), petticoat
+nær-tækur        +           ˈnair̥tʰaiːkʏr    obvious, evident, at hand
+sér-stakur       +           ˈsjɛr̥staːkʏr     particular; specific, distinct; special, unusual; distinctive, exceptional
+vor-kuldar       +           ˈvɔr̥kʰʏltar      cold spells in spring
+úr-koma          +           ˈur̥kʰɔːma        rainfall, precipitation
 ## 2. Before <þ>, <hj>, <hl>, <hn> (also presumably <f> but no examples given):
-búr-hnífur       +           puRNi:vYr
-fer-hjóla        +           fɛRçou:la
-var-hluta        +           vaRLY:ta
-vor-hláka        +           vɔRLau:ka
-vor-þing         +           vɔRθiŋk
+búr-hnífur       +           ˈpur̥n̥iːvʏr       kitchen knife
+fer-hjóla        +           ˈfɛr̥çouːla       four-wheeled
+var-hluta        +           ˈvar̥l̥ʏːta        cheated of, deprived of
+vor-hláka        +           ˈvɔr̥l̥auːka       spring thaw
+vor-þing         +           ˈvɔr̥θiŋk         spring parliament, spring session
 ## 3. Assimilation before <hr>: [note, following vowels shortened after double consonant from assimilation, probably a general rule]
-úr-hrak          +           uR:ak
-vor-hret         +           vɔR:ɛt
+úr-hrak          +           ˈur̥ːak           scum, dregs; scoundrel, wretch
+vor-hret         +           ˈvɔr̥ːɛt          cold spell in spring
 ## 4. <r> at the end of an inflection at the end of the first part of a compound often dropped, especially informally in common words:
-efti-sjá         eftirsjá         ɛftIsjau:
-efti-tekt        eftirtekt        ɛftIthɛxt
-hjálpa-gögn      hjálpargögn      çauLpakœkN
-Stranda-kirkja   Strandarkirkja   strantachIRca
-kopa-stunga      koparstunga      khɔ:pastuŋka
-unda-legur       undarlegur       Yntalɛ:ɣYr
-yfi-læti         yfirlæti         I:vIlai:tI
+efti-sjá         eftirsjá         ˈɛftɪsjauː        regret, sense of loss
+efti-tekt        eftirtekt        ˈɛftɪtʰɛxt        attention, heed
+hjálpa-gögn      hjálpargögn      ˈçaul̥pakœkn̥       aid, help; (in plural) emergency aid, emergency supplies
+Stranda-kirkja   Strandarkirkja   ˈstrantacʰɪr̥ca    Coastal Church (a particular famous Lutheran church)
+kopa-stunga      koparstunga      ˈkʰɔːpastuŋka     copperplate
+unda-legur       undarlegur       ˈʏntalɛːɣʏr       weird, strange
+yfi-læti         yfirlæti         ˈɪːvɪlaiːtɪ       haughtiness; hubris, arrogance
 
+## <s> at the end of the first part of a compound is maintained unless the second part begins with an <s>
+ríkis-sjóður     +               ˈriːcɪsjouːðʏr    national treasury, public purse
+heims-sýn        +               ˈheimsiːn         worldview; panorama
+lands-sam-band   +               ˈlantsampant      national association
+lans-sam-band    landssamband    ˈlansampant       national association                            -                reduced pronunciation
 
 geim-steinn  +	ˈceimsteitn̥   meteoroid
 loft-steinn  +	ˈlɔftsteitn̥   meteorite
 gvuð-spjall  guðspjall  ˈkvʏðspjatl̥   gospel
-ski[f]-stjóri  skipstjóri   ˈscɪfstjou:rɪ  captain    [not with /f/ in https://enska.arnastofnun.is/en/ord/36534/tungumal/EN]
+ski[f]-stjóri  skipstjóri   ˈscɪfstjouːrɪ  captain    [not with /f/ in https://enska.arnastofnun.is/en/ord/36534/tungumal/EN]
 
 ]==]
 
