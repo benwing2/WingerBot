@@ -1,55 +1,76 @@
 local UnitTester = {}
 
-local ustring = mw.ustring
-local is_combining = require "Module:Unicode data".is_combining
-local UTF8_char = '[\1-\127\194-\244][\128-\191]*'
+local require = require
+local concat = table.concat
+local deep_equals = require("Module:table/deepEquals")
+local error = error
+local explode_utf8 = require("Module:string utilities").explode_utf8
+local find = string.find
+local full_url = mw.uri.fullUrl
+local gsub = string.gsub
+local html = mw.html
+local insert = table.insert
+local ipairs = ipairs
+local is_callable = require("Module:fun/isCallable")
+local is_combining = require("Module:Unicode data").is_combining
+local match = string.match
+local nowiki = require("Module:string/nowiki")
+local pairs = pairs
+local shallow_copy = require("Module:table/shallowCopy")
+local sort = table.sort
+local sorted_pairs = require("Module:table/sortedPairs")
+local sub = string.sub
+local tostring = tostring
+local traceback = debug.traceback
+local type = type
+local umatch = mw.ustring.find
+local unpack = unpack or table.unpack -- Lua 5.2 compatibility
+local usub = mw.ustring.sub
+local xpcall = require("Module:fun/xpcall")
 
-local sorted_pairs = require('Module:table').sortedPairs
-local Array = require("Module:array")
+-- DO NOT replace with mw.loadData("Module:headword/data").pagename as we need the root portion
+local current_title = mw.title.getCurrentTitle()
 
 local tick, cross =
 	'[[File:Yes check.svg|20px|alt=Passed|link=|Test passed]]',
 	'[[File:X mark.svg|20px|alt=Failed|link=|Test failed]]'
 
-local function iter_UTF8(str)
-	return string.gmatch(str, UTF8_char)
-end
-
--- Skips over bytes that are not used by UTF-8, and will count overlong encodings.
-local function len(str)
-	local _, length = string.gsub(str, UTF8_char, '')
-	return length
-end
-
 local function first_difference(s1, s2)
-	if type(s1) ~= 'string' or type(s2) ~= 'string' then return 'N/A' end
-	if s1 == s2 then return '' end
-	local next_char1, next_char2 = iter_UTF8(s1), iter_UTF8(s2)
-	local max = math.min(len(s1), len(s2))
-	for i = 1, max do
-		local c1, c2 = next_char1(), next_char2()
-		if c1 ~= c2 then return i end
+	if not (type(s1) == "string" and type(s2) == "string") then
+		return "N/A"
+	elseif s1 == s2 then
+		return ""
 	end
-	return max + 1
+	
+	s1 = explode_utf8(s1)
+	s2 = explode_utf8(s2)
+	
+	local i = 0
+	repeat
+		i = i + 1
+	until s1[i] ~= s2[i]
+	
+	return i
 end
 
 local function highlight(str)
-	if ustring.find(str, "%s") then
-		return '<span style="background-color: pink;">' ..
-			string.gsub(str, " ", "&nbsp;") .. '</span>'
+	if umatch(str, "%s") then
+		return '<span style="background-color: var(--wikt-palette-red-4,pink);">' ..
+			gsub(str, " ", "&nbsp;") .. '</span>'
 	else
-		return '<span style="color: red;">' ..
+		return '<span style="color: var(--wikt-palette-red-9, red);">' ..
 			str .. '</span>'
 	end
 end
 
 local function find_noncombining(str, i, incr)
-	local char = ustring.sub(str, i, i)
-	while char ~= '' and is_combining(ustring.codepoint(char)) do
+	while true do
+		local ch = usub(str, i, i)
+		if ch == "" or not is_combining(ch) then
+			return i
+		end
 		i = i + incr
-		char = ustring.sub(str, i, i)
 	end
-	return i
 end
 
 -- Highlight character where a difference was found. Start highlight at first
@@ -64,124 +85,179 @@ local function highlight_difference(actual, expected, differs_at, func)
 	local i = find_noncombining(actual, differs_at, -1)
 	local j = find_noncombining(actual, differs_at + 1, 1)
 	j = j - 1
-	return ustring.sub(actual, 1, i - 1) ..
-		(type(func) == "function" and func or highlight)(ustring.sub(actual, i, j)) ..
-		ustring.sub(actual, j + 1, -1)
+	return usub(actual, 1, i - 1) ..
+		(is_callable(func) and func or highlight)(usub(actual, i, j)) ..
+		usub(actual, j + 1, -1)
 end
 
 local function val_to_str(v)
-	if type(v) == 'string' then
-		v = string.gsub(v, '\n', '\\n')
-		if string.find(string.gsub(v, '[^\'"]', ''), '^"+$') then
+	if type(v) == "string" then
+		v = gsub(v, '\n', '\\n')
+		if find(gsub(v, '[^\'"]', ''), '^"+$') then
 			return "'" .. v .. "'"
 		end
-		return '"' .. string.gsub(v, '"', '\\"' ) .. '"'
+		return '"' .. gsub(v, '"', '\\"' ) .. '"'
 	elseif type(v) == 'table' then
-		local result, done = Array(), {}
+		local result, done = {}, {}
 		for k, val in ipairs(v) do
-			result:insert(val_to_str(val))
+			insert(result, val_to_str(val))
 			done[k] = true
 		end
 		for k, val in sorted_pairs(v) do
 			if not done[k] then
-				if (type(k) ~= "string") or not string.find(k, '^[_%a][_%a%d]*$') then
+				if (type(k) ~= "string") or not find(k, '^[_%a][_%a%d]*$') then
 					k = '[' .. val_to_str(k) .. ']'
 				end
-				result:insert(k .. '=' .. val_to_str(val))
+				insert(result, k .. '=' .. val_to_str(val))
 			end
 		end
-		return '{' .. result:concat(', ') .. '}'
+		return "{" .. concat(result, ", ") .. "}"
 	else
 		return tostring(v)
 	end
 end
 
-local function deep_compare(t1, t2, ignore_mt)
-	local ty1, ty2 = type(t1), type(t2)
-	if ty1 ~= ty2 then return false
-	elseif ty1 ~= 'table' then return t1 == t2 end
-	
-	local mt = getmetatable(t1)
-	if not ignore_mt and mt and mt.__eq then return t1 == t2 end
-	
-	for k1, v1 in pairs(t1) do
-		local v2 = t2[k1]
-		if v2 == nil or not deep_compare(v1, v2) then return false end
+local function insert_differences(keys, t1, t2)
+	for k, v1 in pairs(t1) do
+		local v2 = t2[k]
+		if v2 == nil or not deep_equals(v1, v2, true) then
+			insert(keys, k)
+		end
 	end
-	for k2, v2 in pairs(t2) do
-		local v1 = t1[k2]
-		if v1 == nil or not deep_compare(v1, v2) then return false end
-	end
-
-	return true
 end
 
-local function get_differing_keys(t1, t2, mt)
-	local ty1, ty2 = type(t1), type(t2)
-	if ty1 ~= ty2 then return nil
-	elseif ty1 ~= 'table' then return nil end
-	
-	local mt = getmetatable(t1)
-	if not ignore_mt and mt and mt.__eq then return nil end
+local function get_differing_keys(t1, t2)
+	local ty1 = type(t1)
+	if not (ty1 == type(t2) and ty1 == "table") then
+		return nil
+	end
 	
 	local keys = {}
-	
-	for k1, v1 in pairs(t1) do
-		local v2 = t2[k1]
-		if v2 == nil or not deep_compare(v1, v2) then table.insert(keys, k1) end
-	end
-	for k2, v2 in pairs(t2) do
-		local v1 = t1[k2]
-		if v1 == nil or not deep_compare(v1, v2) then table.insert(keys, k2) end
-	end
+	insert_differences(keys, t1, t2)
+	insert_differences(keys, t2, t1)
 
 	return keys
 end
 
-local function extract_keys(table, keys)
-	if not keys then return table end
-	local new_table = {}
-	for _, key in ipairs(keys) do
-		new_table[key] = table[key]
+local function extract_keys(t, keys)
+	if not keys then
+		return t
 	end
-	return new_table
+	local new_t = {}
+	for _, key in ipairs(keys) do
+		new_t[key] = t[key]
+	end
+	return new_t
 end
 
 -- Return the header for the result table along with the number of columns in the table.
-function UnitTester:result_table_header()
-	local header = ('{| class="unit-tests wikitable"\n! class="unit-tests-img-corner" style="cursor:pointer" title="Only failed tests"| !! %s !! Expected !! Actual'):
-		format(table.concat(self.name_columns, " !! "))
-	local columns = 3 + #self.name_columns
+function UnitTester:new_result_table()
+	local header_row = html.create("tr")
+		:tag("th")
+			:attr("class", "unit-tests-img-corner")
+			:css("cursor", "pointer")
+			:attr("title", "Only failed tests")
+			:done()
+	
+	local columns = shallow_copy(self.name_columns)
+	insert(columns, "Expected")
+	insert(columns, "Actual")
+	
 	if self.differs_at then
-		columns = columns + 1
-		header = header .. ' !! Differs at'
+		insert(columns, "Differs at")
 	end
+	
 	if self.comments then
-		columns = columns + 1
-		header = header .. ' !! Comments'
+		insert(columns, "Comments")
 	end
+	
+	for _, cell in ipairs(columns) do
+		header_row = header_row:tag("th")
+			:wikitext(cell)
+			:done()
+	end
+	
+	self.columns = #columns + 1
+	
+	return html.create("table")
+		:attr("class", "unit-tests wikitable")
+		:node(header_row)
+end
 
-	return header, columns
+function UnitTester:get_result(key)
+	return self[key](self)
+end
+
+function UnitTester:display_difference(success, name, actual, expected, options)
+	local differs_at = self.differs_at and first_difference(expected, actual)
+	local comment = self.comments and (options and options.comment or "")
+	
+	expected = expected == nil and "(nil)" or tostring(expected)
+	actual   = actual == nil and "(nil)" or tostring(actual)
+	
+	if self.nowiki or options and options.nowiki then
+		expected = nowiki(expected)
+		actual = nowiki(actual)
+	end
+	
+	if options and is_callable(options.display) then
+		expected = options.display(expected)
+		actual = options.display(actual)
+	end
+	
+	local cells
+	if type(name) == "table" then
+		cells = shallow_copy(name)
+		insert(cells, expected)
+		insert(cells, actual)
+		insert(cells, differs_at)
+	else
+		cells = {
+			name,
+			expected,
+			actual,
+			differs_at
+		}
+	end
+	insert(cells, comment) -- In case differs_at is nil.
+	
+	local row = html.create("tr")
+	
+	if success then
+		row = row:attr("class", "unit-test-pass")
+		insert(cells, 1, tick)
+	else
+		row = row:attr("class", "unit-test-fail")
+		insert(cells, 1, cross)
+		self.num_failures = self.num_failures + 1
+	end
+	
+	for _, cell in ipairs(cells) do
+		row = row:tag("td")
+			:wikitext(cell)
+			:done()
+	end
+	
+	self.result_table = self.result_table:node(row)
+	
+	self.total_tests = self.total_tests + 1
+end
+
+function UnitTester:equals(name, actual, expected, options)
+	local success = actual == expected
+	if options and options.show_difference then
+		local difference = first_difference(expected, actual)
+		if type(difference) == "number" then
+			actual = highlight_difference(actual, expected, difference,
+				is_callable(options.show_difference) and options.show_difference)
+		end
+	end
+	self:display_difference(success, name, actual, expected, options)
 end
 
 function UnitTester:preprocess_equals(text, expected, options)
 	local actual = self.frame:preprocess(text)
-	if actual == expected then
-		self.result_table:insert('|- class="unit-test-pass"\n | ' .. tick)
-	else
-		self.result_table:insert('|- class="unit-test-fail"\n | ' .. cross)
-		self.num_failures = self.num_failures + 1
-	end
-	local differs_at = self.differs_at and (' || ' .. first_difference(expected, actual)) or ''
-	local comment = self.comments and (' || ' .. (options and options.comment or '')) or ''
-	actual   = tostring(actual)
-	expected = tostring(expected)
-	if self.nowiki or options and options.nowiki then
-		expected = mw.text.nowiki(expected)
-		actual = mw.text.nowiki(actual)
-	end
-	self.result_table:insert(' || ' .. mw.text.nowiki(text) .. ' || ' .. expected .. ' || ' .. actual .. differs_at .. comment .. "\n")
-	self.total_tests = self.total_tests + 1
+	self:equals(nowiki(text), actual, expected, options)
 end
 
 function UnitTester:preprocess_equals_many(prefix, suffix, cases, options)
@@ -191,22 +267,8 @@ function UnitTester:preprocess_equals_many(prefix, suffix, cases, options)
 end
 
 function UnitTester:preprocess_equals_preprocess(text1, text2, options)
-	local actual = self.frame:preprocess(text1)
 	local expected = self.frame:preprocess(text2)
-	if actual == expected then
-		self.result_table:insert('|- class="unit-test-pass"\n | ' .. tick)
-	else
-		self.result_table:insert('|- class="unit-test-fail"\n | ' .. cross)
-		self.num_failures = self.num_failures + 1
-	end
-	if self.nowiki or options and options.nowiki then
-		expected = mw.text.nowiki(expected)
-		actual = mw.text.nowiki(actual)
-	end
-	local differs_at = self.differs_at and (' || ' .. first_difference(expected, actual)) or ''
-	local comment = self.comments and (' || ' .. (options and options.comment or '')) or ''
-	self.result_table:insert(' || ' .. mw.text.nowiki(text1) .. ' || ' .. expected .. ' || ' .. actual .. differs_at .. comment .. "\n")
-	self.total_tests = self.total_tests + 1
+	self:preprocess_equals(text1, expected, options)
 end
 
 function UnitTester:preprocess_equals_preprocess_many(prefix1, suffix1, prefix2, suffix2, cases, options)
@@ -215,84 +277,35 @@ function UnitTester:preprocess_equals_preprocess_many(prefix1, suffix1, prefix2,
 	end
 end
 
-function UnitTester:display_difference(success, name, actual, expected, options)
-	if type(name) ~= "table" then
-		name = {name}
-	end
-	name = table.concat(name, " || ")
-	if success then
-		self.result_table:insert('|- class="unit-test-pass"\n | ' .. tick)
-	else
-		self.result_table:insert('|- class="unit-test-fail"\n | ' .. cross)
-		self.num_failures = self.num_failures + 1
-	end
-	local differs_at = self.differs_at and (' || ' .. first_difference(expected, actual)) or ''
-	local comment = self.comments and (' || ' .. (options and options.comment or '')) or ''
-	if expected == nil then
-		expected = '(nil)'
-	else
-		expected = tostring(expected)
-	end
-	if actual == nil then
-		actual = '(nil)'
-	else
-		actual = tostring(actual)
-	end
-	if self.nowiki or options and options.nowiki then
-		expected = mw.text.nowiki(expected)
-		actual = mw.text.nowiki(actual)
-	end
-	
-	if options and type(options.display) == "function" then
-		expected = options.display(expected)
-		actual = options.display(actual)
-	end
-	
-	self.result_table:insert(' || ' .. name .. ' || ' .. expected .. ' || ' .. actual .. differs_at .. comment .. "\n")
-	self.total_tests = self.total_tests + 1
-end
-
-function UnitTester:equals(name, actual, expected, options)
-	success = actual == expected
-	if options and options.show_difference then
-		local difference = first_difference(expected, actual)
-		if type(difference) == "number" then
-		actual = highlight_difference(actual, expected, difference,
-			type(options.show_difference) == "function" and options.show_difference)
-	end
-
-	self.display_difference(success, name, actual, expected, options)
-end
-
 function UnitTester:equals_deep(name, actual, expected, options)
 	local actual_str, expected_str
-	local success = deep_compare(actual, expected)
+	local success = deep_equals(actual, expected, true)
 	if success then
-		if options.show_table_difference then
+		if options and options.show_table_difference then
 			actual_str = ''
 			expected_str = ''
 		end
 	else
-		if options.show_table_difference then
+		if options and options.show_table_difference then
 			local keys = get_differing_keys(actual, expected)
 			actual_str = val_to_str(extract_keys(actual, keys))
 			expected_str = val_to_str(extract_keys(expected, keys))
 		end
 	end
-	if not options.show_table_difference then
+	if (not options) or not options.show_table_difference then
 		actual_str = val_to_str(actual)
 		expected_str = val_to_str(expected)
 	end
 
-	self.display_difference(success, name, actual_str, expected_str, options)
+	self:display_difference(success, name, actual_str, expected_str, options)
 end
 
 function UnitTester:iterate(examples, func)
 	require 'libraryUtil'.checkType('iterate', 1, examples, 'table')
-	if type(func) == 'string' then
+	if type(func) == "string" then
 		func = self[func]
-	elseif type(func) ~= 'function' then
-		error(("bad argument #2 to 'iterate' (expected function or string, got %s)")
+	elseif not is_callable(func) then
+		error(("bad argument #2 to 'iterate' (expected function, callable table or string; got %s)")
 			:format(type(func)), 2)
 	end
 	
@@ -300,7 +313,7 @@ function UnitTester:iterate(examples, func)
 		if type(example) == 'table' then
 			func(self, unpack(example))
 		elseif type(example) == 'string' then
-			self:heading(example)
+			self:header(example)
 		else
 			error(('bad example #%d (expected table or string, got %s)')
 				:format(i, type(example)), 2)
@@ -308,29 +321,46 @@ function UnitTester:iterate(examples, func)
 	end
 end
 
-function UnitTester:heading(text)
-	local prefix, maintext = text:match('^#(h[0-9]+):(.*)$')
+function UnitTester:header(text)
+	local prefix, maintext = match(text, '^#(h[0-9]+):(.*)$')
 	if not prefix then
 		maintext = text
 	end
-	local style = prefix == "h1" and "text-align: center; font-size: 150%" or "text-align: left"
-	self.result_table:insert((' |-\n ! colspan="%u" style="%s" | %s\n'):format(self.columns, style, maintext))
+	
+	local header = html.create("th")
+		:attr("colspan", self.columns)
+	
+	if prefix == "h1" then
+		header = header:css("text-align", "center")
+			:css("font-size", "150%")
+	else
+		header = header:css("text-align", "left")
+	end
+	
+	header = header:wikitext(maintext)
+	
+	self.result_table = self.result_table:tag("tr")
+		:node(header)
+		:done()
+end
+
+local function err_handler(mesg)
+	return {mesg = mesg, traceback = traceback("", 2)}
 end
 
 function UnitTester:run(frame)
 	self.num_failures = 0
 	
-	local output = Array()
+	local output = {}
 
-	local iparams = {
-		["nowiki"] = {type = "boolean"},
-		["differs_at"] = {type = "boolean"},
-		["comments"] = {type = "boolean"},
-		["summarize"] = {type = "boolean"},
-		["name_column"] = {type = "list", default = "Text"},
-	}
-
-	local iargs = require("Module:parameters").process(frame.args, iparams)
+	local boolean = {type = "boolean"}
+	local iargs = require("Module:parameters").process(frame.args, {
+		["nowiki"] = boolean,
+		["differs_at"] = boolean,
+		["comments"] = boolean,
+		["summarize"] = boolean,
+		["name_column"] = {list = true, default = "Text"},
+	})
 
 	self.frame = frame
 	self.nowiki = iargs.nowiki
@@ -339,46 +369,45 @@ function UnitTester:run(frame)
 	self.summarize = iargs.summarize
 	self.name_columns = iargs.name_column
 	self.total_tests = 0
-	self.result_table = Array()
-
-	local table_header
-	table_header, self.columns = self.result_table_header()
 
 	-- Sort results into alphabetical order.
-	local self_sorted = Array()
-	for key, value in pairs(self) do
-		if key:find('^test') then
-			self_sorted:insert(key)
+	local self_sorted = {}
+	for key in pairs(self) do
+		if sub(key, 1, 4) == "test" then
+			insert(self_sorted, key)
 		end
 	end
-	self_sorted:sort()
+	sort(self_sorted)
 	
 	-- Add results to the results table.
 	for _, key in ipairs(self_sorted) do
-		self.result_table:insert(table_header .. "\n")
-		self.result_table:insert('|+ style="text-align: left; font-weight: bold;" | ' .. key .. ':\n|-\n')
-		local traceback = "(no traceback)"
-		local success, mesg = xpcall(function ()
-			return self[key](self)	
-		end, function (mesg)
-			traceback = debug.traceback("", 2)
-			return mesg
-		end)
+		self.result_table = self:new_result_table()
+			:tag("caption")
+				:css("text-align", "left")
+				:css("font-weight", "bold")
+				:wikitext(key .. ":")
+				:done()
+		local success, err = xpcall(UnitTester.get_result, err_handler, self, key)
 		if not success then
-			self.result_table:insert((' |-\n | colspan="%u" style="text-align: left" | <strong class="error">Script error during testing: %s</strong>%s\n'):format(
-				self.columns, mw.text.nowiki(mesg), frame:extensionTag("pre", traceback)
-			))
+			self.result_table = self.result_table:tag("tr")
+				:tag("td")
+					:attr("colspan", self.columns)
+					:css("text-align", "left")
+					:tag("strong")
+						:attr("class", "error")
+						:wikitext("Script error during testing: " .. nowiki(err.mesg))
+						:done()
+					:wikitext(frame:extensionTag("pre", err.traceback or "(no traceback)"))
+					:allDone()
 			self.num_failures = self.num_failures + 1
 		end
-		self.result_table:insert("|}")
-		output:insert(self.result_table:concat())
-		self.result_table = Array()
+		insert(output, tostring(self.result_table))
 	end
 
-	local refresh_link = tostring(mw.uri.fullUrl(mw.title.getCurrentTitle().fullText, 'action=purge&forcelinkupdate'))
+	local refresh_link = tostring(full_url(current_title.fullText, 'action=purge&forcelinkupdate=1'))
 
-	local failure_cat = '[[Category:Failing module unit tests]]'
-	if mw.title.getCurrentTitle().text:find("/documentation$") then
+	local failure_cat = '[[Category:Failing testcase modules]]'
+	if sub(current_title.text, -14) == "/documentation" then
 		failure_cat = ''
 	end
 	
@@ -392,9 +421,9 @@ function UnitTester:run(frame)
 		end
 	else
 		return (self.num_failures == 0 and '<strong class="success">All tests passed.</strong>' or 
-				'<strong class="error">' .. self.num_failures .. ' test' .. (self.num_failures == 1 and '' or 's' ) .. ' failed.</strong>' .. failure_cat) ..
+				'<strong class="error">' .. self.num_failures .. ' of ' .. self.total_tests .. ' test' .. (self.total_tests == 1 and '' or 's' ) .. ' failed.</strong>' .. failure_cat) ..
 			" <span class='plainlinks unit-tests-refresh'>[" .. refresh_link .. " (refresh)]</span>\n\n" ..
-			output:concat("\n\n")
+			concat(output, "\n\n")
 	end
 end
 
@@ -405,6 +434,10 @@ function UnitTester:new()
 	return o
 end
 
-local p = UnitTester:new()
-function p.run_tests(frame) return p:run(frame) end
-return p
+local unit_tester = UnitTester:new()
+
+function unit_tester.run_tests(frame)
+	return unit_tester:run(frame)
+end
+
+return unit_tester
