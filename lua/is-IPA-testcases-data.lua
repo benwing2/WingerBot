@@ -29,7 +29,7 @@ export.testcases = [==[
 ### Simple words (not compound)
 
 þorn          +        ˈθɔrtn̥                  thorn
-himinn        +        ˈhɪːmɪn                 heaven
+himinn        +        ˈhɪːmɪn(ː)              heaven
 minn          +        ˈmɪn(ː)                 my; mine
 brúnn         +        ˈprutn̥                  brown
 steinn        +        ˈsteitn̥                 stone
@@ -43,7 +43,7 @@ sakna         +        ˈsahkna                 to miss, long for; to lack
 kembt         +        ˈcʰɛm̥t                  combed; debugged (supine)
 þið           +        ˈθɪːð                   you (pl.)
 gvuð          guð      ˈkvʏːð                  God
-byggja        +        ˈpɪca                   to build
+byggja        +        ˈpɪc(ː)a                to build
 syngja        +        ˈsiɲca                  to sing
 munkur        +        ˈmuŋ̊kʏr                 monk
 öngull        +        ˈœiŋkʏtl̥                fishhook
@@ -78,8 +78,8 @@ falsa         +        ˈfalsa                  to falsify, to forge, to fake
 allt          +        ˈal̥t                    everything; (the) whole; all; completely
 alt           +        ˈal̥t                    contralto
 basalt        +        ˈpaːsal̥t                basalt
-ball-skák     +        ˈbatl̥ˌskauːk            billiards
-fjalls-brún   +        ˈfjalsˌbruːn            crest, brim (of a mountain)
+ball-skák     +        ˈpatl̥ˌskauːk            billiards
+fjalls-brún   +        ˈfjalsˌpruːn            crest, brim (of a mountain)
 basl          +        ˈpastl̥                  struggle, grind
 basla         +        ˈpastla                 to struggle, to wrestle (with); to toil
 myll:a        +        ˈmɪl(ː)a                mill
@@ -89,7 +89,7 @@ breidd        +        ˈpreit(ː)               width; latitude
 gribba        +        ˈkrɪp(ː)a               harpy, shrew
 gabb          +        ˈkap(ː)                 hoax
 flagga        +        ˈflak(ː)a               to fly (a flag); to flaunt
-dögg          +        ˈdœk(ː)                 dew
+dögg          +        ˈtœk(ː)                 dew
 saggi         +        ˈsac(ː)ɪ                damp
 byggja        +        ˈpɪc(ː)a                to build; to settle (a land)
 hvass         +        ˈkʰvas(ː)               strong; sharp
@@ -110,12 +110,12 @@ frakki        +        ˈfrahcɪ                 raincoat
 drykkja       +        ˈtrɪhca                 drinking
 voffi         +        ˈvɔf(ː)ɪ                doggie
 só[f]i        +        ˈsou:fɪ                 sofa
-e[v]st        efst     ˈɛvst                   top                                   -          common but non-normative
+evst          efst     ˈɛvst                   top                                   -          common but non-normative
 ehji          ekki     ˈɛçɪ                    not
-ry[þ]mi       +        ˈrɪθmɪ                  rhythm                                -          proscribed
-vaffla        +        ˈvafla                  waffle
-rö[v]la       röfla    ˈrœvla                  to ramble, to chatter                 -          proscribed spelling
-rö[v]ls       röfls    ˈrœvls                  rambling, chattering (gen. sg.)       -          proscribed spelling
+ryþmi         +        ˈrɪθmɪ                  rhythm                                -          proscribed
+vaffla        +        ˈvapla                  waffle
+rövla         röfla    ˈrœvla                  to ramble, to chatter                 -          proscribed spelling
+rövls         röfls    ˈrœvls                  rambling, chattering (gen. sg.)       -          proscribed spelling
 kæra          +        ˈcʰaiːra                to accuse; to complain; accusation; complaint
 kragi         +        ˈkʰraijɪ                collar
 [g]æi         +        ˈkaijɪ                  dude, guy
@@ -123,8 +123,121 @@ dis[k]etta    +        ˈtɪskɛhta               diskette
 [K]enía       +        ˈkʰɛːnia                Kenya
 nefndi        +        ˈnɛmtɪ                  named (masc. nom. sg. weak)
 hafrar        +        ˈhavrar                 oats
-efld   +   ˈɛl(ˠ)t  strengthened (fem. nom. sg. strong)
-eflds   +   ˈɛl(ˠ)ts  strengthened (masc. gen. sg. strong)
+efld          +        ˈɛl(ˠ)t                 strengthened (fem. nom. sg. strong)
+eflds         +        ˈɛl(ˠ)ts                strengthened (masc. gen. sg. strong)
+fernt         +        ˈfɛr̥n̥t                  four (things)
+
+
+### Words with clusters
+káfa          +        'khau:(v)a              ?                   -             for -áf-
+mágur         +        'mau:(ɣ)Yr              ?                   -             for -ág-
+rófa          +        'rou:(v)a               ?                   -             for -óf-
+bógur         +        'pou:(ɣ)Yr              ?                   -             for -óg-
+ljúfur        +        'lju:(v)Yr              ?                   -             for -úf-
+bljúgur       +        'blju:(ɣ)Yr             ?                   -             for -úg-
+efldi         +        'ɛ(v)ltI                ?                   -             for -fld-
+teflt         +        'thɛLt                  ?                   -             for -flt-
+hefndi        +        'hɛmtI                  ?                   -             for -fnd-
+hrafns        +        'Rafs,'RapNs            ?                   -             for -fns-
+jafnt         +        'jaMt                   ?                   -             for -fnt-
+lofts         +        'lɔf(t)s                ?                   -             for -fls-
+sigldi        +        'sIltI                  ?                   -             for -g(g)ld-
+siglt         +        'sILt                   ?                   -             for -g(g)lt-
+rigndi        +        'rIŋtI                  ?                   -             for -g(g)nd-
+gagns         +        'kak(N)s                ?                   -             for -gns-; given as [kaxs]/[kakn̥s] but I have to assume that [xs]->[ks] for speakers under 60 is general; https://enska.arnastofnun.is/is/ord/14704/tungumal/EN for <gagnslaus> has [kakstlœis]
+skyggnst      +        'sciŋst                 ?                   -             for -g(g)nst-; given as [scɪŋt] in Eiríkur but I assume it's a typo
+hrygnt        +        'Riŋ̊t                   ?                   -             for -g(g)nt-; given as [r̥ɪŋ̊t] in Eiríkur but I assume it's a typo
+gjögts        +        'cœxts,'cœks            ?                   -             for -gts-; given as [cœx(t)s] but I have to assume that [xs]->[ks] for speakers under 60 is general
+sýknt         +        'siŋ̊t                   ?                   -             for -knt-
+svekkts       +        'svɛxts,svɛks           ?                   -             for -k(k)ts-; given as [svɛx(t)s] but I have to assume that [xs]->[ks] for speakers under 60 is general 
+þvælds        +        'θvail(t)s              ?                   -             for -l(l)ds-
+hvolfdi       +        'khvɔltI                ?                   -             for -lfd-
+ýlfra         +        'il(v)ra                ?                   -             for -lfr-
+úlfs          +        'ul(f)s                 ?                   -             for -lfs-
+tólfti        +        'thouLtI                ?                   -             for -lft-
+fylgdi        +        'fIltI                  ?                   -             for -lgd-
+volgna        +        'vɔlna                  ?                   -             for -lgn-
+fólks         +        'fouls,'fouLks          ?                   -             for -lks-
+velktur       +        'vɛLtYr                 ?                   -             for -lkt-
+hvolps        +        'khvɔls,'khvɔLps 
+falsks        +        'fals(ks)
+pólskt        +        'phoulst
+gyllts        +        'cIL(t)s
+rembdist      +        'rɛmtIst
+lambs         +        'lams
+kembt         +        'cheMt
+límds         +        'lim(t)s
+svamps        +        'svams,'svaMps
+sands         +        'san(t)s
+hringdi       +        'RiŋtI
+strengds      +        'streiŋ(t)s
+lungna        +        'lu(ŋ)na
+hangs         +        'hauŋs
+tengt         +        'theiŋ̊t
+dynks         +        'tiŋ̊(k)s
+fransks       +        'frans(ks)
+punktur       +        'phuNtYr
+finnskt       +        'fInst
+teppts        +        'thɛf(t)s
+sperðlar      +        'spɛrtlar
+harðna        +        'hartna
+horfði        +        'hɔrðI
+hvarfla       +        'khvartla
+horfnir       +        'hɔrtnIr
+orfs          +        'ɔr(f)s
+horfst        +        'hɔ(R)st
+horft         +        'hɔRt
+mergð         +        'mɛrð
+morgna        +         mɔrtna
+dvergs        +         tvɛr(k)s
+margt         +         maRt
+sterks        +         stɛR(k)s
+styrks        +         stI(r)st
+myrkt         +         mIRt
+styrkts       +         stIR(t)s
+karls         +
+þyrmdi        +
+harms         +
+hermt         +
+fyrndu        +
+barns         +
+bernska       +
+hyrnt         +
+þorps         +
+skerpst       +
+skyrpti       +
+skerpts       +
+norskur       +
+fjarski       +
+þorsks        +
+gerskt        +
+sparsla       +
+versna        +
+berst         +
+fyrsts        +
+svarts        +
+fisks         +
+frískt        +
+rasps         +
+systkin       +
+prests        +
+vatns         +
+
+
+
+
+
+
+káfa          +        'khau:(v)a              
+káfa          +        'khau:(v)a              
+káfa          +        'khau:(v)a              
+káfa          +        'khau:(v)a              
+káfa          +        'khau:(v)a              
+káfa          +        'khau:(v)a              
+káfa          +        'khau:(v)a              
+káfa          +        'khau:(v)a              
+káfa          +        'khau:(v)a              
+
 
 
 ### Words with indicated affixes
@@ -150,10 +263,12 @@ sam-eign   +  ˈsaːmˌeikn̥   shared asset; communal space
 úr-illur   +  ˈuːrˌɪtlʏr   grumpy; sullen
 al-heimur  +  ˈaːlˌheiːmʏr   universe, cosmos (poetic)
 ljós-haf   +  ˈljouːsˌhaːv   sea of light
+ríg-halda  +  ˈriːɣˌhalta    hold tight
+ríg-hélt   +  ˈriɣˌçɛl̥t      held tight (1st/3rd. sg. past indic)         -         [note that hé- doesn't count as h+vowel because -é- is phonemically /jɛ/]
 
 ## First part ends in -p, -t, -k or -s and second part begins with a consonant or cluster (MANY EXCEPTIONS)
 tap-rekstur  +  ˈtʰaːpˌrɛkstʏr   loss-making business
-kaup-maður   +  ˈkœiːpˌmaːðʏr   merchant
+kaup-maður   +  ˈkʰœiːpˌmaːðʏr   merchant
 at-kvæði     +  ˈaːtˌkʰvaiːðɪ   syllable
 mót-læti     +  ˈmouːtˌlaiːtɪ   adversity; misfortune
 bik-svartur  +  ˈpɪːkˌsvar̥tʏr   pitch black
@@ -203,13 +318,13 @@ að-krepptur    +   ˈaðˌkʰrɛftʏr   pressed (for time, money); cramped, con
 ráð-kænska     +   ˈrauðˌcʰainska  resourcefulness, astuteness
 við-kvæði      +   ˈvɪðˌkʰvaiːðɪ   refrain, chorus
 að-koma        +   ˈaðˌkʰɔːma      situation; involvement; driveway
-borð-búnaður   +   ˈporðˌpuːnaðʏr  tableware    -      [/u/ given as short but apparently a typo; compare treggáfaður below with long á]
+borð-búnaður   +   ˈpɔrðˌpuːnaðʏr  tableware    -      [/u/ given as short but apparently a typo; compare treggáfaður below with long á]
 bragð-betri    +   ˈpraɣðˌpɛːtrɪ   tastier, more delicious
 harð-brjósta   +   ˈharðˌprjousta  heartless, callous
 orð-tak        +   ˈɔrðˌtʰaːk      expression, idiom
 við-tæki       +   ˈvɪðˌtʰaiːcɪ    radio set; extensive, far-reaching (nom. masc. sg. weak)
 verð-myndun    +   ˈvɛrðˌmɪntʏn    price determination
-verð-skulda    +   ˈverðˌskʏlta    to deserve, to merit
+verð-skulda    +   ˈvɛrðˌskʏlta    to deserve, to merit
 
 ## Names with /ð/ at the end of a compound, which conventionally drops or assimilates
 Bárð-dælir     +   ˈpaurðˌtaiːlɪr   [placename]
@@ -227,10 +342,10 @@ Skrid[:]alur    Skriðdalur   ˈskrɪtˌtalʏr     [placename]     -       local
 
 ## First part ending in /f/, which becomes [v] before a vowel, voiced sound, unaspirated stop or /h/ + vowel
 of-ætlun     +    ˈɔːvˌaihtlʏn       insurmountable task
-af-dalur     +    ˈafˌtaːlʏr         side valley; isolated valley
+af-dalur     +    ˈavˌtaːlʏr         side valley; isolated valley
 raf-geymir   +    ˈravˌceiːmɪr       accumulator, storage battery
 haf-gola     +    ˈhavˌkɔːla         sea breeze
-af-hausa     +    ˈavˌhœiːsa         to behead
+af-hausa     +    ˈaːvˌhœiːsa        to behead
 a-fausa     afhausa    ˈaːˌfœiːsa    to behead      -       with assimilation
 líf-láta     +      ˈlivˌlauːta      to put to death, to execute; execution, murder (gen pl indef)
 raf-neisti   +      ˈravˌneistɪ      electric spark
@@ -288,11 +403,11 @@ o-boðs-legur  ofboðslegur   ˈɔːˌpɔðsˌlɛːɣʏr           tremendous, e
 aug-ljós       +   ˈœiɣˌljouːs     obvious, apparent
 dag-blað       +   ˈtaɣˌplaːð      newspaper
 dag-legur      +   ˈtaɣˌlɛːɣʏr     daily, everyday
-dag-mamma      +   ˈtaɣˌmam(ː)a      childminder, daycare provider, childcare provider
+dag-mamma      +   ˈtaɣˌmam(ː)a    childminder, daycare provider, childcare provider
 fag-maður      +   ˈfaɣˌmaːðʏr     professional, expert
 hag-ræða       +   ˈhaɣˌraiːða     get comfortable; adjust, sort out; economize; adapt, modify
-lag-hentur     +   ˈlaɣˌhɛn̥tʏr     handy, dexterous
-leg-bólga      +   ˈleɣˌpoulka     uterine inflammation
+lag-hentur     +   ˈlaːɣˌhɛn̥tʏ     handy, dexterous
+leg-bólga      +   ˈlɛɣˌpoulka     uterine inflammation
 nag-dýr        +   ˈnaɣˌtiːr       rodent
 sog-æðar       +   ˈsɔːɣˌaiːðar     lymphatic vessels
 treg-gáfaður   +   ˈtʰrɛɣˌkauːvaðʏr   slow-witted, dim
@@ -321,7 +436,7 @@ drjúgvirkur    +   ˈtrjuːˌvɪr̥kʏr       efficient, highly effective
 
 ## First part ending in /k/: pre-aspirated in some common compound words
 
-einstakk-lingur    einstaklingur  ˈeinˌstahkˌliŋkʏr    individual, person
+ein-stakk-lingur   einstaklingur  ˈeinˌstahkˌliŋkʏr    individual, person
 klakk-laust        klaklaust      ˈkʰlahkˌlœist        safe and sound (also spelled "klakklaust")
 líkk-legur         líklegur       ˈlihkˌlɛːɣʏr        likely, probable
 lík-legur          +              ˈliːkˌlɛːɣʏr        likely, probable        -        alternative pronunciation; note long vowel in first component before <k>
@@ -352,7 +467,7 @@ van-svefta      +   ˈvanˌsvɛfta     sleep-deprived
 ## <ns>, <nns> in non-compound words:
 dansa           +   ˈtansa          to dance
 eins            +   ˈeins           identical; equal; identically, equally
-vinnsla         +   ˈvɪnsla         processing (noun)
+vinnsla         +   ˈvɪnstla        processing (noun)
 
 ## <n-b> across a compound boundary informally becomes /mp/, <n-k> informally becomes /ŋkʰ/; in colloquial speech the <n> may drop but this is frowned on in formal speech
 eim-búi         einbúi       ˈeimˌpuːɪ           loner, hermit, recluse                    -              informal
@@ -365,7 +480,7 @@ undaŋ-koma      undankoma    ˈʏntaŋˌkʰɔːma       escape, way out        
 
 
 ## <p> across a compound boundary disappears before <b>, <p>
-kaup-bætir      +           ˈkʰœiːˌpaiːtʏr       added bonus, something coming along "in the bargain"
+kaup-bætir      +           ˈkʰœiːˌpaiːtɪr       added bonus, something coming along "in the bargain"
 kaup-binding    +           ˈkʰœiːˌpɪntiŋk       wage freeze
 lop-band        +           ˈlɔːˌpant            band or ribbon of coarse wool yarn        -               book says [lɔpːand], probably a mistake
 upp-bót         +           ˈʏhˌpouːt            supplement; compensation                  -               book says [ʏhbout], probably a mistake
@@ -440,8 +555,8 @@ Mýva-sveit       Mývatnssveit    ˈmiːvaˌsveiːt      [placename; (Lake) Mý
 
 ## <t>; in some words at the end of the first component of a compound before <l> or <t> at the beginning of the second component, there is pre-aspiration, as if a non-compound word
 á-gætt-lega      ágætlega        ˈauːˌcaihtˌlɛːɣa  well, fine                                     -                 alternative pronunciation
-mótt-taka        móttaka         ˈmouhˌtaːka       reception (event, function); reception desk; (in the pl.) reception, welcome        -     alternative pronunciation
-rótt-tækur       róttækur        ˈrouhˌtaiːkʏr     radical, extreme                               -                 alternative pronunciation
+mótt-taka        móttaka         ˈmouhˌtʰaːka      reception (event, function); reception desk; (in the pl.) reception, welcome        -     alternative pronunciation
+rótt-tækur       róttækur        ˈrouhˌtʰaiːkʏr    radical, extreme                               -                 alternative pronunciation
 vitt-leysa       vitleysa        ˈvɪhtˌleiːsa      nonsense, gibberish; mistake, blunder          -                 usual pronunciation
 vitt-laus        vitlaus         ˈvɪhtˌlœiːs       stupid, foolish; wrong; crazy                  -                 usual pronunciation
 mótt-læti        mótlæti         ˈmouhtˌlaiːtɪ     adversity, misfortune                          East Iceland
@@ -469,26 +584,26 @@ sihkvað          sitthvað        ˈsɪhkvað          a few, some             
 geim-steinn        +             ˈceimˌsteitn̥       meteoroid
 loft-steinn        +             ˈlɔftˌsteitn̥       meteorite
 gvuð-spjall        guðspjall     ˈkvʏðˌspjatl̥       gospel
-skif-stjóri        skipstjóri    ˈscɪfˌstjouːrɪ     captain                                        -                 [not with /f/ in https://enska.arnastofnun.is/en/ord/36534/tungumal/EN]
+ski[f]-stjóri      skipstjóri    ˈscɪfˌstjouːrɪ     captain                                        -                 [not with /f/ in https://enska.arnastofnun.is/en/ord/36534/tungumal/EN]
 Mel-rakka-slétta   +             ˈmɛlˌrahkaˌstljɛhta  [placename, peninsula in northeast Iceland]  
 Raufar-höfn        +             ˈrœiːvarˌhœpn̥       [village in Melrakkaslétta peninsula]
 Heim-skauts-gerði  +             ˈheimˌskœitsˌcɛrðɪ   [Arctic Henge, a modern mystical monument near the village of Raufarhöfn]
-Hraun-hafnar-tanga-viti    +     ˈr̥œinˌhapnarˌtʰauŋkaˌvɪːtɪ    [Hraunhafnartanga Lighthouse, the northernmost lighthouse in Iceland]
-Hraun-hafnar-tanga-viti    +     ˈr̥œinˌhapnarˌtʰauŋkaˌvɪːtʰɪ    [Hraunhafnartanga Lighthouse, the northernmost lighthouse in Iceland]        East Iceland
+Hraun-hafnar-tanga-viti    +     ˈr̥œiːnˌhapnar̥ˌtʰauŋkaˌvɪːtɪ    [Hraunhafnartanga Lighthouse, the northernmost lighthouse in Iceland]
+Hraun-hafnar-tanga-viti    +     ˈr̥œiːnˌhapnar̥ˌtʰauŋkaˌvɪːtʰɪ    [Hraunhafnartanga Lighthouse, the northernmost lighthouse in Iceland]        northeast
 Eyja-fjalla-jökull         +     ˈeiːjaˌfjatlaˌjœːkʏtl̥    [well-known volcano in southern Iceland]
 jökul-hlaup        +             ˈjœːkʏl̥ˌl̥œiːp        [type of glacial outburst flood]
 Brenni-steins-alda         +     ˈprɛn(ː)ɪˌsteinsˌalta    [volcano in southern Iceland]
 Fljóts-dals-hérað          +     ˈfljoutsˌtalsˌçɛːrað     [former municipality in eastern Iceland]
 Akur-eyri          +             ˈaːkʏrˌeiːrɪ          [large town in northern Iceland]
-Akur-eyri          +             ˈaːkʰʏrˌeiːrɪ          [large town in northern Iceland]           Northern Iceland
+Akur-eyri          +             ˈaːkʰʏrˌeiːrɪ          [large town in northern Iceland]           north
 of-fitu-vanda-mál  +             ˈɔfˌfɪːtʏˌvantaˌmauːl    (in the plural) problem of obesity
-fjár-afla-maður    +             ˈfjauːrˌavlaˌmaːðʏr      tycoon, magnate
-fjár-bú-skapur     +             ˈfjaurˌbuːˌskaːpʏr       sheep raising                 -                          [in https://enska.arnastofnun.is/en/ord/62651/tungumal/EN, however, fjár- is long]
-sauð-fjár-bú-skapur      +       ˈsœiðˌfjaurˌbuːskaːpʏr    sheep farming, sheep husbandry
-sauð-fjár-veiki-varnir   +       ˈsœiðˌfjaurˌveiːkɪˌvarnɪr   measures to prevent the spread of sheep disease       [in https://enska.arnastofnun.is/en/ord/64828/tungumal/EN, sauð- and veiki- appear long]
-sauma-vélar-nál    +             ˈsœiːmaˌvjɛːlar-nauːl     sewing machine needle
+fjár-afla-maður    +             ˈfjauːrˌaplaˌmaːðʏr      tycoon, magnate
+fjár-bú-skapur     +             ˈfjaurˌpuːˌskaːpʏr       sheep raising                 -                          [in https://enska.arnastofnun.is/en/ord/62651/tungumal/EN, however, fjár- is long]
+sauð-fjár-bú-skapur      +       ˈsœiðˌfjaurˌpuːˌskaːpʏr    sheep farming, sheep husbandry
+sauð-fjár-veiki-varnir   +       ˈsœiðˌfjaurˌveiːcɪˌvartnɪr   measures to prevent the spread of sheep disease       [in https://enska.arnastofnun.is/en/ord/64828/tungumal/EN, sauð- and veiki- appear long]
+sauma-vélar-nál    +             ˈsœiːmaˌvjɛːlarˌnauːl     sewing machine needle
 fé-lags-mála-ráðu-neyti    +     ˈfjɛːˌlaksˌmauːlaˌrauːðʏˌneiːtɪ         ministry of social affairs
-deildar-hjúkrunar-fræðingur  +   ˈteiltar̥ˌçuːkrʏnar̥ˌfraiːðinkʏr         head nurse (lit. "ward registered nurse", more lit. "ward nursing expert")
+deildar-hjúkrunar-fræðingur  +   ˈteiltar̥ˌçuːkrʏnar̥ˌfraiːðiŋkʏr         head nurse (lit. "ward registered nurse", more lit. "ward nursing expert")
 ]==]
 
 return export
