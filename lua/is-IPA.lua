@@ -2,18 +2,33 @@ local export = {}
 
 local lang = require("Module:languages").getByCode("is")
 
+local parse_utilities_module = "Module:parse utilities"
 local pron_utilities_module = "Module:pron utilities"
 local table_module = "Module:table"
 local m_string_utilities = require("Module:string utilities")
 
 local ugsub = m_string_utilities.gsub
 local usub = m_string_utilities.sub
+local umatch = m_string_utilities.match
+local pattern_escape = m_string_utilities.pattern_escape
+local replacement_escape = m_string_utilities.replacement_escape
+local toNFC = mw.ustring.toNFC
+local toNFD = mw.ustring.toNFD
 local u = m_string_utilities.char
 local codepoint = mw.ustring.codepoint
 local split = m_string_utilities.split
 local concat = table.concat
 local insert = table.insert
 local dump = mw.dumpObject
+
+
+local function split_on_comma(term)
+	if term:find(",%s") or term:find("\\") then
+		return require(parse_utilities_module).split_on_comma(term)
+	else
+		return split(term, ",")
+	end
+end
 
 -- Convert a string of characters to a list. This does not handle ranges.
 local function explode_to_list(s)
@@ -1019,6 +1034,7 @@ local function convert(w, dialect)
 	return w
 end
 
+
 local function toIPA_word(word, dialect)
 	word = word:gsub("%[(.-)%]", bracketed_phone_map)
 	word = ugsub(word, "[ăĕĭŏŭ]", decompose_breve_map)
@@ -1035,7 +1051,108 @@ local function toIPA_word(word, dialect)
 	return convert({{output = word, levels_by_class = {}}}, dialect)
 end
 
-function export.toIPA(text, dialect)
+
+-- Given a single substitution spec, `to`, figure out the corresponding value of `from` used in a complete
+-- substitution spec. `pagename` is the name of the page, either the actual one or taken from the `pagename` param.
+-- `whole_word`, if set, indicates that the match must be to a whole word (it was preceded by ~).
+local function convert_single_substitution_to_original(to, pagename, whole_word)
+	-- Replace specially-handled characters with a class matching the character and possible replacements.
+	local escaped_from = to
+	escaped_from = escaped_from:gsub("[._:+]", "")
+	escaped_from = pattern_escape(escaped_from)
+	-- This is tricky, because we already passed `escaped_from` through pattern_escape() causing a hyphen or paren
+	-- to get a % sign before it, and have to double up the percent signs to match and replace a literal %.
+	escaped_from = escaped_from:gsub("%%([-()])", "%%%1?")
+	-- Tie sign (‿) should match against space, hyphen or nothing in the original.
+	escaped_from = escaped_from:gsub("‿", "[ %%-]?")
+	-- ŋ and ɲ match n in original.
+	escaped_from = escaped_from:gsub("ŋ", "n")
+	escaped_from = escaped_from:gsub("ɲ", "n")
+	-- Letters with breve match the corresponding letters without breve.
+	escaped_from = toNFC((toNFD(escaped_from):gsub(BREVE, "")))
+	escaped_from = "(" .. escaped_from .. ")"
+	if whole_word then
+		escaped_from = "%f[%a]" .. escaped_from .. "%f[%A]"
+	end
+	local match = umatch(pagename, escaped_from)
+	if match then
+		if match == to then
+			error(("Single substitution spec '%s' found in pagename '%s', replacement would have no effect"):
+				format(to, pagename))
+		end
+		return match
+	end
+	error(("Single substitution spec '%s' couldn't be matched to pagename '%s'"):format(to, pagename))
+end
+
+
+local function apply_substitution_spec(respelling, pagename)
+	local orig_respelling = respelling
+	local subs = split_on_comma(respelling:match("^%[(.*)%]$"))
+	respelling = pagename
+
+	local function parse_err(txt)
+		error(("%s: original substitution spec %s, pagename '%s'"):format(orig_respelling, pagename))
+	end
+
+	for _, sub in ipairs(subs) do
+		local from, escaped_from, to, escaped_to, whole_word
+		if sub:find("^~") then
+			-- whole-word match
+			sub = sub:match("^~(.*)$")
+			whole_word = true
+		end
+		if sub:find(":.") then
+			from, to = sub:match("^(.-):(.+)$")
+		else
+			to = sub
+			from = convert_single_substitution_to_original(to, pagename, whole_word)
+		end
+		if from then
+			escaped_from = pattern_escape(from)
+			if whole_word then
+				escaped_from = "%f[%a]" .. escaped_from .. "%f[%A]"
+			end
+			escaped_to = replacement_escape(to)
+			local subbed_respelling, nsubs = ugsub(respelling, escaped_from, escaped_to)
+			if nsubs == 0 then
+				parse_err(("Substitution spec %s -> %s didn't match processed pagename '%s'"):format(
+					from, to, respelling))
+			elseif nsubs > 1 then
+				parse_err(("Substitution spec %s -> %s matched multiple substrings in processed pagename '%s', add " ..
+					"more context"):format(from, to, respelling))
+			else
+				respelling = subbed_respelling
+			end
+		end
+	end
+
+	return respelling
+end
+
+
+local function handle_substitution_specs(text, pagename)
+	if text == "+" then
+		return pagename
+	elseif text:find("^%[.*%]$") then
+		-- Check that there is a single bracketed expression; otherwise it's vaguely possible that there are
+		-- two [C] literals, one at the beginning and one at the end.
+		local put = require(parse_utilities_module)
+		local segments = put.parse_balanced_segment_run(text, "[", "]")
+		if #segments > 1 then
+			return text
+		end
+		return apply_substitution_spec(segments[1], pagename)
+	else
+		return text
+	end
+end
+
+
+function export.toIPA(text, dialect, pagename)
+	local orig_respelling_spec = text
+	pagename = pagename or mw.loadData("Module:headword/data").pagename
+	text = handle_substitution_specs(text, pagename)
 	local words = split(text, "%s+")
 	local all_word_pronuns = {{output = "", levels_by_class = {}}}
 	for _, word in ipairs(words) do
@@ -1080,16 +1197,21 @@ function export.toIPA(text, dialect)
 			footnotes = levels_by_class_to_footnotes(pronun.levels_by_class),
 		}
 	end
-	return all_word_pronuns
+	return {
+		orig_respelling = orig_respelling_spec,
+		respelling = text,
+		pagename = pagename,
+		pronuns = all_word_pronuns,
+	}
 end	
 
 function export.toIPA_bot(frame)
-	local text, dialect = frame.args[1], frame.args[2]
-	return export.toIPA(text, dialect)
+	local text, dialect, pagename = frame.args[1], frame.args[2], frame.args[3]
+	return export.toIPA(text, dialect, pagename)
 end
 
 local function respelling_to_IPA(data)
-	return "/" .. export.toIPA(data.respelling) .. "/"
+	return "[" .. export.toIPA(data.respelling) .. "]"
 end
 
 function export.make(frame)
