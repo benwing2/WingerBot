@@ -4,12 +4,14 @@ local lang = require("Module:languages").getByCode("is")
 
 local parse_utilities_module = "Module:parse utilities"
 local pron_utilities_module = "Module:pron utilities"
-local table_module = "Module:table"
+local m_table = require("Module:table")
 local m_string_utilities = require("Module:string utilities")
 
 local ugsub = m_string_utilities.gsub
 local usub = m_string_utilities.sub
+local ufind = m_string_utilities.find
 local umatch = m_string_utilities.match
+local ulower = m_string_utilities.lower
 local pattern_escape = m_string_utilities.pattern_escape
 local replacement_escape = m_string_utilities.replacement_escape
 local toNFC = mw.ustring.toNFC
@@ -19,6 +21,7 @@ local codepoint = mw.ustring.codepoint
 local split = m_string_utilities.split
 local concat = table.concat
 local insert = table.insert
+local listToSet = m_table.listToSet
 local dump = mw.dumpObject
 
 
@@ -103,25 +106,27 @@ local C = {
 	hj = pua(14), -- ç
 	gh = pua(15), -- ɣ
 	x = pua(16), -- x
-	h = pua(17), -- h
-	m = pua(18), -- m 
-	hm = pua(19), -- m̥
-	n = pua(20), -- n
-	hn = pua(21), -- n̥
-	nj = pua(22), -- ɲ
-	hnj = pua(23), -- ɲ̊
-	ng = pua(24), -- ŋ
-	hng = pua(25), -- ŋ̊
-	l = pua(26), -- l
-	hl = pua(27), -- l̥
-	r = pua(28), -- r
-	hr = pua(29), -- r̥
+	xw = pua(17), -- xʷ
+	h = pua(18), -- h
+	m = pua(19), -- m 
+	hm = pua(20), -- m̥
+	n = pua(21), -- n
+	hn = pua(22), -- n̥
+	nj = pua(23), -- ɲ
+	hnj = pua(24), -- ɲ̊
+	ng = pua(25), -- ŋ
+	hng = pua(26), -- ŋ̊
+	l = pua(27), -- l
+	hl = pua(28), -- l̥
+	r = pua(29), -- r
+	hr = pua(30), -- r̥
 }
 
-local kPAL, gPAL        = pua(30), pua(31) -- Palatalization markers: k/g immediately before a J-set segment
+local kPAL, gPAL        = pua(40), pua(41) -- Palatalization markers: k/g immediately before a J-set segment
 
 -- Suprasegmental tokens
 local Solc              = pua(50)          -- optional long after a consonant
+local Soblc             = pua(51)          -- obligatory long after a consonant
 
 local Cfirst, Clast     = pua(0), pua(99)
 
@@ -130,25 +135,28 @@ local OC = {}
 -- Map from obligatory PUA characters to regular PUA chars
 local OC_to_C = {}
 
-local Soblc              = pua(150)          -- obligatory long after a consonant
+local OSoblc            = pua(151)
 
 for phone, pua_char in pairs(C) do
 	local obl_pua_char = u(100 + codepoint(pua_char))
 	OC[phone] = obl_pua_char
-	OC_to_C[obl_pua_char] = pua_char
+end
+for pua_codepoint = codepoint(Cfirst), codepoint(Clast) do
+	local obl_pua_char = u(100 + pua_codepoint)
+	OC_to_C[obl_pua_char] = u(pua_codepoint)
 end
 
 local OCfirst, OClast     = pua(100), pua(199)
 
 -- Vowel tokens
-local Va, Vai, Vau      = pua(200), pua(201), pua(202)        -- a ai au
-local Ve, Vje           = pua(203), pua(204)                 -- ɛ jɛ
-local Vi, Vii           = pua(205), pua(206)                 -- ɪ i
-local Vo, Vou           = pua(207), pua(208)                 -- ɔ ou
-local Vu, Vuu           = pua(209), pua(210)                 -- ʏ u
-local Voe, Voei         = pua(211), pua(212)                 -- œ œi
-local Vei, Voi, Vui     = pua(213), pua(214), pua(215)        -- ei ɔi ʏi
-local Vai_gi            = pua(216)                          -- ai (from a before -gi; NOT in J-set)
+local Va, Vai, Vau      = pua(200), pua(201), pua(202)       -- a ai au
+local Ve                = pua(203)                           -- ɛ; no jɛ because we replaced <é> -> <je> early on
+local Vi, Vii           = pua(204), pua(205)                 -- ɪ i
+local Vo, Vou           = pua(206), pua(207)                 -- ɔ ou
+local Vu, Vuu           = pua(208), pua(209)                 -- ʏ u
+local Voe, Voei         = pua(210), pua(211)                 -- œ œi
+local Vei, Voi, Vui     = pua(212), pua(213), pua(214)       -- ei ɔi ʏi
+local Vai_gi            = pua(215)                           -- ai (from a before -gi; NOT in J-set)
 
 local Vfirst, Vlast     = pua(200), pua(299)
 
@@ -170,11 +178,14 @@ local orth_to_asp_pua_map = {b = C.p, d = C.t, g = C.k, [gPAL] = C.c, p = C.ph, 
 local orth_to_unasp_pua_map = {b = C.p, d = C.t, g = C.k, [gPAL] = C.c, p = C.p, t = C.t, k = C.k, [kPAL] = C.c,
 							   l = C.l, m = C.m, n = C.n, r = C.r, j = C.j,
 							   f = C.f, h = C.h, s = C.s, ["þ"] = C.th2, v = C.v, ["ð"] = C.dh}
+local orth_velar_stop_to_palatal_pua_map = {g = C.c, k = C.ch}
+local orth_velar_stop_to_special_palatal_pua_map = {g = gPAL, k = kPAL}
 
 local bracketed_phone_map = {
 	f = OC.f,
 	s = OC.s,
 	x = OC.x,
+	xw = OC.xw,
 	kh = OC.kh,
 	k = OC.k,
 	th = OC.th,
@@ -183,7 +194,7 @@ local bracketed_phone_map = {
 	p = OC.p,
 	ch = OC.ch,
 	c = OC.c,
-	[":"] = Soblc,
+	[":"] = OSoblc,
 }
 
 -- Diphthongization of lax vowels occurs before -gi- and before velar and palatal nasals.
@@ -200,15 +211,15 @@ local detok = {
 	[C.p] = "p", [C.ph] = "pʰ", [C.t] = "t", [C.th] = "tʰ",
 	[C.c] = "c", [C.ch] = "cʰ", [C.k] = "k", [C.kh] = "kʰ",
 	[C.v] = "v", [C.f] = "f", [C.dh] = "ð", [C.th2] = "θ",
-	[C.s] = "s", [C.j] = "j", [C.hj] = "ç", [C.gh] = "ɣ", [C.x] = "x", [C.h] = "h",
+	[C.s] = "s", [C.j] = "j", [C.hj] = "ç", [C.gh] = "ɣ", [C.x] = "x", [C.xw] = "xʷ", [C.h] = "h",
 	[C.m] = "m", [C.hm] = "m̥", [C.n] = "n", [C.hn] = "n̥",
 	[C.nj] = "ɲ", [C.hnj] = "ɲ̊", [C.ng] = "ŋ", [C.hng] = "ŋ̊",
 	[C.l] = "l", [C.hl] = "l̥", [C.r] = "r", [C.hr] = "r̥",
-	[Va] = "a", [Vai] = "ai", [Vau] = "au", [Ve] = "ɛ", [Vje] = "jɛ",
+	[Va] = "a", [Vai] = "ai", [Vau] = "au", [Ve] = "ɛ",
 	[Vi] = "ɪ", [Vii] = "i", [Vo] = "ɔ", [Vou] = "ou", [Vu] = "ʏ", [Vuu] = "u",
 	[Voe] = "œ", [Voei] = "œi", [Vei] = "ei", [Voi] = "ɔi", [Vui] = "ʏi",
 	[Vai_gi] = "ai",
-	[Solc] = "(ː)",
+	-- [Solc] = "(ː)", don't convert Solc yet so we can eliminate it before a consonant in the next word
 	[Soblc] = "ː",
 	[kPAL] = "c", [gPAL] = "j",  -- fallback only; normally resolved before detok
 }
@@ -216,7 +227,8 @@ local detok = {
 -- Character-class fragments (contents of a [ .. .] set)
 local Call_pua = Cfirst .. "-" .. Clast
 -- allow explicit use of certain IPA consonants in respelling; ŋ and ɲ don't trigger diphthongization
-local Call = Call_pua .. Call_orth .. "ŋɲçɣ"
+local Cipa_not_orth = "ŋɲcçɣθ"
+local Call = Call_pua .. Call_orth .. Cipa_not_orth
 local OCall = OCfirst .. "-" .. OClast
 local COCall = Call .. OCall
 -- We need to include obligatory PUA characters to handle bracketed characters, which we map directly to PUA characters
@@ -225,22 +237,62 @@ local consonant_set = explode_to_set(COCall)
 local Vall_pua = Vfirst .. "-" .. Vlast
 local Vall = Vall_pua .. Vall_orth
 local vowel_set = explode_to_set(Vall)
-local Vfront = concat {Vi, Vii, Ve, Vje, Vai, Vei}  -- J vowels (front unrounded + æ + ei/ey)
+local Vfront = concat {Vi, Vii, Ve, Vai, Vei}  -- J vowels (front unrounded + æ + ei/ey)
 local J = Vfront .. "j"                                     -- J-set incl. orthographic j
 local Vauou = concat {Vau, Vou, Vuu}                -- á ó ú (for silent g)
 local Vtense = concat {Vau, Vou, Vuu, Vii, Vai, Voei, Vei}  -- á í/ý ó ú æ au ei/ey (nn → tn)
 -- Aspirated stop or voiceless fricative or approximant; triggers devoicing e.g. of preceding /r/;
 -- C.h should not be present
-local Cvoiceless_pua = concat {C.ph, C.th, C.ch, C.kh, kPAL, C.s, C.f, C.th2, C.x,
+local Cvoiceless_pua = concat {C.ph, C.th, C.ch, C.kh, kPAL, C.s, C.f, C.th2, C.x, C.xw,
 							   C.hj, C.hn, C.hnj, C.hng, C.hm, C.hl, C.hr}
 -- "Voiceless" obligatory PUA characters should still trigger devoicing. No equivalent of kPAL,
 -- which is generated secondarily..
-local OCvoiceless_pua = concat {OC.ph, OC.th, OC.ch, OC.kh, OC.s, OC.f, OC.th2, OC.x,
+local OCvoiceless_pua = concat {OC.ph, OC.th, OC.ch, OC.kh, OC.s, OC.f, OC.th2, OC.x, OC.xw,
 							   OC.hj, OC.hn, OC.hnj, OC.hng, OC.hm, OC.hl, OC.hr}
 -- We have to assume that at the point Cvoiceless is used, clusters like hj have been to PUA characters.
 local Cvoiceless_orth = "ptksfþ"
 local Cvoiceless = Cvoiceless_pua .. Cvoiceless_orth .. "ç"
 local COCvoiceless = Cvoiceless .. OCvoiceless_pua
+
+local unstressed_words = listToSet {
+	-- monosyllabic prepositions from https://ritmalssafn.arnastofnun.is/leit//ordflokkur/prep
+	-- NOTE: many can function as stressed adverbs and will need explicit stress
+	-- also, some can function as unrelated words, e.g. á "river", gegn "respectable; worthy", úr "watch"
+	"að", "af", "auk", "á", "án", "frá", "gegn", "gegnt", "hjá", "í", "með", "til", "um", "úr", "við",
+	-- not included despite being listed as monosyllabic prepositions:
+	-- 1. "bak" (mostly an adverb or noun "back")
+	-- 2. "bland" (mostly a noun "blend")
+	-- 3. "for" (a noun "mud"; a prefix for-, not a preposition)
+	-- 4. "fur" (obsolete?)
+	-- 5. "inn" (mostly a stressed adverb "in")
+	-- 6. "kring" (?)
+	-- 7. "mót" ("meeting; mo(u)ld; junction"; only a function word in the expression [[á móti]] "opposite",
+	--    [[í móti]] and <mót jólum> "just before Christmas"
+	-- 8. "nær" (an adverb "nearer")
+	-- 9. "of" (an adverb "too", seemingly stressed)
+	-- 10. "per" (?)
+	-- 11. "po" (?)
+	-- 12. "und" (mostly a noun "wound"; presumably an obsolete preposition "under")
+	-- 13. "út" (an adverb "out"; appears as a preposition in "út af", "út að", etc.)
+	-- conjunctions
+	"alls", "ef", "en", "er", "eð", "eða", "fyrst", "hvert", "hvort",
+	"né", "nær", "og", "sem", "uns", "þar", "þá", "þótt",
+	-- verbal forms
+	-- should we omit the 2nd person forms? should we omit sé which also means "(I) see"?
+	"ert", "var", "varst", "sé", "sért",
+	-- personal pronouns
+	"ég", "mig", "mér", "mín",
+	"þú", "þig", "þér", "þín",
+	"sig", "sér", "sín",
+	"hann", "hans", -- honum
+	"hún", -- hana, henni, hennar
+	"það", "því", "þess",
+	"þeir", "þá", "þær", "þau", "þeim", -- þeirra
+	-- other possibilities:
+	-- 1. sá "the" (but also stressed "to sow", "(I/he/she/it) saw"), and forms
+	-- 2. multistressed forms of the article, e.g þeirra, þeirri
+}
+
 
 -- This maps each "variation" (e.g. "formal", "allegro"), to an object with properties `class` (the class that groups
 -- the variations, e.g. "formality" for "formal", "speed" for "allegro"), `priority` (for sorting the variations,
@@ -389,7 +441,7 @@ local function union_each_class(existing_class_levels, new_class_levels)
 			for new_var, _ in pairs(new_levels_by_class) do
 				union[new_var] = true
 			end
-			if require(table_module).size(union) == #variation_classes[class].levels then
+			if m_table.size(union) == #variation_classes[class].levels then
 				-- the union includes all possible elements
 				union = nil
 			end
@@ -492,32 +544,46 @@ local function concatenate_horizontally(part1_pronuns, part2_pronuns, concatfun)
 end
 
 
--- Mark vowel length on the first (stressed) vowel nucleus.
--- Icelandic phonemic vowel length is only contrastive in stressed syllables,
--- which is always the first syllable in non-compound words.
+-- Determine the stressed syllable, if any, and mark it using \1 = ^A (not the primary stress symbol ˈ so that
+-- Lua patterns using it can use the regular, much-faster pattern matching in place of the PHP versions).
+local function mark_stress(word)
+	if word:find("^%.") then
+		word = word:match("^%.(.*)$")
+	elseif not unstressed_words[word] and not word:find("ˈ") then
+		-- word unstressed or stress already marked
+		word = "ˈ" .. word
+	end
+	word = word:gsub("ˈ", "\1")
+	return word
+end
+
+
+-- Mark vowel length on vowel nuclei with primary stress. Icelandic phonemic vowel length is only contrastive
+-- in stressed syllables (usually the first syllable in non-compound words).
 --
 -- Long if: 0 or 1 consonant follows (before next vowel or component end).
 -- Short if: 2+ consonants follow (cluster or geminate), unless the cluster is
 --   one of the transparent clusters ptksbd + vjr (e.g. pr, kr, tv, tj, kv, br, dr).
 -- x counts as 2 consonants (represents /ks/).
--- Always short before the sequence -gi (diphthongization environment).
+-- Always short before the sequence -gi-/-j-/-gj- (diphthongization environment) except for í and ý, and
+-- not in the south and south-rounded dialect.
 --
 -- In a compound, the same rules apply to the last component, but otherwise a
 -- stressed syllable in a single-syllable component is lengthened only when either
 -- the component ends in a vowel, the next component begins with a vowel or h + vowel,
 -- or the component ends in a single written <p>, <t>, <k> or <s>.
-local function determine_vowel_length(component_index, component, next_component)
+local function determine_vowel_length(component, next_component, dialect, seen_primary_stress)
 	local chars = explode_to_list(component)
 	local n = #chars
 	local result = {}
-	local found_vowel = false
+	local syllable_stressed = seen_primary_stress
 	local i = 1
 
 	while i <= n do
 		local c = chars[i]
 
-		if found_vowel then
-			-- Subsequent (unstressed) vowels: pass through unchanged, no length marking
+		if c == "\1" then -- primary stress
+			syllable_stressed = true
 			insert(result, c)
 			i = i + 1
 		else
@@ -534,12 +600,11 @@ local function determine_vowel_length(component_index, component, next_component
 			end
 
 			if nucleus then
-				found_vowel = true
 				local long = false
 				local j = i + nlen  -- index of first character after the nucleus
 				if chars[j] == BREVE then
 					nlen = nlen + 1
-				else
+				elseif syllable_stressed then
 					-- Count orthographic consonant letters following the nucleus
 					local count = 0
 					local c1, c2 = nil, nil
@@ -554,8 +619,10 @@ local function determine_vowel_length(component_index, component, next_component
 						k = k + 1
 					end
 	
-					-- -gi-/-j- special case: vowel (other than <í>/<ý>) is always short (and diphthongized) before <gi> and <j>
-					local before_gi = c1 == "j" or c1 == "g" and chars[j + 1] == "i" -- it's ok if j > n, we just get nil
+					-- -gi-/-gj-/-j- special case: vowel (other than <í>/<ý>) is always short (and diphthongized) before
+					-- <gi>, <gj> and <j>, but <í>/<ý> is long (including before -gj-);
+					-- it's ok if j > n in chars[j + 1], we just get nil
+					local before_gi = c1 == "j" or c1 == "g" and (chars[j + 1] == "i" or chars[j + 1] == "j")
 	
 					-- At this point, j is the index of the first character after the stressed vowel
 					-- nucleus, and k is the index of the first character after any consonant cluster
@@ -570,8 +637,8 @@ local function determine_vowel_length(component_index, component, next_component
 						elseif count == 1 then
 							local first_next = usub(next_component, 1, 1)
 							local second_next = usub(next_component, 2, 2)
-							if vowel_set[first_next] or first_next == "h" and vowel_set[second_next] and second_next ~= "é" then
-								long = true -- next component begins with a vowel or h + vowel (but not hé-, which is phonemically /hjɛ-/)
+							if vowel_set[first_next] or first_next == "h" and vowel_set[second_next] then
+								long = true -- next component begins with a vowel or h + vowel (<hé> doesn't count but has already been transformed to <hje>)
 							else
 								long = false
 							end
@@ -579,8 +646,8 @@ local function determine_vowel_length(component_index, component, next_component
 							long = false
 						end
 					else
-						if before_gi and nucleus ~= "í" and nucleus ~= "ý" then
-							long = false
+						if before_gi then
+							long = nucleus == "í" or nucleus == "ý" or dialect == "south" or dialect == "south-rounded"
 						elseif count <= 1 then
 							long = true
 						elseif count == 2 and ptks[c1] and c2 and vjr[c2] then
@@ -596,6 +663,7 @@ local function determine_vowel_length(component_index, component, next_component
 					insert(result, "ː")
 				end
 				i = i + nlen
+				syllable_stressed = false
 			else
 				insert(result, c)
 				i = i + 1
@@ -606,8 +674,8 @@ local function determine_vowel_length(component_index, component, next_component
 	return concat(result)
 end
 
--- Syllabify a word composed of phones (not letters) by adding a period (.) between each syllable. Respect periods that
--- may already be present, added in the respelling.
+-- Syllabify a word composed of phones (not letters) by adding a period (.) between each syllable. Respect periods and
+-- primary stress markers that may already be present, added in the respelling.
 local function syllabify(word)
 	-- Assume any unknown character is a consonant. "Vowels" are only those in the Vall range as well as any following
 	-- ː, possibly in parens. The algorithm for placing the syllable divider is that it goes to the left of a rightmost
@@ -615,16 +683,17 @@ local function syllabify(word)
 	local clusters = split(word, "([" .. Vall .. "][ː()]*)")
 	for i = 3, #clusters - 2, 2 do
 		local cluster = clusters[i]
-		if not cluster:find("%.") then -- check for the case where the user put an explicit syllable boundary
+		if not cluster:find("[.\1]") then
+			-- Check for the case where the user put an explicit syllable boundary or primary stress.
 			-- Note that we're operating on phones here, not letters, so kj will have already been converted to C.c,
 			-- but that is fine because it gets treated as a single phone.
 			cluster = ugsub(cluster, "^(.-)(%(?[" .. C.p .. C.t .. C.k .. C.s .. "]%)?%(?[" .. C.v .. C.j .. C.r .. "]%)?)$", "%1.%2")
 		end
-		if not cluster:find("%.") then
+		if not cluster:find("[.\1]") then
 			-- ptks+vjr not found
 			cluster = ugsub(cluster, "^(.-)(%(?.%)?)$", "%1.%2")
 		end
-		if not cluster:find("%.") then
+		if not cluster:find("[.\1]") then
 			-- no characters probably
 			cluster = "." .. cluster
 		end
@@ -672,7 +741,7 @@ end
 -- vowels per determine_vowel_length(). On output, there may be multiple pronunciations, where the `output` field
 -- of each pronunciation is in IPA and the `levels_by_class` table is filled in (if a particular class is missing in the
 -- `levels_by_class` table, it means that all possible levels apply). `dialect` specifies the dialect to generate the
--- pronunciation of, and can be either "north", "northeast", "south" or nil for the standard dialect.
+-- pronunciation of, and can be either "north", "northeast", "south", "south-rounded" or nil for the standard dialect.
 -- `disable_internal_stresses` is used by bots that convert raw IPA to respelling and causes stresses in the middle of a
 -- component of 3 or more syllables to be omitted.
 local function convert(w, dialect, disable_internal_stresses)
@@ -684,7 +753,7 @@ local function convert(w, dialect, disable_internal_stresses)
 	w = apply(w, {
 		-- A1: digraphs (longest first)
 		{"au", Voei}, {"ei", Vei}, {"ey", Vei},
-		-- A2: monophthong diphthongized + shortened before -gi, -gj
+		-- A2: monophthong diphthongized + shortened before -gi, -gj; won't happen in southern dialects due to lengthening
 		{"([" .. lax_vowels .. "])(g[ij])", function(v, gij)
 			return (lax_back_vowel_front_diphthongize_map[v] or lax_front_vowel_diphthongize_map[v]) .. gij
 		end},
@@ -692,33 +761,38 @@ local function convert(w, dialect, disable_internal_stresses)
 		-- even if the [ŋ] ends up disappearing or transforming to [n] (e.g. in <punktur> pʰun̥tʏr, with tensed vowel
 		-- despite the [ŋ] disappearing), or an [ŋ] appears that wasn't originally present (e.g. in <hrygnt> [r̥ɪŋ̊t],
 		-- with lax vowel despite secondary [ŋ]), we need to preserve the vowel quality.
-		{"([" .. lax_vowels .. "])(n[gk])", function(v, ngk)
+		{"([" .. lax_vowels .. "])(n+[gk])", function(v, ngk)
 			return (lax_back_vowel_back_diphthongize_map[v] or lax_front_vowel_diphthongize_map[v]) .. ngk 
 		end},
 		-- A4: plain vowels (the length marker ː stays in place after the token)
-		{"á", Vau}, {"ó", Vou}, {"ú", Vuu}, {"æ", Vai}, {"é", Vje},
+		{"á", Vau}, {"ó", Vou}, {"ú", Vuu}, {"æ", Vai}, -- <é> was replaced with <je> early on
 		{"a", Va}, {"e", Ve}, {"í", Vii}, {"i", Vi},
 		{"o", Vo}, {"u", Vu}, {"ý", Vii}, {"y", Vi}, {"ö", Voe},
 	})
 
 	------------------------------------------------------------------
-	-- Step 3.2: component-initial stops and h (anchored on #)
+	-- Step 3.2: component-initial stops and h
+	-- Anchored on # or ˈ; component-initial stops are aspirated and fricatives devoiced even in unstressed
+	-- words, as in unstressed <fyrir>, but also after non-initial primary stress as in <atarna>
 	------------------------------------------------------------------
 	if dialect == "south" then
-		w = apply(w, {{"#hv", "#" .. C.x}})             -- hv-pronunciation: [x]
+		w = apply(w, {{"([#\1])hv", "%1" .. C.x}})             -- hv-pronunciation: [x]
+	elseif dialect == "south-rounded" then
+		w = apply(w, {{"([#\1])hv", "%1" .. C.xw}})             -- rounded hv-pronunciation: [xʷ]
 	else
-		w = apply(w, {{"#hv", "#" .. C.kh .. C.v}})        -- standard: [kʰv]
+		w = apply(w, {{"([#\1])hv", "%1" .. C.kh .. C.v}})        -- standard: [kʰv]
 	end
 	w = apply(w, {
-		{"#h" .. Vje, "#" .. C.hj .. Ve},               -- hé → ç ɛ
-		{"#h([jlnr])", function(lnr) return "#" .. orth_to_asp_pua_map[lnr] end}, -- initial hj/hl/hn/hr -> aspirated sonorant
-		{"#h", "#" .. C.h},                                -- initial h + vowel
-		{"#gj", "#" .. C.c},                               -- gj → c (j absorbed)
-		{"#kj", "#" .. C.ch},                              -- kj → cʰ (j absorbed)
-		{"#g([" .. J .. "])", "#" .. C.c .. "%1"},         -- g + J → c
-		{"#k([" .. J .. "])", "#" .. C.ch .. "%1"},        -- k + J → cʰ
+		-- initial hj/hl/hn/hr -> aspirated sonorant
+		{"([#\1])h([jlnr])", function(anchor, jlnr) return anchor .. orth_to_asp_pua_map[jlnr] end},
+		{"([#\1])h", "%1" .. C.h},                                -- initial h + vowel
+		-- gj → c, kj → cʰ (j absorbed)
+		{"([#\1])([gk])j", function(anchor, gk) return anchor .. orth_velar_stop_to_palatal_pua_map[gk] end},
+		-- g + J → c, k + J -> cʰ
+		{"([#\1])([gk])([" .. J .. "])",
+			function(anchor, gk, j_after) return anchor .. orth_velar_stop_to_palatal_pua_map[gk] .. j_after end},
 		-- map remaining initial stops to PUA equivalents
-		{"#([ptkbdg])", function(stop) return "#" .. orth_to_asp_pua_map[stop] end},
+		{"([#\1])([ptkbdg])", function(anchor, stop) return anchor .. orth_to_asp_pua_map[stop] end},
 	})
 
 	------------------------------------------------------------------
@@ -731,15 +805,15 @@ local function convert(w, dialect, disable_internal_stresses)
 		{"kk([" .. J .. "])", C.h .. kPAL .. "%1"},  -- blekkja, þekkja
 		{"ggj", gPAL .. Solc},
 		{"gg([" .. J .. "])", gPAL .. Solc .. "%1"}, -- byggja
-		{"kj", kPAL},
-		{"k([" .. J .. "])", kPAL .. "%1"},
-		{"gj", gPAL},
-		{"g([" .. J .. "])", gPAL .. "%1"},
+		{"([gk])j", orth_velar_stop_to_special_palatal_pua_map},
+		{"([gk])([" .. J .. "])", function(gk, j_after) return orth_velar_stop_to_special_palatal_pua_map[gk] .. j_after end},
 		{"ll([std])", "l%1"},
 		{"ll([+" .. Call .. "])", C.t .. C.hl .. "%1"},
 		-- other cases of geminates before a consonant simplify; not yet across a component boundary
 		-- because of -tt, -ánn, etc.
 		{"([" .. Call .. "])%1([" .. Call .. "])", "%1%2"},
+		-- also do cases where Solc already is in place to handle e.g. <ll:> and <nn:> before a consonant
+		{"([" .. Call .. "])" .. Solc .. "([" .. Call .. "])", "%1%2"},
 
 		-- (b) 5 consonant clusters; FIXME: these are guesses based on the respective 4-consonant outputs in Eiríkur,
 		--     since no clusters with 5 consonants are specifically given.
@@ -840,7 +914,8 @@ local function convert(w, dialect, disable_internal_stresses)
 		-- definitely not be expected before <g>.
 		{"r[ðfg]l", C.r .. C.t .. C.l}, -- sperðlar; hvarfla; sargla~svargla/gúrgla~gurgla/snörgla
 		{"r[ðfg]n", C.r .. C.t .. C.n}, -- harðna; horfnir; morgna
-		{"r[fg]ð", C.r .. C.dh}, -- horfði; mergð
+		{"rfð", C.r .. "(" .. C.v .. ")" .. C.dh}, -- horfði; dirð
+		{"rgð", C.r .. "(" .. C.k .. ")" .. C.dh}, -- mergð
 		-- rfl above
 		-- rfn above
 		{"rfs", C.r .. "(" .. C.f .. ")" .. C.s}, -- orfs
@@ -886,13 +961,15 @@ local function convert(w, dialect, disable_internal_stresses)
 		{"tns", C.s .. "ː"}, -- vatns
 
 		-- (3) 2 consonant clusters
+		{"x", "ks"},                            -- x → ks; should precede epenthetic t in <sl>, e.g. <jaxl> -> [jakstl]
+		-- epenthetic [t] in rl, rn, sl, sn
+		{"([rs])([ln])", function(rs, ln) return orth_to_unasp_pua_map[rs] .. C.t .. orth_to_unasp_pua_map[ln] end},
 		{"ðk", C.th2 .. C.k},                         -- ð devoiced before k → θ
 		-- nasal + velar/palatal stop (place + voicing by following segment)
 		{"n" .. kPAL, C.hnj .. C.c},                  -- voiceless palatal: banki, þenkja
 		{"nk", C.hng .. C.k},                         -- voiceless velar: banka
 		{"n" .. gPAL, C.nj .. C.c},                   -- voiced palatal: angi, syngja
 		{"ng", C.ng .. C.k},                          -- voiced velar: hanga, langur
-		{"lr", C.l .. C.t .. C.r},                    -- elri
 		-- geminates and preaspiration; maintain the [kpt] because we may need to convert p -> f later,
 		-- as in uppfræða
 		{"([" .. Vall .. "])([kpt])%2", "%1" .. C.h .. "%2"}, -- drekka, stoppa, fletta
@@ -902,9 +979,13 @@ local function convert(w, dialect, disable_internal_stresses)
 		-- rr is special and is a long trill (and not devoiced) even word-finally or before a consonant,
 		-- e.g. barr, barri, barrtré, kyrrstæður
 		{"rr", C.r .. "ː"},
+		{"ff", C.f .. Solc},
+		{"gg", C.k .. Solc},
 		-- no gemination before consonant across component boundary, as in innbú, rassvasi;
 		-- this should go as early as possible, directly after any special handling of written geminates.
-		{"([" .. Call .. "])%1#([" .. Call .. "])", "%1#%2"},
+		{"([" .. Call .. "])%1([#\1][" .. Call .. "])", "%1%2"},
+		-- also do cases where Solc already is in place to handle e.g. <ll:> and <nn:> before a consonant
+		{"([" .. Call .. "])" .. Solc .. "([#\1][" .. Call .. "])", "%1%2"},
 		-- hagga, etc.
 		{"([bdgfhsþðmnr])%1", function(c) return orth_to_unasp_pua_map[c] .. Solc end},
 		-- preaspiration: p/t/k + l/n
@@ -918,17 +999,17 @@ local function convert(w, dialect, disable_internal_stresses)
 	------------------------------------------------------------------
 	w = apply(w, {
 		-- kaupfélag, kaupfar, upp fyrir, uppfræða; kaupsýsla, kauptíð, kauptrygging
-		{"(ː?)(" .. C.h.. "?p)(#[fs" .. C.th .. "])", {
+		{"(ː?)(" .. C.h.. "?p)([#\1][fs" .. C.th .. "])", {
 			{replace = "%1%2%3", var = "formal"},
 			{replace = C.f .. "%3", var = "informal"}, -- preceding length shortens and hp -> f
 		}},
 		-- kaupmaður, kaupmennska, Kaupmannahöfn
-		{"(ː?)(p#m)", {			
+		{"(ː?)(p[#\1]m)", {			
 			{replace = "%1%2"},
 			{replace = C.h .. "%2"},
 		}},
-		-- <d> may drop before <s> across component boundaries
-		{"(d)(#s)", "(%1)%2"},
+		-- <d> in <ld>, <nd> may drop before <s> across component boundaries
+		{"([ln])(d)([#\1]s)", "%1(%2)%3"},
 	})
 
 	------------------------------------------------------------------
@@ -938,30 +1019,30 @@ local function convert(w, dialect, disable_internal_stresses)
 	------------------------------------------------------------------
 	w = apply(w, {
  		-- <f> preceding labial across component boundary; rafmagn
-		{"(f#)(m)", {
-			{replace = "%1%2", var = "formal"},
-			{replace = "%2#%2", var = "informal"},
+		{"(f)([#\1])(m)", {
+			{replace = "%1%2%3", var = "formal"},
+			{replace = "%3%2%3", var = "informal"},
 		}},
  		-- <f> preceding labial across component boundary; afbera, afbragð, ofboðslegur;
 		-- use OC.p to prevent [p] from getting deleted across component boundary before another [p]
-		{"(f#)(" .. C.p .. ")", {
+		{"(f)([#\1]" .. C.p .. ")", {
 			{replace = "%1%2", var = "formal"},
-			{replace = OC.p .. "#%2", var = "informal"},
+			{replace = OC.p .. "%2", var = "informal"},
 		}},
 		-- <f> preceding <p> across component boundary; no discussion or examples given, guess that it's similar to -f#b-
-		{"(f#)([" .. C.ph .. "])", {
+		{"(f)([#\1]" .. C.ph .. ")", {
 			{replace = "%1%2", var = "formal"},
-			{replace = C.p .. "#%2", var = "informal"},
+			{replace = C.p .. "%2", var = "informal"},
 		}},
  		-- [f] preceding [f] and [s] across component boundary; affall, afferma, offita, afskekktur, afstaða, ofsjónir
-		{"f(#[fs])", C.f .. "%1"},
+		{"f([#\1][fs])", C.f .. "%1"},
 		-- Before voiceless fricatives and approximants other than [s], and before aspirated stops, modern [v], older [f]:
 		-- afhlúpa, afhrak, afkimi, afkoma, aftaka, raftækni, Riftún, ofhleðsla, ofhvörf, etc.
-		{"f(#[" .. COCvoiceless .. "])", {
+		{"f([#\1][" .. COCvoiceless .. "])", {
 			{replace = C.v .. "%1", var = "modern"},
 			{replace = C.f .. "%1", var = "older"},
 		}},
-		{"#f", "#" .. C.f},                          -- initial f; should precede handling of -fl-
+		{"([#\1])f", "%1" .. C.f},                   -- initial f; should precede handling of -fl-
 		{"f([ln])", C.p .. "%1"},                    -- efla, hafna → p
 		{"f([st])", C.f .. "%1"},                    -- ofsi, aftur → f
 		{"([" .. Vauou .. "]ː?)f([" .. Vall .. "])", "%1(v)%2"},      -- optionally silent after á/ó/ú
@@ -975,14 +1056,12 @@ local function convert(w, dialect, disable_internal_stresses)
 	w = apply(w, {
 		-- r becomes voiceless before any aspirated stop or voiceless fricative/approximant,
 		-- including across component boundaries
-		{"r(#?" .. "[" .. COCvoiceless .. "])", C.hr .. "%1"},
+		{"r([#\1]?" .. "[" .. COCvoiceless .. "])", C.hr .. "%1"},
 		-- l/m becomes voiceless before an aspirated stop
 		{"([lm])([kpt" .. kPAL .. "])", function(lm, kpt) return orth_to_asp_pua_map[lm] .. kpt end},
 		-- l becomes voiceless across a component boundary before hl- (jökulhlaup; FIXME: there may be other cases like this)
-		{"l(#" .. C.hl .. ")", C.hl .. "%1"},
+		{"l([#\1]" .. C.hl .. ")", C.hl .. "%1"},
 		{"nt", C.hn .. C.t},                          -- vanta
-		-- epenthetic [t] in rl, rn, sl, sn
-		{"([rs])([ln])", function(rs, ln) return orth_to_unasp_pua_map[rs] .. C.t .. orth_to_unasp_pua_map[ln] end},
 	})
 
 	--------------------------------------------------------------------------
@@ -1006,18 +1085,18 @@ local function convert(w, dialect, disable_internal_stresses)
 		{"([" .. Vauou .. "]ː?)g([" .. Vall .. "])", "%1(" .. C.gh .. ")%2"},
 		-- optionally silent after á/ó/ú component-finally; needs to lengthen when dropped; lágnætti, skóglendi, drjúgvirkur
 		-- note that if before voiceless, the rule below will generate optional [x]
-		{"([" .. Vauou .. "])g#", {
-			{replace = "%1g#"},
-			{replace = "%1ː#"},
+		{"([" .. Vauou .. "])g([#\1])", {
+			{replace = "%1g%2"},
+			{replace = "%1ː%2"},
 		}},
 		{"gt", C.x .. "t"},                                        -- sagt: g → x (t kept)
 		{"g([ðr])", C.gh .. "%1"},                                 -- sigra, sagði → ɣ
 		{"([" .. Vall .. "]ː?)g([" .. Vall .. "])", "%1" .. C.gh .. "%2"},-- saga → ɣ (intervocalic)
-		{"([" .. Vall .. "]ː?)g#([" .. COCvoiceless .. "])", {
-			{replace = "%1" .. C.x .. "#%2"},
-			{replace = "%1" .. C.gh .. "#%2"},
+		{"([" .. Vall .. "]ː?)g([#\1][" .. COCvoiceless .. "])", {
+			{replace = "%1" .. C.x .. "%2"},
+			{replace = "%1" .. C.gh .. "%2"},
 		}},
-		{"([" .. Vall .. "]ː?)g#", "%1" .. C.gh .. "#"},             -- lag → ɣ (final after a vowel)
+		{"([" .. Vall .. "]ː?)g([#\1])", "%1" .. C.gh .. "%2"},           -- lag → ɣ (final after a vowel)
 		{"([" .. Vall .. "]ː?)" .. gPAL .. "([" .. Vall .. "])", "%1" .. C.j .. "%2"}, -- hagi → j
 		{gPAL, C.c},                                             -- elsewhere palatal g → c
 		{"g", C.k},                                              -- elsewhere velar g → k
@@ -1030,11 +1109,10 @@ local function convert(w, dialect, disable_internal_stresses)
 	-- Step 3.4f: remaining single consonants
 	------------------------------------------------------------------
 	w = apply(w, {
-		{"x", C.k .. C.s},                            -- x → ks
 		{"([bdptmnlrðþvsjk])", orth_to_unasp_pua_map},
 		-- component-final stop + [n]/[l] devoice the sonorant: vopn [vɔhpn̥], magn [makn̥], einn [eitn̥], stjákl [stjauhkl̥]
-		{"([" .. unaspirated_stops_pua .. "])([" .. C.n .. C.l .. "])#",
-			function(stop, nl) return stop .. devoice_resonant_map[nl] .. "#" end
+		{"([" .. unaspirated_stops_pua .. "])([" .. C.n .. C.l .. "])([#\1])",
+			function(stop, nl, boundary) return stop .. devoice_resonant_map[nl] .. boundary end
 		},
 	})
 
@@ -1043,10 +1121,10 @@ local function convert(w, dialect, disable_internal_stresses)
 	--------------------------------------------------------------------------------
 	w = apply(w, {
 		-- same-place stop consonants drop across component boundaries
-		{"[" .. C.k .. C.kh .. "](#[" .. C.k .. C.kh .. C.c .. C.ch .. "])", "%1"},
-		{"[" .. C.p .. C.ph .. "](#[" .. C.p .. C.ph .. "])", "%1"},
-		{"[" .. C.t .. C.th .. "](#[" .. C.t .. C.th .. "])", "%1"},
-		{C.s .. "(#" .. C.s .. ")", "%1"},
+		{"[" .. C.k .. C.kh .. "]([#\1][" .. C.k .. C.kh .. C.c .. C.ch .. "])", "%1"},
+		{"[" .. C.p .. C.ph .. "]([#\1][" .. C.p .. C.ph .. "])", "%1"},
+		{"[" .. C.t .. C.th .. "]([#\1][" .. C.t .. C.th .. "])", "%1"},
+		{C.s .. "([#\1]" .. C.s .. ")", "%1"},
 	})
 
 	----------------------------------------------------------------------------------------
@@ -1080,10 +1158,10 @@ local function convert(w, dialect, disable_internal_stresses)
 	-- explicitly discussed, but it's consistent in the book
 	w = apply(w, {
 		-- across a component boundary; usualy case
-		{"ː?([" .. Call .. "])(#%1[" .. Vall .. "])ː", "%1%2"},
+		{"ː?([" .. Call .. "])([#\1]%1[" .. Vall .. "])ː", "%1%2"},
 		-- geminate precedes the component boundary; can happen with explicit written [:],
 		-- as in [[prestsekkja]] written <pres[:]-ekkja>
-		{"ː?([" .. Call .. "]ː#[" .. Vall .. "])ː", "%1"},
+		{"ː?([" .. Call .. "]ː[#\1][" .. Vall .. "])ː", "%1"},
 		-- eliminate _ and + markers before syllabification
 		{"[_+]", ""},
 	})
@@ -1092,45 +1170,87 @@ local function convert(w, dialect, disable_internal_stresses)
 	for _, word in ipairs(w) do
 		local components = split(word.output, "(#+)")
 		local syllables_since_stress
+		local seen_primary_stress
 		for i = 3, #components - 2, 2 do
+			local component = components[i]
+			local syllabified_component = syllabify(component)
+			local syllables = split(syllabified_component, "([.\1])")
+			if syllables[1] ~= "" then
+				-- Component doesn't begin with primary stress; move the first syllable to position 3 to align this
+				-- case with the one where the component does begin with primary stress.
+				insert(syllables, 1, "")
+				insert(syllables, 1, "")
+			end
+			-- Eliminate all dots indicating syllable boundaries and convert \1 to actual primary stress.
+			for j = 3, #syllables, 2 do
+				if syllables[j - 1] == "." then
+					syllables[j - 1] = ""
+				elseif syllables[j - 1] == "\1" then
+					syllables[j - 1] = "ˈ"
+				end
+			end
 			if not syllables_since_stress then
-				components[i - 1] = "ˈ"
+				-- beginning of word; not that we've already marked primary stress in words that need it
+				components[i - 1] = ""
 				syllables_since_stress = 0
 			elseif syllables_since_stress >= 2 then
-				components[i - 1] = "ˌ"
+				-- component boundary, not beginning of word, and a secondary stress is called for; but if we
+				-- haven't seen the primary stress, put a period (assume no secondary stress before primary stress)
+				components[i - 1] = seen_primary_stress and "ˌ" or "."
 				syllables_since_stress = 0
 			end
-			local syllabified_word = syllabify(components[i])
-			local syllables = split(syllabified_word, "%.")
 			-- We may need to give secondary stress to syllables within a component if the component has more than
 			-- two syllables. We need to give alternating stresses and can stress the final syllable only in the
-			-- last component of the word.
-			if #syllables >= 3 then
+			-- last component of the word. In the following, keep in mind that the actual syllables are at odd numbered
+			-- positions starting with 3. Position 1 should always be a blank string and even numbered positions are the
+			-- primary stress or syllable boundary markers before the actual syllables. This means we need to divide
+			-- syllable positions by 2 (after subtracting 1 to account for the initial blank syllable) to get the actual
+			-- number of syllables.
+			if #syllables >= 7 then -- i.e. 3 or more actual syllables
 				if i > 3 then
-					components[i - 1] = "ˌ"
+					-- not beginning of word; see comment above about no secondary stress before primary
+					components[i - 1] = seen_primary_stress and "ˌ" or "."
 				end
-				local first_secstress_syllable = 3
-				local last_secstress_syllable = i == #components - 2 and #syllables or #syllables - 1
-				if first_secstress_syllable <= last_secstress_syllable then
-					for j = first_secstress_syllable, last_secstress_syllable, 2 do
-						if not disable_internal_stresses then
-							syllables[j] = resolve_optional_consonant_gemination(syllables[j], syllables[j - 1])
-							syllables[j] = "ˌ" .. syllables[j]
-						end
-						syllables_since_stress = #syllables - j + 1
+				local primary_stress_syllable
+				-- First, find the primary stress, if any.
+				for j = 3, #syllables, 2 do
+					if syllables[j - 1] == "ˈ" then
+						primary_stress_syllable = j
+						break
 					end
-				else
-					syllables_since_stress = #syllables
+				end
+				if primary_stress_syllable or seen_primary_stress then
+					-- Either this or a preceding component has primary stress. If this component has primary stress, we
+					-- start with the third syllable after the stress marker; otherwise we start with the third syllable
+					-- of the component.
+					local first_secstress_syllable = primary_stress_syllable and primary_stress_syllable + 4 or 7
+					-- Last syllable of a component can't get secondary stress. This doesn't apply to non-inflectional
+					-- final syllables as in [[september]], [[kabarett]], but it's difficult to automatically
+					-- distinguish them from the more common case of inflectional final syllables.
+					local last_secstress_syllable = #syllables - 2
+					if first_secstress_syllable <= last_secstress_syllable then
+						-- 4 here means we examine every other syllable.
+						for j = first_secstress_syllable, last_secstress_syllable, 4 do
+							if not disable_internal_stresses then
+								syllables[j] = resolve_optional_consonant_gemination(syllables[j], syllables[j - 2])
+								syllables[j - 1] = "ˌ"
+							end
+							syllables_since_stress = (#syllables - j) / 2 + 1
+						end
+					else
+						syllables_since_stress = (#syllables - 1) / 2
+					end
 				end
 			else
 				if syllables_since_stress > 0 then
 					components[i - 1] = "."
 				end
-				syllables_since_stress = syllables_since_stress + #syllables
+				syllables_since_stress = syllables_since_stress + (#syllables - 1) / 2
 			end
 			-- Concatenate, including any added secondary stress marks but removing dots marking other syllable
 			-- boundaries.
 			components[i] = concat(syllables)
+			seen_primary_stress = seen_primary_stress or not not components[i]:find("ˈ")
 		end
 		components[#components - 1] = "" -- erase word-final ##
 		word.output = concat(components)
@@ -1145,16 +1265,23 @@ end
 
 
 local function toIPA_word(word, dialect, disable_internal_stresses)
+	-- Mark stress before eliminating case distinctions so we don't treat capitalized words like <Á> as unstressed
+	word = mark_stress(word)
+	word = ulower(word)
 	word = word:gsub("%[(.-)%]", bracketed_phone_map)
 	word = ugsub(word, "[ăĕĭŏŭ]", decompose_breve_map)
 	word = word:gsub("([ln])%1:", "%1" .. Solc)
+	word = word:gsub("é", "je") -- this seems to be the easiest way to handle this letter
 	-- Handle epenthetic [j] in hiatus after a high front vowel or glide
-	word = word:gsub("(e[iy])([aiu])", "%1j%2")
-	word = ugsub(word, "([íýæ])([aiu])", "%1j%2")
+	word = ugsub(word, "(e[iy])([" .. Vall .. "])", "%1j%2")
+	word = ugsub(word, "(au)([" .. Vall .. "])", "%1j%2")
+	word = ugsub(word, "([íýæ])([" .. Vall .. "])", "%1j%2")
+	word = word:gsub("\1guð", "\1gvuð") -- special case for guð-, Guð-
 	local components = split(word, "[-‿]")
+	local seen_primary_stress = false
 	for i, component in ipairs(components) do
-		component = mw.ustring.lower(component)
-		components[i] = determine_vowel_length(i, component, components[i + 1])
+		components[i] = determine_vowel_length(component, components[i + 1], dialect, seen_primary_stress)
+		seen_primary_stress = seen_primary_stress or not not components[i]:find("\1")
 	end
 	word = "##" .. concat(components, "#") .. "##"
 	return convert({{output = word, levels_by_class = {}}}, dialect, disable_internal_stresses)
@@ -1167,11 +1294,20 @@ end
 local function convert_single_substitution_to_original(to, pagename, whole_word)
 	-- Replace specially-handled characters with a class matching the character and possible replacements.
 	local escaped_from = to
-	escaped_from = escaped_from:gsub("[._:+]", "")
+	escaped_from = escaped_from:gsub("ˈ", ""):gsub("[._:+]", "")
+	-- [k] and [c] normally stand for written <g> so make the substitution.
+	escaped_from = escaped_from:gsub("%[[kc]%]", "g")
+	escaped_from = escaped_from:gsub("%[[KC]%]", "G")
+	escaped_from = escaped_from:gsub("%[[kc]h%]", "k")
+	escaped_from = escaped_from:gsub("%[[KC]h%]", "K")
 	escaped_from = pattern_escape(escaped_from)
-	-- This is tricky, because we already passed `escaped_from` through pattern_escape() causing a hyphen or paren
-	-- to get a % sign before it, and have to double up the percent signs to match and replace a literal %.
-	escaped_from = escaped_from:gsub("%%([-()])", "%%%1?")
+	-- Hyphen should match against space, hyphen or nothing in the original.
+	-- This is tricky, because we already passed `escaped_from` through pattern_escape() causing a hyphen, paren or
+	-- bracket to get a % sign before it, and have to double up the percent signs to match and replace a literal %.
+	escaped_from = escaped_from:gsub("%%%-", "[ %%-]?")
+	
+	-- Parens and brackets should match against themselves or nothing in the original.
+	escaped_from = escaped_from:gsub("%%([()%[%]])", "%%%1?")
 	-- Tie sign (‿) should match against space or hyphen in the original.
 	escaped_from = escaped_from:gsub("‿", "[ %%-]")
 	-- ŋ and ɲ match n in original.
@@ -1243,17 +1379,20 @@ end
 local function handle_substitution_specs(text, pagename)
 	if text == "+" then
 		return pagename
-	elseif text:find("^%[.*%]$") then
-		-- Check that there is a single bracketed expression; otherwise it's vaguely possible that there are
-		-- two [C] literals, one at the beginning and one at the end.
-		local put = require(parse_utilities_module)
-		local segments = put.parse_balanced_segment_run(text, "[", "]")
-		if #segments > 3 then
+	else
+		text = text:gsub("'", "ˈ") -- convert apostrophe to primary stress
+		if text:find("^%[.*%]$") then
+			-- Check that there is a single bracketed expression; otherwise it's vaguely possible that there are
+			-- two [C] literals, one at the beginning and one at the end.
+			local put = require(parse_utilities_module)
+			local segments = put.parse_balanced_segment_run(text, "[", "]")
+			if #segments > 3 then
+				return text
+			end
+			return apply_substitution_spec(segments[2], pagename)
+		else
 			return text
 		end
-		return apply_substitution_spec(segments[2], pagename)
-	else
-		return text
 	end
 end
 
@@ -1270,10 +1409,19 @@ function export.toIPA(text, dialect, pagename, disable_internal_stresses)
 			if word1 == "" then
 				return word2
 			else
+				-- eliminate word-final optional gemination before a next-word-initial consonant
+				if ufind(word2, "^ˈ?[" .. Call .. "]") then
+					word1 = word1:gsub(Solc .. "$", "")
+				end
 				return word1 .. " " .. word2
 			end
 		end
 		all_word_pronuns = concatenate_horizontally(all_word_pronuns, this_word_pronuns, concatenate)
+	end
+	-- We purposely didn't convert Solc to (ː) during detokenization so we could eliminate it in the above
+	-- loop. Now convert remaining Solc to (ː).
+	for _, all_word_pronun in ipairs(all_word_pronuns) do
+		all_word_pronun.output = all_word_pronun.output:gsub(Solc, "(ː)")
 	end
 	for i, pronun in ipairs(all_word_pronuns) do
 		local sortkey_parts = {}
@@ -1336,7 +1484,7 @@ function export.toIPA_bot_multiple(frame)
 end
 
 local function respelling_to_IPA(data)
-	local pronuns = export.toIPA(data.respelling, nil, data.pagename).pronuns
+	local pronuns = export.toIPA(data.respelling, data.args.dialect, data.pagename).pronuns
 	for _, pronun in ipairs(pronuns) do
 		pronun.pron = "[" .. pronun.pron .. "]"
 	end
@@ -1350,6 +1498,9 @@ function export.make(frame)
 		respelling_to_IPA = respelling_to_IPA,
 		raw_args = parent_args,
 		track_module = "is-IPA",
+		augment_params = {
+			dialect = {},
+		},
 	}
 end
 
