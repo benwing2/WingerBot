@@ -467,22 +467,31 @@ local function insert_pron_or_merge(existing_prons, newpron)
 end
 
 
--- Apply an ordered list of {pattern, replacement} substitutions.
+-- Apply an ordered list of {pattern, replacement} substitutions. The pattern is always a string, but it may contain !
+-- as a shorthand for a (sub)component boundary; !! as a shorthand for a (sub)component boundary or a primary stress
+-- internal to the subcomponent (after which <p>, <t> and <k> are aspirated; <f> voiceless; and <g> a stop); or @ as a
+-- shorthand for an explicit secondary stress. Note that, since !, !! and @ may match multiple characters, they should
+-- always be contained within groups (i.e. inside of parens), with appropriate group references in the replacement. The
+-- replacement can either be a string (for a single output) or a list of multiple possible outputs, each of which is a
+-- table containing fields `replace` (the replacement string itself) and `var` (the variant or variants describing the
+-- register, formality, etc.; either a string specifying a single variant, or a list of variants).
 local function apply(w, rules)
 	local outw = w
 	for _, rule in ipairs(rules) do
 		if type(rule) ~= "table" then
 			error("Expected rule to be a table but saw " .. dump(rule))
 		end
+		local from = rule[1]:gsub("!!", "[#\1-\3]+"):gsub("!", "#[#\1-\3]*"):gsub("@", "[\4]?")
 		if type(rule[2]) == "string" or type(rule[2]) == "function" or type(rule[2]) == "table" and not rule[2][1] then
+			local to = rule[2]
 			-- a simple rule; apply to each output
 			if #outw == 1 then
-				outw[1].output = ugsub(outw[1].output, rule[1], rule[2])
+				outw[1].output = ugsub(outw[1].output, from, to)
 			else
 				local newoutw = {}
 				for i = 1, #outw do
 					local newpron = {
-						output = ugsub(outw[i].output, rule[1], rule[2]),
+						output = ugsub(outw[i].output, from, to),
 						levels_by_class = outw[i].levels_by_class,
 					}
 					insert_pron_or_merge(newoutw, newpron)
@@ -513,7 +522,7 @@ local function apply(w, rules)
 					end
 					if new_levels_by_class ~= false then
 						local newpron = {
-							output = ugsub(outw[i].output, rule[1], rulespec.replace),
+							output = ugsub(outw[i].output, from, rulespec.replace),
 							levels_by_class = new_levels_by_class,
 						}
 						insert_pron_or_merge(newoutw, newpron)
@@ -544,45 +553,88 @@ local function concatenate_horizontally(part1_pronuns, part2_pronuns, concatfun)
 end
 
 
--- Determine the stressed syllable, if any, and mark it using \1 = ^A (not the primary stress symbol ˈ so that
--- Lua patterns using it can use the regular, much-faster pattern matching in place of the PHP versions).
+-- Determine the stressed syllable, if any, of each high-level component in the word (high-level components are
+-- separated by --). Mark primary stress using \1 = ^A (not the primary stress symbol ˈ so that Lua patterns using it
+-- can use the regular, much-faster pattern matching in place of the PHP versions), and convert any explicitly
+-- user-specified primary stress using the IPA symbol ˈ to \1. Mark word-initial or high-level-component-initial
+-- secondary stress using \2, and convert any initial user-specified secondary-stress using IPA ˌ to \2; this is assumed
+-- to apply to the entire component. If the user included explicit non-initial secondary stress using IPA ˌ, convert to
+-- \4; this doesn't prevent assignment of component-level stress. The user can explicitly prevent adding
+-- component-initial stress either by putting the primary stress mark elsewhere or adding a period (.) at the beginning
+-- of any component or subcomponent (which we convert to \3).
+-- 
+-- With multiple components, if any word has primary stress in it, all remaining components not specifically marked for
+-- stress (either using a primary stress anywhere in the word, initial secondary stress or initial period to indicate
+-- lack of stress) get marked with initial secondary stress (\2). Otherwise, the first word not specifically marked for
+-- stress gets primary stress (\1) and the remainder not specifically marked for stress get secondary stress. If
+-- there's only one component (as in most cases), we don't handle it specially here, but we do elsewhere in
+-- determine_secondary_stresses(); subcomponent boundaries (marked with single hyphen, i.e. -) can get secondary stress
+-- as well as (in some cases) syllables internal to a subcomponent. When there are multiple high-level components,
+-- subcomponent boundaries not explicitly marked with a stress indicator always get a period separator, and internal
+-- syllables never get marked.
 local function mark_stress(word)
-	if word:find("^%.") then
-		word = word:match("^%.(.*)$")
-	elseif not unstressed_words[word] and not word:find("ˈ") then
-		-- word unstressed or stress already marked
-		word = "ˈ" .. word
+	word = word:gsub("ˈ", "\1"):gsub("^ˌ", "\2"):gsub("%-ˌ", "-\2"):gsub("^%.", "\3"):gsub("%-%.", "-\3")
+		:gsub("ˌ", "\4")
+	local components = split(word, "%-%-")
+	local component_has_primary_stress = false
+	for i, component in ipairs(components) do
+		if component:find("\1") then
+			component_has_primary_stress = true
+		end
 	end
-	word = word:gsub("ˈ", "\1")
-	return word
+	for i, component in ipairs(components) do
+		if i == 1 and unstressed_words[word] then
+			component = "\3" .. component
+		elseif component:find("\1") or component:find("^[\2\3]") then
+			-- Do nothing; either primary stress (anywhere in the component) or secondary stress mark or no-stress mark
+			-- at the beginning of the component (it can also be at the beginning of a non-initial subcomponent, which
+			-- doesn't negate the need to put stress at the beginning of the component).
+		elseif component_has_primary_stress or i > 1 then
+			component = "\2" .. component
+		else
+			component = "\1" .. component
+		end
+		-- Convert subcomponent (hyphen) boundaries to #.
+		-- FIXME: Currently we are treating the tie bar (‿) the same; we should distinguish hyphen and tie bar,
+		-- maybe by making the tie bar not be considered a subcomponent boundary for the purposes of assigning
+		-- secondary stress.
+		components[i] = component:gsub("%-", "#"):gsub("‿", "#")
+	end
+
+	-- High-level component boundaries get marked with ##, as do word edges.
+	return "##" .. concat(components, "##") .. "##"
 end
 
 
--- Mark vowel length on vowel nuclei with primary stress. Icelandic phonemic vowel length is only contrastive
--- in stressed syllables (usually the first syllable in non-compound words).
+-- Mark vowel length on vowel nuclei of syllables with primary stress and subcomponent-initial secondary stress.
 --
--- Long if: 0 or 1 consonant follows (before next vowel or component end).
+-- Long if: 0 or 1 consonant follows (before next vowel or subcomponent end).
 -- Short if: 2+ consonants follow (cluster or geminate), unless the cluster is
 --   one of the transparent clusters ptksbd + vjr (e.g. pr, kr, tv, tj, kv, br, dr).
 -- x counts as 2 consonants (represents /ks/).
 -- Always short before the sequence -gi-/-j-/-gj- (diphthongization environment) except for í and ý, and
 -- not in the south and south-rounded dialect.
 --
--- In a compound, the same rules apply to the last component, but otherwise a
--- stressed syllable in a single-syllable component is lengthened only when either
--- the component ends in a vowel, the next component begins with a vowel or h + vowel,
--- or the component ends in a single written <p>, <t>, <k> or <s>.
-local function determine_vowel_length(component, next_component, dialect, seen_primary_stress)
-	local chars = explode_to_list(component)
+-- In a compound, the same rules apply to the last subcomponent, but otherwise a
+-- stressed syllable in a single-syllable subcomponent is lengthened only when either
+-- the subcomponent ends in a vowel, the next subcomponent begins with a vowel or h + vowel,
+-- or the subcomponent ends in a single written <p>, <t>, <k> or <s>.
+local function determine_vowel_length(subcomponent, next_subcomponent, dialect)
+	local chars = explode_to_list(subcomponent)
 	local n = #chars
 	local result = {}
-	local syllable_stressed = seen_primary_stress
+	-- The initial syllable is stressed unless (a) the subcomponent is explicitly marked for no stress or (b) there's
+	-- a primary stress anywhere in the subcomponent. In the case of (b), whichever syllable is marked for primary
+	-- stress will get stressed (usually the initial syllable).
+	local syllable_stressed = not subcomponent:find("^\3") and not subcomponent:find("\1")
 	local i = 1
 
 	while i <= n do
 		local c = chars[i]
 
-		if c == "\1" then -- primary stress
+		if c == "\1" then
+			-- primary stress (anywhere in the subcomponent) or subcomponent-initial secondary stress
+			-- (other secondary stresses are marked with \4)
 			syllable_stressed = true
 			insert(result, c)
 			i = i + 1
@@ -627,18 +679,20 @@ local function determine_vowel_length(component, next_component, dialect, seen_p
 					-- At this point, j is the index of the first character after the stressed vowel
 					-- nucleus, and k is the index of the first character after any consonant cluster
 					-- following the vowel nucleus. Either may be > n (the number of characters in the
-					-- component).
-					if next_component and k > n then
-						-- Non-final component, single-syllable component.
+					-- subcomponent).
+					if next_subcomponent and k > n then
+						-- Non-final subcomponent, single-syllable subcomponent.
 						if count == 0 then
-							long = true -- component ends in a vowel
+							long = true -- subcomponent ends in a vowel
 						elseif count == 1 and ptks[c1] then
 							long = true -- ends in a single orthographic <p>, <t>, <k>, <s>, <b> or <d>
 						elseif count == 1 then
-							local first_next = usub(next_component, 1, 1)
-							local second_next = usub(next_component, 2, 2)
+							local first_next = usub(next_subcomponent, 1, 1)
+							local second_next = usub(next_subcomponent, 2, 2)
 							if vowel_set[first_next] or first_next == "h" and vowel_set[second_next] then
-								long = true -- next component begins with a vowel or h + vowel (<hé> doesn't count but has already been transformed to <hje>)
+								-- next subcomponent begins with a vowel or h + vowel (<hé> doesn't count but has
+								-- already been transformed to <hje>)
+								long = true
 							else
 								long = false
 							end
@@ -675,7 +729,7 @@ local function determine_vowel_length(component, next_component, dialect, seen_p
 end
 
 -- Syllabify a word composed of phones (not letters) by adding a period (.) between each syllable. Respect periods and
--- primary stress markers that may already be present, added in the respelling.
+-- primary/secondary stress markers that may already be present, added in the respelling or during mark_stress().
 local function syllabify(word)
 	-- Assume any unknown character is a consonant. "Vowels" are only those in the Vall range as well as any following
 	-- ː, possibly in parens. The algorithm for placing the syllable divider is that it goes to the left of a rightmost
@@ -683,17 +737,17 @@ local function syllabify(word)
 	local clusters = split(word, "([" .. Vall .. "][ː()]*)")
 	for i = 3, #clusters - 2, 2 do
 		local cluster = clusters[i]
-		if not cluster:find("[.\1]") then
+		if not cluster:find("[.\1-\4]") then
 			-- Check for the case where the user put an explicit syllable boundary or primary stress.
 			-- Note that we're operating on phones here, not letters, so kj will have already been converted to C.c,
 			-- but that is fine because it gets treated as a single phone.
 			cluster = ugsub(cluster, "^(.-)(%(?[" .. C.p .. C.t .. C.k .. C.s .. "]%)?%(?[" .. C.v .. C.j .. C.r .. "]%)?)$", "%1.%2")
 		end
-		if not cluster:find("[.\1]") then
+		if not cluster:find("[.\1-\4]") then
 			-- ptks+vjr not found
 			cluster = ugsub(cluster, "^(.-)(%(?.%)?)$", "%1.%2")
 		end
-		if not cluster:find("[.\1]") then
+		if not cluster:find("[.\1-\4]") then
 			-- no characters probably
 			cluster = "." .. cluster
 		end
@@ -718,6 +772,151 @@ local function resolve_optional_consonant_gemination(syllable, prev_syllable)
 	return syllable
 end
 
+-- Determine secondary stresses for a single output of a word. This does not operate when there are multiple
+-- high-level components; in that case we use a simpler algorithm.
+local function determine_single_output_secondary_stresses(output, disable_internal_stresses)
+	local subcomponents = split(output, "#+")
+	-- At the beginning of processing a subcomponent, this tells how many syllables were previously processed after the
+	-- last stress mark. It will always be at least 1 except for when processing the first component, in which case it
+	-- will be nil.
+	local syllables_since_stress
+	-- Loop over all subcomponents. Since the word begins and ends with ##, the first and last subcomponents are blank.
+	for i = 2, #subcomponents - 1 do
+		local subcomponent = subcomponents[i]
+		local syllabified_subcomponent = syllabify(subcomponent)
+		local syllables = split(syllabified_subcomponent, "([.\1-\4])")
+		if syllables[1] ~= "" then
+			-- Subcomponent doesn't begin with explicit stress; move the first syllable to position 3 to align
+			-- this case with the one where the subcomponent does begin with explicit stress.
+			insert(syllables, 1, "")
+			insert(syllables, 1, "")
+		end
+		-- Eliminate all dots indicating syllable boundaries.
+		for j = 3, #syllables, 2 do
+			if syllables[j - 1] == "." then
+				syllables[j - 1] = ""
+			end
+		end
+		local num_syllables = (#syllables - 1) / 2 -- actual number of syllables in subcomponent
+		if num_syllables < 3 then
+			-- One or two actual syllables in subcomponent. We only need to determine whether to put, at subcomponent
+			-- beginning, either secondary stress, no stress (.), or nothing at all (if explcit stress is already
+			-- present). We will never place internal stress if it isn't already there.
+			if syllables[4] and syllables[4] ~= "" then
+				-- Two-syllable subcomponent with explicit stress on second syllable.
+				if syllables_since_stress and syllables[2] == "" then
+					-- A stress can't directly precede another, so give non-initial components a component boundary
+					-- marker unless there's an explicit stress already.
+					syllables[2] = "."
+				end
+				-- When we process the next subcomponent, its first syllable will be following a stressed syllable.
+				syllables_since_stress = 1
+			elseif not syllables_since_stress then
+				-- Beginning of word; note that we've already marked primary stress in words that need it. (If there
+				-- isn't primary stress, it means the user explicitly either put primary or secondary stress on a later
+				-- syllable, put secondary stress on the first syllable, or put a dot (= no stress) on the first
+				-- syllable.
+				syllables_since_stress = num_syllables
+			elseif syllables[2] ~= "" then
+				-- subcomponent already has explicit initial stress. Since the subcomponent has at most two syllables, we
+				-- don't need to put any non-initial secondary stress.
+				syllables_since_stress = num_syllables
+			elseif not syllables[4] and i < #subcomponents - 1 and subcomponents[i + 1]:find("^[\1-\3]") then
+				-- One-syllable subcomponent with explicit stress at beginning of next subcomponent.
+				syllables[2] = "."
+				-- It doesn't in fact matter what we put here because the code that processes the next subcomponent will
+				-- see the initial stress and reset `syllables_since_stress`.
+				syllables_since_stress = syllables_since_stress + 1
+			else
+				if syllables_since_stress >= 2 then
+					-- Preceding stress was two or more syllables before us and there's not a directly following
+					-- explicit stress, so we put a secondary stress.
+					syllables[2] = "\2"
+					syllables_since_stress = num_syllables
+				else
+					syllables[2] = "."
+					syllables_since_stress = syllables_since_stress + num_syllables
+				end
+			end
+		else
+			-- Three or more syllables. Unlike with one or two syllable subcomponents, we always place a stress at the
+			-- beginning of the subcomponent (unless there is explicit stress on the first or second syllable). We also
+			-- place alternating stresses after each stress (i.e. 2, 4, ... syllables after a stressed syllable),
+			-- subject to the provisos that we can't stress the final syllable of a subcomponent, nor (more generally)
+			-- any syllable where the next syllable has primary or secondary stress. (In fact, the last subcomponent
+			-- of the last syllable of a word can be stress if it's not an inflectional syllable, as in [[september]],
+			-- [[kabarett]] or [[Aristóteles]], but it's difficult to automatically distinguish them from the more
+			-- common case of inflectional final syllables, so we require that such syllables be marked manually.) In
+			-- the following, keep in mind that the actual syllables are at odd numbered positions starting with 3.
+			-- Position 1 should always be a blank string and even numbered positions are the primary or secondary
+			-- stress markers (\1, \2 or \4), no-stress markers (\3) or syllable boundary markers (.) before the actual
+			-- syllables. This means we need to divide syllable positions by 2 (after subtracting 1 to account for the
+			-- initial blank syllable) to get the actual number of syllables.
+			local preceding_syllable_stressed = false
+			if not syllables_since_stress then
+				syllables_since_stress = 0
+			end
+			for j = 3, #syllables - 2, 2 do -- skip the last syllable since we can't give it a stress
+				if syllables[j - 1] ~= "" then
+					-- explicit stress (or no-stress marker) on this syllable
+					preceding_syllable_stressed = true
+					syllables_since_stress = 1
+				elseif preceding_syllable_stressed then
+					preceding_syllable_stressed = false
+					syllables_since_stress = syllables_since_stress + 1
+				elseif syllables[j + 1] ~= "" then
+					-- next syllable stressed, can't stress this one
+					syllables_since_stress = syllables_since_stress + 1
+				else
+					if not disable_internal_stresses then
+						syllables[j] = resolve_optional_consonant_gemination(syllables[j], syllables[j - 2])
+						-- \2 vs. \4 doesn't matter at this point, since we're about to convert both to IPA secondary stress
+						syllables[j - 1] = "\2"
+					end
+					preceding_syllable_stressed = true
+					syllables_since_stress = 1
+				end
+			end
+			if syllables[#syllables - 1] ~= "" then
+				-- explicit user stress on final syllable
+				syllables_since_stress = 1
+			else
+				syllables_since_stress = syllables_since_stress + 1
+			end
+			if i > 2 and syllables[2] == "" then
+				-- first syllable of non-initial subcomponent and it doesn't have a stress; add . for subcomponent
+				-- boundary
+				syllables[2] = "."
+			end
+		end
+		-- Concatenate, including any added secondary stress marks but removing dots marking other syllable
+		-- boundaries.
+		subcomponents[i] = concat(syllables)
+	end
+	subcomponents[1] = "" -- erase word-initial ##
+	subcomponents[#subcomponents] = "" -- erase word-final ##
+	return concat(subcomponents)
+end
+
+	
+-- Determine secondary stresses and mark other (sub)component boundaries with a period (.).
+local function determine_secondary_stresses(w, disable_internal_stresses)
+	for _, word in ipairs(w) do
+		local output = word.output
+		if output:find(".##.") then
+			-- Word has multiple high-level components. We already marked primary and secondary stress using \1 and \2
+			-- in mark_stress(). We simple mark component and subcomponent boundaries with . unless it's already marked
+			-- with \1 (primary stress), \2 (secondary stress), \4 (user-specified secondary stress in the middle of
+			-- a word; we normally shouldn't see this after a period) or \3 (no stress).
+			output = output:sub(3, #output - 2) -- remove initial and final ##
+			output = output:gsub("#+", "."):gsub("%.([\1-\4])", "%1")
+		else
+			output = determine_single_output_secondary_stresses(output, disable_internal_stresses)
+		end
+		word.output = output:gsub("\1", "ˈ"):gsub("[\2\4]", "ˌ"):gsub("\3", "")
+	end
+end
+
 
 --------------------------------------------------------------------------------
 -- Step 3 machinery: phonological rules as ordered pattern substitutions.
@@ -737,15 +936,22 @@ end
 -- levels that apply for this class (e.g. a set containing "natural" and "allegro" for the class "speed"). On input,
 -- there is only a single pronunciation with `levels_by_class` an empty table, with the pronunciation being the
 -- input respelling with some transformations already applied; notably, ## is added to the beginning and end of the
--- word, hyphens marking component boundaries have been converted to #, and length marks have been added after long
+-- word, hyphens marking (sub)component boundaries have been converted to #, and length marks have been added after long
 -- vowels per determine_vowel_length(). On output, there may be multiple pronunciations, where the `output` field
 -- of each pronunciation is in IPA and the `levels_by_class` table is filled in (if a particular class is missing in the
 -- `levels_by_class` table, it means that all possible levels apply). `dialect` specifies the dialect to generate the
 -- pronunciation of, and can be either "north", "northeast", "south", "south-rounded" or nil for the standard dialect.
 -- `disable_internal_stresses` is used by bots that convert raw IPA to respelling and causes stresses in the middle of a
--- component of 3 or more syllables to be omitted.
+-- (sub)component of 3 or more syllables to be omitted.
 local function convert(w, dialect, disable_internal_stresses)
 	local orig_respelling = w[1].output -- for debugging purposes
+
+	------------------------------------------------------------------
+	-- Step 3.0: some special cases
+	------------------------------------------------------------------
+	w = apply(w, {
+		{"(!)gu(ː?)ð", "%1gvu%2ð"},-- special case for guð-, Guð-
+	})
 
 	------------------------------------------------------------------
 	-- Step 3.1: vowels → tokens
@@ -771,28 +977,28 @@ local function convert(w, dialect, disable_internal_stresses)
 	})
 
 	------------------------------------------------------------------
-	-- Step 3.2: component-initial stops and h
-	-- Anchored on # or ˈ; component-initial stops are aspirated and fricatives devoiced even in unstressed
+	-- Step 3.2: (sub)component-initial stops and h
+	-- Anchored on # or \1; (sub)component-initial stops are aspirated and fricatives devoiced even in unstressed
 	-- words, as in unstressed <fyrir>, but also after non-initial primary stress as in <atarna>
 	------------------------------------------------------------------
 	if dialect == "south" then
-		w = apply(w, {{"([#\1])hv", "%1" .. C.x}})             -- hv-pronunciation: [x]
+		w = apply(w, {{"(!!)hv", "%1" .. C.x}})             -- hv-pronunciation: [x]
 	elseif dialect == "south-rounded" then
-		w = apply(w, {{"([#\1])hv", "%1" .. C.xw}})             -- rounded hv-pronunciation: [xʷ]
+		w = apply(w, {{"(!!)hv", "%1" .. C.xw}})             -- rounded hv-pronunciation: [xʷ]
 	else
-		w = apply(w, {{"([#\1])hv", "%1" .. C.kh .. C.v}})        -- standard: [kʰv]
+		w = apply(w, {{"(!!)hv", "%1" .. C.kh .. C.v}})        -- standard: [kʰv]
 	end
 	w = apply(w, {
 		-- initial hj/hl/hn/hr -> aspirated sonorant
-		{"([#\1])h([jlnr])", function(anchor, jlnr) return anchor .. orth_to_asp_pua_map[jlnr] end},
-		{"([#\1])h", "%1" .. C.h},                                -- initial h + vowel
+		{"(!!)h([jlnr])", function(boundary, jlnr) return boundary .. orth_to_asp_pua_map[jlnr] end},
+		{"(!!)h", "%1" .. C.h},                                -- initial h + vowel
 		-- gj → c, kj → cʰ (j absorbed)
-		{"([#\1])([gk])j", function(anchor, gk) return anchor .. orth_velar_stop_to_palatal_pua_map[gk] end},
+		{"(!!)([gk])j", function(boundary, gk) return boundary .. orth_velar_stop_to_palatal_pua_map[gk] end},
 		-- g + J → c, k + J -> cʰ
-		{"([#\1])([gk])([" .. J .. "])",
-			function(anchor, gk, j_after) return anchor .. orth_velar_stop_to_palatal_pua_map[gk] .. j_after end},
+		{"(!!)([gk])([" .. J .. "])",
+			function(boundary, gk, j_after) return boundary .. orth_velar_stop_to_palatal_pua_map[gk] .. j_after end},
 		-- map remaining initial stops to PUA equivalents
-		{"([#\1])([ptkbdg])", function(anchor, stop) return anchor .. orth_to_asp_pua_map[stop] end},
+		{"(!!)([ptkbdg])", function(boundary, stop) return boundary .. orth_to_asp_pua_map[stop] end},
 	})
 
 	------------------------------------------------------------------
@@ -809,7 +1015,7 @@ local function convert(w, dialect, disable_internal_stresses)
 		{"([gk])([" .. J .. "])", function(gk, j_after) return orth_velar_stop_to_special_palatal_pua_map[gk] .. j_after end},
 		{"ll([std])", "l%1"},
 		{"ll([+" .. Call .. "])", C.t .. C.hl .. "%1"},
-		-- other cases of geminates before a consonant simplify; not yet across a component boundary
+		-- other cases of geminates before a consonant simplify; not yet across a (sub)component boundary
 		-- because of -tt, -ánn, etc.
 		{"([" .. Call .. "])%1([" .. Call .. "])", "%1%2"},
 		-- also do cases where Solc already is in place to handle e.g. <ll:> and <nn:> before a consonant
@@ -981,11 +1187,11 @@ local function convert(w, dialect, disable_internal_stresses)
 		{"rr", C.r .. "ː"},
 		{"ff", C.f .. Solc},
 		{"gg", C.k .. Solc},
-		-- no gemination before consonant across component boundary, as in innbú, rassvasi;
+		-- no gemination before consonant across (sub)component boundary, as in innbú, rassvasi;
 		-- this should go as early as possible, directly after any special handling of written geminates.
-		{"([" .. Call .. "])%1([#\1][" .. Call .. "])", "%1%2"},
+		{"([" .. Call .. "])%1(![" .. Call .. "])", "%1%2"},
 		-- also do cases where Solc already is in place to handle e.g. <ll:> and <nn:> before a consonant
-		{"([" .. Call .. "])" .. Solc .. "([#\1][" .. Call .. "])", "%1%2"},
+		{"([" .. Call .. "])" .. Solc .. "(![" .. Call .. "])", "%1%2"},
 		-- hagga, etc.
 		{"([bdgfhsþðmnr])%1", function(c) return orth_to_unasp_pua_map[c] .. Solc end},
 		-- preaspiration: p/t/k + l/n
@@ -995,21 +1201,21 @@ local function convert(w, dialect, disable_internal_stresses)
 	})
 
 	------------------------------------------------------------------
-	-- Step 3.4a: stops and fricatives across component boundaries
+	-- Step 3.4a: stops and fricatives across (sub)component boundaries
 	------------------------------------------------------------------
 	w = apply(w, {
 		-- kaupfélag, kaupfar, upp fyrir, uppfræða; kaupsýsla, kauptíð, kauptrygging
-		{"(ː?)(" .. C.h.. "?p)([#\1][fs" .. C.th .. "])", {
+		{"(ː?)(" .. C.h.. "?p)(![fs" .. C.th .. "])", {
 			{replace = "%1%2%3", var = "formal"},
 			{replace = C.f .. "%3", var = "informal"}, -- preceding length shortens and hp -> f
 		}},
 		-- kaupmaður, kaupmennska, Kaupmannahöfn
-		{"(ː?)(p[#\1]m)", {			
+		{"(ː?)(p!m)", {			
 			{replace = "%1%2"},
 			{replace = C.h .. "%2"},
 		}},
-		-- <d> in <ld>, <nd> may drop before <s> across component boundaries
-		{"([ln])(d)([#\1]s)", "%1(%2)%3"},
+		-- <d> in <ld>, <nd> may drop before <s> across (sub)component boundaries
+		{"([ln])(d)(!s)", "%1(%2)%3"},
 	})
 
 	------------------------------------------------------------------
@@ -1018,34 +1224,34 @@ local function convert(w, dialect, disable_internal_stresses)
 	-- f may get voiced
 	------------------------------------------------------------------
 	w = apply(w, {
- 		-- <f> preceding labial across component boundary; rafmagn
-		{"(f)([#\1])(m)", {
+ 		-- <f> preceding labial across (sub)component boundary; rafmagn
+		{"(f)(!)(m)", {
 			{replace = "%1%2%3", var = "formal"},
 			{replace = "%3%2%3", var = "informal"},
 		}},
- 		-- <f> preceding labial across component boundary; afbera, afbragð, ofboðslegur;
-		-- use OC.p to prevent [p] from getting deleted across component boundary before another [p]
-		{"(f)([#\1]" .. C.p .. ")", {
+ 		-- <f> preceding labial across (sub)component boundary; afbera, afbragð, ofboðslegur;
+		-- use OC.p to prevent [p] from getting deleted across (sub)component boundary before another [p]
+		{"(f)(!" .. C.p .. ")", {
 			{replace = "%1%2", var = "formal"},
 			{replace = OC.p .. "%2", var = "informal"},
 		}},
-		-- <f> preceding <p> across component boundary; no discussion or examples given, guess that it's similar to -f#b-
-		{"(f)([#\1]" .. C.ph .. ")", {
+		-- <f> preceding <p> across (sub)component boundary; no discussion or examples given, guess that it's similar to -f#b-
+		{"(f)(!" .. C.ph .. ")", {
 			{replace = "%1%2", var = "formal"},
 			{replace = C.p .. "%2", var = "informal"},
 		}},
- 		-- [f] preceding [f] and [s] across component boundary; affall, afferma, offita, afskekktur, afstaða, ofsjónir
-		{"f([#\1][fs])", C.f .. "%1"},
+ 		-- [f] preceding [f] and [s] across (sub)component boundary; affall, afferma, offita, afskekktur, afstaða, ofsjónir
+		{"f(![fs])", C.f .. "%1"},
 		-- Before voiceless fricatives and approximants other than [s], and before aspirated stops, modern [v], older [f]:
 		-- afhlúpa, afhrak, afkimi, afkoma, aftaka, raftækni, Riftún, ofhleðsla, ofhvörf, etc.
-		{"f([#\1][" .. COCvoiceless .. "])", {
+		{"f(![" .. COCvoiceless .. "])", {
 			{replace = C.v .. "%1", var = "modern"},
 			{replace = C.f .. "%1", var = "older"},
 		}},
-		{"([#\1])f", "%1" .. C.f},                   -- initial f; should precede handling of -fl-
-		{"f([ln])", C.p .. "%1"},                    -- efla, hafna → p
-		{"f([st])", C.f .. "%1"},                    -- ofsi, aftur → f
-		{"([" .. Vauou .. "]ː?)f([" .. Vall .. "])", "%1(v)%2"},      -- optionally silent after á/ó/ú
+		{"(!)f", "%1" .. C.f},                   -- initial f; should precede handling of -fl-
+		{"f(@[ln])", C.p .. "%1"},                    -- efla, hafna → p
+		{"f(@[st])", C.f .. "%1"},                    -- ofsi, aftur → f
+		{"([" .. Vauou .. "]ː?@)f([" .. Vall .. "])", "%1(v)%2"},      -- optionally silent after á/ó/ú
 		{"f", C.v},                                  -- sofa → v
 	})
 
@@ -1055,13 +1261,15 @@ local function convert(w, dialect, disable_internal_stresses)
 	----------------------------------------------------------------------
 	w = apply(w, {
 		-- r becomes voiceless before any aspirated stop or voiceless fricative/approximant,
-		-- including across component boundaries
-		{"r([#\1]?" .. "[" .. COCvoiceless .. "])", C.hr .. "%1"},
+		-- including across (sub)component boundaries
+		{"r(!" .. "[" .. COCvoiceless .. "])", C.hr .. "%1"},
+		{"r([" .. COCvoiceless .. "])", C.hr .. "%1"},
+		{"r(@[" .. COCvoiceless .. "])", C.hr .. "%1"},
 		-- l/m becomes voiceless before an aspirated stop
-		{"([lm])([kpt" .. kPAL .. "])", function(lm, kpt) return orth_to_asp_pua_map[lm] .. kpt end},
-		-- l becomes voiceless across a component boundary before hl- (jökulhlaup; FIXME: there may be other cases like this)
-		{"l([#\1]" .. C.hl .. ")", C.hl .. "%1"},
-		{"nt", C.hn .. C.t},                          -- vanta
+		{"([lm])(@[kpt" .. kPAL .. "])", function(lm, kpt) return orth_to_asp_pua_map[lm] .. kpt end},
+		-- l becomes voiceless across a (sub)component boundary before hl- (jökulhlaup; FIXME: there may be other cases like this)
+		{"l(!" .. C.hl .. ")", C.hl .. "%1"},
+		{"n(@)t", C.hn .. "%1" .. C.t},                          -- vanta
 	})
 
 	--------------------------------------------------------------------------
@@ -1071,7 +1279,7 @@ local function convert(w, dialect, disable_internal_stresses)
 	if dialect == "north" or dialect == "northeast" then
 		-- harðmæli: aspirate non-initial unaspirated stops between a vowel and a
 		-- following sonorant (vowel / j / r / v). The optional ː is the length mark.
-		w = apply(w, {{"([" .. Vall .. "]ː?)([ptk" .. kPAL .. "])([" .. Vall .. C.v .. "jr])",
+		w = apply(w, {{"([" .. Vall .. "]ː?@)([ptk" .. kPAL .. "])([" .. Vall .. C.v .. "jr])",
 			function(v1, stop, son2) return v1 .. orth_to_asp_pua_map[stop] .. son2 end
 		}})
 	end
@@ -1082,22 +1290,22 @@ local function convert(w, dialect, disable_internal_stresses)
 	w = apply(w, {
 		-- g
 		-- optionally silent after á/ó/ú before a vowel
-		{"([" .. Vauou .. "]ː?)g([" .. Vall .. "])", "%1(" .. C.gh .. ")%2"},
-		-- optionally silent after á/ó/ú component-finally; needs to lengthen when dropped; lágnætti, skóglendi, drjúgvirkur
+		{"([" .. Vauou .. "]ː?@)g([" .. Vall .. "])", "%1(" .. C.gh .. ")%2"},
+		-- optionally silent after á/ó/ú (sub)component-finally; needs to lengthen when dropped; lágnætti, skóglendi, drjúgvirkur
 		-- note that if before voiceless, the rule below will generate optional [x]
-		{"([" .. Vauou .. "])g([#\1])", {
+		{"([" .. Vauou .. "])g(!)", {
 			{replace = "%1g%2"},
 			{replace = "%1ː%2"},
 		}},
-		{"gt", C.x .. "t"},                                        -- sagt: g → x (t kept)
-		{"g([ðr])", C.gh .. "%1"},                                 -- sigra, sagði → ɣ
-		{"([" .. Vall .. "]ː?)g([" .. Vall .. "])", "%1" .. C.gh .. "%2"},-- saga → ɣ (intervocalic)
-		{"([" .. Vall .. "]ː?)g([#\1][" .. COCvoiceless .. "])", {
+		{"g(@t)", C.x .. "%1"},                                        -- sagt: g → x (t kept)
+		{"g(@[ðr])", C.gh .. "%1"},                                 -- sigra, sagði → ɣ
+		{"([" .. Vall .. "]ː?@)g([" .. Vall .. "])", "%1" .. C.gh .. "%2"},-- saga → ɣ (intervocalic)
+		{"([" .. Vall .. "]ː?)g(![" .. COCvoiceless .. "])", {
 			{replace = "%1" .. C.x .. "%2"},
 			{replace = "%1" .. C.gh .. "%2"},
 		}},
-		{"([" .. Vall .. "]ː?)g([#\1])", "%1" .. C.gh .. "%2"},           -- lag → ɣ (final after a vowel)
-		{"([" .. Vall .. "]ː?)" .. gPAL .. "([" .. Vall .. "])", "%1" .. C.j .. "%2"}, -- hagi → j
+		{"([" .. Vall .. "]ː?)g(!)", "%1" .. C.gh .. "%2"},           -- lag → ɣ (final after a vowel)
+		{"([" .. Vall .. "]ː?@)" .. gPAL .. "([" .. Vall .. "])", "%1" .. C.j .. "%2"}, -- hagi → j
 		{gPAL, C.c},                                             -- elsewhere palatal g → c
 		{"g", C.k},                                              -- elsewhere velar g → k
 		-- k
@@ -1110,21 +1318,21 @@ local function convert(w, dialect, disable_internal_stresses)
 	------------------------------------------------------------------
 	w = apply(w, {
 		{"([bdptmnlrðþvsjk])", orth_to_unasp_pua_map},
-		-- component-final stop + [n]/[l] devoice the sonorant: vopn [vɔhpn̥], magn [makn̥], einn [eitn̥], stjákl [stjauhkl̥]
-		{"([" .. unaspirated_stops_pua .. "])([" .. C.n .. C.l .. "])([#\1])",
+		-- (sub)component-final stop + [n]/[l] devoice the sonorant: vopn [vɔhpn̥], magn [makn̥], einn [eitn̥], stjákl [stjauhkl̥]
+		{"([" .. unaspirated_stops_pua .. "])([" .. C.n .. C.l .. "])(!)",
 			function(stop, nl, boundary) return stop .. devoice_resonant_map[nl] .. boundary end
 		},
 	})
 
 	--------------------------------------------------------------------------------
-	-- Step 3.4g: stop consonants and <s> across component boundaries
+	-- Step 3.4g: stop consonants and <s> across (sub)component boundaries
 	--------------------------------------------------------------------------------
 	w = apply(w, {
-		-- same-place stop consonants drop across component boundaries
-		{"[" .. C.k .. C.kh .. "]([#\1][" .. C.k .. C.kh .. C.c .. C.ch .. "])", "%1"},
-		{"[" .. C.p .. C.ph .. "]([#\1][" .. C.p .. C.ph .. "])", "%1"},
-		{"[" .. C.t .. C.th .. "]([#\1][" .. C.t .. C.th .. "])", "%1"},
-		{C.s .. "([#\1]" .. C.s .. ")", "%1"},
+		-- same-place stop consonants drop across (sub)component boundaries
+		{"[" .. C.k .. C.kh .. "](![" .. C.k .. C.kh .. C.c .. C.ch .. "])", "%1"},
+		{"[" .. C.p .. C.ph .. "](![" .. C.p .. C.ph .. "])", "%1"},
+		{"[" .. C.t .. C.th .. "](![" .. C.t .. C.th .. "])", "%1"},
+		{C.s .. "(!" .. C.s .. ")", "%1"},
 	})
 
 	----------------------------------------------------------------------------------------
@@ -1133,16 +1341,16 @@ local function convert(w, dialect, disable_internal_stresses)
 	if dialect == "northeast" then
 		-- voiced pronunciation: a nasal voices before a stop, and the stop aspirates
 		local voiceless_nasals_pua = C.hm .. C.hn .. C.hnj .. C.hng
-		w = apply(w, {{"([" .. voiceless_nasals_pua .. "])([" .. unaspirated_stops_pua .. "])",
-			function(nv, stop) return voice_resonant_map[nv] .. aspirate_stop_map[stop] end
+		w = apply(w, {{"([" .. voiceless_nasals_pua .. "])(@)([" .. unaspirated_stops_pua .. "])",
+			function(nv, secstress, stop) return voice_resonant_map[nv] .. secstress .. aspirate_stop_map[stop] end
 		}})
 		-- l voices (and stop aspirates) before labial/velar stops, but stays
 		-- voiceless before t (per doc: piltur, elta keep [l̥t])
-		w = apply(w, {{C.hl .. "([" .. C.p .. C.k .. C.c .. "])",
-			function(stop) return C.l .. aspirate_stop_map[stop] end
+		w = apply(w, {{C.hl .. "(@)([" .. C.p .. C.k .. C.c .. "])",
+			function(secstress, stop) return C.l ..secstress .. aspirate_stop_map[stop] end
 		}})
 		-- ð voiced (and following k aspirated) in -ðk-: maðkur [maðkʰʏr]
-		w = apply(w, {{C.th2 .. C.k, C.dh .. C.kh}})
+		w = apply(w, {{C.th2 .. "(@)" .. C.k, C.dh .. "%1" .. C.kh}})
 	end
 
 	------------------------------------------------------------------
@@ -1153,109 +1361,21 @@ local function convert(w, dialect, disable_internal_stresses)
 		{".", OC_to_C},
 	})
 
-	-- shorten following vowel directly after a geminate consonant (usually across a component boundary);
+	-- shorten following vowel directly after a geminate consonant (usually across a (sub)component boundary);
 	-- FIXME: not clear if this is real due to prevalent typos in Kristján Árnason's book and not being
 	-- explicitly discussed, but it's consistent in the book
 	w = apply(w, {
-		-- across a component boundary; usualy case
-		{"ː?([" .. Call .. "])([#\1]%1[" .. Vall .. "])ː", "%1%2"},
-		-- geminate precedes the component boundary; can happen with explicit written [:],
+		-- across a (sub)component boundary; usualy case
+		{"ː?([" .. Call .. "])(!%1[" .. Vall .. "])ː", "%1%2"},
+		-- geminate precedes the (sub)component boundary; can happen with explicit written [:],
 		-- as in [[prestsekkja]] written <pres[:]-ekkja>
-		{"ː?([" .. Call .. "]ː[#\1][" .. Vall .. "])ː", "%1"},
+		{"ː?([" .. Call .. "]ː![" .. Vall .. "])ː", "%1"},
 		-- eliminate _ and + markers before syllabification
 		{"[_+]", ""},
 	})
 
-	-- determine secondary stresses and mark other component boundaries with .
-	for _, word in ipairs(w) do
-		local components = split(word.output, "(#+)")
-		local syllables_since_stress
-		local seen_primary_stress
-		for i = 3, #components - 2, 2 do
-			local component = components[i]
-			local syllabified_component = syllabify(component)
-			local syllables = split(syllabified_component, "([.\1])")
-			if syllables[1] ~= "" then
-				-- Component doesn't begin with primary stress; move the first syllable to position 3 to align this
-				-- case with the one where the component does begin with primary stress.
-				insert(syllables, 1, "")
-				insert(syllables, 1, "")
-			end
-			-- Eliminate all dots indicating syllable boundaries and convert \1 to actual primary stress.
-			for j = 3, #syllables, 2 do
-				if syllables[j - 1] == "." then
-					syllables[j - 1] = ""
-				elseif syllables[j - 1] == "\1" then
-					syllables[j - 1] = "ˈ"
-				end
-			end
-			if not syllables_since_stress then
-				-- beginning of word; not that we've already marked primary stress in words that need it
-				components[i - 1] = ""
-				syllables_since_stress = 0
-			elseif syllables_since_stress >= 2 then
-				-- component boundary, not beginning of word, and a secondary stress is called for; but if we
-				-- haven't seen the primary stress, put a period (assume no secondary stress before primary stress)
-				components[i - 1] = seen_primary_stress and "ˌ" or "."
-				syllables_since_stress = 0
-			end
-			-- We may need to give secondary stress to syllables within a component if the component has more than
-			-- two syllables. We need to give alternating stresses and can stress the final syllable only in the
-			-- last component of the word. In the following, keep in mind that the actual syllables are at odd numbered
-			-- positions starting with 3. Position 1 should always be a blank string and even numbered positions are the
-			-- primary stress or syllable boundary markers before the actual syllables. This means we need to divide
-			-- syllable positions by 2 (after subtracting 1 to account for the initial blank syllable) to get the actual
-			-- number of syllables.
-			if #syllables >= 7 then -- i.e. 3 or more actual syllables
-				if i > 3 then
-					-- not beginning of word; see comment above about no secondary stress before primary
-					components[i - 1] = seen_primary_stress and "ˌ" or "."
-				end
-				local primary_stress_syllable
-				-- First, find the primary stress, if any.
-				for j = 3, #syllables, 2 do
-					if syllables[j - 1] == "ˈ" then
-						primary_stress_syllable = j
-						break
-					end
-				end
-				if primary_stress_syllable or seen_primary_stress then
-					-- Either this or a preceding component has primary stress. If this component has primary stress, we
-					-- start with the third syllable after the stress marker; otherwise we start with the third syllable
-					-- of the component.
-					local first_secstress_syllable = primary_stress_syllable and primary_stress_syllable + 4 or 7
-					-- Last syllable of a component can't get secondary stress. This doesn't apply to non-inflectional
-					-- final syllables as in [[september]], [[kabarett]], but it's difficult to automatically
-					-- distinguish them from the more common case of inflectional final syllables.
-					local last_secstress_syllable = #syllables - 2
-					if first_secstress_syllable <= last_secstress_syllable then
-						-- 4 here means we examine every other syllable.
-						for j = first_secstress_syllable, last_secstress_syllable, 4 do
-							if not disable_internal_stresses then
-								syllables[j] = resolve_optional_consonant_gemination(syllables[j], syllables[j - 2])
-								syllables[j - 1] = "ˌ"
-							end
-							syllables_since_stress = (#syllables - j) / 2 + 1
-						end
-					else
-						syllables_since_stress = (#syllables - 1) / 2
-					end
-				end
-			else
-				if syllables_since_stress > 0 then
-					components[i - 1] = "."
-				end
-				syllables_since_stress = syllables_since_stress + (#syllables - 1) / 2
-			end
-			-- Concatenate, including any added secondary stress marks but removing dots marking other syllable
-			-- boundaries.
-			components[i] = concat(syllables)
-			seen_primary_stress = seen_primary_stress or not not components[i]:find("ˈ")
-		end
-		components[#components - 1] = "" -- erase word-final ##
-		word.output = concat(components)
-	end
-
+	determine_secondary_stresses(w, disable_internal_stresses)
+	
 	w = apply(w, {
 		-- convert regular PUA characters to IPA
 		{".", detok},
@@ -1273,17 +1393,19 @@ local function toIPA_word(word, dialect, disable_internal_stresses)
 	word = word:gsub("([ln])%1:", "%1" .. Solc)
 	word = word:gsub("é", "je") -- this seems to be the easiest way to handle this letter
 	-- Handle epenthetic [j] in hiatus after a high front vowel or glide
-	word = ugsub(word, "(e[iy])([" .. Vall .. "])", "%1j%2")
-	word = ugsub(word, "(au)([" .. Vall .. "])", "%1j%2")
-	word = ugsub(word, "([íýæ])([" .. Vall .. "])", "%1j%2")
-	word = word:gsub("\1guð", "\1gvuð") -- special case for guð-, Guð-
-	local components = split(word, "[-‿]")
-	local seen_primary_stress = false
-	for i, component in ipairs(components) do
-		components[i] = determine_vowel_length(component, components[i + 1], dialect, seen_primary_stress)
-		seen_primary_stress = seen_primary_stress or not not components[i]:find("\1")
+	word = ugsub(word, "(e[iy][\4]?)([" .. Vall .. "])", "%1j%2")
+	word = ugsub(word, "(au[\4]?)([" .. Vall .. "])", "%1j%2")
+	word = ugsub(word, "([íýæ][\4]?)([" .. Vall .. "])", "%1j%2")
+	local subcomponents = split(word, "(#+)")
+	-- Odd-numbered elements are subcomponents and even-numbered are separators, except that the first and last subcomponent
+	-- are blank because we have ## at word edges.
+	for i = 3, #subcomponents - 2, 2 do
+		local subcomponent = subcomponents[i]
+		-- If there's no next subcomponent, pass in nil.
+		subcomponents[i] = determine_vowel_length(subcomponent, i + 2 < #subcomponents and subcomponents[i + 2] or nil,
+			dialect)
 	end
-	word = "##" .. concat(components, "#") .. "##"
+	word = concat(subcomponents)
 	return convert({{output = word, levels_by_class = {}}}, dialect, disable_internal_stresses)
 end
 
@@ -1294,16 +1416,17 @@ end
 local function convert_single_substitution_to_original(to, pagename, whole_word)
 	-- Replace specially-handled characters with a class matching the character and possible replacements.
 	local escaped_from = to
-	escaped_from = escaped_from:gsub("ˈ", ""):gsub("[._:+]", "")
+	escaped_from = escaped_from:gsub("ˈ", ""):gsub("ˌ", ""):gsub("[._:+]", "")
 	-- [k] and [c] normally stand for written <g> so make the substitution.
 	escaped_from = escaped_from:gsub("%[[kc]%]", "g")
 	escaped_from = escaped_from:gsub("%[[KC]%]", "G")
 	escaped_from = escaped_from:gsub("%[[kc]h%]", "k")
 	escaped_from = escaped_from:gsub("%[[KC]h%]", "K")
 	escaped_from = pattern_escape(escaped_from)
-	-- Hyphen should match against space, hyphen or nothing in the original.
+	-- Single and double hyphen should match against space, hyphen or nothing in the original.
 	-- This is tricky, because we already passed `escaped_from` through pattern_escape() causing a hyphen, paren or
 	-- bracket to get a % sign before it, and have to double up the percent signs to match and replace a literal %.
+	escaped_from = escaped_from:gsub("%%%-%%%-", "[ %%-]?")
 	escaped_from = escaped_from:gsub("%%%-", "[ %%-]?")
 	
 	-- Parens and brackets should match against themselves or nothing in the original.
@@ -1380,7 +1503,8 @@ local function handle_substitution_specs(text, pagename)
 	if text == "+" then
 		return pagename
 	else
-		text = text:gsub("'", "ˈ") -- convert apostrophe to primary stress
+		-- convert apostrophe to primary stress and backquote to secondary stress
+		text = text:gsub("'", "ˈ"):gsub("`", "ˌ")
 		if text:find("^%[.*%]$") then
 			-- Check that there is a single bracketed expression; otherwise it's vaguely possible that there are
 			-- two [C] literals, one at the beginning and one at the end.
