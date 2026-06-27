@@ -467,21 +467,25 @@ local function insert_pron_or_merge(existing_prons, newpron)
 end
 
 
--- Apply an ordered list of {pattern, replacement} substitutions. The pattern is always a string, but it may contain !
--- as a shorthand for a (sub)component boundary; !! as a shorthand for a (sub)component boundary or a primary stress
--- internal to the subcomponent (after which <p>, <t> and <k> are aspirated; <f> voiceless; and <g> a stop); or @ as a
--- shorthand for an explicit secondary stress. Note that, since !, !! and @ may match multiple characters, they should
--- always be contained within groups (i.e. inside of parens), with appropriate group references in the replacement. The
--- replacement can either be a string (for a single output) or a list of multiple possible outputs, each of which is a
--- table containing fields `replace` (the replacement string itself) and `var` (the variant or variants describing the
--- register, formality, etc.; either a string specifying a single variant, or a list of variants).
+-- Apply an ordered list of {pattern, replacement} substitutions. The pattern is always a string, but it may contain the
+-- following special shorthand symbols:
+-- * ! for a (sub)component boundary;
+-- * !! for a (sub)component boundary or a primary stress internal to the subcomponent (after which <p>, <t> and <k> are
+--      aspirated; <f> voiceless; and <g> a stop);
+-- * @ for optional explicit secondary stress or syllable division internal to a subcomponent;
+-- * @! for required explicit secondary stress or syllable division internal to a subcomponent.
+-- Note that, since all these symbols may match multiple possible characters, they should always be contained within
+-- groups (i.e. inside of parens), with appropriate group references in the replacement. The replacement can either be a
+-- string (for a single output) or a list of multiple possible outputs, each of which is a table containing fields
+-- `replace` (the replacement string itself) and `var` (the variant or variants describing the register, formality,
+-- etc.; either a string specifying a single variant, or a list of variants).
 local function apply(w, rules)
 	local outw = w
 	for _, rule in ipairs(rules) do
 		if type(rule) ~= "table" then
 			error("Expected rule to be a table but saw " .. dump(rule))
 		end
-		local from = rule[1]:gsub("!!", "[#\1-\3]+"):gsub("!", "#[#\1-\3]*"):gsub("@", "[\4]?")
+		local from = rule[1]:gsub("@!", "[.\4]"):gsub("@", "[.\4]?"):gsub("!!", "[#\1-\3]+"):gsub("!", "#[#\1-\3]*")
 		if type(rule[2]) == "string" or type(rule[2]) == "function" or type(rule[2]) == "table" and not rule[2][1] then
 			local to = rule[2]
 			-- a simple rule; apply to each output
@@ -573,8 +577,12 @@ end
 -- subcomponent boundaries not explicitly marked with a stress indicator always get a period separator, and internal
 -- syllables never get marked.
 local function mark_stress(word)
-	word = word:gsub("ˈ", "\1"):gsub("^ˌ", "\2"):gsub("%-ˌ", "-\2"):gsub("^%.", "\3"):gsub("%-%.", "-\3")
-		:gsub("ˌ", "\4")
+	-- Word-initial hyphen marks a suffix; treat as if marking no-stress unless it's followed by an explicit stress or
+	-- no-stress marker, in which case we just delete it. Word-final hyphen marks a prefix; delete it since prefixes
+	-- are normally stressed. Also, since we convert initial secondary stress marker to \2 before processing an initial
+	-- hyphen, we have to account for that hyphen's presence.
+	word = word:gsub("ˈ", "\1"):gsub("^(%-?)ˌ", "%1\2"):gsub("ˌ", "\4"):gsub("^%-([\1\2\4.])", "%1"):gsub("^%-", "\3")
+		:gsub("%-$", ""):gsub("%-ˌ", "-\2"):gsub("^%.", "\3"):gsub("%-%.", "-\3")
 	local components = split(word, "%-%-")
 	local component_has_primary_stress = false
 	for i, component in ipairs(components) do
@@ -657,18 +665,23 @@ local function determine_vowel_length(subcomponent, next_subcomponent, dialect)
 				if chars[j] == BREVE then
 					nlen = nlen + 1
 				elseif syllable_stressed then
-					-- Count orthographic consonant letters following the nucleus
+					-- Count orthographic consonant letters following the nucleus. Skip past special symbols (
+					-- underscore, plus, parens). Don't skip past explicit syllable divider or stress mark.
 					local count = 0
 					local c1, c2 = nil, nil
 					local k = j
-					while k <= n and (consonant_set[chars[k]] or chars[k] == "_" or chars[k] == "+") do
+					while k <= n do
 						local cc = chars[k]
-						if cc ~= "_" and cc ~= "+" then
+						if cc == "_" or cc == "+" or cc == "(" or cc == ")" then
+							k = k + 1
+						elseif consonant_set[cc] then
 							if count == 0 then c1 = cc end
 							if count == 1 then c2 = cc end
 							count = count + (cc == "x" and 2 or 1)  -- x = /ks/ = 2 consonants
+							k = k + 1
+						else
+							break
 						end
-						k = k + 1
 					end
 	
 					-- -gi-/-gj-/-j- special case: vowel (other than <í>/<ý>) is always short (and diphthongized) before
@@ -1007,106 +1020,120 @@ local function convert(w, dialect, disable_internal_stresses)
 	w = apply(w, {
 		-- (a) Special handling of geminates before other consonants and kj/gj
 		-- kkj, ggj, llC where C is not s/t/d are special; all other cases of C₁ːC₂ reduce to C₁C₂
-		{"kkj", C.h .. kPAL},
-		{"kk([" .. J .. "])", C.h .. kPAL .. "%1"},  -- blekkja, þekkja
+		{"k(@)kj", C.h .. "%1" .. kPAL},
+		{"k(@)k([" .. J .. "])", C.h .. "%1" .. kPAL .. "%2"},  -- blekkja, þekkja
 		{"ggj", gPAL .. Solc},
+		{"g(@!)gj", "(" .. gPAL .. ")%1" .. gPAL},
 		{"gg([" .. J .. "])", gPAL .. Solc .. "%1"}, -- byggja
+		{"g(@!)g([" .. J .. "])", "(" .. gPAL .. ")%1" .. gPAL .. "%2"}, -- byggja
 		{"([gk])j", orth_velar_stop_to_special_palatal_pua_map},
 		{"([gk])([" .. J .. "])", function(gk, j_after) return orth_velar_stop_to_special_palatal_pua_map[gk] .. j_after end},
-		{"ll([std])", "l%1"},
-		{"ll([+" .. Call .. "])", C.t .. C.hl .. "%1"},
+		{"ll(@[std])", "l%1"},
+		{"ll(@[+" .. Call .. "])", C.t .. C.hl .. "%1"},
 		-- other cases of geminates before a consonant simplify; not yet across a (sub)component boundary
 		-- because of -tt, -ánn, etc.
-		{"([" .. Call .. "])%1([" .. Call .. "])", "%1%2"},
+		{"([" .. Call .. "])%1(@[" .. Call .. "])", "%1%2"},
 		-- also do cases where Solc already is in place to handle e.g. <ll:> and <nn:> before a consonant
-		{"([" .. Call .. "])" .. Solc .. "([" .. Call .. "])", "%1%2"},
+		{"([" .. Call .. "])" .. Solc .. "(@[" .. Call .. "])", "%1%2"},
 
 		-- (b) 5 consonant clusters; FIXME: these are guesses based on the respective 4-consonant outputs in Eiríkur,
 		--     since no clusters with 5 consonants are specifically given.
-		{"rnskt", "(" .. C.r .. ")" .. C.n .. C.s .. C.t}, -- bernskt
+		{"rnsk(@)t", "(" .. C.r .. ")" .. C.n .. C.s .. "%1" .. C.t}, -- bernskt
 		{"rnsks", "(" .. C.r .. ")" .. C.n .. C.s .. "(" .. C.k .. C.s .. ")"}, -- bernsks
+		{"rnsk(@!)s", "(" .. C.r .. ")" .. C.n .. C.s .. C.k .. "%1" .. C.s}, -- bernsks
 		
 		-- (c) 4 consonant clusters; things like -rrst and -ggnd count as 3 letters and -ggnst as 4 letters because
 		--     we already reduced geminate consonants next to other consonants. Do 4-consonant clusters before
 		--     3-consonant ones.
 		-- (c.1) 4-consonant clusters beginning with <g>
-		{"gnst", C.ng .. C.s .. C.t}, -- skyggnst
+		{"gn(@)s(@)t", C.ng .. "%1" .. C.s .. "%2" .. C.t}, -- skyggnst
 		-- (c.2) 4-consonant clusters beginning with <l>
 		{"([ln])sks", function(ln) return orth_to_unasp_pua_map[ln] .. C.s .. "(" .. C.k .. C.s .. ")" end}, -- falsks; fransks
-		{"([ln])skt", function(ln) return orth_to_unasp_pua_map[ln] .. C.s .. C.t end}, -- pólskt; finnskt
+		{"([ln])sk(@!)s", function(ln, syldiv) return orth_to_unasp_pua_map[ln] .. C.s .. C.k .. syldiv .. C.s end},
+		{"([ln])sk(@)t", function(ln, syldiv) return orth_to_unasp_pua_map[ln] .. C.s .. syldiv .. C.t end}, -- pólskt; finnskt
 		-- (c.3) 4-consonant clusters beginning with <n>
-		{"ngds", C.ng .. "(" .. C.t .. ")" .. C.s}, -- strengds
+		{"ngd(@)s", C.ng .. "(" .. C.t .. ")%1" .. C.s}, -- strengds
 		-- nsks above under lsks
 		-- nskt above under lskt
 		-- (c.4) 4-consonant clusters beginning with <r>
-		{"r[kp]ts", C.hr .. "(" .. C.t .. ")" .. C.s}, -- styrkts; skerpts
-		{"rnsk", "(" .. C.r .. ")" .. C.n .. C.s .. C.k}, -- bernska
+		{"r[kp]t(@)s", C.hr .. "(" .. C.t .. ")%1" .. C.s}, -- styrkts; skerpts
+		{"rn(@)s(@)k", "(" .. C.r .. ")" .. C.n .. "%1" .. C.s .. "%2" .. C.k}, -- bernska
 		{"rsks", { -- þorsks
 			{replace = C.hr .. C.s, var = {"natural", "careful"}},
 			{replace = C.s .. C.k .. C.s, var = {"natural", "careful"}},
 			{replace = C.s .. "ː", var = "allegro"},
 		}},
-		{"rskt",  "(" .. C.hr .. ")" .. C.s .. C.t}, -- gerskt
+		{"rsk(@!)s", {
+			{replace = C.hr .. "%1" .. C.s, var = {"natural", "careful"}},
+			{replace = C.s .. C.k .. "%1" .. C.s, var = {"natural", "careful"}},
+			{replace = C.s .. "%1" .. C.s, var = "allegro"},
+		}},
+		{"rsk(@)t",  "(" .. C.hr .. ")" .. C.s .. "%1" .. C.t}, -- gerskt
 		-- r?sts needs to precede r[fkp]?st because the latter affects rst, which is part of rsts
 		{"rsts", { -- fyrsts
 			{replace = C.s .. "ː", var = "allegro"},
 			{replace = C.s .. C.t .. C.s, var = {"careful", "natural"}},
 		}},	
-		{"r[fkp]?st", "(" .. C.hr .. ")" .. C.s .. C.t}, -- horfst; styrkst; skerpst; berst
+		{"rst(@!)s", { -- fyrsts
+			{replace = C.s .. "%1" .. C.s, var = "allegro"},
+			{replace = C.s .. C.t .. "%1" .. C.s, var = {"natural", "careful"}},
+		}},	
+		{"r[fkp]?(@)s(@)t", "(" .. C.hr .. ")%1" .. C.s .. "%2" .. C.t}, -- horfst; styrkst; skerpst; berst
 
 		-- (d) 3 consonant clusters
 		-- (d.1) beginning with <f>
-		{"fld", "(" .. C.v .. ")" .. C.l .. C.t}, -- efldi
-		{"flt", C.hl .. C.t}, -- teflt
-		{"fnd", C.m .. C.t}, -- hefndi; not a mistake, fn mutually assimilates to m
-		{"fns", { -- hrafns
-			{replace = C.p .. C.hn .. C.s, var = "careful"},
-			{replace = C.f .. C.s, var = {"natural", "allegro"}},
+		{"fl(@)d", "(" .. C.v .. ")" .. C.l .. "%1" .. C.t}, -- efldi
+		{"fl(@)t", C.hl .. "%1" .. C.t}, -- teflt
+		{"fn(@)d", C.m .. "%1" .. C.t}, -- hefndi; not a mistake, fn mutually assimilates to m
+		{"fn(@)s", { -- hrafns
+			{replace = C.p .. C.hn .. "%1" .. C.s, var = "careful"},
+			{replace = C.f .. "%1" .. C.s, var = {"natural", "allegro"}},
 		}},
-		{"fnt", C.hm .. C.t}, -- jafnt; not a mistake, fn mutually assimilates to m, which is aspirated by the preaspiration of t
-		{"fts", C.f .. "(" .. C.t .. ")" .. C.s}, -- lofts
+		{"fn(@)t", C.hm .. "%1" .. C.t}, -- jafnt; not a mistake, fn mutually assimilates to m, which is aspirated by the preaspiration of t
+		{"ft(@)s", C.f .. "(" .. C.t .. ")%1" .. C.s}, -- lofts
 		-- (d.2) beginning with <g> or <k>
-		{"gld", C.l .. C.t}, -- sigldi
-		{"glt", C.hl .. C.t}, -- siglt
-		{"gnd", C.ng .. C.t}, -- rigndi
-		{"gns", { -- gagns
-			{replace = C.k .. C.hn .. C.s, var = "careful"},
-			{replace = C.x .. C.s, var = {"natural", "allegro"}},
+		{"gl(@)d", C.l .. "%1" .. C.t}, -- sigldi
+		{"gl(@)t", C.hl .. "%1" .. C.t}, -- siglt
+		{"gn(@)d", C.ng .. "%1" .. C.t}, -- rigndi
+		{"gn(@)s", { -- gagns
+			{replace = C.k .. C.hn .. "%1" .. C.s, var = "careful"},
+			{replace = C.x .. "%1" .. C.s, var = {"natural", "allegro"}},
 		}},
-		{"[gk]nt", C.hng .. C.t}, -- hrygnt; sýknt
-		{"[gk]ts", C.x .. "(" .. C.t .. ")" .. C.s}, -- gjögts; svekkts
+		{"[gk]n(@)t", C.hng .. "%1" .. C.t}, -- hrygnt; sýknt
+		{"[gk]t(@)s", C.x .. "(" .. C.t .. ")%1" .. C.s}, -- gjögts; svekkts
 		-- (d.3) beginning with <l>
-		{"lds", C.l .. "(" .. C.t .. ")" .. C.s}, -- þvælds
-		{"l[fg]d", C.l .. C.t}, -- hvolfdi, fylgdi
-		{"lfr", C.l .. "(" .. C.v .. ")" .. C.r}, -- ýlfra
-		{"lfs", C.l .. "(" .. C.f .. ")" .. C.s}, -- úlfs
-		{"l[fk]t", C.hl .. C.t}, -- tólfti, velktur
-		{"lgn", C.l .. C.n}, -- volgna
-		{"l([kp])s", { -- fólks; hvolps
-			{replace = C.l .. C.s, var = {"natural", "allegro"}},
-			{replace = function(kp) return C.hl .. orth_to_unasp_pua_map[kp] .. C.s end, var = "careful"},
+		{"ld(@)s", C.l .. "(" .. C.t .. ")%1" .. C.s}, -- þvælds
+		{"l[fg](@)d", C.l .. "%1" .. C.t}, -- hvolfdi, fylgdi
+		{"l(@)f(@)r", C.l .. "%1" .. "(" .. C.v .. ")%2" .. C.r}, -- ýlfra
+		{"lf(@)s", C.l .. "(" .. C.f .. ")" .. C.s}, -- úlfs
+		{"l[fk](@)t", C.hl .. "%1" .. C.t}, -- tólfti, velktur
+		{"lg(@)n", C.l .. "%1" .. C.n}, -- volgna
+		{"l([kp])(@)s", { -- fólks; hvolps
+			{replace = C.l .. "%2" .. C.s, var = {"natural", "allegro"}},
+			{replace = function(kp, syldiv) return C.hl .. orth_to_unasp_pua_map[kp] .. syldiv .. C.s end, var = "careful"},
 		}},
-		{"lts", C.hl .. "(" .. C.t .. ")" .. C.s}, -- gyllts
+		{"lt(@)s", C.hl .. "(" .. C.t .. ")%1" .. C.s}, -- gyllts
 		-- (d.4) beginning with <m>
-		{"mbd", C.m .. C.t}, -- rembdist
-		{"mbs", C.m .. C.s}, -- lambs
-		{"mbt", C.hm .. C.t}, -- kembt
-		{"mds", C.m .. "(" .. C.t .. ")" .. C.s}, -- límds
-		{"mps", { -- svamps
-			{replace = C.hm .. C.p .. C.s, var = "careful"},
-			{replace = C.m .. C.s, var = {"natural", "allegro"}},
+		{"mb(@)d", C.m .. "%1" .. C.t}, -- rembdist
+		{"mb(@)s", C.m .. "%1" .. C.s}, -- lambs
+		{"mb(@)t", C.hm .. "%1" .. C.t}, -- kembt
+		{"md(@)s", C.m .. "(" .. C.t .. ")%1" .. C.s}, -- límds
+		{"mp(@)s", { -- svamps
+			{replace = C.hm .. C.p .. "%1" .. C.s, var = "careful"},
+			{replace = C.m .. "%1" .. C.s, var = {"natural", "allegro"}},
 		}},
 		-- (d.5) beginning with <n>
-		{"nds", C.n .. "(" .. C.t .. ")" .. C.s}, -- sands
-		{"ngd", C.ng .. C.t}, -- hringdi
-		{"ngl", C.ng .. C.l}, -- England
-		{"ngn", "(" .. C.ng .. ")" .. C.n}, -- lungna
-		{"ngs", C.ng .. C.s}, -- hangs
-		{"ngt", C.hng .. C.t}, -- tengt
-		{"nks", C.hng .. "(" .. C.k .. ")" .. C.s}, -- dynks
-		{"nkt", C.hn .. C.t}, -- punktur
+		{"nd(@)s", C.n .. "(" .. C.t .. ")%1" .. C.s}, -- sands
+		{"ng(@)d", C.ng .. "%1" .. C.t}, -- hringdi
+		{"ng(@)l", C.ng .. "%1" .. C.l}, -- England
+		{"n(@!)gl", C.ng .. "%1" .. C.k .. C.l},
+		{"ng(@)n", "(" .. C.ng .. ")%1" .. C.n}, -- lungna
+		{"ng(@)s", C.ng .. "%1" .. C.s}, -- hangs
+		{"ng(@)t", C.hng .. "%1" .. C.t}, -- tengt
+		{"nk(@)s", C.hng .. "(" .. C.k .. ")%1" .. C.s}, -- dynks
+		{"nk(@)t", C.hn .. "%1" .. C.t}, -- punktur
 		-- (d.6) beginning with <p>
-		{"pts", C.f .. "(" .. C.t .. ")" .. C.s}, -- teppts
+		{"pt(@)s", C.f .. "(" .. C.t .. ")%1" .. C.s}, -- teppts
 		-- (d.7) beginning with <r>
 		-- NOTE: of the following six clusters, Eiríkur lists pronuunciations for 5, omitting <rgl>. By analogy, it
 		-- should be pronounced [rtl], and I assume this. -rgl- seems to occur only in 4-5 verbs:
@@ -1118,39 +1145,42 @@ local function convert(w, dialect, disable_internal_stresses)
 		--                       and in fact <gurgla> is obsolete, not even in BÍN)
 		-- Google says <rgl> is pronounced [r̥kl] but this is clearly wrong; the unvoiced [r̥] in particular would
 		-- definitely not be expected before <g>.
-		{"r[ðfg]l", C.r .. C.t .. C.l}, -- sperðlar; hvarfla; sargla~svargla/gúrgla~gurgla/snörgla
-		{"r[ðfg]n", C.r .. C.t .. C.n}, -- harðna; horfnir; morgna
-		{"rfð", C.r .. "(" .. C.v .. ")" .. C.dh}, -- horfði; dirð
-		{"rgð", C.r .. "(" .. C.k .. ")" .. C.dh}, -- mergð
+		{"r[ðfg](@)l", C.r .. C.t .. "%1" .. C.l}, -- sperðlar; hvarfla; sargla~svargla/gúrgla~gurgla/snörgla
+		{"r[ðfg](@)n", C.r .. C.t .. "%1" .. C.n}, -- harðna; horfnir; morgna
+		-- FIXME: Do we need r(@!)fl, r(@!)gl?
+		{"rf(@)ð", C.r .. "(" .. C.v .. ")%1" .. C.dh}, -- horfði; dirð
+		{"rg(@)ð", C.r .. "(" .. C.k .. ")%1" .. C.dh}, -- mergð
 		-- rfl above
 		-- rfn above
-		{"rfs", C.r .. "(" .. C.f .. ")" .. C.s}, -- orfs
+		{"rf(@)s", C.r .. "(" .. C.f .. ")%1" .. C.s}, -- orfs
 		-- rfst in 4-char section above
-		{"r[fgkp]t", C.hr .. C.t}, -- horft; margt; myrkt; skyrpti
+		{"r[fgkp](@)t", C.hr .. "%1" .. C.t}, -- horft; margt; myrkt; skyrpti
 		-- rgð above
 		-- rgn above
-		{"rgs", C.r .. "(" .. C.k .. ")" .. C.s}, -- dvergs
+		{"rg(@)s", C.r .. "(" .. C.k .. ")%1" .. C.s}, -- dvergs
 		-- rgt above
-		{"r([kpt])s", function(kpt) return C.hr .. "(" .. orth_to_unasp_pua_map[kpt] .. ")" .. C.s end}, -- sterks; þorps; svarts
+		{"r([kpt])(@)s", function(kpt, syldiv) return C.hr .. "(" .. orth_to_unasp_pua_map[kpt] .. ")" .. syldiv .. C.s end}, -- sterks; þorps; svarts
 		-- rkst in 4-char section above
 		-- rkt above
 		-- rkts in 4-char section above
-		{"rls", "((" .. C.r .. ")" .. C.t .. ")" .. C.l .. C.s}, -- karls
-		{"rm([ds])", function(ds) return "(" .. C.r .. ")" .. C.m .. orth_to_unasp_pua_map[ds] end}, -- þyrmdi, harms
-		{"rmt", "(" .. C.hr .. ")" .. C.hm .. C.t}, -- hermt
-		{"rnd", "(" .. C.r .. ")" .. C.n .. C.t}, -- fyrndur
-		{"rns", C.hr .. C.s}, -- barns
+		{"rl(@)s", "((" .. C.r .. ")" .. C.t .. ")" .. C.l .. "%1" .. C.s}, -- karls
+		{"rm(@)([ds])", function(syldiv, ds) return "(" .. C.r .. ")" .. C.m .. syldiv .. orth_to_unasp_pua_map[ds] end}, -- þyrmdi, harms
+		{"rm(@)t", "(" .. C.hr .. ")" .. C.hm .. "%1" .. C.t}, -- hermt
+		{"rn(@)d", "(" .. C.r .. ")" .. C.n .. "%1" .. C.t}, -- fyrndur
+		{"rn(@)s", C.hr .. "%1" .. C.s}, -- barns
 		-- rnsk in 4-char section above
-		{"rnt", C.hn .. C.t}, -- hyrnt
+		{"rn(@)t", C.hn .. "%1" .. C.t}, -- hyrnt
 		-- rps above under rks
 		-- rpst in 4-char section above
 		-- rpt above
 		-- rpts in 4-char section above
-		{"rsk", "(" .. C.hr .. ")" .. C.s .. C.k}, -- norskur
-		{"rs" .. kPAL, "(" .. C.hr .. ")" .. C.s .. C.c}, -- fjarski
+		{"r(@)s(@)k", "(" .. C.hr .. ")%1" .. C.s .. "%2" .. C.k}, -- norskur
+		{"r(@)s(@)" .. kPAL, "(" .. C.hr .. ")%1" .. C.s .. "%2" .. C.c}, -- fjarski
 		-- rsks in 4-char section above
 		-- rskt in 4-char section above
-		{"rs([ln])", function(ln) return "(" .. C.hr .. ")" .. C.s .. C.t .. orth_to_unasp_pua_map[ln] end}, -- sparsla; versna
+		{"r(@)s(@)([ln])", function(syldiv1, syldiv2, ln)
+			return "(" .. C.hr .. ")" .. syldiv1 .. C.s .. C.t .. syldiv2 .. orth_to_unasp_pua_map[ln]
+		end}, -- sparsla; versna
 		-- rst in 4-char section above (due to optional consonant after r)
 		-- rsts in 4-char section above
 		-- rts above under rks
@@ -1159,34 +1189,46 @@ local function convert(w, dialect, disable_internal_stresses)
 			{replace = C.s .. "ː", var = {"natural", "allegro"}},
 			{replace = function(kpt) return C.s .. orth_to_unasp_pua_map[kpt] .. C.s end, var = "careful"},
 		}},	
-		{"skt", C.s .. C.t}, -- frist
-		{"stk", C.s .. C.k},
-		{"st" .. kPAL, C.s .. C.c}, -- systkin
+		{"s([kpt])(@!)s", { -- fisks, rasps, prests
+			{replace = C.s .. "%2" .. C.s, var = {"natural", "allegro"}},
+			{replace = function(kpt, syldiv)
+				return C.s .. orth_to_unasp_pua_map[kpt] .. syldiv .. C.s
+			end, var = "careful"},
+		}},	
+		{"sk(@)t", C.s .. "%1" .. C.t}, -- friskt
+		{"st(@)k", C.s .. "%1" .. C.k},
+		{"st(@)" .. kPAL, C.s .. "%1" .. C.c}, -- systkin
 		-- sts in 4-char section above (due to optional r in rsts)
 		-- (d.9) beginning with <t>
 		{"tns", C.s .. "ː"}, -- vatns
+		{"tn(@!)s", C.s .. "%1" .. C.s},
 
 		-- (3) 2 consonant clusters
 		{"x", "ks"},                            -- x → ks; should precede epenthetic t in <sl>, e.g. <jaxl> -> [jakstl]
 		-- epenthetic [t] in rl, rn, sl, sn
-		{"([rs])([ln])", function(rs, ln) return orth_to_unasp_pua_map[rs] .. C.t .. orth_to_unasp_pua_map[ln] end},
-		{"ðk", C.th2 .. C.k},                         -- ð devoiced before k → θ
+		{"([rs])(@)([ln])", function(rs, syldiv, ln)
+			return orth_to_unasp_pua_map[rs] .. C.t .. syldiv .. orth_to_unasp_pua_map[ln]
+		end},
+		{"ð(@)k", C.th2 .. "%1" .. C.k},                         -- ð devoiced before k → θ
 		-- nasal + velar/palatal stop (place + voicing by following segment)
-		{"n" .. kPAL, C.hnj .. C.c},                  -- voiceless palatal: banki, þenkja
-		{"nk", C.hng .. C.k},                         -- voiceless velar: banka
-		{"n" .. gPAL, C.nj .. C.c},                   -- voiced palatal: angi, syngja
-		{"ng", C.ng .. C.k},                          -- voiced velar: hanga, langur
+		{"n(@)" .. kPAL, C.hnj .. "%1" .. C.c},                  -- voiceless palatal: banki, þenkja
+		{"n(@)k", C.hng .. "%1" .. C.k},                         -- voiceless velar: banka
+		{"n(@)" .. gPAL, C.nj .. "%1" .. C.c},                   -- voiced palatal: angi, syngja
+		{"n(@)g", C.ng .. "%1" .. C.k},                          -- voiced velar: hanga, langur
 		-- geminates and preaspiration; maintain the [kpt] because we may need to convert p -> f later,
 		-- as in uppfræða
-		{"([" .. Vall .. "])([kpt])%2", "%1" .. C.h .. "%2"}, -- drekka, stoppa, fletta
+		{"([" .. Vall .. "])([kpt])(@)%2", "%1" .. C.h .. "%3%2"}, -- drekka, stoppa, fletta
 		-- nn → tn after a tense vowel / diphthong, else n
-		{"([" .. Vtense .. "])(ː?)nn", "%1%2" .. C.t .. C.n},
-		{"ll", C.t .. C.l},
+		{"([" .. Vtense .. "]ː?)n(@)n", "%1" .. C.t .. "%2" .. C.n},
+		{"l(@)l", C.t .. "%1" .. C.l},
 		-- rr is special and is a long trill (and not devoiced) even word-finally or before a consonant,
 		-- e.g. barr, barri, barrtré, kyrrstæður
 		{"rr", C.r .. "ː"},
+		{"r(@!)r", C.r .. "%1" .. C.r},
 		{"ff", C.f .. Solc},
+		{"f(@!)f", "(" .. C.f .. ")%1" .. C.f},
 		{"gg", C.k .. Solc},
+		{"g(@!)g", "(" .. C.k .. ")%1" .. C.k},
 		-- no gemination before consonant across (sub)component boundary, as in innbú, rassvasi;
 		-- this should go as early as possible, directly after any special handling of written geminates.
 		{"([" .. Call .. "])%1(![" .. Call .. "])", "%1%2"},
@@ -1194,10 +1236,16 @@ local function convert(w, dialect, disable_internal_stresses)
 		{"([" .. Call .. "])" .. Solc .. "(![" .. Call .. "])", "%1%2"},
 		-- hagga, etc.
 		{"([bdgfhsþðmnr])%1", function(c) return orth_to_unasp_pua_map[c] .. Solc end},
+		{"([bdgfhsþðmnr])(@!)%1", function(c, syldiv)
+			return "(" .. orth_to_unasp_pua_map[c] .. ")" .. syldiv .. orth_to_unasp_pua_map[c]
+		end},
 		-- preaspiration: p/t/k + l/n
-		{"([" .. Vall .. "])([kpt])([ln])", function(v, kpt, ln) return v .. C.h .. orth_to_unasp_pua_map[kpt] .. orth_to_unasp_pua_map[ln] end},
-		{"kt", C.x .. C.t}, -- rakti → x t
-		{"pt", C.f .. C.t}, -- æpti → f t
+		{"([" .. Vall .. "])([kpt])(@)([ln])", function(v, kpt, syldiv, ln)
+			return v .. C.h .. orth_to_unasp_pua_map[kpt] .. syldiv .. orth_to_unasp_pua_map[ln]
+		end},
+		-- FIXME: Do we need V(@!)kl, V(@!)pl?
+		{"k(@)t", C.x .. "%1" .. C.t}, -- rakti → x t
+		{"p(@)t", C.f .. "%1" .. C.t}, -- æpti → f t
 	})
 
 	------------------------------------------------------------------
@@ -1342,12 +1390,12 @@ local function convert(w, dialect, disable_internal_stresses)
 		-- voiced pronunciation: a nasal voices before a stop, and the stop aspirates
 		local voiceless_nasals_pua = C.hm .. C.hn .. C.hnj .. C.hng
 		w = apply(w, {{"([" .. voiceless_nasals_pua .. "])(@)([" .. unaspirated_stops_pua .. "])",
-			function(nv, secstress, stop) return voice_resonant_map[nv] .. secstress .. aspirate_stop_map[stop] end
+			function(nv, syldiv, stop) return voice_resonant_map[nv] .. syldiv .. aspirate_stop_map[stop] end
 		}})
 		-- l voices (and stop aspirates) before labial/velar stops, but stays
 		-- voiceless before t (per doc: piltur, elta keep [l̥t])
 		w = apply(w, {{C.hl .. "(@)([" .. C.p .. C.k .. C.c .. "])",
-			function(secstress, stop) return C.l ..secstress .. aspirate_stop_map[stop] end
+			function(syldiv, stop) return C.l ..syldiv .. aspirate_stop_map[stop] end
 		}})
 		-- ð voiced (and following k aspirated) in -ðk-: maðkur [maðkʰʏr]
 		w = apply(w, {{C.th2 .. "(@)" .. C.k, C.dh .. "%1" .. C.kh}})
@@ -1393,9 +1441,9 @@ local function toIPA_word(word, dialect, disable_internal_stresses)
 	word = word:gsub("([ln])%1:", "%1" .. Solc)
 	word = word:gsub("é", "je") -- this seems to be the easiest way to handle this letter
 	-- Handle epenthetic [j] in hiatus after a high front vowel or glide
-	word = ugsub(word, "(e[iy][\4]?)([" .. Vall .. "])", "%1j%2")
-	word = ugsub(word, "(au[\4]?)([" .. Vall .. "])", "%1j%2")
-	word = ugsub(word, "([íýæ][\4]?)([" .. Vall .. "])", "%1j%2")
+	word = ugsub(word, "(e[iy][.\4]?)([" .. Vall .. "])", "%1j%2")
+	word = ugsub(word, "(au[.\4]?)([" .. Vall .. "])", "%1j%2")
+	word = ugsub(word, "([íýæ][.\4]?)([" .. Vall .. "])", "%1j%2")
 	local subcomponents = split(word, "(#+)")
 	-- Odd-numbered elements are subcomponents and even-numbered are separators, except that the first and last subcomponent
 	-- are blank because we have ## at word edges.
