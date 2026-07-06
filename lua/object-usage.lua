@@ -268,7 +268,7 @@ function export.show_obj(frame)
 				if alternant.case then
 					if type(alternant.case) == "string" then
 						case_text = require(form_of_module).tagged_inflections {
-							lang = lang, tags = {alternant.case}, text_classes = text_classes
+							lang = lang, tags = {alternant.case}, text_classes = text_classes, nocat = true
 						}
 					else
 						case_text = format_parsed_object(alternant.case, "suppress with")
@@ -297,7 +297,7 @@ function export.show_obj(frame)
 					end
 				else
 					form = require(form_of_module).tagged_inflections {
-						lang = lang, tags = {alternant.form}, text_classes = text_classes
+						lang = lang, tags = {alternant.form}, text_classes = text_classes, nocat = true
 					}
 					if case_text then
 						if alternant.is_postposition then
@@ -400,13 +400,13 @@ function export.show_aux(frame)
 	local pargs = frame:getParent().args
 
 	local params = {
-		[1] = {required = true, default = "und"},
-		[2] = {list = true, allow_holes = true},
+		[1] = {required = true, template_default = "und"},
+		[2] = {list = true, allow_holes = true, template_default = "auxiliary"},
 		["alt"] = {list = true, allow_holes = true},
 		["q"] = {list = true, allow_holes = true},
 		["id"] = {list = true, allow_holes = true},
-		["senseid"] = {list = true, allow_holes = true, alias_of = "id"},
-		["means"] = {list = true, allow_holes = true},
+		["senseid"] = {list = true, alias_of = "id"},
+		["means"] = {list = true, allow_holes = true, template_default = "meaning"},
 	}
 
 	local args = require("Module:parameters").process(frame:getParent().args, params)
@@ -418,10 +418,6 @@ function export.show_aux(frame)
 		if type(v) == "table" and v.maxindex and v.maxindex > maxmaxindex then
 			maxmaxindex = v.maxindex
 		end
-	end
-
-	if mw.title.getCurrentTitle().nsText == "Template" and mw.title.getCurrentTitle().text == "+aux" then
-		return "[auxiliary " .. m_links.full_link({lang = lang, term = "auxiliary"}, "term") .. " = meaning]"
 	end
 
 	local parts = {}
