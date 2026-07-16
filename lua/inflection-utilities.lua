@@ -2174,8 +2174,8 @@ function export.show_forms(formtable, props)
 					end
 					if not formatted_tr then
 						formatted_tr = require(script_utilities_module).tag_translit(tr_span.tr_for_tag, props.lang,
-							"default", " style=\"color: #888;\"") .. tr_span.old_style_footnote_symbol ..
-							export.get_footnote_text(tr_span.footnotes, footnote_obj)
+							"default", " style=\"color: var(--wikt-palette-grey-8,#888);\"") ..
+							tr_span.old_style_footnote_symbol .. export.get_footnote_text(tr_span.footnotes, footnote_obj)
 					end
 					tr_spans[i] = formatted_tr
 				end
