@@ -1,29 +1,61 @@
 local export = {}
 
-local lang = require("Module:languages").getByCode("is")
-local m_links = require("Module:links")
-local m_table = require("Module:table")
-local m_string_utilities = require("Module:string utilities")
 local pages_module = "Module:pages"
+local string_char_module = "Module:string/char"
+local string_pattern_escape_module = "Module:string/patternEscape"
+local string_replacement_escape_module = "Module:string/replacementEscape"
+local table_module = "Module:table"
 local template_parser_module = "Module:template parser"
 
-local u = mw.ustring.char
-local rsplit = mw.text.split
-local rfind = mw.ustring.find
+local dump = mw.dumpObject
+local new_title = mw.title.new
 local rmatch = mw.ustring.match
 local rsubn = mw.ustring.gsub
-local ulen = mw.ustring.len
 local usub = mw.ustring.sub
 local uupper = mw.ustring.upper
+
+local function find_templates(...)
+	find_templates = require(template_parser_module).find_templates
+	return find_templates(...)
+end
+
+local function get_section(...)
+	get_section = require(pages_module).get_section
+	return get_section(...)
+end
+
+local function insert_if_not(...)
+	insert_if_not = require(table_module).insertIfNot
+	return insert_if_not(...)
+end
+
+local function pattern_escape(...)
+	pattern_escape = require(string_pattern_escape_module)
+	return pattern_escape(...)
+end
+
+local function replacement_escape(...)
+	replacement_escape = require(string_replacement_escape_module)
+	return replacement_escape(...)
+end
+
+local function serial_comma_join(...)
+	serial_comma_join = require(table_module).serialCommaJoin
+	return serial_comma_join(...)
+end
+
+local function u(...)
+	u = require(string_char_module)
+	return u(...)
+end
 
 -- Capitalize the first letter.
 local function ucap(str)
 	local first, rest = rmatch(str, "^(.)(.*)$")
 	if first then
 		return uupper(first) .. rest
-	else
-		return str
 	end
+	return str
 end
 
 -- version of rsubn() that discards all but the first return value
@@ -66,20 +98,19 @@ local function apply_au_ur_sub(stem, ur_only)
 		-- au doesn't u-mutate; easiest way to handle this is to temporarily convert au and variants to single
 		-- characters
 		stem = stem:gsub("au", AU_SUB)
-		stem = stem:gsub("Au", CAP_AU_SUB)
-		stem = stem:gsub("AU", ALL_CAP_AU_SUB)
+			:gsub("Au", CAP_AU_SUB)
+			:gsub("AU", ALL_CAP_AU_SUB)
 	end
 	-- There must be at least one vowel to treat -ur as a suffix; lemmas like [[bur]] don't count.
-	stem = rsub(stem, "^(.*" ..export.vowel_or_hyphen_c .. ".*)ur$", "%1" .. UR_SUB)
-	return stem
+	return (rsub(stem, "^(.*" ..export.vowel_or_hyphen_c .. ".*)ur$", "%1" .. UR_SUB))
 end
 
 local function undo_au_ur_sub(stem)
-	stem = stem:gsub(UR_SUB, "ur")
-	stem = stem:gsub(AU_SUB, "au")
-	stem = stem:gsub(CAP_AU_SUB, "Au")
-	stem = stem:gsub(ALL_CAP_AU_SUB, "AU")
-	return stem
+	return (stem:gsub(UR_SUB, "ur")
+		:gsub(AU_SUB, "au")
+		:gsub(CAP_AU_SUB, "Au")
+		:gsub(ALL_CAP_AU_SUB, "AU")
+	)
 end
 
 
@@ -211,7 +242,7 @@ function export.apply_u_mutation(stem, typ, error_if_unmatchable)
 			C .. "*)(" .. V .. ")(" .. C .. "*)$")
 		if first then
 			v1 = lesser_u_mutation[v1] or v1
-		elseif not stem:find("^%-") then
+		elseif stem:sub(1, 1) ~= "-" then
 			if error_if_unmatchable then
 				error(("Can't apply u-mutation of type '%s' because stem '%s' doesn't have three syllables"):
 					format(typ, origstem))
@@ -242,7 +273,7 @@ function export.apply_u_mutation(stem, typ, error_if_unmatchable)
 		local first, v1, middle, v2, last = rmatch(stem, "^(.*)(" .. V .. ")(" .. C .. "*)(" .. V .. ")(" .. C .. "*)$")
 		if first then
 			v1 = lesser_u_mutation[v1] or v1
-		elseif not stem:find("^%-") then
+		elseif stem:sub(1, 1) ~= "-" then
 			if error_if_unmatchable then
 				error(("Can't apply u-mutation of type '%s' because stem '%s' doesn't have two syllables"):
 					format(typ, origstem))
@@ -306,7 +337,7 @@ function export.apply_reverse_u_mutation(stem, typ, error_if_unmatchable)
 			C .. "*)(" .. V .. ")(" .. C .. "*)$")
 		if first then
 			v1 = lesser_reverse_u_mutation[v1] or v1
-		elseif not stem:find("^%-") then
+		elseif stem:sub(1, 1) ~= "-" then
 			if error_if_unmatchable then
 				error(("Can't apply reverse u-mutation of type '%s' because stem '%s' doesn't have three syllables"):
 					format(typ, origstem))
@@ -378,7 +409,7 @@ function export.apply_contraction(stem)
 	-- Contraction only applies when the last vowel is a/i/u and followed by a single consonant. There are restrictions
 	-- on what the consonant can be but I'm not sure exactly what they are; r/l/n/ð are all possible (cf. [[hamar]],
 	-- [[megin]], [[höfuð]], [[þumall]], where in the last case the final -l is the nominative singular ending).
-	local butlast, v, last = rmatch(stem, "^(.*" .. C .. ")([aiu])(" .. C .. ")$")
+	local butlast, last = rmatch(stem, "^(.*" .. C .. ")[aiu](" .. C .. ")$")
 	if not butlast then
 		error(("Contraction cannot be applied to stem '%s' because it doesn't end in a/i/u preceded by a consonant and followed by a single consonant"
 			):format(stem))
@@ -389,20 +420,19 @@ end
 
 -- Add a dental ending (d/t/ð) to `stem`.
 function export.add_dental_ending(stem)
-	if stem:find("[lmn]$") then
+	if stem:match("[lmn]$") then
 		-- [[talinn]] "counted" -> tald-; [[framinn]] "performed" -> framd-; [[hruninn]] "fallen down/in" -> hrund-
 		return stem .. "d"
-	elseif stem:find("ð$") then
+	elseif stem:match("ð$") then
 		-- I dunno if this ever happens.
 		return usub(stem, 1, -2) .. "dd"
-	elseif rfind(stem, "[pkt]$") then
+	elseif stem:match("[pkt]$") then
 		-- [[glapinn]] "confused" -> glapt-; [[lukinn]] "(en)closed" -> lukt-; no examples with -t-
 		return stem .. "t"
-	else
-		-- [[vafinn]] "wrapped" -> vafð-; [[varinn]] "defended" -> varð-; [[tugginn]] "chewed" -> tuggð- (or tuggn-);
-		-- [[spúinn]] "vomited" -> spúð-
-		return stem .. "ð"
 	end
+	-- [[vafinn]] "wrapped" -> vafð-; [[varinn]] "defended" -> varð-; [[tugginn]] "chewed" -> tuggð- (or tuggn-);
+	-- [[spúinn]] "vomited" -> spúð-
+	return stem .. "ð"
 end
 
 
@@ -412,9 +442,9 @@ end
 -- confused by the final -r).
 function export.parse_off_final_nom_ending(lemma)
 	local lemma_minus_r, final_nom_ending
-	if lemma:find("[^Aa]ur$") then
+	if lemma:match("[^Aa]ur$") then
 		lemma_minus_r, final_nom_ending = lemma:match("^(.*)(ur)$")
-	elseif lemma:find("r$") then
+	elseif lemma:sub(-1) == "r" then
 		lemma_minus_r, final_nom_ending = lemma:match("^(.*)(r)$")
 	else
 		lemma_minus_r, final_nom_ending = lemma, ""
@@ -427,13 +457,11 @@ end
 function export.replace_hashvals(val, lemma)
 	if not val then
 		return val
+	elseif val:find("##", nil, true) then
+		local lemma_minus_r = export.parse_off_final_nom_ending(lemma)
+		val = val:gsub("##", replacement_escape(lemma_minus_r))
 	end
-	if val:find("##") then
-		local lemma_minus_r, final_nom_ending = export.parse_off_final_nom_ending(lemma)
-		val = val:gsub("##", m_string_utilities.replacement_escape(lemma_minus_r))
-	end
-	val = val:gsub("#", m_string_utilities.replacement_escape(lemma))
-	return val
+	return (val:gsub("#", replacement_escape(lemma)))
 end
 	
 
@@ -446,16 +474,16 @@ end
 -- If `allow_empty_infl` is given, a missing inflection spec in 1= is allowed and converted to an empty string;
 -- otherwise, an error is signaled.
 function export.find_inflection(lemma, infltemp, allow_empty_infl, is_deriv, inflid)
-	local title = mw.title.new(lemma)
+	local title = new_title(lemma)
 	if title then
 		local content = title:getContent()
 		if content then
-			local icelandic = require(pages_module).get_section(content, "Icelandic")
+			local icelandic = get_section(content, "Icelandic")
 			if icelandic then
 				local infl_sets_by_id = {}
 				local infl_sets_without_id = {}
 				local ordered_seen_ids = {}
-				for template in require(template_parser_module).find_templates(icelandic) do
+				for template in find_templates(icelandic) do
 					if template:get_name() == infltemp then
 						local args = template:get_arguments()
 						local infls = {}
@@ -489,7 +517,7 @@ function export.find_inflection(lemma, infltemp, allow_empty_infl, is_deriv, inf
 								return ("For Icelandic base lemma '[[%s]]', saw id='%s' twice"):format(args.id)
 							end
 							infl_sets_by_id[args.id] = infl_set
-							m_table.insertIfNot(ordered_seen_ids, args.id)
+							insert_if_not(ordered_seen_ids, args.id)
 						else
 							table.insert(infl_sets_without_id, infl_set)
 						end
@@ -500,7 +528,7 @@ function export.find_inflection(lemma, infltemp, allow_empty_infl, is_deriv, inf
 					for _, seen_id in ipairs(ordered_seen_ids) do
 						table.insert(quoted_seen_ids, "'" .. seen_id .. "'")
 					end
-					return m_table.serialCommaJoin(quoted_seen_ids, {dontTag = true})
+					return serial_comma_join(quoted_seen_ids, {dontTag = true})
 				end
 				if ordered_seen_ids[1] and infl_sets_without_id[1] then
 					return ("For Icelandic base lemma '[[%s]]', saw %s [[Template:%s]]%s with id=%s " ..
@@ -575,8 +603,7 @@ function export.find_scraped_infl(data)
 		prefix = ""
 	else
 		local lemma_minus_ending, final_ending = data.parse_off_ending(lemma)
-		local escaped_scrape_spec = m_string_utilities.pattern_escape(scrape_spec)
-		prefix, base_lemma = rmatch(lemma_minus_ending, "^(.*)(" .. escaped_scrape_spec .. ".-)$")
+		prefix, base_lemma = rmatch(lemma_minus_ending, "^(.*)(" .. pattern_escape(scrape_spec) .. ".-)$")
 		if not prefix then
 			error(("Can't determine base lemma to scrape given lemma '%s' and scraping spec '@%s'; scraping spec not " ..
 				"found in lemma"):format(lemma, scrape_spec))
@@ -603,10 +630,10 @@ function export.find_scraped_infl(data)
 		else
 			infl = infl[1]
 			local argspec = infl.infl
-			if argspec:find("<") then
+			if argspec:find("<", nil, true) then
 				errmsg = ("For Icelandic base lemma '[[%s]]', saw explicit angle bracket spec in inflection, likely " ..
 					"indicating a multiword inflection; can't handle yet: %s"):format(lemma, argspec)
-			elseif argspec:find("%(%(") then
+			elseif argspec:find("((", nil, true) then
 				errmsg = ("For Icelandic base lemma '[[%s]]', saw alternant specs; can't handle yet: %s"):
 					format(lemma, argspec)
 			end
