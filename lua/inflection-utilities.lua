@@ -15,24 +15,17 @@ local split = m_str_utils.split
 local rfind = m_str_utils.find
 local rmatch = m_str_utils.match
 local rsubn = m_str_utils.gsub
+local usub = m_str_utils.sub
 local ucfirst = m_str_utils.ucfirst
 local unpack = unpack or table.unpack -- Lua 5.2 compatibility
 local dump = mw.dumpObject
+local new_title = mw.title.new
 
 -- version of rsubn() that discards all but the first return value
 local function rsub(term, foo, bar)
 	local retval = rsubn(term, foo, bar)
 	return retval
 end
-export.rsub = rsub
-
--- version of rsubn() that returns a 2nd argument boolean indicating whether
--- a substitution was made.
-local function rsubb(term, foo, bar)
-	local retval, nsubs = rsubn(term, foo, bar)
-	return retval, nsubs > 0
-end
-export.rsubb = rsubb
 
 local function track(page)
 	require("Module:debug/track")("inflection utilities/" .. page)
@@ -324,10 +317,9 @@ function export.insert_form_into_list(list, form)
 					for _, footnote in ipairs(form.footnotes) do
 						local already_seen = false
 						local footnote_mods, footnote_without_mods = extract_footnote_modifiers(footnote)
-						if rfind(footnote_nods, "[!+]") then
+						if rfind(footnote_mods, "[!+]") then
 							for _, existing_footnote in ipairs(listform.footnotes) do
-								local existing_footnote_mods, existing_footnote_without_mods =
-									extract_footnote_modifiers(existing_footnote)
+								local _, existing_footnote_without_mods = extract_footnote_modifiers(existing_footnote)
 								if existing_footnote_without_mods == footnote_without_mods then
 									already_seen = true
 									break
@@ -749,16 +741,16 @@ function export.add_forms(formtable, slot, stems, endings, combine_stem_ending, 
 		endings = export.convert_to_general_list_form(endings, footnotes)
 		for _, stem in ipairs(stems) do
 			for _, ending in ipairs(endings) do
-				local footnotes = nil
+				local new_footnotes = nil
 				if stem.footnotes and ending.footnotes then
-					footnotes = m_table.shallowCopy(stem.footnotes)
+					new_footnotes = m_table.shallowCopy(stem.footnotes)
 					for _, footnote in ipairs(ending.footnotes) do
-						m_table.insertIfNot(footnotes, footnote)
+						m_table.insertIfNot(new_footnotes, footnote)
 					end
 				elseif stem.footnotes then
-					footnotes = stem.footnotes
+					new_footnotes = stem.footnotes
 				elseif ending.footnotes then
-					footnotes = ending.footnotes
+					new_footnotes = ending.footnotes
 				end
 				local new_form = combine(stem.form, ending.form)
 				local new_translit
@@ -770,7 +762,7 @@ function export.add_forms(formtable, slot, stems, endings, combine_stem_ending, 
 					local ending_tr = ending.translit or transliterate(m_links.remove_links(ending.form))
 					new_translit = combine_stem_ending_tr(stem_tr, ending_tr)
 				end
-				export.insert_form(formtable, slot, {form = new_form, translit = new_translit, footnotes = footnotes})
+				export.insert_form(formtable, slot, {form = new_form, translit = new_translit, footnotes = new_footnotes})
 			end
 		end
 	end
@@ -844,8 +836,8 @@ end
 
 
 local function parse_before_or_post_text(data)
-	local props, text, text_index, segments, lemma_is_last = data.props, data.text, data.text_index, data.segments,
-		data.lemma_is_last
+	-- NOTE: data.text_index is also used (in `default_split_bracketed_runs_into_words`).
+	local props, text, segments, lemma_is_last = data.props, data.text, data.segments, data.lemma_is_last
 	-- Call parse_balanced_segment_run() to keep multiword links together.
 	local bracketed_runs = put.parse_balanced_segment_run(text, "[", "]")
 	-- Split normally on space or hyphen (but customizable). Use preserve_splitchar so we know whether the separator was
@@ -875,12 +867,12 @@ local function parse_before_or_post_text(data)
 				error("Manual translit not allowed for this language; if this is incorrect, 'props.lang' must be set internally")
 			end
 			saw_manual_translit = true
-			local split = split(component, "//", "plain")
-			if #split ~= 2 then
+			local split_components = split(component, "//", "plain")
+			if #split_components ~= 2 then
 				error("Term with translit or respelling should have only one // in it: " .. component)
 			end
 			local translit
-			component, translit = unpack(split)
+			component, translit = unpack(split_components)
 			if props.transliterate_respelling then
 				translit = props.transliterate_respelling(translit)
 			end
@@ -1027,7 +1019,6 @@ The return value is a table of the form
 where ``multiword_spec`` describes a given alternant and is as returned by parse_multiword_spec().
 ]=]
 local function parse_alternant(alternant, props)
-	local parsed_alternants = {}
 	local alternant_text = rmatch(alternant, "^%(%((.*)%)%)$")
 	local segments = put.parse_balanced_segment_run(alternant_text, "<", ">")
 	local comma_separated_groups = put.split_alternating_runs(segments, "%s*,%s*")
@@ -1238,7 +1229,6 @@ local function append_forms(props, formtable, slot, forms, before_text, before_t
 					new_formobj = m_table.shallowCopy(form)
 					new_formobj.footnotes = new_footnotes
 				else
-					local new_footnotes = export.combine_footnotes(old_form.footnotes, form.footnotes)
 					new_formobj = {form=new_formval, translit=new_translit, footnotes=new_footnotes}
 					if props.combine_metadata then
 						props.combine_metadata {
@@ -1982,7 +1972,7 @@ function export.show_forms(formtable, props)
 						end
 					end
 					m_table.insertIfNot(deduped_formobjs, form, {
-						key = function(form) return form.form end,
+						key = function(formobj) return formobj.form end,
 						combine = combine_forms,
 					})
 				end
@@ -2056,7 +2046,6 @@ function export.show_forms(formtable, props)
 							accel_lemma = {}
 							accel_lemma_translit = {}
 							for j=first_lemma, last_lemma do
-								local this_lemma = props_lemmas[j]
 								local this_accel_lemma, this_accel_lemma_translit =
 									fetch_formval_and_translit(props_lemmas[j], "remove links")
 								-- Do not use table.insert() especially for the translit because it may be nil and in
@@ -2074,7 +2063,7 @@ function export.show_forms(formtable, props)
 								accel_translit = form.translit
 							else
 								error(("Internal error: For slot '%s', form translit is not a table or string: %s"):
-									format(slot, dump(accel_translit)))
+									format(slot, dump(form.translit)))
 							end
 						end
 
@@ -2098,7 +2087,7 @@ function export.show_forms(formtable, props)
 			if props.format_forms then
 				formatted_forms = props.format_forms {
 					slot = slot,
-					forms = forms,
+					forms = formobjs,
 					footnote_obj = footnote_obj,
 				}
 			end
@@ -2149,11 +2138,11 @@ function export.show_forms(formtable, props)
 								footnotes = form.footnotes,
 							}, {
 								key = function(trobj) return trobj.tr_for_tag end,
-								combine = function(tr, newtr)
+								combine = function(trobj, newtrobj)
 									-- Combine footnotes.
-									tr.footnotes = export.combine_footnotes(tr.footnotes, newtr.footnotes)
-									tr.old_style_footnote_symbol = tr.old_style_footnote_symbol ..
-										newtr.old_style_footnote_symbol
+									trobj.footnotes = export.combine_footnotes(trobj.footnotes, newtrobj.footnotes)
+									trobj.old_style_footnote_symbol = trobj.old_style_footnote_symbol ..
+										newtrobj.old_style_footnote_symbol
 								end,
 							})
 						end
@@ -2221,132 +2210,27 @@ end
 
 
 --[==[
-Find the inflection spec by scraping the contents of the `langname` section of `lemma`, looking for `infltemp` calls
-(where `infltemp` is either the name of a template containing the relevant inflections in it or a function of one
-argument, the template object, which should return true if the given object specifies an appropriate inflection
-template) name of an inflection template, which may in some cases be a headword template with inflections
-specified in the headword, as for {{tl|en-verb}}). If `inflid` is given, it must match the value of the `idparam` param
-specified to the inflection template; otherwise, any inflection template call will work. If anything goes wrong in the
-process, a string is returned describing the error message; otherwise a table is returned, where `infl` is the template
-found, an object of the form returned by `find_templates` in [[Module:template parser]].
-]==]
-function export.find_inflection(data)
-	local langname, lemma, infltemp, allow_empty_infl, is_deriv, inflid = data.langname, data.lemma, data.infltemp,
-		data.allow_empty_infl, data.is_deriv, data.inflid
-	local title = mw.title.new(lemma)
-	if title then
-		local content = title:getContent()
-		if content then
-			local langtext = require(pages_module).get_section(content, langname)
-			if langtext then
-				local infl_sets_by_id = {}
-				local infl_sets_without_id = {}
-				local ordered_seen_ids = {}
-				for template in require(template_parser_module).find_templates(langtext) do
-					if template:get_name() == infltemp then
-						local args = template:get_arguments()
-						local infls = {}
-						if is_deriv and args.deriv then
-							local i = 1
-							while true do
-								local deriv_param = "deriv" .. (i == 1 and "" or tostring(i))
-								if args[deriv_param] then
-									table.insert(infls, {infl = args[deriv_param]})
-									i = i + 1
-								else
-									break
-								end
-							end
-						elseif not args[1] and not allow_empty_infl then
-							return ("For %s base lemma '[[%s]]', saw no inflection spec in 1="):format(langname, lemma)
-						else
-							local i = 1
-							while true do
-								if args[i] or (i == 1 and allow_empty_infl) then
-									table.insert(infls, {infl = args[i] or ""})
-									i = i + 1
-								else
-									break
-								end
-							end
-						end
-						local infl_set = {infls = infls, pos = args.pos}
-						if args.id then
-							if infl_sets_by_id[args.id] then
-								return ("For %s base lemma '[[%s]]', saw id='%s' twice"):format(langname, args.id)
-							end
-							infl_sets_by_id[args.id] = infl_set
-							m_table.insertIfNot(ordered_seen_ids, args.id)
-						else
-							table.insert(infl_sets_without_id, infl_set)
-						end
-					end
-				end
-				local function concat_ordered_seen_ids()
-					local quoted_seen_ids = {}
-					for _, seen_id in ipairs(ordered_seen_ids) do
-						table.insert(quoted_seen_ids, "'" .. seen_id .. "'")
-					end
-					return m_table.serialCommaJoin(quoted_seen_ids, {dontTag = true})
-				end
-				if ordered_seen_ids[1] and infl_sets_without_id[1] then
-					return ("For %s base lemma '[[%s]]', saw %s [[Template:%s]]%s with id=%s " ..
-						"as well as %s [[Template:%s]]%s without ID; this is not allowed; with multiple " ..
-						"[[Template:%s]] calls, all must have id= params"):format(langname, lemma, #ordered_seen_ids,
-						infltemp, ordered_seen_ids[2] and "'s" or "",concat_ordered_seen_ids(), #infl_sets_without_id,
-						infltemp, infl_sets_without_id[2] and "'s" or "", infltemp)
-				elseif not ordered_seen_ids[1] and not infl_sets_without_id[1] then
-					return ("For %s base lemma '[[%s]]', found %s section but couldn't find " ..
-							"any calls to [[Template:%s]]"):format(langname, lemma, langname, infltemp)
-				elseif #infl_sets_without_id > 1 then
-					return ("For %s base lemma '[[%s]]', found %s [[Template:%s]]'s without " ..
-						"ID's; this is not allowed; with multiple [[Template:%s]] calls, all must have id= params"):
-						format(langname, lemma, #infl_sets_without_id, infltemp, infltemp)
-				elseif inflid then
-					if infl_sets_by_id[inflid] then
-						return infl_sets_by_id[inflid]
-					elseif ordered_seen_ids[1] then
-							return ("For %s base lemma '[[%s]]', found %s section but couldn't find " ..
-								"any inflections matching ID '%s'; instead found ID's %s; you may have misspelled " ..
-								"the ID"):format(langname, lemma, langname, inflid, concat_ordered_seen_ids())
-					else
-						return ("For %s base lemma '[[%s]]', found %s section with a single " ..
-							"[[Template:%s]] without ID, but ID requirement '%s' specified; consider " ..
-							"removing the ID requirement"):format(langname, lemma, langname, infltemp, inflid)
-					end
-				elseif infl_sets_without_id[1] then
-					-- only one infl template, and it doesn't have an id=; return it
-					return infl_sets_without_id[1]
-				elseif ordered_seen_ids[2] then
-					return ("For %s base lemma '[[%s]]', saw %s [[Template:%s]]'s with id=%s " ..
-						"but with a request to return the inflection without ID; consider adding an ID " ..
-						"restriction to the scrape request, e.g. '@@:%s' for self-scraping or '@%s:%s' for " ..
-						"scraping from another page"):format(langname, lemma, #ordered_seen_ids, infltemp,
-						concat_ordered_seen_ids(), ordered_seen_ids[1], usub(lemma, 1, 1), ordered_seen_ids[1])
-				else
-					return ("For %s base lemma '[[%s]]', found %s section with a single " ..
-						"[[Template:%s]] with id=%s, but the scrape request didn't specify an ID; " ..
-						"consider removing the id= param from the [[Template:%s]] call unless you " ..
-						"expect to add more such calls to the page in the future (in which case add the ID " ..
-						"to the scrape request, e.g. '@@:%s' for self-scraping or '@%s:%s' for scraping from " ..
-						"another page"):format(langname, lemma, langname, infltemp, concat_ordered_seen_ids(), infltemp,
-						ordered_seen_ids[1], usub(lemma, 1, 1), ordered_seen_ids[1])
-				end
-			else
-				return ("For %s base lemma '[[%s]]', page exists but has no %s section"):format(langname, lemma,
-					langname)
-			end
-		else
-			return ("For %s base lemma '[[%s]]', couldn't fetch contents for page; page may not exist"):
-				format(langname, lemma)
-		end
-	else
-		return ("Bad %s base lemma '[[%s]]'; couldn't create title object"):format(langname, lemma)
-	end
-end
+Find the inflection spec for a given lemma by scraping the contents of the section for the lemma's language, looking
+for the appropriate inflection template (which may in some cases be a headword template with inflections specified in
+the headword, as for {{tl|en-verb}}). An inflection ID can be given; in that case, the value of the appropriate ID param
+(usually `id=`) must match the specified ID; otherwise, any inflection template call of the right name will work. If
+anything goes wrong in the process, a string is returned describing the error message; otherwise an object is returned,
+where `template` is the template found (an object of the form returned by `find_templates` in
+[[Module:template parser]]).
 
+There is one param, an object with the following fields:
+* `lemma`: The page to scrape for inflection calls.
+* `langname`: The name of the language of the lemma (e.g. {"English"} or {"Icelandic"}). Only that section is scraped.
+* `infltemp`: A string specifying the name of the template containing the inflections, or a function of one argument,
+  the template object (an object of the form returned by `find_templates` in [[Module:template parser]]), which should
+  return true if the given object specifies an appropriate inflection template.
+* `idparam`: The name of the parameter holding the inflection ID used to disambiguate lemmas with multiple inflections.
+* `inflid`: The inflection ID that must match the value of the `idparam` parameter specified by the inflection template.
+  If not specified, there must be exactly one matching inflection template present, and it must not have a value given
+  for the `idparam` parameter. Otherwise, all matching inflection templates must have a value specified for the
+  `idparam` parameter of the template, and there must be exactly one template whose `idparam` parameter value is the
+  same as the value of `inflid`.
 
---[==[
 Find the inflection spec by scraping the contents of the Icelandic section of `lemma`, looking for `infltemp` calls
 (where template is e.g. "is-ndecl", "is-adecl" or "is-conj") If `inflid` is given, it must match the value of the
 |id= param specified to the inflection template; otherwise, any inflection template call will work. If anything goes
@@ -2356,55 +2240,40 @@ returned, each containing a field `infl` with the inflection spec. The inflectio
 If `allow_empty_infl` is given, a missing inflection spec in 1= is allowed and converted to an empty string;
 otherwise, an error is signaled.
 ]==]
-function export.find_inflection(data)
-	local langname, lemma, infltemp, allow_empty_infl, is_deriv, inflid = data.langname, data.lemma, data.infltemp,
-		data.allow_empty_infl, data.is_deriv, data.inflid
-	local title = mw.title.new(lemma)
+function export.scrape_inflection(data)
+	local langname, lemma, infltemp, inflid, idparam =
+		data.langname, data.lemma, data.infltemp, data.inflid, data.idparam
+	local lang_lemma = ("%s base lemma '[[%s]]'"):format(langname, lemma)
+	local title = new_title(lemma)
 	if title then
 		local content = title:getContent()
 		if content then
 			local langtext = require(pages_module).get_section(content, langname)
 			if langtext then
-				local infl_sets_by_id = {}
-				local infl_sets_without_id = {}
+				local inflobjs_by_id = {}
+				local inflobjs_without_id = {}
 				local ordered_seen_ids = {}
 				for template in require(template_parser_module).find_templates(langtext) do
-					if template:get_name() == infltemp then
+					local matches
+					if type(infltemp) == "string" then
+						matches = template:get_name() == infltemp
+					else
+						matches = infltemp(template)
+					end
+					if matches then
+						local inflobj = {template = template}
 						local args = template:get_arguments()
-						local infls = {}
-						if is_deriv and args.deriv then
-							local i = 1
-							while true do
-								local deriv_param = "deriv" .. (i == 1 and "" or tostring(i))
-								if args[deriv_param] then
-									table.insert(infls, {infl = args[deriv_param]})
-									i = i + 1
-								else
-									break
-								end
+						local tid = args[idparam]
+						if tid then
+							if inflobjs_by_id[tid] then
+								return ("For %s base lemma '[[%s]]', saw id='%s' twice"):format(
+									langname, lemma, tid
+								)
 							end
-						elseif not args[1] and not allow_empty_infl then
-							return ("For %s base lemma '[[%s]]', saw no inflection spec in 1="):format(langname, lemma)
+							inflobjs_by_id[tid] = inflobj
+							m_table.insertIfNot(ordered_seen_ids, tid)
 						else
-							local i = 1
-							while true do
-								if args[i] or (i == 1 and allow_empty_infl) then
-									table.insert(infls, {infl = args[i] or ""})
-									i = i + 1
-								else
-									break
-								end
-							end
-						end
-						local infl_set = {infls = infls, pos = args.pos}
-						if args.id then
-							if infl_sets_by_id[args.id] then
-								return ("For %s base lemma '[[%s]]', saw id='%s' twice"):format(langname, args.id)
-							end
-							infl_sets_by_id[args.id] = infl_set
-							m_table.insertIfNot(ordered_seen_ids, args.id)
-						else
-							table.insert(infl_sets_without_id, infl_set)
+							table.insert(inflobjs_without_id, inflobj)
 						end
 					end
 				end
@@ -2415,128 +2284,62 @@ function export.find_inflection(data)
 					end
 					return m_table.serialCommaJoin(quoted_seen_ids, {dontTag = true})
 				end
-				if ordered_seen_ids[1] and infl_sets_without_id[1] then
-					return ("For %s base lemma '[[%s]]', saw %s [[Template:%s]]%s with id=%s " ..
-						"as well as %s [[Template:%s]]%s without ID; this is not allowed; with multiple " ..
-						"[[Template:%s]] calls, all must have id= params"):format(langname, lemma, #ordered_seen_ids,
-						infltemp, ordered_seen_ids[2] and "'s" or "",concat_ordered_seen_ids(), #infl_sets_without_id,
-						infltemp, infl_sets_without_id[2] and "'s" or "", infltemp)
-				elseif not ordered_seen_ids[1] and not infl_sets_without_id[1] then
-					return ("For %s base lemma '[[%s]]', found %s section but couldn't find " ..
-							"any calls to [[Template:%s]]"):format(langname, lemma, langname, infltemp)
-				elseif #infl_sets_without_id > 1 then
-					return ("For %s base lemma '[[%s]]', found %s [[Template:%s]]'s without " ..
-						"ID's; this is not allowed; with multiple [[Template:%s]] calls, all must have id= params"):
-						format(langname, lemma, #infl_sets_without_id, infltemp, infltemp)
+				local formatted_template = type(infltemp) == "string" and ("[[Template:%s]]"):format(infltemp) or
+					"inflection template"
+				local formatted_template_sing_article = type(infltemp) == "string" and
+					("[[Template:%s]]"):format(infltemp) or "an inflection template"
+				local formatted_template_plural = type(infltemp) == "string" and "'s" or "s"
+				if ordered_seen_ids[1] and inflobjs_without_id[1] then
+					return ("For %s, saw %s %s%s with id=%s as well as %s %s%s without ID; this is not allowed; " ..
+						"with multiple %s calls, all must have id= params"):format(lang_lemma, #ordered_seen_ids,
+						formatted_template, ordered_seen_ids[2] and formatted_template_plural or "",
+						concat_ordered_seen_ids(), #inflobjs_without_id, formatted_template,
+						inflobjs_without_id[2] and formatted_template_plural or "", formatted_template)
+				elseif not ordered_seen_ids[1] and not inflobjs_without_id[1] then
+					return ("For %s, found %s section but couldn't find any calls to %s"):format(
+						lang_lemma, langname, formatted_template_sing_article)
+				elseif #inflobjs_without_id > 1 then
+					return ("For %s, found %s %s%s without ID's; this is not allowed; with multiple %s calls, " ..
+						"all must have id= params"):format(lang_lemma, #inflobjs_without_id, formatted_template,
+						formatted_template_plural, formatted_template)
 				elseif inflid then
-					if infl_sets_by_id[inflid] then
-						return infl_sets_by_id[inflid]
+					if inflobjs_by_id[inflid] then
+						return inflobjs_by_id[inflid]
 					elseif ordered_seen_ids[1] then
-							return ("For %s base lemma '[[%s]]', found %s section but couldn't find " ..
-								"any inflections matching ID '%s'; instead found ID's %s; you may have misspelled " ..
-								"the ID"):format(langname, lemma, langname, inflid, concat_ordered_seen_ids())
+						return ("For %s, found %s section but couldn't find any inflections matching ID '%s'; " ..
+							"instead found ID's %s; you may have misspelled the ID"):format(lang_lemma, langname,
+							inflid, concat_ordered_seen_ids())
 					else
-						return ("For %s base lemma '[[%s]]', found %s section with a single " ..
-							"[[Template:%s]] without ID, but ID requirement '%s' specified; consider " ..
-							"removing the ID requirement"):format(langname, lemma, langname, infltemp, inflid)
+						return ("For %s, found %s section with a single %s without ID, but ID requirement '%s' " ..
+							"specified; consider removing the ID requirement"):format(lang_lemma, langname,
+							formatted_template, inflid)
 					end
-				elseif infl_sets_without_id[1] then
+				elseif inflobjs_without_id[1] then
 					-- only one infl template, and it doesn't have an id=; return it
-					return infl_sets_without_id[1]
+					return inflobjs_without_id[1]
 				elseif ordered_seen_ids[2] then
-					return ("For %s base lemma '[[%s]]', saw %s [[Template:%s]]'s with id=%s " ..
-						"but with a request to return the inflection without ID; consider adding an ID " ..
-						"restriction to the scrape request, e.g. '@@:%s' for self-scraping or '@%s:%s' for " ..
-						"scraping from another page"):format(langname, lemma, #ordered_seen_ids, infltemp,
-						concat_ordered_seen_ids(), ordered_seen_ids[1], usub(lemma, 1, 1), ordered_seen_ids[1])
+					return ("For %s, saw %s %s%s with id=%s but with a request to return the inflection without " ..
+						"ID; consider adding an ID restriction to the scrape request, e.g. '@@:%s' for " ..
+						"self-scraping or '@%s:%s' for scraping from another page"):format(lang_lemma,
+						#ordered_seen_ids, formatted_template, formatted_template_plural, concat_ordered_seen_ids(),
+						ordered_seen_ids[1], usub(lemma, 1, 1), ordered_seen_ids[1])
 				else
-					return ("For %s base lemma '[[%s]]', found %s section with a single " ..
-						"[[Template:%s]] with id=%s, but the scrape request didn't specify an ID; " ..
-						"consider removing the id= param from the [[Template:%s]] call unless you " ..
-						"expect to add more such calls to the page in the future (in which case add the ID " ..
-						"to the scrape request, e.g. '@@:%s' for self-scraping or '@%s:%s' for scraping from " ..
-						"another page"):format(langname, lemma, langname, infltemp, concat_ordered_seen_ids(), infltemp,
+					return ("For %s, found %s section with a single %s with id=%s, but the scrape request didn't " ..
+						"specify an ID; consider removing the id= param from the %s call unless you expect to add " ..
+						"more such calls to the page in the future (in which case add the ID to the scrape request, " ..
+						"e.g. '@@:%s' for self-scraping or '@%s:%s' for scraping from another page"):format(lang_lemma,
+						langname, formatted_template, concat_ordered_seen_ids(), formatted_template,
 						ordered_seen_ids[1], usub(lemma, 1, 1), ordered_seen_ids[1])
 				end
 			else
-				return ("For %s base lemma '[[%s]]', page exists but has no %s section"):format(langname, lemma,
-					langname)
+				return ("For %s, page exists but has no %s section"):format(lang_lemma, langname)
 			end
 		else
-			return ("For %s base lemma '[[%s]]', couldn't fetch contents for page; page may not exist"):
-				format(langname, lemma)
+			return ("For %s, couldn't fetch contents for page; page may not exist"):format(lang_lemma)
 		end
 	else
-		return ("Bad %s base lemma '[[%s]]'; couldn't create title object"):format(langname, lemma)
+		return ("Bad %s; couldn't create title object"):format(lang_lemma)
 	end
-end
-
-
--- Find and return the prefix, base lemma and inflection spec for a scraped lemma given `lemma` (the lemma with an `@l`
--- or similar indicator spec), the scraping spec (e.g. "l", i.e. the portion after the @ sign), and optionally an
--- `inflid` restriction. The base lemma is the lemma whose inflection was scraped, and `prefix` is the portion of the
--- lemma before the base lemma (which must be a suffix of the lemma). For example, if `lemma` is [[ljósabekkur]]
--- "sunbed, tanning bed" and `scrape_spec` is "@b", the base lemma will be [[bekkur]] "bench" and the prefix will be
--- "ljósa". The inflection spec returned will be either an object containing a field `infl` containing the scraped
--- inflection spec, or a string indicating an error to display.
-function export.find_scraped_infl(data)
-	local langname, lemma, scrape_spec, scrape_is_suffix, scrape_is_uppercase, infltemp, allow_empty_infl, inflid =
-		data.langname, data.lemma, data.scrape_spec, data.scrape_is_suffix, data.scrape_is_uppercase, data.infltemp,
-		data.allow_empty_infl, data.inflid
-	local prefix, base_lemma
-	if scrape_spec == "@" then -- @@ specified
-		base_lemma = lemma
-		prefix = ""
-	else
-		local lemma_minus_ending, final_ending = data.parse_off_ending(lemma)
-		local escaped_scrape_spec = m_str_utils.pattern_escape(scrape_spec)
-		prefix, base_lemma = rmatch(lemma_minus_ending, "^(.*)(" .. escaped_scrape_spec .. ".-)$")
-		if not prefix then
-			error(("Can't determine base lemma to scrape given lemma '%s' and scraping spec '@%s'; scraping spec not " ..
-				"found in lemma"):format(lemma, scrape_spec))
-		end
-		base_lemma = base_lemma .. final_ending
-	end
-	if scrape_is_uppercase then
-		local base_first, base_rest = rmatch(base_lemma, "^(.)(.*)$")
-		if not base_first then
-			error(("Internal error: Something wrong, couldn't match a single character in %s"):format(dump(base_lemma)))
-		end
-		base_lemma = uupper(base_first) .. base_rest
-	end
-	if scrape_is_suffix then
-		base_lemma = "-" .. base_lemma
-	end
-	local infl = export.find_inflection {
-		langname = langname,
-		lemma = base_lemma,
-		infltemp = infltemp,
-		allow_empty_infl = allow_empty_infl,
-		is_deriv = true,
-		inflid = inflid
-	}
-	local errmsg = nil
-	if type(infl) == "table" then
-		infl = infl.infls
-		if infl[2] then
-			errmsg = ("For %s base lemma '[[%s]]', saw %s inflection specs; currently, can only handle one"):
-				format(langname, base_lemma, #infl)
-		else
-			infl = infl[1]
-			local argspec = infl.infl
-			if argspec:find("<") then
-				errmsg = ("For %s base lemma '[[%s]]', saw explicit angle bracket spec in inflection, likely " ..
-					"indicating a multiword inflection; can't handle yet: %s"):format(langname, lemma, argspec)
-			elseif argspec:find("%(%(") then
-				errmsg = ("For %s base lemma '[[%s]]', saw alternant specs; can't handle yet: %s"):
-					format(langname, lemma, argspec)
-			end
-		end
-		if errmsg then
-			infl = errmsg
-		end
-	end
-	return prefix, base_lemma, infl
 end
 
 
