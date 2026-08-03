@@ -14,6 +14,7 @@ local iut = require("Module:inflection utilities")
 local put = require("Module:parse utilities")
 local m_para = require("Module:parameters")
 local com = require("Module:is-common")
+local m_inflection_table = require("Module:inflection-table")
 local m_is_adjective = require_when_needed("Module:is-adjective")
 local en_utilities_module = "Module:en-utilities"
 
@@ -134,6 +135,8 @@ add_slot("presp", "pres|part", "act")
 -- The past infinitive only occurs for a few verbs and only in the active voice.
 add_slot("pastinf", "past|VOICE|inf", "act")
 
+local clipped_imp_2s_footnote = "Mostly found in older literature, biblical texts, or high-register rhetoric."
+local suffixed_imp_2p_footnote = "Spoken form; proscribed in writing, where the unappended plural form (optionally followed by the full pronoun) is preferred."
 
 --[=[
 Create an empty `base` object for holding the result of parsing and later the generated forms. The object is of the form
@@ -361,12 +364,12 @@ local function create_base()
 end
 
 
-local function formval_list_has_hyphen(formvals)
-	if not formvals then
+local function formobj_list_has_hyphen(formobjs)
+	if not formobjs then
 		return false
 	end
-	for _, formval in ipairs(formvals) do
-		if formval.form == "-" then
+	for _, formobj in ipairs(formobjs) do
+		if formobj.form == "-" then
 			return true
 		end
 	end
@@ -427,11 +430,12 @@ end
 
 -- Add the appropriate dental suffix (ð, d or t) to a consonant cluster, which should be the final cluster of the word.
 -- If the word ends in a vowel, the cluster should be an empty string. Returns a list of the possible clusters including
--- the dental suffix (it is one this way since sometimes the cluster assimilates or partly assimilates to the suffix).
+-- the dental suffix (it is done this way since sometimes the cluster assimilates or partly assimilates to the suffix).
 -- If there is more than one element in the list, the first element is the most common one and the one that should be
 -- the default; but if the first element is "-" (for -rr and -rn), there is no default and users must explicitly specify
--- the past tense (other dental-suffixed forms will pick up the appropriate ending from the past tense). A return value
--- of nil means the cluster ending was unknown; an error should be thrown in this case.
+-- the past tense. If the past tense is explicitly given, other dental-suffixed forms (past participle, joined
+-- imperative) will pick up the appropriate ending from the past tense. A return value of nil means the cluster ending
+-- was unknown; an error should be thrown in this case.
 local function add_dental_suffix(cluster)
 	-- Vowel stems
 	if cluster == "" then
@@ -861,7 +865,7 @@ end
 -- indefinite and definite slot variants. If any of the formats for `endings` is supplied other than the separate
 -- indefinite/definite table, the supplied set of endings is used for both indefinite and definite slot variants.
 -- `ending_override` and `endings_are_full` are as in add_slotval().
-local function add(base, slot, props, endings, ending_override, endings_are_full)
+local function add(data, slot, stemobj, ending)
 	if not endings then
 		return
 	end
@@ -887,53 +891,6 @@ local function add(base, slot, props, endings, ending_override, endings_are_full
 		end
 		add_slotval(base, "def_", slot, props, def_endings, clitic, ending_override, endings_are_full)
 	end
-end
-
-
--- Generate the accusative plural ending from the nominative plural. For feminines and neuters, both are the same.
--- For masculines, drop the -r except in -ur.
-local function acc_p_from_nom_p(base, nom_p)
-	if base.gender == "f" or base.gender == "n" then
-		return nom_p
-	end
-	if not nom_p then
-		return nom_p -- this is correct as `nom_p` could be nil or false and we want to return the same thing
-	end
-	local function form_masc_acc_p(ending)
-		-- Form the masculine accusative by dropping -r unless the form ends in -ur, which is kept. If the ending is *,
-		-- we substitute the entire actual lemma. In that case, if the lemma is definite-only, we have to strip off
-		-- the nominative plural clitic -nir before generating the accusative. We don't add the clitic -na because it
-		-- will be added in add_slotval().
-		if ending == "*" then
-			ending = "!" .. base.actual_lemma
-		end
-		if base.definiteness == "def" and ending:find("^!") then
-			ending = ending:match("^(.*)nir$")
-			if not ending then
-				error(("Masculine plural definite-only lemma '%s' does not end in expected clitic '-nir'; " ..
-					"don't know how to compute the corresponding accusative plural"):format(base.actual_lemma))
-			end
-		end
-		-- If the ending is full (begins with !), check the whole thing for -ur at the end.
-		if ending:find("^%^*ur$") or ending:find("^!.*[^Aa]ur$") then
-			-- as-is
-		else
-			ending = ending:gsub("r$", "")
-		end
-		return ending
-	end
-	if type(nom_p) == "string" then
-		return form_masc_acc_p(nom_p)
-	end
-	local acc_p = {}
-	for _, ending in ipairs(nom_p) do
-		if type(ending) == "string" then
-			insert(acc_p, form_masc_acc_p(ending))
-		else
-			insert(acc_p, { form = form_masc_acc_p(ending.form), footnotes = ending.footnotes })
-		end
-	end
-	return acc_p
 end
 
 
@@ -1025,8 +982,8 @@ end
 -- will be defaulted: dat_p defaults to "um", gen_p defaults to "a", and acc_p defaults to the nom_p except for masculines
 -- not in -ur, where the -r is dropped. Use `false` as the value of an ending to disable generating any value for that
 -- slot.
-local function add_personal_tense(base, stems, s1, s2, s3, p1, p2, p3)
-	add(base, "nom_s", props, nom_s)
+local function add_personal_tense(data, slot_prefix, stemobj, s1, s2, s3, p1, p2, p3)
+	add(data, slot_prefix .. "1s", , "nom_s", props, nom_s)
 	add(base, "acc_s", props, acc_s)
 	add(base, "dat_s", props, dat_s)
 	add(base, "gen_s", props, gen_s)
@@ -2196,23 +2153,26 @@ local function determine_default_u_mutation(base)
 end
 
 local function not_if_no_pres_indic_sg(data)
-	if formval_list_has_hyphen(data.base.pres.indicative.singular) then
+	if formobj_list_has_hyphen(data.base.pres.indicative.singular) then
 		return nil
 	end
 	return "+"
 end
 
 -- This applies equally for the indicative and subjunctive.
-local function generate_default_pres_1pl(data)
+local function apply_umut_to_stem(data, stem, existing_footnotes)
 	local values = {}
-	local infstem = data.base.infstem
 	for _, umut_spec in ipairs(data.base.default_umut_specs) do
 		iut.insert_form(values, {
-			form = umut_spec.form:find("^%-") and infstem or com.apply_u_mutation(infstem, umut_spec.form),
-			footnotes = umut_spec.footnotes,
+			form = umut_spec.form:find("^%-") and stem or com.apply_u_mutation(stem, umut_spec.form),
+			footnotes = iut.combine_footnotes(existing_footnotes, umut_spec.footnotes),
 		})
 	end
 	return values
+end
+
+local function generate_default_pres_1pl(data)
+	return apply_umut_to_stem(data, data.base.infstem)
 end
 
 -- This applies equally for the indicative and subjunctive.
@@ -2232,10 +2192,48 @@ local function generate_default_pres_2pl(data)
 end
 
 local function not_if_no_past_indic_sg(data)
-	if formval_list_has_hyphen(data.base.past.indicative.singular) then
+	if formobj_list_has_hyphen(data.base.past.indicative.singular) then
 		return nil
 	end
 	return "+"
+end
+
+local function form_default_dental_suffixed_stem(data, stem)
+	stem = remove_jv_before_non_vowel(stem)
+	local begin, final_cluster = umatch(stem, "^(.-)(" .. com.cons_c .. "*)$")
+	local cluster_with_dental = add_dental_suffix(final_cluster)
+	if not cluster_with_dental then
+		data.err(("Unrecognized final cluster '%s' in stem '%s'"):format(final_cluster, stem))
+	end
+	if cluster_with_dental[1] == "-" then
+		table.remove(cluster_with_dental, 1)
+		for i, cl in ipairs(cluster_with_dental) do
+			cluster_with_dental[i] = "'" .. cl .. "'"
+		end
+		data.err(("Cluster '%s' has no default in stem '%s', specify explicitly; normal dental-suffixed clusters are %s"):format(
+			final_cluster, stem, mw.text.listToText(cluster_with_dental)))
+	end
+	return begin .. cluster_with_dental[1]
+end
+
+local function apply_parenthesized_umlaut_spec(data, values_to_insert_into, stemobjs, default_umlaut_spec)
+	for _, stemobj in ipairs(stemobjs) do
+		local paren_spec = stemobj.paren_spec or {{form = default_umlaut_spec}}
+		for _, umlautobj in ipairs(paren_spec) do
+			local umform = umlautobj.form
+			if umform ~= "^" and umform ~= "-^" and not ufind(umform, "[^Jj]?" .. com.vowel_c .. "$") and
+				not umform:find("^[Ee][iIyY]$") and not umform:find("^[Aa][Uu]$") then
+				data.err(("Invalid parenthesized subjunctive umlaut spec '%s'; should be ^, -^, a dipthong or a vowel optionally preceded by j"):format(
+					umform))
+			end
+			local substem = umform == "-^" and stemobj.form or com.apply_i_mutation(stemobj.form,
+				umform ~= "^" and umform or nil, false, not not stemobj.paren_spec)
+			iut.insert_form_into_list(values_to_insert_into, {
+				form = substem,
+				footnotes = iut.combine_footnotes(stemobj.footnotes, umlautobj.footnotes),
+			})
+		end
+	end
 end
 
 local principal_part_stem_conjugations = {
@@ -2284,6 +2282,35 @@ local principal_part_stem_conjugations = {
 				data.interr(("Unrecognized verb class: %s"):format(class))
 			end
 		end,
+		conjugate = function(data, stemobj)
+			local s2, s3
+			local ending = stemobj.ending
+			if ending == "i" or ending == "a" then
+				s2 = ending .. "r"
+				s3 = s2
+			else
+				local stem = stemobj.form
+				if ufind(stem, com.vowel_c .. "$") then
+					s2 = "rð"
+					s3 = "r"
+				elseif stem:find("r$") then
+					s2 = "ð"
+					s3 = ""
+				elseif stem:find("s$") then
+					s2 = "t"
+					s3 = ""
+				elseif stem:find("x$") or stem:find("ín$") then
+					-- Einarsson says all singular endings after -n are null, but that only seems to apply to strong 1
+					-- verbs. Strong 3 verbs in -nn have -ur, -ur, as do weak 1 verbs in -nja.
+					s2 = ""
+					s3 = ""
+				else
+					s2 = "ur"
+					s3 = "ur"
+				end
+			end
+			add_personal_tense(data, "pres", stemobj, ending, s2, s3)
+		end,
 	}},
 	{"pres_indic_1pl", {
 		desc = "first-person plural present indicative",
@@ -2293,6 +2320,9 @@ local principal_part_stem_conjugations = {
 		end,
 		default_if_unspecified = not_if_no_pres_indic_sg,
 		generate_default = generate_default_pres_1pl,
+		conjugate = function(data, stemobj)
+			add(data, "pres1p", stemobj, "um")
+		end,
 	}},
 	{"pres_indic_2pl", {
 		desc = "second-person plural present indicative",
@@ -2300,6 +2330,9 @@ local principal_part_stem_conjugations = {
 		process_explicit = process_explicit_pres_2pl,
 		default_if_unspecified = not_if_no_pres_indic_sg,
 		generate_default = generate_default_pres_2pl,
+		conjugate = function(data, stemobj)
+			add(data, "pres2p", stemobj, "ið")
+		end,
 	}},
 	{"pres_indic_3pl", {
 		desc = "third-person plural present indicative",
@@ -2310,6 +2343,9 @@ local principal_part_stem_conjugations = {
 				form = data.base.lemma,
 			}
 		end,
+		conjugate = function(data, stemobj)
+			add(data, "pres3p", stemobj, "")
+		end,
 	}},
 	{"pres_subj_sg", {
 		desc = "present subjunctive singular",
@@ -2317,7 +2353,7 @@ local principal_part_stem_conjugations = {
 		process_explicit = function(data, value)
 			local stem = value:match("^(.*)i$")
 			if not stem then
-				data.err(("Value '%s' should end in -i"):format(value))
+				data.err(("Value for first-person singular '%s' should end in -i"):format(value))
 			end
 			return stem
 		end,
@@ -2326,6 +2362,9 @@ local principal_part_stem_conjugations = {
 			return {
 				form = remove_j_before_i(data.base.infstem),
 			}
+		end,
+		conjugate = function(data, stemobj)
+			add_personal_tense(data, "pressub", stemobj, "i", "ir", "i")
 		end,
 	}},
 	{"pres_subj_1pl", {
@@ -2336,6 +2375,9 @@ local principal_part_stem_conjugations = {
 		end,
 		default_if_unspecified = not_if_no_pres_indic_sg,
 		generate_default = generate_default_pres_1pl,
+		conjugate = function(data, stemobj)
+			add(data, "pressub1p", stemobj, "um")
+		end,
 	}},
 	{"pres_subj_2pl", {
 		desc = "second-person plural present subjunctive",
@@ -2343,6 +2385,10 @@ local principal_part_stem_conjugations = {
 		process_explicit = process_explicit_pres_2pl,
 		default_if_unspecified = not_if_no_pres_indic_sg,
 		generate_default = generate_default_pres_2pl,
+		conjugate = function(data, stemobj)
+			add(data, "pressub2p", stemobj, "ið")
+			add(data, "pressub3p", stemobj, "i")
+		end,
 	}},
 	{"past_indic_sg", {
 		desc = "past indicative singular",
@@ -2365,456 +2411,140 @@ local principal_part_stem_conjugations = {
 			if data.verbclass:find("^s") then
 				data.err("For strong verbs, this principal part must be given explicitly")
 			end
+			local dental_stem
+			if data.verbclass == "w4" then
+				dental_stem = data.base.infstem .. "að"
+			else
+				local past_base_stem
+				if data.verbclass == "w1" and data.base.infstem:find("j$") then
+					past_base_stem = com.apply_reverse_i_mutation(data.base.infstem, nil, false, false)
+				else
+					past_base_stem = data.base.infstem
+				end
+				dental_stem = form_default_dental_suffixed_stem(data, data.base.infstem)
+			end
 			return {
-				form = remove_j_before_i(data.base.infstem),
+				form = dental_stem,
 			}
 		end,
 	}},
-}
-
-
--- Determine the stems for combinations of tense, mood and number.
-local function determine_stems(base, verbclass, parse_err)
-	local stem = nil
-	local ending
-	local default_props = {}
-	-- Determine declension
-	if base.props.indecl then
-		base.decl = "indecl"
-		stem = base.lemma
-	elseif base.props["decl?"] then
-		base.decl = "decl?"
-		stem = base.lemma
-	elseif base.gender == "m" then
-		if not stem then
-			stem, ending = umatch(base.lemma, "^(.*[ÁáÆæ])(r)$")
-			if stem then
-				-- in -ár:
-				-- [[nár]] "corpse", [[sár]] "tub (archaic)", [[hár]] "thole, oarlock (archaic)", [[hár]]
-				-- "spiny dogfish (archaic)" (with v-infix), [[kljár]] "weaving stone (archaic)", [[ljár]] "scythe",
-				-- [[skjár]] "video screen, display", [[már]] "seagull", [[sjár]] "sea", [[snjár]] "snow" (with
-				-- v-infix); vs. stems ending in -r: [[ár]] "? (archaic)", [[lár]] "wooden box for wool", [[klár]]
-				-- "inferior horse, nag", [[pílár]] "slat, fence post; spoke (dated)", [[kentár]] "centaur"
-				--
-				-- in -ær:
-				-- [[glær]] "sea", [[skær]] "? (obsolete)", [[blær]] "gentle breeze", [[bær]] "farm; town", [[óbær]]
-				-- "?", [[sær]] "sea", [[snær]] "snow"
-				--
-				-- We used to also drop -r by default from the stem in -ýr words, but this doesn't make sense for
-				-- adjectives and only half makes sense for nouns, so we don't do it any more. We have stems without -r:
-				-- [[ýr]] "yew", [[býr]] "town, farm", [[gnýr]] "clash, rumble; blue wildebeest", [[týr]] "hero; god",
-				-- also many proper names; vs. stems ending in -r: [[fýr]] "dude, guy", [[lýr]] "pollock", [[sýr]]
-				-- "? (poetic)", [[ýr]] "? (obsolete)", [[hlýr]] "? (obsolete)", [[glýr]] "? (obsolete)"
-				base.decl = "m"
+	{"past_indic_pl", {
+		desc = "past indicative plural",
+		explicit_part = function(data) return data.base.past.indicative.plural end,
+		process_explicit = function(data, value)
+			local stem = value:match("^(.*)um$")
+			if not stem then
+				data.err(("Value for first-person plural '%s' should end in -um"):format(value))
 			end
-		end
-		if not stem then
-			stem = umatch(base.lemma, "^(.*[Aa]ur)$")
-			if stem then
-				-- [[maur]] "ant", [[aur]] "loam, mud", [[gaur]] "ruffian", [[paur]] "devil; enmity",
-				-- [[saur]] "dirt; excrement", [[staur]] "post", [[ljósastaur]] "lamp post"
-				base.decl = "m"
-			end
-		end
-		if not stem then
-			-- There must be at least one vowel; lemmas like [[bur]] don't count.
-			stem, ending = umatch(base.lemma, "^(.*" .. com.vowel_or_hyphen_c .. ".*)(ur)$")
-			if stem then
-				if stem:find("skap$") and not base.stem then
-					-- tons of words in -skapur
-					base.decl = "m-skapur"
-				elseif stem:find("nað$") and not base.stem then
-					-- lots of words in -naður
-					base.decl = "m-naður"
-					default_props.umut = "uUmut"
-				else
-					if base.stem == base.lemma then
-						-- [[akur]] "field" etc. where the stem includes the final -r
-						stem = base.stem
-						ending = "" -- not actually used
-						default_props.con = "con"
+			return stem
+		end,
+		default_if_unspecified = not_if_no_past_indic_sg,
+		generate_default = function(data)
+			local values = {}
+			-- If the past indicative singular was given as -, `base.stems.past_indic_sg` will be nil, but we should
+			-- never encounter this because of `default_if_unspecified`.
+			for _, formobj in ipairs(data.base.stems.past_indic_sg) do
+				local form = formobj.form
+				if formobj.ending == "" then
+					data.err(("Cannot generate past indicative plural default from explicit strong singular '%s'; specify the plural explicitly as well"):format(
+						form
+					))
+				end
+				local weak_4_stem = form:match("^(.*)að$")
+				if weak_4_stem then
+					local umut_stems = apply_umut_to_stem(data, weak_4_stem, formobj.footnotes)
+					for _, umut_stem in ipairs(umut_stems) do
+						umut_stem.form = umut_stem.form .. "uð"
+						iut.insert_form_into_list(values, umut_stem)
 					end
-					-- [[hestur]] "horse" and lots of others
-					base.decl = "m"
-				end
-			end
-		end
-		if not stem then
-			stem = umatch(base.lemma, "^(.*[Ee][iy]r)$")
-			if stem then
-				-- in -eir (all include -r in the stem):
-				-- [[geir]] "?", [[eir]] "copper", [[leir]] "clay", [[Geir]] (male given name)
-				--
-				-- in -eyr, including -r in the stem:
-				-- [[reyr]] "reed", [[Reyr]] (male given name)
-				-- in -eyr, not including -r in the stem:
-				-- [[þeyr]] "thaw, thawing wind", [[Þeyr]] (male given name), [[Freyr]] (male given name)
-				base.decl = "m"
-			end
-		end
-		if not stem then
-			-- There must be at least one vowel (although there don't appear to be any single-syllable
-			-- lemmas ending in -ir other than in -eir).
-			stem, ending = umatch(base.lemma, "^(.*" .. com.vowel_or_hyphen_c .. ".*)(ir)$")
-			if stem then
-				-- [[læknir]] "physician" and many others
-				-- [[bróðir]], [[faðir]] are r-stems
-				if base.props.rstem then
-					base.decl = "m-rstem"
-					base.need_imut = true
 				else
-					base.decl = "m-ir"
+					iut.insert_forms_into_list(values, apply_umut_to_stem(data, form, formobj.footnotes))
 				end
 			end
-		end
-		if not stem then
-			stem, ending = umatch(base.lemma, "^(.*l)(l)$")
-			if stem then
-				if is_proper_noun(base, stem) and stem:find("kel$") then
-					base.decl = "m-kell"
-				else
-					if not base.stem and (ufind(stem, com.cons_c .. "[aiu]l$") or stem:find("^[aiuAIU]l$")) then
-						-- [[gaffall]] "fork" (dat pl [[göfflum]]), [[þumall]] "thumb"; [[ekkill]] "widower";
-						-- [[spegill]] "mirror"; [[segull]] "magnet"; [[öxull]] "axis; axle"; etc. Note that the check
-						-- for a consonant preceding the a/i/u is important as there are words like [[manúall]]
-						-- "manual", [[ritúall]] "ritual", [[kokteill]] "cocktail", [[feill]] "flaw, error", [[deill]]
-						-- "dispute???" (rare, regional), [[haull]] "hernia", [[straull]] "? (rare, regional)" that
-						-- don't have contraction. Beware of the rare word [[síill]] "sieve? strainer?" that per BÍN
-						-- does contract to síl- before vowels. Currently the code to handle contraction will throw an
-						-- error if you attempt to contract that word, but you can use 'vstem:...'.
-						--
-						-- There are also lots of words in a vowel other than a/i/u followed by -ll, such as [[bíll]]
-						-- "car", [[áll]] "eel", [[konsúll]] "consul", [[þræll]] "slave", [[hvoll]] "hill", [[stóll]]
-						-- "chair", etc. In these, the final -l is the nominative singular ending, as above.
-						--
-						-- Note that if the user overrode the stem (e.g. using '#' as with [[Ármann]]), we don't
-						-- default to contraction as it may cause an error to be thrown.
-						default_props.con = "con"
-					end
-					base.decl = "m"
-				end
+			return values
+		end,
+	}},
+	{"past_subj_sg", {
+		desc = "past subjunctive singular",
+		explicit_part = function(data) return data.base.past.subjunctive.singular end,
+		process_explicit = function(data, value)
+			local stem = value:match("^(.*)i$")
+			if not stem then
+				data.err(("Value for first-person singular '%s' should end in -i"):format(value))
 			end
-		end
-		if not stem then
-			stem, ending = umatch(base.lemma, "^(.*n)(n)$")
-			if stem then
-				if not base.stem and (ufind(stem, com.cons_c .. "[aiu]n$") or stem:find("^[aiuAIU]n$")) then
-					-- As with -all/-ill/-ull although there are fewer such words in -nn. Examples: [[aftann]] "evening"
-					-- (dat pl öftnum), [[arinn]] "hearth, fireplace" (dat pl örnum), [[drottinn]] "lord", [[himinn]]
-					-- "sky, heaven", [[morgunn]] "morning", [[jötunn]] "giant", etc.
-					--
-					-- There are also lots of words in a vowel other than a/i/u followed by -nn, such as [[fleinn]]
-					-- "spear", [[steinn]] "rock", [[prjónn]] "knitting needle", [[daunn]] "stink", [[húnn]] "knob".
-					-- In these, the final -n is the nominative singular ending, as above.
-					--
-					-- Note that if the user overrode the stem (e.g. using '#' as with [[Ármann]]), we don't default
-					-- to contraction as it may cause an error to be thrown.
-					default_props.con = "con"
-				end
-				base.decl = "m"
-			end
-		end
-		if not stem and not base.props.weak then
-			stem, ending = umatch(base.lemma, "^(.*[aóæ]nd)(i)$")
-			if stem then
-				-- [[nemandi]] "student" and many others; terms in -jandi like [[byrjandi]]
-				-- "beginner", [[seljandi]] "seller" umlaut to -jend- in the plural instead of -ind-
-				-- also terms in -óndi (probably all compounds of [[bóndi]] "farmer") and in -ændi
-				-- (probably all compounds of [[frændi]]). Terms like [[andi]] "breath, spirit" and
-				-- [[heiðasandi]] "heath sand?" need '.weak' to disable this, as does [[fjandi]] in
-				-- the meaning "devil, demon" (vs. "enemy", which has plural [[fjendur]]). Terms like
-				-- [[vandi]] "trouble; responsibility; custom, habit" and compounds are singular-only.
-				base.decl = "m-ndi"
-				if not stem:find("ænd$") then
-					base.need_imut = true
-				end
-				if stem:find("jand$") then
-					default_props.imutval = "je"
-				end
-			end
-		end
-		if not stem then
-			stem, ending = umatch(base.lemma, "^(.*)([ia])$")
-			if stem then
-				-- [[tími]] "time, hour" and many others; [[herra]] "gentleman" ([[sendiherra]] "ambassador"),
-				-- [[séra]]/[[síra]] "reverend"
-				base.decl = "m-weak"
-				-- Recognize -ingi and make automatically j-infixing, but only when a vowel precedes
-				-- (not [[ingi]], [[Ingi]], [[stingi]], [[þvingi]]). Use `-j` to turn this off.
-				if ending == "i" and ufind(stem, com.vowel_or_hyphen_c .. ".*ing$") then
-					default_props.j = "j"
-				elseif ending == "i" and ufind(stem, com.vowel_or_hyphen_c .. ".*ar$") then
-					default_props.umut = "uUmut"
-				end
-			end
-		end
-		if not stem then
-			stem = umatch(base.lemma, "^(.*ó)$")
-			if stem then
-				-- [[kanó]] "canoe", [[pesó]] "peso", [[Plútó]] "Pluto", [[Markó]] (male given name), etc.
-				base.decl = "m-ó"
-			end
-		end
-		if not stem then
-			-- Miscellaneous masculine terms without ending
-			stem = base.lemma
-			base.decl = "m"
-		end
-	elseif base.gender == "f" then
-		if not stem then
-			stem, ending = umatch(base.lemma, "^(.*)(a)$")
-			if stem then
-				base.decl = "f-weak"
-			end
-		end
-		if not stem then
-			stem, ending = umatch(base.lemma, "^(.*[^eE])(i)$")
-			if stem then
-				base.decl = "f-i"
-			end
-		end
-		if not stem and not base.stem then
-			-- Don't match when base.stem is set, e.g. [[gimbur]] "female lamb", where the -ur is part of the stem
-			stem, ending = umatch(base.lemma, "^(.*[^aA])(ur)$")
-			if stem and ufind(stem, com.vowel_or_hyphen_c) then
-				if is_proper_noun(base, stem) then
-					-- [[Auður]], [[Heiður]], [[Ingveldur]], [[Móeiður]], [[Þórelfur]], [[-frídur]] ([[Gunnfríður]],
-					-- [[Hólmfríður]], [[Málfríður]], [[Sigfríður]]), [[Gerður]] ([[Hallgerður]], [[Ingigerður]],
-					-- [[Þorgerður]]), [[Gunnur]] ([[Arngunnur]], [[Hildigunnur]]), [[Heiður]] ([[Aðalheiður]],
-					-- [[Arnheiður]], [[Brynheiður]], [[Ragnheiður]]), [[Hildur]] ([[Ásthildur]], [[Berghildur]],
-					-- [[Brynhildur]], [[Geirhildur]], [[Gunnhildur]], [[Ragnhildur]], [[Þórhildur]]), [[Ástríður]]
-					-- (related names [[Guðríður]], [[Sigríður]], [[Þuríður]]), [[Þrúður]] [also a man's name]
-					-- ([[Jarþrúður]], [[Jarðþrúður]], [[Sigþrúður]])
-					--
-					-- also with company/organization names like [[Berghildur]], [[Gunnhildur]]; likewise place names
-					-- like [[Þuríður]]
-					base.decl = "f-acc-dat-i"
-				else
-					base.decl = "f-ur"
-				end
-			end
-		end
-		if not stem and base.props.rstem then
-			stem, ending = umatch(base.lemma, "^(.*[^eE])(ir)$")
-			if stem and base.props.rstem then
-				-- [[dóttir]], [[móðir]], [[systir]]
-				base.decl = "f-rstem"
-				if not stem:find("syst$") then
-					base.need_imut = true
-				end
-			end
-		end
-		if not stem then
-			stem = umatch(base.lemma, "^(.*ung)$")
-			if stem then
-				base.decl = "f-ung"
-			end
-		end
-		if not stem then
-			stem = umatch(base.lemma, "^(.*ing)$")
-			if stem then
-				base.decl = "f-ing"
-			end
-		end
-		if not stem then
-			stem = umatch(base.lemma, "^(.*[áóúÁÓÚ])$")
-			if stem then
-				base.decl = "f-long-vowel"
-				if ufind(stem, "[óÓ]$") then
-					base.need_imut = true
-				end
-			end
-		end
-		if not stem and not base.stem then
-			-- Not when base.stem is set, which includes [[Ýr]], following the regular endingless f declension where
-			-- -r is part of the stem.
-			stem, ending = umatch(base.lemma, "^(.*[ýÝæÆ])(r)$")
-			if stem then
-				-- [[kýr]] "cow", [[sýr]] "sow (archaic)", [[ær]] "ewe" and compounds
-				base.decl = "f-long-umlaut-vowel-r"
-				default_props.unimut = "unimut"
-			end
-		end
-		if not stem then
-			stem = umatch(base.lemma, "^(.*[^aA]un)$")
-			if stem and ufind(stem, com.vowel_or_hyphen_c) then
-				-- [[pöntun]] "order (in commerce)"; [[verslun]] "trade, business; store, shop"; [[efun]] "doubt";
-				-- [[bötun]] "improvement"; [[örvun]] "encouragement; stimulation" (pl. örvanir); etc.
-				-- Exclude words in -aun like [[baun]] "bean", [[laun]] "secret", [[raun]] "experience".
-				-- Some words need a different indicator, e.g. [[örvun]] "encouragement; stimulation" (pl. örvanir),
-				-- [[fjölgun]] "increase, proliferation" (pl. fjölganir), which need "unUmut".
-				base.decl = "f"
-				default_props.unumut = "unuUmut"
-			end
-		end
-		if not stem then
-			-- Miscellaneous feminine terms without ending
-			stem = base.lemma
-			base.decl = "f"
-			-- A function here means we resolve it to its actual value later. We don't want to trigger
-			-- unumut if the user specified v-infix or any type of u-mutation (e.g. 'uUmut' in [[ætlan]]),
-			-- or if the last vowel of the term is 'a' ([[dragt]], [[aukavakt]]).
-			default_props.unumut = function(base, props)
-				if base.vstem or props.v and props.v.form == "v" or props.umut or
-					ufind(stem, "[Aa]" .. com.cons_c .. "*$") then
+			return stem
+		end,
+		default_if_unspecified = not_if_no_past_indic_sg,
+		generate_default = function(data)
+			local values = {}
+			if data.verbclass:find("^s") then
+				local past_pl_stems = data.base.stems.past_indic_pl
+				if not past_pl_stems then
 					return nil
-				else
-					return { form = "unumut", defaulted = true }
 				end
-			end
-		end
-	elseif base.gender == "n" then
-		if not stem then
-			stem, ending = umatch(base.lemma, "^(.*)(a)$")
-			if stem then
-				base.decl = "n-weak"
-			end
-		end
-		if not stem then
-			-- stem actually includes -é but due to the change to já we include it in the ending
-			stem, ending = umatch(base.lemma, "^(.*)(é)$")
-			if stem then
-				if base.props["já"] then
-					-- Indicator 'já' for [[tré]], [[hné]]/[[kné]], etc.
-					base.decl = "n-já"
-				else
-					-- [[té]] (letter T), etc.
-					stem = stem .. "é"
-					base.decl = "n"
-				end
-			end
-		end
-		if not stem then
-			stem, ending = umatch(base.lemma, "^(.*[kKgG])(i)$")
-			if stem then
-				base.decl = "n-i"
-				default_props.j = "j"
-			end
-		end
-		if not stem then
-			stem, ending = umatch(base.lemma, "^(.*[^eE])(i)$")
-			if stem then
-				base.decl = "n-i"
-			end
-		end
-		if not stem then
-			-- -ur preceded by a consonant and at least one vowel.
-			stem = umatch(base.lemma, "^(.*" .. com.vowel_or_hyphen_c .. ".*" .. com.cons_c .. "ur)$")
-			if stem then
-				base.decl = "n"
-				default_props.con = "con"
-				default_props.defcon = "defcon"
-			end
-		end
-		if not stem then
-			-- Miscellaneous neuter terms without ending
-			stem = base.lemma
-			base.decl = "n"
-		end
-	else
-		error(("Internal error: `base.gender` is '%s' but should be 'm', 'f' or 'n'"):dump(base.gender))
-	end
-	if base.stem then
-		-- This isn't necessarily accurate but doesn't really matter. We only record the lemma ending to help with
-		-- contraction of definite clitics in the nominative singular, and in the cases where the user gives an explicit
-		-- stem, it's usually with # (meaning the ending is null) or ## (meaning the ending ends in -r), and in both
-		-- cases there's no contraction of initial vowels in definite clitics in any case.
-		base.lemma_ending = ""
-	else
-		base.stem = stem
-		base.lemma_ending = ending or ""
-	end
-	for k, v in pairs(default_props) do
-		if not base[k] then
-			if control_spec_set[k] then
-				for _, props in ipairs(base.prop_sets) do
-					if type(v) == "function" then
-						props[k] = v(base, props)
-					else
-						props[k] = { form = v, defaulted = true }
-					end
-				end
+				-- Strong verbs use the past indicative plural stem to form the subjunctive singular, always umlauted if
+				-- possible. There is no need to undo u-mutation because there aren't any strong verbs with u-mutation
+				-- in the past indicative plural. There is also no need to drop a final -j- because no verbs have a -j-
+				-- in the past indicative.
+				apply_parenthesized_umlaut_spec(data, values, past_pl_stems, "^")
 			else
-				base[k] = v
+				local past_sg_stems = data.base.stems.past_indic_sg
+				if not past_sg_stems then
+					return nil
+				end
+				-- Weak verbs use the past indicative singular to form the subjunctive singular, by default umlauted if
+				-- weak 1 and not otherwise (although there are some weak-3 verbs with subjunctive umlaut). This avoids
+				-- the need to undo u-mutation in the plural, which does exist for some verbs, and there are several
+				-- irregular weak verbs where the singular and plural past indicative use different stems, with the same
+				-- irregularity duplicated in the subjunctive singular and plural. An example is frýja, which is weak 4
+				-- or weak 1 in the present indicative singular (frýja or frý) and past singular (frýjaði or frýði, the
+				-- latter in place of expected *frúði), with past plural only frýjuðum.
+				apply_parenthesized_umlaut_spec(data, values, past_sg_stems, data.verbclass == "w1" and "^" or "-^")
 			end
-		end
-	end
-	track("decl/" .. base.decl)
-end
-
-
-local function determine_default_masc_dat_sg(base, props)
-	-- We only need to compute the default dative singular for regular masculines (not masculines in -ir, -ó, -i, etc.).
-	-- These other types have specific defaults for the entire type.
-	if base.decl ~= "m" or base.number == "pl" then
-		return
-	end
-	local default_dat_sg
-	if base.overrides.dat_s then
-		-- Track explicit override.
-		track("masc-dat-sg-override")
-	end
-	local stem = base.stem
-	if props.j and props.j.form == "j" then
-		-- Stems with j-infix normally have null dative even if they end in two consonants, e.g.
-		-- [[belgur]] "bellows; skin", [[fengur]] "profit", [[flekkur]] "spot, fleck", [[serkur]]
-		-- "shirt", [[stingur]] "sting"
-		default_dat_sg = ""
-	elseif stem:find(com.vowel_or_hyphen_c .. ".*[iu]ng$") then
-		-- Stems in suffix -ing or -ung normally have indef dat -i, def dat null
-		default_dat_sg = { indef = "i", def = "" }
-	elseif stem:find("x$") or (ufind(stem, com.cons_c .. com.cons_c .. "$") and not stem:find("kk$") and not stem:find("pp$")) then
-		-- Other stems in two consonants normally have dat -i, but those in -kk or -pp normally
-		-- don't, so exclude them and require explicit specification
-		default_dat_sg = "i"
-	elseif not ufind(stem, com.vowel_c .. "$") and is_proper_noun(base, stem) then
-		-- proper noun whose stem does not end in a vowel
-		default_dat_sg = "i"
-	elseif props.con and props.con.form == "con" then
-		default_dat_sg = "i"
-	elseif ufind(stem, com.vowel_c .. "r?$") then
-		default_dat_sg = ""
-	elseif base.lemma:find("ll$") then
-		-- nouns in -ll without contraction, which generally includes those not in -all/-ill/-ull plus a few in these
-		-- endings such as [[panill]] "paneling" (rare variant of [[panell]]), [[kórall]] "coral", [[kristall]]
-		-- "crystal", [[kanill]] "cinnamon" (also [[kanell]]); only a few exceptions, such as [[rafall]] "generator",
-		-- which optionally contracts and has with dati/-:i without contraction; [[hvoll]] "hill", [[kokkáll]]
-		-- "cuckold", [[páll]] "spade, pointed shovel", [[þræll]] "slave" with dat-:i/-; [[hóll]] "hill", [[hæll]]
-		-- "heel", [[stóll]] "chair", which are dat-:i[footnote]/- with a footnote variously indicating that the
-		-- dative in -i occurs only in fixed expressions, compounds, place names, etc.
-		default_dat_sg = ""
-	elseif base.lemma:find("nn$") then
-		-- nouns in -nn without contraction, which generally includes those not in -ann/-inn/-unn; there are fewer of
-		-- these than the corresponding nouns in -ll and they have default dative i/i; only exceptions I can find are
-		-- [[húnn]] "knob", [[tónn]] "tone (music)", [[dúnn]] "down (feathers)"", which have dati:-/i.
-		default_dat_sg = "i"
-	elseif base.overrides.def_dat_s and base.definiteness == "def" then
-		-- OK; user supplied def_dat_s override for a definite-only lemma
-	elseif base.overrides.dat_s and base.overrides.dat_s.indef and base.definiteness == "indef" then
-		-- OK; user supplied dat_s override with indefinite setting, for an indefinite-only lemma
-	elseif base.overrides.dat_s and base.overrides.dat_s.indef and base.overrides.def_dat_s then
-		-- OK; user supplied dat_s override with indefinite setting and def_dat_s override, which
-		-- together provide both indefinite and definite values
-	elseif base.overrides.dat_s and not base.overrides.dat_s.def then
-		error(("Saw masculine stem '%s' and dative singular override of just the indefinite ending, but " ..
-			"requires both the indefinite and definite endings of the dative singular in the form 'datINDEF/DEF'"):
-		format(stem))
-	elseif not base.overrides.dat_s then
-		local exceptions = "exceptions are nouns in -ir, -ó or -i; proper nouns; plural-only nouns; nouns with " ..
-			"stem contraction or j-infix; nouns whose stem ends in two or more consonants, except for -kk and " ..
-			"-pp; and nouns whose stem ends in a vowel or vowel + r"
-		if base.definiteness == "indef" then
-			error(("Saw masculine stem '%s' and no dative override: Most indefinite-only masculine nouns must " ..
-				"explicitly specify the indefinite ending of the dative singular using an override of the form " ..
-				"'datINDEF'; %s"):format(stem, exceptions))
-		else
-			error(("Saw masculine stem '%s' and no dative override: Most masculine nouns must explicitly specify " ..
-				"the indefinite and definite endings of the dative singular using an override of the form " ..
-				"'datINDEF/DEF'; %s"):format(stem, exceptions))
-		end
-	end
-	props.default_dat_sg = default_dat_sg
-end
+			return values
+		end,
+	}},
+	{"past_subj_pl", {
+		desc = "past subjunctive plural",
+		explicit_part = function(data) return data.base.past.subjunctive.plural end,
+		process_explicit = function(data, value)
+			local stem = value:match("^(.*)um$")
+			if not stem then
+				data.err(("Value for first-person plural '%s' should end in -um"):format(value))
+			end
+			return stem
+		end,
+		default_if_unspecified = not_if_no_past_indic_sg,
+		generate_default = function(data)
+			local values = {}
+			if data.verbclass:find("^s") then
+				local past_pl_stems = data.base.stems.past_indic_pl
+				if not past_pl_stems then
+					return nil
+				end
+				-- Strong verbs use the past indicative plural stem to form the subjunctive singular, always umlauted if
+				-- possible. There is no need to undo u-mutation because there aren't any strong verbs with u-mutation
+				-- in the past indicative plural. There is also no need to drop a final -j- because no verbs have a -j-
+				-- in the past indicative.
+				apply_parenthesized_umlaut_spec(data, values, past_pl_stems, "^")
+			else
+				local past_sg_stems = data.base.stems.past_indic_sg
+				if not past_sg_stems then
+					return nil
+				end
+				-- Weak verbs use the past indicative singular to form the subjunctive singular, by default umlauted if
+				-- weak 1 and not otherwise (although there are some weak-3 verbs with subjunctive umlaut). This avoids
+				-- the need to undo u-mutation in the plural, which does exist for some verbs, and there are several
+				-- irregular weak verbs where the singular and plural past indicative use different stems, with the same
+				-- irregularity duplicated in the subjunctive singular and plural. An example is frýja, which is weak 4
+				-- or weak 1 in the present indicative singular (frýja or frý) and past singular (frýjaði or frýði, the
+				-- latter in place of expected *frúði), with past plural only frýjuðum.
+				apply_parenthesized_umlaut_spec(data, values, past_sg_stems, data.verbclass == "w1" and "^" or "-^")
+			end
+			return values
+		end,
+	}},
+}
 
 
 -- Determine the stems and other properties to use for each property set. The list of such properties is given in the
@@ -3392,109 +3122,127 @@ end
 
 local function make_table(alternant_multiword_spec)
 	local forms = alternant_multiword_spec.forms
-	local frame = mw.getCurrentFrame()
 
-	local function template_prelude()
-		return frame:expandTemplate {
-			title = 'inflection-table-top',
-			args = {
-				title = '{title}{annotation}',
-				palette = 'blue',
-				tall = 'yes',
-			}
+	local function template_prelude(palette)
+		return m_inflection_table.make_top {
+			title = "{title}{annotation}",
+			palette = palette,
+			tall = "yes",
 		}
 	end
 
 	local function template_postlude()
-		return frame:expandTemplate {
-			title = 'inflection-table-bottom',
-			args = {
-				notes = '{footnote}',
-			}
+		return m_inflection_table.make_bottom {
+			notes = "{footnote}",
 		}
 	end
 
-	local table_spec_both = template_prelude() .. [=[
-! rowspan="2" |
-! colspan="2" | singular
-! colspan="2" | plural
+	local function get_verb_table_spec(voice, include_pastinf)
+		local palette = voice == "act" and "blue" or "green"
+		local spec = [=[
+! colspan=3 | infinitive <<s!nafnháttur>>
+| colspan=5 data-accel-col=1 | {VOICEad_inf}
+]=] .. (not include_pastinf and "" or [=[
 |-
-! class="secondary" | indefinite
-! class="secondary" | definite
-! class="secondary" | indefinite
-! class="secondary" | definite
+! colspan=3 | past infinitive<br /><<s!nafnháttur>> <<s!þátíð>>
+| colspan=5 data-accel-col=6 | {VOICEpastinf}
+]=]) .. [=[
 |-
-! nominative
-| {ind_nom_s}
-| {def_nom_s}
-| {ind_nom_p}
-| {def_nom_p}
+! colspan=3 | supine <<s!sagnbót>>
+| colspan=5 data-accel-col=1 | {VOICEsup}
+]=] .. (voice == "mid" and "" or [=[
 |-
-! accusative
-| {ind_acc_s}
-| {def_acc_s}
-| {ind_acc_p}
-| {def_acc_p}
+! colspan=3 | present participle<br /><<s!lýsingarháttur nútíðar>>
+| colspan=5 data-accel-col=7 | {presp}
+]=]) .. [=[
 |-
-! dative
-| {ind_dat_s}
-| {def_dat_s}
-| {ind_dat_p}
-| {def_dat_p}
+| colspan=999 class="separator" |
 |-
-! genitive
-| {ind_gen_s}
-| {def_gen_s}
-| {ind_gen_p}
-| {def_gen_p}
-]=] .. template_postlude()
-
-	local function get_table_spec_one_number(number, numcode)
-		local table_spec_one_number = [=[
-! rowspan="2" |
-! colspan="2" | NUMBER
+! colspan=3 class="outer" |
+! colspan=2 class="outer" | indicative<br /><<s!framsöguháttur>>
+| rowspan=8 class="separator" |
+! colspan=3 class="outer" | subjunctive<br /><<s!viðtengingarháttur>>
 |-
-! class="secondary" | indefinite
-! class="secondary" | definite
+! colspan=3 |
+! present<br /><<s!nútíð>>
+! past<br /><<s!þátíð>>
+! present<br /><<s!nútíð>>
+! past<br /><<s!þátíð>>
 |-
-! nominative
-| {ind_nom_NUM}
-| {def_nom_NUM}
+! rowspan=4 | singular<br /><<s!eintala>>
+! class="secondary" | first
+! class="secondary" | <<l!ég>>
+| data-accel-col=2 | {VOICEpres1s}
+| data-accel-col=3 | {VOICEpast1s}
+| data-accel-col=4 | {VOICEpressub1s}
+| data-accel-col=5 | {VOICEpastsub1s}
 |-
-! accusative
-| {ind_acc_NUM}
-| {def_acc_NUM}
+! class="secondary" | second
+! class="secondary" | <<l!þú>>
+| data-accel-col=2 | {VOICEpres2s}
+| data-accel-col=3 | {VOICEpast2s}
+| data-accel-col=4 | {VOICEpressub2s}
+| data-accel-col=5 | {VOICEpastsub2s}
 |-
-! dative
-| {ind_dat_NUM}
-| {def_dat_NUM}
+! class="secondary" | third
+! class="secondary" | <<l!hann, hún, það>>
+| data-accel-col=2 | {VOICEpres3s}
+| data-accel-col=3 | {VOICEpast3s}
+| data-accel-col=4 | {VOICEpressub3s}
+| data-accel-col=5 | {VOICEpastsub3s}
 |-
-! genitive
-| {ind_gen_NUM}
-| {def_gen_NUM}
+! colspan=2 class="secondary" | second-person question form<br /><<s!spurnarmynd>>
+| data-accel-col=2 | {VOICEqform_pres2s}
+| data-accel-col=3 | {VOICEqform_past2s}
+| data-accel-col=4 | {VOICEqform_pressub2s}
+| data-accel-col=5 | {VOICEqform_pastsub2s}
+|-
+! rowspan=4 | plural<br /><<s!fleirtala>>
+! class="secondary" | first
+! class="secondary" | <<l!við>>
+| data-accel-col=2 | {VOICEpres1p}
+| data-accel-col=3 | {VOICEpast1p}
+| data-accel-col=4 | {VOICEpressub1p}
+| data-accel-col=5 | {VOICEpastsub1p}
+|-
+! class="secondary" | second
+! class="secondary" | <<l!þið>>
+| data-accel-col=2 | {VOICEpres2p}
+| data-accel-col=3 | {VOICEpast2p}
+| data-accel-col=4 | {VOICEpressub2p}
+| data-accel-col=5 | {VOICEpastsub2p}
+|-
+! class="secondary" | third
+! class="secondary" | <<l!þeir, þær, þau>>
+| data-accel-col=2 | {VOICEpres3p}
+| data-accel-col=3 | {VOICEpast3p}
+| data-accel-col=4 | {VOICEpressub3p}
+| data-accel-col=5 | {VOICEpastsub3p}
+|-
+! colspan=2 class="secondary" | second-person question form<br /><<s!spurnarmynd>>
+| data-accel-col=2 | {VOICEqform_pres2p}
+| data-accel-col=3 | {VOICEqform_past2p}
+| data-accel-col=4 | {VOICEqform_pressub2p}
+| data-accel-col=5 | {VOICEqform_pastsub2p}
+|-
+| colspan=5 class="separator" |
+| colspan=3 rowspan=5 class="blank-end-row" |
+|-
+! colspan=3 class="outer" | 
+! colspan=2 class="outer" | imperative <<s!boðháttur>>
+|-
+! rowspan=2 | singular<br /><<s!eintala>>
+! rowspan=3 class="secondary" | second
+! class="secondary" | clipped<br /><<s!stýfður>>
+| colspan=2 data-accel-col=6 | {VOICEimp2s}
+|-
+! class="secondary" | suffixed<br /><<s!viðskeyttur>>
+| colspan=2 data-accel-col=7 | {VOICEimp2ss}
+|-
+! plural<br /><<s!fleirtala>>
+| colspan=2 data-accel-col=6 | {VOICEimp2p}, {VOICEimp2ps}
 ]=]
-		return template_prelude() .. table_spec_one_number:gsub("NUMBER", number):gsub("NUM", numcode) ..
-			template_postlude()
-	end
-
-	local function get_table_spec_one_number_one_def(number, numcode, definiteness, defcode)
-		local table_spec_one_number_one_def = [=[
-! colspan="2" | DEFINITENESS NUMBER
-|-
-! nominative
-| {DEF_nom_NUM}
-|-
-! accusative
-| {DEF_acc_NUM}
-|-
-! dative
-| {DEF_dat_NUM}
-|-
-! genitive
-| {DEF_gen_NUM}
-]=]
-		return template_prelude() .. (table_spec_one_number_one_def:gsub("NUMBER", number):gsub("NUM", numcode)
-			:gsub("DEFINITENESS", definiteness):gsub("DEF", defcode)) .. template_postlude()
+		return template_prelude(palette) .. spec:gsub("VOICE", voice == "act" and "" or "mid_") .. template_postlude
 	end
 
 	if alternant_multiword_spec.title then
@@ -3503,6 +3251,11 @@ local function make_table(alternant_multiword_spec)
 		forms.title = 'Declension of <i lang="is">' .. forms.lemma .. '</i>'
 	end
 
+	-- Active title: {{m|is||{{{1|{{PAGENAME}}}}}}} – active voice <span class="small">({{m|is|germynd}})</span> [blue]
+	-- Middle title: {{m|is||{{{1|{{PAGENAME}}}}}}} – middle voice <span class="small">({{m|is|miðmynd}})</span> [teal]
+	-- Active past participle title: {{m-self|is|{{{1|{{PAGENAME}}}}}}} — past participle <small>([[lýsingarháttur þátíðar]])</small> [purple]
+	-- Middle past participle title: {{m-self|is|{{{1|{{PAGENAME}}}}}}} — middle past participle <small>([[lýsingarháttur þátíðar]] [[af]] [[miðmynd]])</small> [red]
+	--  only [[sestur]] and [[lagstur]]
 	local annotation = alternant_multiword_spec.annotation
 	if annotation == "" then
 		forms.annotation = ""
