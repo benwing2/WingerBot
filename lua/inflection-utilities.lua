@@ -7,25 +7,21 @@ local put = require("Module:parse utilities")
 local headword_data_module = "Module:headword/data"
 local script_utilities_module = "Module:script utilities"
 local pages_module = "Module:pages"
-local table_tools_module = "Module:table tools"
 local template_parser_module = "Module:template parser"
 
 local is_callable = require("Module:fun").is_callable
 local split = m_str_utils.split
-local rfind = m_str_utils.find
-local rmatch = m_str_utils.match
-local rsubn = m_str_utils.gsub
+local ufind = m_str_utils.find
 local usub = m_str_utils.sub
 local ucfirst = m_str_utils.ucfirst
 local unpack = unpack or table.unpack -- Lua 5.2 compatibility
 local dump = mw.dumpObject
 local new_title = mw.title.new
 
--- version of rsubn() that discards all but the first return value
-local function rsub(term, foo, bar)
-	local retval = rsubn(term, foo, bar)
-	return retval
-end
+local insert = table.insert
+local concat = table.concat
+local insert_if_not = m_table.insertIfNot
+local shallow_copy = m_table.shallowCopy
 
 local function track(page)
 	require("Module:debug/track")("inflection utilities/" .. page)
@@ -103,7 +99,7 @@ terminology is helpful to understand:
   object whose form value is the string and all other properties are nil. Similarly, an '''abbreviated form list''' is
   either a single abbreviated form object or a list of such objects, i.e. any of a string, form object or list of
   strings and/or form objects. Functions that do not accept such abbreviated structures may be said to insist on being
-  passed form objects in '''general form''', or form lists in '''general list form'''.
+  passed form objects in '''full form''', or form lists in '''full list form'''.
 * Each slot is associated with an '''accelerator tag set''', which is a list of inflection tags that are used when
   generating an accelerator entry for the forms in the slot (see [[WT:ACCEL]]). For example, the first singular present
   indicative of a verb might have slot name `pres_1sg` and corresponding accelerator tag set `1|s|pres|ind`. As shown,
@@ -173,7 +169,7 @@ terminology is helpful to understand:
 * Among these various "spec" structures, the two most important are the top-level alternant multiword spec and the
   bottom-level word spec or "base". You will rarely find it necessary to manipulate the intermediate structures or
   concern yourself with the details of their formation.
-* The term ''form'' is unfortunatately overloaded in various modules to mean several things. In particular, for
+* The term ''form'' is unfortunately overloaded in various modules to mean several things. In particular, for
   historical reasons, the form value inside of a form object is stored using the key `form`; the form table inside of an
   alternant multiword spec, a word spec (or "base") and the intermediate structures is stored using the key `forms`; and
   the accelerator tag set is internally referred to in [[WT:ACCEL]] as a "form". To avoid confusion, the following
@@ -236,22 +232,485 @@ notated it as `((кожу́х<b.[more common among laymen]>,ко́жух<c(1).[m
 would wrongly have the footnote ''more common among laymen'' when in fact they are the only possible forms. If instead
 we used `((кожу́х<b.[*more common among laymen]>,ко́жух<c(1).[more common among professionals]>))`, the shared forms
 would correctly have no footnote.
-
-Finally, be aware of '''old-style footnote symbols'''. For compatibility reasons, some inflection implementations
-support a system whereby footnote symbols (consisting of numbers; certain ASCII symbols such as `*`, `~`, `@`, `#`,
-`+`, etc.; and a large number of Unicode symbols) are directly attached to form values and the footnotes themselves
-specified manually using the `footnotes` property passed to `show_forms()`. This is allowed only when
-`allow_footnote_symbols` is set and is highly deprecated. All uses of such symbols should be converted to standard
-footnotes and the support for such symbols removed.
 ]==]
 
 
 local function extract_footnote_modifiers(footnote)
-	local footnote_mods, footnote_without_mods = rmatch(footnote, "^%[([!*+]?)(.*)%]$")
+	local footnote_mods, footnote_without_mods = footnote:match("^%[([!*+]?)(.*)%]$")
 	if not footnote_mods then
 		error("Saw footnote '" .. footnote .. "' not surrounded by brackets")
 	end
 	return footnote_mods, footnote_without_mods
+end
+
+
+function export.deduplicate_footnotes(existing, new)
+	if not new then
+		return existing
+	end
+	-- Check to see if there are existing footnotes with *; if so, remove them.
+	if existing then
+		local any_footnotes_with_asterisk = false
+		for _, footnote in ipairs(existing) do
+			local footnote_mods, _ = extract_footnote_modifiers(footnote)
+			if footnote_mods:find("%*") then
+				any_footnotes_with_asterisk = true
+				break
+			end
+		end
+		if any_footnotes_with_asterisk then
+			local filtered_footnotes = {}
+			for _, footnote in ipairs(existing) do
+				local footnote_mods, _ = extract_footnote_modifiers(footnote)
+				if not footnote_mods:find("%*") then
+					insert(filtered_footnotes, footnote)
+				end
+			end
+			if #filtered_footnotes > 0 then
+				existing = filtered_footnotes
+			else
+				existing = nil
+			end
+		end
+	end
+
+	-- The behavior here has changed; track cases where the old behavior might
+	-- be needed by adding ! to the footnote.
+	track("combining-footnotes")
+	local any_footnotes_with_bang = false
+	for _, footnote in ipairs(new) do
+		local footnote_mods, _ = extract_footnote_modifiers(footnote)
+		if footnote_mods:find("[!+]") then
+			any_footnotes_with_bang = true
+			break
+		end
+	end
+	if any_footnotes_with_bang then
+		if not existing then
+			existing = {}
+		else
+			existing = shallow_copy(existing)
+		end
+		for _, footnote in ipairs(new) do
+			local already_seen = false
+			local footnote_mods, footnote_without_mods = extract_footnote_modifiers(footnote)
+			if footnote_mods:find("[!+]") then
+				for _, existing_footnote in ipairs(existing) do
+					local _, existing_footnote_without_mods = extract_footnote_modifiers(existing_footnote)
+					if existing_footnote_without_mods == footnote_without_mods then
+						already_seen = true
+						break
+					end
+				end
+				if not already_seen then
+					insert(existing, footnote)
+				end
+			end
+		end
+	end
+
+	return existing
+end
+
+
+--[==[
+Combine two sets of footnotes. If either is {nil}, just return the other, and if both are {nil}, return {nil}.
+]==]
+function export.combine_footnotes(notes1, notes2)
+	if not notes1 and not notes2 then
+		return nil
+	end
+	if not notes1 then
+		return notes2
+	end
+	if not notes2 then
+		return notes1
+	end
+	local combined = shallow_copy(notes1)
+	for _, note in ipairs(notes2) do
+		insert_if_not(combined, note)
+	end
+	return combined
+end
+
+
+function export.combine_formobj_lists(list1, list2, metadata)
+	if not list1 and not list2 then
+		return nil
+	end
+	if not list1 then
+		return list2
+	end
+	if not list2 then
+		return list1
+	end
+	return export.insert_formobjs_into_list {
+		existing_list = list1,
+		formobjs = list2,
+		metadata = metadata,
+	}
+end
+
+
+function export.looks_like_formobj_list(list)
+	if list == nil then
+		return true
+	end
+	if type(list) ~= "table" then
+		return false
+	end
+	for k, v in pairs(list) do
+		if type(k) ~= "number" then
+			return false
+		end
+		if type(v) ~= "table" then
+			return false
+		end
+		if type(v.form) ~= "string" then
+			return false
+		end
+	end
+	return true
+end
+
+
+function export.looks_like_boolean(object)
+	return object == nil or type(object) == "boolean"
+end
+
+
+function export.default_fallback_deduplicate_handler(_prop, existing, new)
+	return existing, true
+end
+
+
+function export.default_fallback_combine_handler(_prop, existing, new)
+	if export.looks_like_formobj_list(existing) and export.looks_like_formobj_list(new) then
+		return export.combine_formobj_lists(existing, new), true
+	end
+	if export.looks_like_boolean(existing) and export.looks_like_boolean(new) then
+		return existing or new, true
+	end
+	if existing ~= nil then
+		return existing, true
+	end
+	return new, true
+end
+
+--[=[
+Default handler functions for working with form object metadata. The user-specific metadata structure has the same
+format. The key is a specific metadata field and the value is an object with fields specifying handlers and other
+properties of the metadata. The recognized per-metadata fields are:
+* `deduplicate`: Handler to deduplicate form objects when inserting a form object into an existing list (e.g. in a
+  form table) and two form objects have the same form value and translit. It is passed two values, respectively the
+  metadata property from the existing list object and the new object being inserted into the list. The default and
+  most common behavior here is to preserve the property from the existing object, even if {nil}, and discard the value
+  from the new object. This is what is done in footnotes, for example, unless the existing footnote is preceded by a *
+  (meaning to discard both values) or the new one is preceded by a + (meaning to preserve and combine both values,
+  which is not currrently used anywhere and may not make sense). This ensures, for example, that if a noun can be
+  declined according to two paradigms and the second one is rare, the {"rare"} footnote on the second one gets
+  discarded whenever the two paradigms coincide.
+* `combine`: Handler to combine form objects when deriving a new object from an existing one. This is conceptually very
+  different from deduplication. In this situation, the existing and new objects may or may not match in form value and
+  translit, and since the new form object is a derivative of the existing one, it should combine the metadata
+  properties of both, preserving as much information as possible and not discarding anything. Combining footnotes, for
+  example, means taking the footnotes from either one, and if both exising and new objects have footnotes, merging
+  the two lists and removing duplicates. (The only exception is if a new footnote is preceded by !, which causes
+  existing footnotes to be discarded. This is termed an ''override'', and allows e.g. for one form of a paradigm to
+  override the footnote associated with the paradigm as a whole, as for example if a paradigm is archaic except for
+  one of the forms.) The default `combine` strategy is as follows:
+*# If both the existing and new objects are {nil} or "look like" form object lists (i.e. are tables where all keys are
+   numeric and all values are tables with a `form` key whose value is a string), combine them using
+   `insert_formobjs_into_list`.
+*# If both the existing and new objects are {nil} or boolean, combine them using `A or B`.
+*# Otherwise, take the existing value if it is non-{nil}, and if not, take the new value. Note that this means that the
+   existing value will be kept even if it is {false} (which would not happen if the new value were {true}); this allows
+   for metadata where {false} is a special signal and keys are otherwise strings or objects. However, in general if the
+   metadata objects are not boolean and not form object lists, they will need a custom combine handler.
+
+Some keys in the metadata handler object are special:
+* `*`: This provides "fallback" handlers. These handlers are called for all metadata fields without dedicated handlers.
+    These handlers work similar to normal `deduplicate` and `combine` handlers except (a) they are passed three values,
+	first the metadata property name and then the existing and new values; (b) they should return two values, first the
+	appropriate merged value and second a boolean indicating whether the property was handled. (If {false} is returned,
+	the first value is ignored and should be {nil}.) Dedicated and fallback handlers are called in the following order:
+	(1) dedicated user-specified handlers; (2) dedicated default handlers; (3) fallback user-specified handlers;
+	(4) fallback default handlers. This ensures that standard dedicated default handlers (particularly for footnotes)
+	get run prior to the user-specified fallback handlers; otherwise, practically all such fallback handlers will need
+	to check for and ignore footnotes.
+* `_side_effect_formobjs`: If true, existing form objects can be side-effected during deduplication or combining. This
+    requires that two logically distinct form objects in a given form table never have the same reference. (Generally
+	two such objects should be in different slots. If two references to the same object occur in different positions
+	in the list of form objects under a single slot, it indicates an internal error in the deduplication mechanism.)
+	This means that user code that generates form objects for insertion into a table must take care never to reuse
+	existing form objects (e.g. when setting one slot equal to another slot), but must always shallow-copy the form
+	objects. This is not the default for this reason, and in fact it's not clear that implementing this results in any
+	efficiency gain (it may actually be the reverse, since form objects have to be copied that could otherwise be
+	shared).
+]=]
+local default_metadata_handlers = {
+	footnotes = {
+		deduplicate = export.deduplicate_footnotes,
+		combine = export.combine_footnotes,
+	},
+	["*"] = {
+		deduplicate = export.default_fallback_deduplicate_handler,
+		combine = export.default_fallback_combine_handler,
+	}
+}
+
+
+local function is_non_metadata_property(k)
+	return k == "form" or k == "translit"
+end
+
+
+-- Call the appropriate handler for merging the metadata for property `prop` with values `existing_val` and `new_val`,
+-- using method `method` (either "deduplicate" or "combine"). `metadata` is the structure describing all properties of
+-- all metadata in a given form object. This looks for, in order:
+-- 1. A handler for the specific property in `metadata`.
+-- 2. A default handler for the specific property.
+-- 3. A fallback handler in `metadata`.
+-- 4. A default fallback handler.
+-- Return the new value.
+local function call_merge_metadata_handler(metadata, prop, method, existing_val, new_val)
+	local function try_specific(handler_struct, prop)
+		if handler_struct and handler_struct[prop] and handler_struct[prop][method] then
+			return (handler_struct[prop][method](existing_val, new_val)), true
+		end
+		return nil, false
+	end
+	local function try_fallback(handler_struct, prop)
+		if handler_struct and handler_struct["*"] and handler_struct["*"][method] then
+			-- Two values are returned from the handler, the new value and whether the property was handled.
+			return handler_struct["*"][method](prop, existing_val, new_val)
+		end
+		return nil, false
+	end
+	local retval, matched = try_specific(metadata, prop)
+	if matched then
+		return retval
+	end
+	retval, matched = try_specific(default_metadata_handlers, prop)
+	if matched then
+		return retval
+	end
+	retval, matched = try_fallback(metadata, prop)
+	if matched then
+		return retval
+	end
+	retval, matched = try_fallback(default_metadata_handlers, prop)
+	return retval
+end
+
+
+-- Merge the metadata of two form objects using `method` (either "deduplicate" or "combine"). `metadata` is the
+-- structure describing all properties of all metadata in a given form object. Metadata is merged between
+-- `existing_formobj` (on the left) and `new_formobj` (on the right), and is normally stored into `existing_formobj`,
+-- but will be stored into `new_formobj` if `merge_into_new` is given. If `metadata` allows for side-effecting, the
+-- changes will be made by side-effecting the object to be changed; otherwise, a shallow copy of the object will be
+-- made if necessary (only if the new value is not equal to the existing value). Returns two values, the changed form
+-- object (which may be the same as one of the passed-in objects) and a flag which is true if a copy was made of a form
+-- object.
+local function merge_metadata(metadata, method, existing_formobj, new_formobj, merge_into_new)
+	local props_of_either = nil
+	for k, _ in pairs(existing_formobj) do
+		if not is_non_metadata_property(k) then
+			props_of_either = props_of_either or {}
+			props_of_either[k] = true
+		end
+	end
+	for k, _ in pairs(new_formobj) do
+		if not is_non_metadata_property(k) then
+			props_of_either = props_of_either or {}
+			props_of_either[k] = true
+		end
+	end
+	local store_object = merge_into_new and new_formobj or existing_formobj
+	if props_of_either then
+		if metadata._side_effect_formobjs then
+			for k, _ in pairs(props_of_either) do
+				store_object[k] = call_merge_metadata_handler(metadata, k, method, existing_formobj[k], new_formobj[k])
+			end
+		else
+			local need_to_copy = false
+			local new_values = {}
+			for k, _ in pairs(props_of_either) do
+				local newval = call_merge_metadata_handler(metadata, k, method, existing_formobj[k], new_formobj[k])
+				if newval ~= store_object[k] and not m_table.deepEquals(newval, store_object[k]) then
+					need_to_copy = true
+				end
+				new_values[k] = newval
+			end
+			if need_to_copy then
+				store_object = shallow_copy(store_object)
+				for k, _ in pairs(props_of_either) do
+					store_object[k] = new_values[k]
+				end
+			end
+			return store_object, need_to_copy
+		end
+	else
+		return store_object, false
+	end
+end
+
+
+--[==[
+Insert a form object (see above) into a list of such objects. If the form is already present (i.e. both the form
+value and translit, if any, match), the footnotes of the existing and new form might be combined (specifically,
+footnotes in the new form beginning with `+` will be combined).
+]==]
+function export.insert_formobj_into_list(data)
+	local existing_list = data.existing_list
+	local formobj = data.formobj
+	-- Don't do anything if the form object is nil.
+	if not formobj then
+		return existing_list
+	end
+	for i, existing_formobj in ipairs(existing_list) do
+		if existing_formobj.form == formobj.form and existing_formobj.translit == formobj.translit then
+			local new_existing, copied = merge_metadata(data.metadata, "deduplicate", existing_formobj, formobj)
+			if copied then
+				local list_copy = shallow_copy(existing_list)
+				list_copy[i] = new_existing
+				return list_copy
+			end
+			return existing_list
+		end
+	end
+	-- Form not found.
+	insert(existing_list, formobj)
+	return existing_list
+end
+
+--[==[
+Insert a list of form objects (see above) into an existing list of such objects. ``forms`` can be {nil},
+in which case nothing happens. This is equivalent to calling `insert_form_into_list` for each form object.
+]==]
+function export.insert_formobjs_into_list(data)
+	local existing_list = data.existing_list
+	local formobjs = data.formobjs
+	if not formobjs then
+		return existing_list
+	end
+	for _, formobj in ipairs(formobjs) do
+		existing_list = export.insert_formobj_into_list {
+			existing_list = existing_list,
+			formobj = formobj,
+			metadata = data.metadata,
+		}
+	end
+	return existing_list
+end
+
+
+--[==[
+Insert a form object (see above) into the given slot in the given form table. On input, `data` is an object with the
+following fields:
+* `formtable`: A form table (see above).
+* `slot`: A slot in the form table, i.e. a key whose value is a form object list.
+* `formobj`: A form object to be inserted into the slot. Can be {nil}, in which case nothing happens.
+* `metadata`: The metadata structure describing how to combine user-specified metadata. Can be {nil} if there is no
+  user-specified metadata or the default fallback metadata handlers are sufficient (which is usually the case if the
+  all user-specified metadata is boolean).
+]==]
+function export.insert_formobj_into_form_table(data)
+	local formtable, slot, formobj, metadata = data.formtable, data.slot, data.formobj, data.metadata
+	-- Don't do anything if the form object is nil.
+	if not formobj then
+		return
+	end
+	if not formtable[slot] then
+		formtable[slot] = {}
+	end
+	formtable[slot] = export.insert_formobj_into_list {
+		existing_list = formtable[slot],
+		formobj = formobj,
+		metadata = metadata,
+	}
+end
+
+
+--[==[
+Insert a list of form objects (see above) into the given slot in the given form table. On input, `data` is an object
+with the following fields:
+* `formtable`: A form table (see above).
+* `slot`: A slot in the form table, i.e. a key whose value is a form object list.
+* `formobjs`: A list of form objects (in "full list" form) to be inserted into the slot. Can be {nil} or an empty list,
+  in which case nothing happens.
+* `metadata`: The metadata structure describing how to combine user-specified metadata. Can be {nil} if there is no
+  user-specified metadata or the default fallback metadata handlers are sufficient (which is usually the case if the
+  all user-specified metadata is boolean).
+]==]
+function export.insert_formobjs_into_form_table(data)
+	local formtable, slot, formobjs, metadata = data.formtable, data.slot, data.formobjs, data.metadata
+	if not formobjs or not formobjs[1] then
+		return
+	end
+	if not formtable[slot] then
+		formtable[slot] = {}
+	end
+	formtable[slot] = export.insert_formobjs_into_list {
+		existing_list = formtable[slot],
+		formobjs = formobjs,
+		metadata = metadata,
+	}
+end
+
+
+--[==[
+Flatmap a function over a list of form objects and return the (potentially flattened) results. Flatmapping is like
+a normal mapping operation except that the function being called may return a list, and all values returned are
+concatenated into a single flattened list. On input, `data` is an object with the following fields:
+* `formobjs`: A list of form objects to map over, in "full list form" (see above).
+* `fn`: The function to map over each form object. If a form object's value is {"?"}, the form object is preserved on
+  output and the function is not called. Otherwise, the function is called with one argument, the form object, and
+  should {nil} (equivalent to returning an empty list) or an abbreviated form list (i.e. anything that is convertible
+  into a full list form, such as a single form value, a list of form values, a form object or a list of form objects).
+  For each form object in the return value, the metadata of the object mapped over is combined with the metadata of
+  the returned object, unless `no_combine_metadata` is given. The resulting form objects from all function calls are
+  flattened into a list and deduplicated in the same fashion as `insert_formobj_into_list()` (in case two different
+  form objects map to the same form value).
+* `metadata`: The metadata structure describing how to combine user-specified metadata. Can be {nil} if there is no
+  user-specified metadata or the default fallback metadata handlers are sufficient (which is usually the case if the
+  all user-specified metadata is boolean).
+* `no_combine_metadata`: See `fn` above. If given, metadata from objects mapped over will not be combined into the
+  returned objects.
+]==]
+function export.flatmap_formobjs(data)
+	local formobjs, fn, metadata, no_combine_metadata =
+		data.formobjs, data.fn, data.metadata, data.no_combine_metadata
+	if not formobjs then
+		return nil
+	end
+	local retval = {}
+	for _, formobj in ipairs(formobjs) do
+		local funret
+		if formobj.form == "?" then
+			if metadata and metadata._side_effect_formobjs then
+				funret = shallow_copy(formobj)
+			else
+				funret = formobj
+			end
+		else
+			funret = fn(formobj)
+		end
+		if funret then
+			funret = export.convert_to_full_list_form(funret)
+			for _, fr in ipairs(funret) do
+				if not no_combine_metadata then
+					fr = merge_metadata(metadata, "combine", formobj, fr, "merge_into_new")
+				end
+				retval = export.insert_formobj_into_list {
+					existing_list = retval,
+					formobj = fr,
+					metadata = metadata,
+				}
+			end
+		end
+	end
+	return retval
 end
 
 
@@ -269,75 +728,27 @@ function export.insert_form_into_list(list, form)
 	end
 	for _, listform in ipairs(list) do
 		if listform.form == form.form and listform.translit == form.translit then
-			-- Form already present; maybe combine footnotes.
-			if form.footnotes then
-				-- Check to see if there are existing footnotes with *; if so, remove them.
-				if listform.footnotes then
-					local any_footnotes_with_asterisk = false
-					for _, footnote in ipairs(listform.footnotes) do
-						local footnote_mods, _ = extract_footnote_modifiers(footnote)
-						if rfind(footnote_mods, "%*") then
-							any_footnotes_with_asterisk = true
-							break
-						end
-					end
-					if any_footnotes_with_asterisk then
-						local filtered_footnotes = {}
-						for _, footnote in ipairs(listform.footnotes) do
-							local footnote_mods, _ = extract_footnote_modifiers(footnote)
-							if not rfind(footnote_mods, "%*") then
-								table.insert(filtered_footnotes, footnote)
-							end
-						end
-						if #filtered_footnotes > 0 then
-							listform.footnotes = filtered_footnotes
-						else
-							listform.footnotes = nil
-						end
-					end
-				end
-
-				-- The behavior here has changed; track cases where the old behavior might
-				-- be needed by adding ! to the footnote.
-				track("combining-footnotes")
-				local any_footnotes_with_bang = false
-				for _, footnote in ipairs(form.footnotes) do
-					local footnote_mods, _ = extract_footnote_modifiers(footnote)
-					if rfind(footnote_mods, "[!+]") then
-						any_footnotes_with_bang = true
-						break
-					end
-				end
-				if any_footnotes_with_bang then
-					if not listform.footnotes then
-						listform.footnotes = {}
-					else
-						listform.footnotes = m_table.shallowCopy(listform.footnotes)
-					end
-					for _, footnote in ipairs(form.footnotes) do
-						local already_seen = false
-						local footnote_mods, footnote_without_mods = extract_footnote_modifiers(footnote)
-						if rfind(footnote_mods, "[!+]") then
-							for _, existing_footnote in ipairs(listform.footnotes) do
-								local _, existing_footnote_without_mods = extract_footnote_modifiers(existing_footnote)
-								if existing_footnote_without_mods == footnote_without_mods then
-									already_seen = true
-									break
-								end
-							end
-							if not already_seen then
-								table.insert(listform.footnotes, footnote)
-							end
-						end
-					end
-				end
-			end
+			listform.footnotes = export.deduplicate_footnotes(listform.footnotes, form.footnotes)
 			return
 		end
 	end
 	-- Form not found.
-	table.insert(list, form)
+	insert(list, form)
 end
+
+--[==[
+Insert a list of form objects (see above) into an existing list of such objects. ``forms`` can be {nil},
+in which case nothing happens. This is equivalent to calling `insert_form_into_list` for each form object.
+]==]
+function export.insert_forms_into_list(list, forms)
+	if not forms then
+		return
+	end
+	for _, form in ipairs(forms) do
+		export.insert_form_into_list(list, form)
+	end
+end
+
 
 --[==[
 Insert a form object (see above) into the given slot in the given form table. ``form`` can be {nil}, in which case
@@ -406,7 +817,7 @@ end
 
 
 --[==[
-Map a function over the form values in ``forms`` (a list of form objects in "general list form; see above). If an
+Map a function over the form values in ``forms`` (a list of form objects in "full list form"; see above). If an
 input form value is {"?"}, it is preserved on output and the function is not called. Otherwise, the function is
 called with two arguments, the original form and manual translit; if manual translit isn't relevant, it's fine to
 declare the function with only one argument. The return value is either a single value (the new form) or two values
@@ -429,16 +840,14 @@ end
 
 
 --[==[
-Map a list-returning function over the form values in ``forms`` (a list of form objects in "general list form"; see
+Map a list-returning function over the form values in ``forms`` (a list of form objects in "full list form"; see
 above). If an input form value is {"?"}, it is preserved on output and the function is not called. Otherwise, the
 function is called with two arguments, the original form and manual translit; if manual translit isn't relevant, it's
 fine to declare the function with only one argument. The return value of the function can be {nil} or an abbreviated
-form list (i.e. anything that is convertible into a general list form, such as a single form value, a list of form
+form list (i.e. anything that is convertible into a full list form, such as a single form value, a list of form
 values, a form object or a list of form objects). For each form object in the return value, the footnotes of that form
 object (if any) are combined with any footnotes from the input form object, and the result inserted into the returned
 list using `insert_form_into_list()` in case two different forms map to the same thing.
-
-FIXME: Expand this to correctly handle metadata, or create a variant that correctly handles metadata.
 ]==]
 function export.flatmap_forms(forms, fun)
 	if not forms then
@@ -487,31 +896,10 @@ function export.map_form_or_forms(abforms, fun, first_only)
 			if first_only then
 				return export.map_form_or_forms(abform, fun)
 			end
-			table.insert(retval, export.map_form_or_forms(abform, fun))
+			insert(retval, export.map_form_or_forms(abform, fun))
 		end
 		return retval
 	end
-end
-
-
---[==[
-Combine two sets of footnotes. If either is {nil}, just return the other, and if both are {nil}, return {nil}.
-]==]
-function export.combine_footnotes(notes1, notes2)
-	if not notes1 and not notes2 then
-		return nil
-	end
-	if not notes1 then
-		return notes2
-	end
-	if not notes2 then
-		return notes1
-	end
-	local combined = m_table.shallowCopy(notes1)
-	for _, note in ipairs(notes2) do
-		m_table.insertIfNot(combined, note)
-	end
-	return combined
 end
 
 
@@ -528,7 +916,7 @@ function export.expand_footnote_or_references(note, return_raw, no_parse_refs)
 	local _, notetext = extract_footnote_modifiers(note)
 	if not no_parse_refs and notetext:find("^ref:") then
 		-- a reference
-		notetext = rsub(notetext, "^ref:", "")
+		notetext = notetext:gsub("^ref:", "")
 		local parsed_refs = require("Module:references").parse_references(notetext)
 		for i, ref in ipairs(parsed_refs) do
 			if type(ref) == "string" then
@@ -558,7 +946,7 @@ function export.expand_footnote_or_references(note, return_raw, no_parse_refs)
 				end
 			end
 		end
-		notetext = table.concat(split_notes)
+		notetext = concat(split_notes)
 	end
 	return return_raw and notetext or ucfirst(notetext) .. "."
 end
@@ -581,14 +969,14 @@ function export.convert_footnotes_to_qualifiers_and_references(footnotes)
 				refs = this_refs
 			else
 				for _, ref in ipairs(this_refs) do
-					table.insert(refs, ref)
+					insert(refs, ref)
 				end
 			end
 		else
 			if not quals then
 				quals = {this_footnote}
 			else
-				table.insert(quals, this_footnote)
+				insert(quals, this_footnote)
 			end
 		end
 	end
@@ -624,7 +1012,7 @@ function export.combine_form_and_footnotes(abform, addl_footnotes, new_formval, 
 		new_formval = new_formval or abform
 		return {form = new_formval, translit = new_translit, footnotes = addl_footnotes}
 	end
-	abform = m_table.shallowCopy(abform)
+	abform = shallow_copy(abform)
 	if new_formval then
 		abform.form = new_formval
 	end
@@ -639,23 +1027,17 @@ end
 
 
 --[==[
-Convert an abbreviated form list (either a string, form object, or list of either) into general list form. If
-``footnotes`` is supplied, then for each form in the form list, combine the form's footnotes with ``footnotes``.
+Convert an abbreviated form list (either a string, form object, or list of either) into full list form.
 This function does not side-effect any of the objects passed into ``abforms``, but will return ``abforms``
-unchanged if already in general list form and ``footnotes`` is {nil}.
-
-'''FIXME:''' This does not correctly preserve metadata.
+unchanged if already in full list form.
 ]==]
-function export.convert_to_general_list_form(abforms, footnotes)
-	if type(footnotes) == "string" then
-		footnotes = {footnotes}
-	end
+function export.convert_to_full_list_form(abforms)
 	if type(abforms) == "string" then
-		return {{form = abforms, footnotes = footnotes}}
+		return {form = abforms}
 	elseif abforms.form then
-		return {export.combine_form_and_footnotes(abforms, footnotes)}
-	elseif not footnotes then
-		-- Check if already in general list form and return directly if so.
+		return {abforms}
+	else
+		-- Check if already in full list form and return directly if so.
 		local must_convert = false
 		for _, form in ipairs(abforms) do
 			if type(form) == "string" then
@@ -670,9 +1052,50 @@ function export.convert_to_general_list_form(abforms, footnotes)
 	local retval = {}
 	for _, form in ipairs(abforms) do
 		if type(form) == "string" then
-			table.insert(retval, {form = form, footnotes = footnotes})
+			insert(retval, {form = form})
 		else
-			table.insert(retval, export.combine_form_and_footnotes(form, footnotes))
+			insert(retval, form)
+		end
+	end
+	return retval
+end
+
+
+--[==[
+Convert an abbreviated form list (either a string, form object, or list of either) into full list form. If
+``footnotes`` is supplied, then for each form in the form list, combine the form's footnotes with ``footnotes``.
+This function does not side-effect any of the objects passed into ``abforms``, but will return ``abforms``
+unchanged if already in full list form and ``footnotes`` is {nil}.
+
+'''FIXME:''' This does not correctly preserve metadata.
+]==]
+function export.convert_to_general_list_form(abforms, footnotes)
+	if type(footnotes) == "string" then
+		footnotes = {footnotes}
+	end
+	if type(abforms) == "string" then
+		return {{form = abforms, footnotes = footnotes}}
+	elseif abforms.form then
+		return {export.combine_form_and_footnotes(abforms, footnotes)}
+	elseif not footnotes then
+		-- Check if already in full list form and return directly if so.
+		local must_convert = false
+		for _, form in ipairs(abforms) do
+			if type(form) == "string" then
+				must_convert = true
+				break
+			end
+		end
+		if not must_convert then
+			return abforms
+		end
+	end
+	local retval = {}
+	for _, form in ipairs(abforms) do
+		if type(form) == "string" then
+			insert(retval, {form = form, footnotes = footnotes})
+		else
+			insert(retval, export.combine_form_and_footnotes(form, footnotes))
 		end
 	end
 	return retval
@@ -697,7 +1120,7 @@ local function lang_or_func_transliterate(func, lang, text)
 		retval = (lang:transliterate(text))
 	end
 	-- FIXME! Hack to work around bug in ...:transliterate(). Remove me as soon as this bug is fixed.
-	if not retval and (text == " " or text == "-" or text == "?") then
+	if not retval and (text == " " or text == "-" or text == "-́" or text == "?" or text == "-∅") then
 		retval = text
 	end
 	if not retval then
@@ -743,9 +1166,9 @@ function export.add_forms(formtable, slot, stems, endings, combine_stem_ending, 
 			for _, ending in ipairs(endings) do
 				local new_footnotes = nil
 				if stem.footnotes and ending.footnotes then
-					new_footnotes = m_table.shallowCopy(stem.footnotes)
+					new_footnotes = shallow_copy(stem.footnotes)
 					for _, footnote in ipairs(ending.footnotes) do
-						m_table.insertIfNot(new_footnotes, footnote)
+						insert_if_not(new_footnotes, footnote)
 					end
 				elseif stem.footnotes then
 					new_footnotes = stem.footnotes
@@ -774,7 +1197,7 @@ Combine any number of form components and store into slot ``slot`` of form table
 lists which should be concatenated similarly to how `add_forms()` does it, and stored in ``slot`` along with any footnotes in ``footnotes``.
 More specifically:
 # If there are no components, nothing happens.
-# If there is one component, it is converted to general list form and `insert_forms()` called.
+# If there is one component, it is converted to full list form and `insert_forms()` called.
 # If there are two components, they are treated as stems and endings respectively and `add_forms()` is called.
 # If there are three or more components, they are concatenated left-to-right in the manner of a `reduce()` operation: the first two components
   are combined using `add_forms()` and stored into a temporary table, then the next component is combined with the result of the previous
@@ -824,7 +1247,7 @@ function export.default_split_bracketed_runs_into_words(bracketed_runs, data)
 	-- If the text begins with a hyphen, include the hyphen in the set of allowed characters
 	-- for an inflected segment. This way, e.g. conjugating "-ir" is treated as a regular
 	-- -ir verb rather than a hyphen + irregular [[ir]].
-	local is_suffix = (not data or data.text_index == 1) and rfind(bracketed_runs[1], "^%-")
+	local is_suffix = (not data or data.text_index == 1) and bracketed_runs[1]:find("^%-")
 	local split_pattern = is_suffix and " " or "[ %-]"
 	return put.split_alternating_runs(bracketed_runs, split_pattern, "preserve splitchar")
 end
@@ -855,13 +1278,13 @@ local function parse_before_or_post_text(data)
 	local saw_manual_translit = false
 	local lemma
 	for j, space_separated_group in ipairs(space_separated_groups) do
-		local component = table.concat(space_separated_group)
+		local component = concat(space_separated_group)
 		if lemma_is_last and j == #space_separated_groups then
 			lemma = component
 			if lemma == "" and not props.allow_blank_lemma then
-				error("Word is blank: '" .. table.concat(segments) .. "'")
+				error("Word is blank: '" .. concat(segments) .. "'")
 			end
-		elseif rfind(component, "//") then
+		elseif component:find("//") then
 			-- Manual translit or respelling specified.
 			if not props.lang then
 				error("Manual translit not allowed for this language; if this is incorrect, 'props.lang' must be set internally")
@@ -876,11 +1299,11 @@ local function parse_before_or_post_text(data)
 			if props.transliterate_respelling then
 				translit = props.transliterate_respelling(translit)
 			end
-			table.insert(parsed_components, component)
-			table.insert(parsed_components_translit, translit)
+			insert(parsed_components, component)
+			insert(parsed_components_translit, translit)
 		else
-			table.insert(parsed_components, component)
-			table.insert(parsed_components_translit, false) -- signal that it may need later transliteration
+			insert(parsed_components, component)
+			insert(parsed_components_translit, false) -- signal that it may need later transliteration
 		end
 	end
 
@@ -892,10 +1315,10 @@ local function parse_before_or_post_text(data)
 		end
 	end
 
-	text = table.concat(parsed_components)
+	text = concat(parsed_components)
 	local translit
 	if saw_manual_translit then
-		translit = table.concat(parsed_components_translit)
+		translit = concat(parsed_components_translit)
 	end
 	return text, translit, lemma
 end
@@ -969,12 +1392,12 @@ local function parse_multiword_spec(segments, props, disable_allow_default_indic
 	if not disable_allow_default_indicator then
 		if #segments == 1 then
 			if props.allow_default_indicator then
-				table.insert(segments, "<>")
-				table.insert(segments, "")
+				insert(segments, "<>")
+				insert(segments, "")
 			elseif props.angle_brackets_omittable then
 				segments[1] = "<" .. segments[1] .. ">"
-				table.insert(segments, 1, "")
-				table.insert(segments, "")
+				insert(segments, 1, "")
+				insert(segments, "")
 			end
 		end
 	end
@@ -994,7 +1417,7 @@ local function parse_multiword_spec(segments, props, disable_allow_default_indic
 		base.before_text_no_links = m_links.remove_links(base.before_text)
 		base.before_text_translit = before_text_translit
 		base.lemma = base.lemma or lemma
-		table.insert(multiword_spec.word_specs, base)
+		insert(multiword_spec.word_specs, base)
 	end
 	multiword_spec.post_text, multiword_spec.post_text_translit =
 		parse_before_or_post_text {
@@ -1019,12 +1442,12 @@ The return value is a table of the form
 where ``multiword_spec`` describes a given alternant and is as returned by parse_multiword_spec().
 ]=]
 local function parse_alternant(alternant, props)
-	local alternant_text = rmatch(alternant, "^%(%((.*)%)%)$")
+	local alternant_text = alternant:match("^%(%((.*)%)%)$")
 	local segments = put.parse_balanced_segment_run(alternant_text, "<", ">")
 	local comma_separated_groups = put.split_alternating_runs(segments, "%s*,%s*")
 	local alternant_spec = {alternants = {}}
 	for _, comma_separated_group in ipairs(comma_separated_groups) do
-		table.insert(alternant_spec.alternants, parse_multiword_spec(comma_separated_group, props))
+		insert(alternant_spec.alternants, parse_multiword_spec(comma_separated_group, props))
 	end
 	return alternant_spec
 end
@@ -1127,7 +1550,7 @@ function export.parse_inflected_text(text, props)
 			-- surrounding the alternants as an inflected word rather than as raw text.
 			local multiword_spec = parse_multiword_spec(segments, props, #alternant_segments ~= 1)
 			for _, word_spec in ipairs(multiword_spec.word_specs) do
-				table.insert(alternant_multiword_spec.alternant_or_word_specs, word_spec)
+				insert(alternant_multiword_spec.alternant_or_word_specs, word_spec)
 			end
 			last_post_text = multiword_spec.post_text
 			last_post_text_no_links = multiword_spec.post_text_no_links
@@ -1137,7 +1560,7 @@ function export.parse_inflected_text(text, props)
 			alternant_spec.before_text = last_post_text
 			alternant_spec.before_text_no_links = last_post_text_no_links
 			alternant_spec.before_text_translit = last_post_text_translit
-			table.insert(alternant_multiword_spec.alternant_or_word_specs, alternant_spec)
+			insert(alternant_multiword_spec.alternant_or_word_specs, alternant_spec)
 		end
 	end
 	alternant_multiword_spec.post_text = last_post_text
@@ -1226,7 +1649,7 @@ local function append_forms(props, formtable, slot, forms, before_text, before_t
 				local new_footnotes = export.combine_footnotes(old_form.footnotes, form.footnotes)
 				if new_formval == form.form and new_translit == form.translit then
 					-- Automatically preserve metadata when possible.
-					new_formobj = m_table.shallowCopy(form)
+					new_formobj = shallow_copy(form)
 					new_formobj.footnotes = new_footnotes
 				else
 					new_formobj = {form=new_formval, translit=new_translit, footnotes=new_footnotes}
@@ -1242,7 +1665,7 @@ local function append_forms(props, formtable, slot, forms, before_text, before_t
 						}
 					end
 				end
-				table.insert(ret_forms, new_formobj)
+				insert(ret_forms, new_formobj)
 			end
 		end
 	end
@@ -1399,7 +1822,7 @@ function export.inflect_multiword_or_alternant_multiword_spec(multiword_spec, pr
 		iterate_slot_list_or_table(props, function(slot)
 			if not props.skip_slot or not props.skip_slot(slot) then
 				append_forms(props, multiword_spec.forms, slot, word_spec.forms[slot],
-					(rfind(slot, "linked") or props.include_user_specified_links) and
+					(slot:find("linked") or props.include_user_specified_links) and
 					word_spec.before_text or word_spec.before_text_no_links,
 					word_spec.before_text_no_links, word_spec.before_text_translit
 				)
@@ -1412,7 +1835,7 @@ function export.inflect_multiword_or_alternant_multiword_spec(multiword_spec, pr
 			-- If slot is empty or should be skipped, don't try to append post-text.
 			if (not props.skip_slot or not props.skip_slot(slot)) and multiword_spec.forms[slot] then
 				append_forms(props, multiword_spec.forms, slot, pseudoform,
-					(rfind(slot, "linked") or props.include_user_specified_links) and
+					(slot:find("linked") or props.include_user_specified_links) and
 					multiword_spec.post_text or multiword_spec.post_text_no_links,
 					multiword_spec.post_text_no_links, multiword_spec.post_text_translit
 				)
@@ -1462,10 +1885,10 @@ function export.get_footnote_text(footnotes, footnote_obj)
 				-- Generate a footnote index.
 				this_noteindex = footnote_obj.noteindex
 				footnote_obj.noteindex = footnote_obj.noteindex + 1
-				table.insert(footnote_obj.notes, '<sup style="color: var(--wikt-palette-red, red)">' .. this_noteindex .. '</sup>' .. footnote)
+				insert(footnote_obj.notes, '<sup style="color: var(--wikt-palette-red, red)">' .. this_noteindex .. '</sup>' .. footnote)
 				footnote_obj.seen_notes[footnote] = this_noteindex
 			end
-			m_table.insertIfNot(link_indices, this_noteindex)
+			insert_if_not(link_indices, this_noteindex)
 		end
 		if refs then
 			for _, ref in ipairs(refs) do
@@ -1484,7 +1907,7 @@ function export.get_footnote_text(footnotes, footnote_obj)
 				-- I considered using "n" as the default group rather than nothing, to more clearly distinguish regular
 				-- footnotes from references, but this requires referencing group "n" as <references group="n"> below,
 				-- which is non-obvious.
-				m_table.insertIfNot(all_refs, ref)
+				insert_if_not(all_refs, ref)
 			end
 		end
 	end
@@ -1509,11 +1932,11 @@ function export.get_footnote_text(footnotes, footnote_obj)
 	end
 	local link_text
 	if #link_indices > 0 then
-		link_text = '<sup style="color: var(--wikt-palette-red, red)">' .. table.concat(link_indices, ",") .. '</sup>'
+		link_text = '<sup style="color: var(--wikt-palette-red, red)">' .. concat(link_indices, ",") .. '</sup>'
 	else
 		link_text = ""
 	end
-	local ref_text = table.concat(all_refs)
+	local ref_text = concat(all_refs)
 	if link_text ~= "" and ref_text ~= "" then
 		return link_text .. "<sup>,</sup>" .. ref_text
 	else
@@ -1530,7 +1953,7 @@ function export.add_links(form, multiword_only)
 		return form
 	end
 	if not form:find("%[%[") then
-		if rfind(form, "[%s%p]") then --optimization to avoid loading [[Module:headword]] on single-word forms
+		if ufind(form, "[%s%p]") then --optimization to avoid loading [[Module:headword]] on single-word forms
 			local m_headword = require("Module:headword")
 			if m_headword.head_is_multiword(form) then
 				form = m_headword.add_multiword_links(form)
@@ -1548,7 +1971,7 @@ end
 Remove redundant link surrounding entire term.
 ]==]
 function export.remove_redundant_links(term)
-	return rsub(term, "^%[%[([^%[%]|]*)%]%]$", "%1")
+	return (term:gsub("^%[%[([^%[%]|]*)%]%]$", "%1"))
 end
 
 
@@ -1593,7 +2016,7 @@ function export.reconstruct_original_spec(alternant_multiword_spec, props)
 	props = props or {}
 
 	local function ins(txt)
-		table.insert(parts, txt)
+		insert(parts, txt)
 	end
 
 	local function insert_angle_bracket_spec(spec)
@@ -1626,7 +2049,7 @@ function export.reconstruct_original_spec(alternant_multiword_spec, props)
 	end
 	ins(alternant_multiword_spec.user_specified_post_text)
 
-	local retval = table.concat(parts)
+	local retval = concat(parts)
 
 	if alternant_multiword_spec.allow_default_indicator then
 		-- As a special case, if we see e.g. "amar<>", remove the <>. Don't do this if there are spaces or alternants.
@@ -1666,7 +2089,6 @@ follows:
   generate_link = nil `or` __function__(data),
   format_tr = nil `or` __function__(data),
   join_spans = nil `or` __function__(data),
-  allow_footnote_symbols = __boolean__,
   footnotes = nil or {"``extra_footnote``", "``extra_footnote``", ...},
 }```
 
@@ -1721,10 +2143,8 @@ The function works as follows:
 	{"?"} or an em-dash ({"—"}); (d) the accelerator tag set is given as a hyphen {"-"}); or (e) the form value contains
 	an internal link.
 ##* The accelerator code sets the `formval_for_link` key in each form object to the version of the form value that
-    should be passed to `full_link()` in [[Module:links]]. This is usually the same as the passed-in form value, but
-	differs when `props.allow_footnote_symbols` is specified and an old-style footnote symbol is attached to the form
-	(the removed footnote symbol is stored in the `formval_old_style_footnote_symbol` key), and also differs when the
-	entire form value is surrounded with a redundant internal link (which is removed).
+	should be passed to `full_link()` in [[Module:links]]. This is usually the same as the passed-in form value, but
+	differs when the entire form value is surrounded with a redundant internal link (which is removed).
 ##* The resulting accelerator object can be modified (or replaced entirely) by the `transform_accel_obj` function. This
     is used, for example, in [[Module:es-verb]], [[Module:pt-verb]] and other Romance-language verb conjugation modules
 	(likewise [[Module:ar-verb]]) to replace the tag set with the original verb spec used to generate the verb, so that
@@ -1745,11 +2165,9 @@ The function works as follows:
 	form object. These translits are themselves deduplicated to get the list of spans. (Such duplication can happen, for
 	example, in Arabic with terms containing a glottal stop in them; there may be multiple ways of spelling the glottal
 	stop or ''hamza'' in Arabic, but only one way of transliterating it.) Each span consists of an object specifying
-	the translit minus any attached old-style footnote symbols (which are only allowed if
-	`props.allow_footnote_symbols` is set); the attached old-style footnote symbol, which is always an empty string when
-	`props.allow_footnote_symbols` is not set; and the list of (new-style) footnotes. These objects are then converted
-	to formatted strings, either using `format_tr` if supplied or else calling `tag_translit()` in
-	[[Module:script utilities]] and concatenating the appropriate footnote symbol(s) (if any).
+	the translit and the list of footnotes. These objects are then converted to formatted strings, either using
+	`format_tr` if supplied or else calling `tag_translit()` in [[Module:script utilities]] and concatenating the
+	appropriate footnote symbol(s) (if any).
 ### Combine the form value and transliteration spans. If `join_spans` is supplied, use it; otherwise, concatenate the
     form value spans (comma-separated) and (if available) transliteration spans (comma-separated), and (if appropriate)
 	combine them using {<br />}.
@@ -1815,23 +2233,23 @@ algorithm (see above). The property table passed in has the following properties
 * `footnote_obj`: The footnote object returned by the `create_footnote_obj` property or the default
   `create_footnote_obj()` function.
 The following should be noted about the form objects in `forms`:
-# There are extra fields `formval_for_link`, `formval_old_style_footnote_symbol` and `accel_obj`. The first two are as
-described above under the paragraph beginning "Add acceleration to all forms" under "The function works as follows".
-The third one is the accelerator object in the format expected by [[Module:links]].
+# There are extra fields `formval_for_link` and `accel_obj`. The first one is as described above under the paragraph
+  beginning "Add acceleration to all forms" under "The function works as follows". The second one is the accelerator
+  object in the format expected by [[Module:links]].
 # The `translit` field, if non-{nil}, is a list of transliterations rather than a single transliteration; this is due to
-the form value deduplication step.
+  the form value deduplication step.
 
 `generate_link` is an optional function to generate the link text for a given form value. It is passed a single argument
 (a table of properties) and should return a string, the formatted link. If it returns {nil}, the default algorithm (see
 above) is invoked. The property table passed in has the following properties:
 * `slot`: The slot being processed.
 * `form`: The form to be converted to a formatted link. As with the `format_forms` function described above, the form
-  objects passed in contain extra fields `formval_for_link`, `formval_old_style_footnote_symbol` and `accel_obj` (all
-  of which will normally be used), and the `translit` field, if non-{nil}, is a list.
+  objects passed in contain extra fields `formval_for_link` and `accel_obj` (both of which will normally be used), and
+  the `translit` field, if non-{nil}, is a list.
 * `pos`: The one-based position of the form being processed, in the list of form value spans. Rarely used.
 * `footnote_obj`: The footnote object returned by the `create_footnote_obj` property or the default
-  `create_footnote_obj()` function. Normally used in order to get the (new-style) footnote symbol associated with any
-  footnotes in `footnotes`.
+  `create_footnote_obj()` function. Normally used in order to get the footnote symbol associated with any footnotes in
+  `footnotes`.
 The description above of how `show_forms()` works inclues various examples of modules that supply a `generate_link`
 function and the reasons for doing so.
 
@@ -1839,16 +2257,15 @@ function and the reasons for doing so.
 argument (a table of properties) and should return a string, the formatted transliteration text. If it returns {nil},
 the default algorithm (see above) is invoked. The property table passed in has the following properties:
 * `slot`: The slot being processed.
-* `tr_for_tag`: The transliteration to process, where old-style footnote symbols have been removed.
-* `old_style_footnote_symbol`: The removed old-style footnote symbol, or a blank string if no symbol was removed.
+* `tr_for_tag`: The transliteration to process.
 * `pos`: The one-based position of the transliteration being processed, in the list of transliteration spans. Rarely
   used.
 * `footnotes`: The list of footnotes associated with all form objects with this transliteration. (If there were multiple
   form objects with the same transliteration, the list of footnotes will have been generated using
   `combine_footnotes()`.)
 * `footnote_obj`: The footnote object returned by the `create_footnote_obj` property or the default
-  `create_footnote_obj()` function. Normally used in order to get the (new-style) footnote symbol associated with any
-  footnotes in `footnotes`.
+  `create_footnote_obj()` function. Normally used in order to get the footnote symbol associated with any footnotes in
+  `footnotes`.
 
 `join_spans` is an optional function to join the processed form value and transliteration spans into a formatted string.
 It is passed a single argument (a table of properties) and should return the final string to store into the form table
@@ -1863,13 +2280,6 @@ A custom `join_spans` is provided by [[Module:de-verb]], which concatenates the 
 values are often long, containing extra words attached during `generate_link()`. The only exception is the `aux` slot
 holding the auxiliaries, which is concatenated horizontally using {" or "}. [[Module:de-adjective]] similarly provides
 a custom `join_spans` function that concatenates the form value spans vertically.
-
-`allow_footnote_symbols`, if given, causes any old-style footnote symbols attached to forms (e.g. numbers, asterisk) to
-be separated off, placed outside the links, and superscripted. In this case, `footnotes` should be a list of footnotes
-(preceded by footnote symbols, which are superscripted). These footnotes are combined with any footnotes found in the
-forms and placed into `forms.footnotes`. This mechanism of specifying footnotes is provided for backward compatibility
-with certain existing inflection modules and should not be used for new modules. Instead, use the regular footnote
-mechanism specified using the `footnotes` property attached to each form object.
 ]==]
 function export.show_forms(formtable, props)
 	local footnote_obj = props.create_footnote_obj and props.create_footnote_obj() or export.create_footnote_obj()
@@ -1889,14 +2299,14 @@ function export.show_forms(formtable, props)
 	local lemma_formvals = {}
 	for _, lemma in ipairs(props.lemmas) do
 		local lemma_formval, _ = fetch_formval_and_translit(lemma)
-		m_table.insertIfNot(lemma_formvals, lemma_formval)
+		insert_if_not(lemma_formvals, lemma_formval)
 	end
-	formtable.lemma = #lemma_formvals > 0 and table.concat(lemma_formvals, ", ") or
+	formtable.lemma = #lemma_formvals > 0 and concat(lemma_formvals, ", ") or
 		mw.loadData(headword_data_module).pagename
 	-- For safety, since we in-place modify `lemmas` usually before processing a given slot, make a copy.
-	local props_lemmas = m_table.shallowCopy(props.lemmas)
+	local props_lemmas = shallow_copy(props.lemmas)
 	for i, lemma in ipairs(props_lemmas) do
-		props_lemmas[i] = m_table.shallowCopy(lemma)
+		props_lemmas[i] = shallow_copy(lemma)
 	end
 
 	local function do_slot(slot, accel_tag_set)
@@ -1957,7 +2367,7 @@ function export.show_forms(formtable, props)
 								dup_form_translit = {dup_form_translit}
 							end
 							for _, translit in ipairs(dup_form_translit) do
-								m_table.insertIfNot(combined_translit, translit)
+								insert_if_not(combined_translit, translit)
 							end
 							existing_form.translit = combined_translit
 						end
@@ -1971,7 +2381,7 @@ function export.show_forms(formtable, props)
 							}
 						end
 					end
-					m_table.insertIfNot(deduped_formobjs, form, {
+					insert_if_not(deduped_formobjs, form, {
 						key = function(formobj) return formobj.form end,
 						combine = combine_forms,
 					})
@@ -1984,23 +2394,12 @@ function export.show_forms(formtable, props)
 				local formval = form.form
 				if not form_value_transliterable(formval) then
 					form.formval_for_link = formval
-					form.formval_old_style_footnote_symbol = ""
 				else
-					local formval_for_link, formval_old_style_footnote_symbol
-					if props.allow_footnote_symbols then
-						formval_for_link, formval_old_style_footnote_symbol =
-							require(table_tools_module).get_notes(formval)
-						if formval_old_style_footnote_symbol ~= "" then
-							track("old-style-footnote-symbol")
-						end
-					else
-						formval_for_link = formval
-						formval_old_style_footnote_symbol = ""
-					end
+					local formval_for_link
+					formval_for_link = formval
 					-- remove redundant link surrounding entire form
 					formval_for_link = export.remove_redundant_links(formval_for_link)
 					form.formval_for_link = formval_for_link
-					form.formval_old_style_footnote_symbol = formval_old_style_footnote_symbol
 
 					-------------------- Compute the accelerator object. -----------------
 
@@ -2048,7 +2447,7 @@ function export.show_forms(formtable, props)
 							for j=first_lemma, last_lemma do
 								local this_accel_lemma, this_accel_lemma_translit =
 									fetch_formval_and_translit(props_lemmas[j], "remove links")
-								-- Do not use table.insert() especially for the translit because it may be nil and in
+								-- Do not use insert() especially for the translit because it may be nil and in
 								-- that case we want gaps in the array.
 								accel_lemma[j - first_lemma + 1] = this_accel_lemma
 								accel_lemma_translit[j - first_lemma + 1] = this_accel_lemma_translit
@@ -2058,7 +2457,7 @@ function export.show_forms(formtable, props)
 						local accel_translit
 						if props.include_translit and form.translit then
 							if type(form.translit) == "table" then
-								accel_translit = table.concat(form.translit, ", ")
+								accel_translit = concat(form.translit, ", ")
 							elseif type(form.translit) == "string" then
 								accel_translit = form.translit
 							else
@@ -2111,38 +2510,24 @@ function export.show_forms(formtable, props)
 					if not link then
 						link = m_links.full_link {
 							lang = props.lang, term = form.formval_for_link, tr = "-", accel = form.accel_obj
-						} .. form.formval_old_style_footnote_symbol ..
-						export.get_footnote_text(form.footnotes, footnote_obj)
+						} .. export.get_footnote_text(form.footnotes, footnote_obj)
 					end
 					formval_spans[i] = link
 					if props.include_translit then
-						-- Note that if there is an attached old-style footnote symbol, we transliterate it.
 						local translits = form.translit or props_transliterate(props, m_links.remove_links(form.form))
 						if type(translits) == "string" then
 							translits = {translits}
 						end
 						for _, tr in ipairs(translits) do
-							local tr_for_tag, tr_old_style_footnote_symbol
-							if props.allow_footnote_symbols then
-								tr_for_tag, tr_old_style_footnote_symbol = require(table_tools_module).get_notes(tr)
-								if tr_old_style_footnote_symbol ~= "" then
-									track("old-style-footnote-symbol")
-								end
-							else
-								tr_for_tag = tr
-								tr_old_style_footnote_symbol = ""
-							end
-							m_table.insertIfNot(tr_spans, {
+							local tr_for_tag = tr -- formerly may have differed due to old-style footnote symbols
+							insert_if_not(tr_spans, {
 								tr_for_tag = tr_for_tag,
-								old_style_footnote_symbol = tr_old_style_footnote_symbol,
 								footnotes = form.footnotes,
 							}, {
 								key = function(trobj) return trobj.tr_for_tag end,
 								combine = function(trobj, newtrobj)
 									-- Combine footnotes.
 									trobj.footnotes = export.combine_footnotes(trobj.footnotes, newtrobj.footnotes)
-									trobj.old_style_footnote_symbol = trobj.old_style_footnote_symbol ..
-										newtrobj.old_style_footnote_symbol
 								end,
 							})
 						end
@@ -2156,7 +2541,6 @@ function export.show_forms(formtable, props)
 							slot = slot,
 							pos = i,
 							tr_for_tag = tr_span.tr_for_tag,
-							old_style_footnote_symbol = tr_span.old_style_footnote_symbol,
 							footnotes = tr_span.footnotes,
 							footnote_obj = footnote_obj,
 						}
@@ -2164,7 +2548,7 @@ function export.show_forms(formtable, props)
 					if not formatted_tr then
 						formatted_tr = require(script_utilities_module).tag_translit(tr_span.tr_for_tag, props.lang,
 							"default", " style=\"color: var(--wikt-palette-grey-8,#888);\"") ..
-							tr_span.old_style_footnote_symbol .. export.get_footnote_text(tr_span.footnotes, footnote_obj)
+							export.get_footnote_text(tr_span.footnotes, footnote_obj)
 					end
 					tr_spans[i] = formatted_tr
 				end
@@ -2177,10 +2561,10 @@ function export.show_forms(formtable, props)
 					}
 				end
 				if not formatted_forms then
-					local formval_span = table.concat(formval_spans, ", ")
+					local formval_span = concat(formval_spans, ", ")
 					local tr_span
 					if #tr_spans > 0 then
-						tr_span = table.concat(tr_spans, ", ")
+						tr_span = concat(tr_spans, ", ")
 					end
 					if tr_span then
 						formatted_forms = formval_span .. "<br />" .. tr_span
@@ -2197,15 +2581,7 @@ function export.show_forms(formtable, props)
 
 	iterate_slot_list_or_table(props, do_slot)
 
-	local all_notes = footnote_obj.notes
-	if props.footnotes then
-		for _, note in ipairs(props.footnotes) do
-			track("old-style-footnote-symbol")
-			local symbol, entry = require(table_tools_module).get_initial_notes(note)
-			table.insert(all_notes, symbol .. entry)
-		end
-	end
-	formtable.footnote = table.concat(all_notes, "<br />")
+	formtable.footnote = concat(footnote_obj.notes, "<br />")
 end
 
 
@@ -2271,16 +2647,16 @@ function export.scrape_inflection(data)
 								)
 							end
 							inflobjs_by_id[tid] = inflobj
-							m_table.insertIfNot(ordered_seen_ids, tid)
+							insert_if_not(ordered_seen_ids, tid)
 						else
-							table.insert(inflobjs_without_id, inflobj)
+							insert(inflobjs_without_id, inflobj)
 						end
 					end
 				end
 				local function concat_ordered_seen_ids()
 					local quoted_seen_ids = {}
 					for _, seen_id in ipairs(ordered_seen_ids) do
-						table.insert(quoted_seen_ids, "'" .. seen_id .. "'")
+						insert(quoted_seen_ids, "'" .. seen_id .. "'")
 					end
 					return m_table.serialCommaJoin(quoted_seen_ids, {dontTag = true})
 				end

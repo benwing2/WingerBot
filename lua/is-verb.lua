@@ -58,6 +58,22 @@ local function track(track_id)
 end
 
 
+local function link_term(term, face)
+	return m_links.full_link({
+		lang = lang,
+		term = term,
+	}, nil, face)
+end
+
+
+local function link_alt(term)
+	return m_links.full_link {
+		lang = lang,
+		alt = term,
+	}
+end
+
+
 -- Issue an error message with any Wikicode escaped so it displays literally. `error_depth` indicates how many error
 -- functions are stacked above this function. Non-error-handling code should either pass in an error depth of 0 or omit
 -- the parameter and let it be defaulted to 0. Error-handling functions that call another error-handling function
@@ -419,6 +435,16 @@ local function remove_j_before_i(stem)
 end
 
 
+local function add_j_before_u_past_subj_pl(stem)
+	-- Past subjunctives in -k- and -g- get -j- before pluram -um, -uð, -u. This also happens with deyja, past
+	-- subjunctive singular dæi, pl dæjum; likewise if we base he past subjunctive plural off of the past indicative
+	-- plural dóum. with umlaut to dæ-. I don't think there are any cases where it is strictly necessary to add -j-
+	-- to a stem in -ý- or -ey- but it seems logical it would happen. Adding to -au- (cf. removal of -j- from -auj-
+	-- in remove_j_before_i) seems less likely.
+	return (umatch(stem, "^(.*[kgæý])$") or stem:match("^(.*ey)$")) and stem .. "j" or stem
+end
+
+
 -- Remove final j and v in a stem that is not followed by a vowel, e.g. pres_indic_1s, imp_2s or weak 1-3 past tense
 -- with a dental added directly to the stem. We want to truncate any final j; cf. [[hlæja]], pres1s and imp2s hlæ.
 -- But v truncates only after k or g; cf. [[slökkva]] "to put out, to extinguish (a light)", imp2s slökk, past tense
@@ -507,355 +533,6 @@ local function add_dental_suffix(cluster)
 end
 
 
---[=[
-Basic function to combine stem(s) and other properties with ending(s) and insert the result into the appropriate
-slot. `base` is the object describing all the properties of the word being inflected for a single alternant (in case
-there are multiple alternants specified using `((...))`). `slot_prefix` is either "ind_" or "def_" and is prefixed to
-the slot value in `slot` to get the actual slot to add the resulting forms to. (`slot_prefix` is separated out
-because the code below frequently needs to conditionalize on the value of `slot` and should not have to worry about
-the definite and indefinite slot variants). `props` is a property set object containing computed stems and other
-information (such as whether i-mutation is active) about a particular combination of control specs. See the comment
-above create_base() for more information. The information found in `props` cannot be stored in `base` because there may
-be more than one set of such properties per `base` (e.g. if the user specified 'umut,uUmut' or '-j,j' or '-imut,imut'
-or some combination of these; in such a case, the caller will iterate over all possible combinations, and ultimately
-invoke add() multiple times, one per combination). `endings` is the ending or endings added to the appropriate stem
-(after any j or v infix) to get the form(s) to add to the slot. Its value can be a single string, a list of strings,
-or a list of form objects (i.e. in general list form). `clitics` is the clitic or clitics to add after the endings to
-form the actual form value inserted into definite slots; it should be nil for indefinite slots. Its format is the
-same as for `endings`. `ending_override`, if true, indicates that the ending(s) supplied in `endings` come from a
-user-specified override, and hence j and v infixes should not be added as they are already included in the override
-if needed.
-]=]
-local function add_slotval(base, slot_prefix, slot, props, endings, clitics, ending_override)
-	if not endings then
-		return
-	end
-	-- Call skip_slot() based on the declined number and definiteness; if the actual number is different, we correct
-	-- this in conjugate_verb() at the end.
-	if skip_slot(base.number, base.definiteness, slot) then
-		return
-	end
-	if not clitics then
-		clitics = { "" }
-	elseif type(clitics) == "string" then
-		clitics = { clitics }
-	end
-	if type(endings) == "string" then
-		endings = { endings }
-	end
-	-- Loop over each ending and clitic.
-	for _, endingobj in ipairs(endings) do
-		for _, cliticobj in ipairs(clitics) do
-			-- Do the following inside of the innermost loop even though it does not depend on the value of `cliticobj`,
-			-- because that way we are free to mutate `ending` below.
-			local ending, ending_footnotes
-			if type(endingobj) == "string" then
-				ending = endingobj
-			else
-				ending = endingobj.form
-				ending_footnotes = endingobj.footnotes
-			end
-			-- Ending of "-" means the user used -- to indicate there should be no form here.
-			if ending == "-" then
-				return
-			end
-			local function interr(msg)
-				error(("Internal error: For lemma '%s', slot '%s%s', ending '%s', %s: %s"):format(base.lemma, slot_prefix,
-					slot, ending, msg, dump(props)))
-			end
-
-			local clitic, clitic_footnotes
-			if type(cliticobj) == "string" then
-				clitic = cliticobj
-			else
-				clitic = cliticobj.form
-				clitic_footnotes = cliticobj.footnotes
-			end
-
-			-- Compute whether i-mutation or u-mutation is in effect, and compute the "mutation footnotes", which are
-			-- footnotes attached to a mutation-related indicator and which may need to be added even if no mutation is
-			-- in effect (specifically when dealing with an ending that would trigger a mutation if in effect). AFAIK
-			-- you cannot have both mutations in effect at once, and i-mutation overrides u-mutation if both would be in
-			-- effect.
-
-			-- Single ^ at the beginning of an ending indicates that the i-mutated version of the stem should apply, and
-			-- double ^^ at the beginning indicates that the u-mutated version should apply.
-			local explicit_imut, explicit_umut
-			-- % at the end of a definite ending indicates that the following i- of the clitic should drop, as with
-			-- neuter [[tré]], [[kné]], [[fé]]. There's no counterpart to force irregular inclusion of an i- that would
-			-- normally drop; just include it in the ending (as with acc/dat sg of [[eygló]] "eyeball???" and [[sígó]]
-			-- "cig").
-			local clitic_i_drops
-			ending, explicit_umut = rsubb(ending, "^%^%^", "")
-			if not explicit_umut then
-				ending, explicit_imut = rsubb(ending, "^%^", "")
-			end
-			ending, clitic_i_drops = rsubb(ending, "%%$", "")
-			local is_vowel_ending = ufind(ending, "^" .. com.vowel_c)
-			local is_vowel_clitic = ufind(clitic, "^" .. com.vowel_c)
-			local mut_in_effect, mut_not_in_effect, mut_footnotes
-			local ending_in_a = not not ending:find("^a")
-			local ending_in_i = not not ending:find("^i")
-			local ending_in_u = not not ending:find("^u")
-			if props.unimut ~= nil and props.unumut ~= nil then
-				interr("Cannot have both 'unimut' and 'unumut' in effect at the same time")
-			end
-			if props.unimut ~= nil and props.imut ~= nil then
-				interr("Cannot have both 'unimut' and 'imut' in effect at the same time")
-			end
-			if props.unumut ~= nil and props.umut ~= nil then
-				interr("Cannot have both 'unumut' and 'umut' in effect at the same time")
-			end
-			if explicit_imut then
-				mut_in_effect = "i"
-			elseif explicit_umut then
-				mut_in_effect = "u"
-			else
-				if props.unimut ~= nil then
-					local is_unimut_slot
-					if base.gender == "m" then
-						is_unimut_slot = slot == "dat_s" or slot:find("_p")
-					elseif base.gender == "f" then
-						is_unimut_slot = slot == "acc_s" or slot == "dat_s" or slot == "dat_p" or
-							slot == "gen_p"
-					else
-						interr(
-						"'unimut' shouldn't be specified with neuter nouns; don't know what slots would be affected; neuter pluralia tantum nouns using 'unimut' should have synthesized a singular without i-mutation")
-					end
-					if is_unimut_slot then
-						mut_not_in_effect = "i"
-						mut_footnotes = props.unimut_footnotes
-					elseif props.unimut then
-						mut_in_effect = "i"
-					end
-				elseif props.imut ~= nil then
-					if ending_in_i then
-						if props.imut then
-							mut_in_effect = "i"
-							mut_footnotes = props.imut_footnotes
-						elseif props.imut == false then
-							mut_not_in_effect = "i"
-							mut_footnotes = props.imut_footnotes
-						end
-					end
-				end
-				if props.unumut ~= nil then
-					local is_unumut_slot
-					if props.unumut == "unumut" or props.unumut == "-unumut" then
-						is_unumut_slot = ending_in_a or ending_in_i
-					elseif base.gender == "m" then
-						is_unumut_slot = slot == "gen_s" or slot == "gen_p"
-					elseif base.gender == "f" then
-						is_unumut_slot = slot == "nom_p" or slot == "acc_p" or slot == "gen_p"
-					else
-						interr(
-						"'unumut' and variants shouldn't be specified with neuter nouns; don't know what slots would be affected; neuter pluralia tantum nouns using 'unumut'and variants should have synthesized a singular without u-mutation")
-					end
-					if not mut_in_effect and not mut_not_in_effect then
-						-- Do nothing if mut_in_effect or mut_not_in_effect because i-mut takes precedence over u-mut;
-						-- FIXME: I hope this is correct in all cases.
-						if is_unumut_slot then
-							mut_not_in_effect = "u"
-							mut_footnotes = props.unumut_footnotes
-						elseif props.unumut then
-							mut_in_effect = "u"
-						end
-					end
-				end
-				if ending_in_u and not mut_in_effect then
-					mut_in_effect = "u"
-					-- umut and uUmut footnotes are incorporated into the appropriate umut_* stems
-				end
-			end
-
-			local ending_was_asterisk = ending == "*"
-
-			-- Now compute the appropriate stem to which the ending and clitic are added. `prefix` is either an empty
-			-- string or "pl_" and selects the set of stems to consider when computing the stem in effect. See the
-			-- comment above for `pl_stem`.
-			local function compute_stem_in_effect(prefix)
-				local stem_in_effect
-
-				if mut_in_effect == "i" then
-					-- NOTE: It appears that imut and defcon never co-occur; otherwise we'd need to flesh out the set of
-					-- stems to include i-mutation versions of defcon stems, similar to what we do for u-mutation.
-					if is_vowel_ending then
-						if not props[prefix .. "imut_vstem"] then
-							interr(("i-mutation in effect and ending begins with a vowel but '.%simut_vstem' not defined")
-							:
-							format(prefix))
-						end
-						stem_in_effect = props[prefix .. "imut_vstem"]
-					else
-						if not props[prefix .. "imut_nonvstem"] then
-							interr(("i-mutation in effect and ending does not begin with a vowel but '.%simut_nonvstem' not defined")
-							:
-							format(prefix))
-						end
-						stem_in_effect = props[prefix .. "imut_nonvstem"]
-					end
-				else
-					-- Careful with the following logic; it is written carefully and should not be changed without a
-					-- thorough understanding of its functioning.
-					local has_umut = mut_in_effect == "u"
-					-- First, if the ending is null (or "*", which eventually turns into a null ending; see below), and
-					-- we have a vowel-initial definite-article clitic, use the special 'defcon' stem if available.
-					if (ending == "" or ending == "*") and is_vowel_clitic then
-						stem_in_effect = has_umut and props[prefix .. "umut_null_defvstem"] or
-							props[prefix .. "null_defvstem"]
-					end
-					-- If the stem is still unset, then use the vowel or non-vowel stem if available. When u-mutation is
-					-- active, we first check for the u-mutated version of the vowel or non-vowel stem before falling
-					-- back to the regular vowel or non-vowel stem. Note that an expression like `has_umut and
-					-- props[prefix .. "umut_vstem"] or props[prefix .. "vstem"]` here is NOT equivalent to an if-else
-					-- or ternary operator expression because if `has_umut` is true and `umut_vstem` is missing, it will
-					-- still fall back to `vstem` (which is what we want).
-					if not stem_in_effect then
-						if is_vowel_ending then
-							stem_in_effect = has_umut and props[prefix .. "umut_vstem"] or props[prefix .. "vstem"]
-						else
-							stem_in_effect = has_umut and props[prefix .. "umut_nonvstem"] or
-								props[prefix .. "nonvstem"]
-						end
-					end
-					-- Finally, fall back to the basic stem, which is always defined.
-					stem_in_effect = stem_in_effect or props[prefix .. "stem"]
-				end
-
-				-- If the ending is "*", it means to use the lemma as the form directly (before adding any definite
-				-- clitic) rather than try to construct the form from a stem and ending. We need to do this for the
-				-- lemma slot and especially for the nominative singular, because we don't have the nominative singular
-				-- ending available and it may vary (e.g. it may be -ur, -l, -n, -a, etc. especially in the masculine).
-				-- Not trying to construct the form from stem + ending also avoids complications from the nominative
-				-- singular in -ur, which exceptionally does not trigger u-mutation. However, when 'defcon' is active
-				-- and we're processing a definite form beginning with a vowel (i.e.  is_vowel_clitic is set), we can't
-				-- do this, because the form to which the clitic is added is not the lemma but the contracted version.
-				-- As it happens, this works out because in all situations where 'defcon' is active, the nominative
-				-- singular has a null ending. (If this weren't the case, we'd have to change all the declension
-				-- functions to pass in the nominative singular ending in addition to other endings.) An example where
-				-- 'defcon' is active is neuter [[mastur]] "mast" with definite nominative singular [[mastrið]]; here,
-				-- using the lemma would incorrectly produce #[[masturið]].
-
-				-- Finally, however, if there is a footnote associated with the computed stem in effect, we need to
-				-- preserve it.
-				if ending == "*" then
-					if not is_vowel_clitic or not props.defcon or props.defcon.form ~= "defcon" then
-						local stem_in_effect_footnotes
-						if type(stem_in_effect) == "table" then
-							stem_in_effect_footnotes = stem_in_effect.footnotes
-						end
-						stem_in_effect = iut.combine_form_and_footnotes(base.actual_lemma, stem_in_effect_footnotes)
-					end
-					-- See comment above. When 'defcon' is not in effect, we changed the stem to be the lemma and
-					-- want to use a null ending; otherwise, the ending is always null anyway, so it's safe to set
-					-- it thus.
-					ending = ""
-				end
-
-				return stem_in_effect
-			end
-
-			local stem_in_effect = props.pl_stem and slot:find("_p$") and compute_stem_in_effect("pl_") or
-				compute_stem_in_effect("")
-
-			local infix, infix_footnotes
-			-- Compute the infix (j, v or nothing) that goes between the stem and ending.
-			if not ending_override and is_vowel_ending then
-				if props.vinfix and props.jinfix then
-					interr("Can't have specifications for both '.vinfix' and '.jinfix'; should have been caught above")
-				end
-				if props.vinfix then
-					infix = props.vinfix
-					infix_footnotes = props.vinfix_footnotes
-				elseif props.jinfix and not ending_in_i then
-					infix = props.jinfix
-					infix_footnotes = props.jinfix_footnotes
-				end
-			end
-
-			-- If base-level footnotes specified, they go before any stem footnotes, so we need to extract any footnotes
-			-- from the stem in effect and insert the base-level footnotes before. In general, we want the footnotes to
-			-- be in the order [base.footnotes, stem.footnotes, mut_footnotes, infix_footnotes, ending.footnotes,
-			-- clitic.footnotes].
-			if base.footnotes then
-				local stem_in_effect_footnotes
-				if type(stem_in_effect) == "table" then
-					stem_in_effect_footnotes = stem_in_effect.footnotes
-					stem_in_effect = stem_in_effect.form
-				end
-				stem_in_effect = iut.combine_form_and_footnotes(stem_in_effect,
-					iut.combine_footnotes(base.footnotes, stem_in_effect_footnotes))
-			end
-
-			local ending_is_full
-			ending, ending_is_full = rsubb(ending, "^!", "")
-
-			local function combine_stem_ending(stem, clitic)
-				if stem == "?" then
-					return "?"
-				end
-				local function drop_clitic_i()
-					clitic = clitic:gsub("^i", "")
-				end
-				-- If we're definite-only and using the actual lemma as the stem, the clitic is already incorporated
-				-- into the stem.
-				if base.definiteness == "def" and ending_was_asterisk then
-					return stem
-				end
-				-- % at the end of a definite ending indicates that the following i- of the clitic should drop; see
-				-- above.
-				if clitic_i_drops then
-					drop_clitic_i()
-				end
-				local stem_with_infix = ending_is_full and "" or stem .. (infix or "")
-				-- Drop final -j- of stem before an ending beginning with a consonant. This happens e.g. in [[kirkja]]
-				-- "church" with genitive plural -na, producing [[kirkna]]. It does not happen with a null ending; cf.
-				-- neuter [[emj]] "cries, shouting" and [[gremj]] "anger, irritation" (the latter not in BÍN).
-				if stem_with_infix:find("j$") and ufind(ending, "^" .. com.cons_c) then
-					stem_with_infix = stem_with_infix:gsub("j$", "")
-				end
-				local stem_with_ending
-				-- An initial s- of the ending drops after a cluster of cons + s (including written <x>).
-				if ending:find("^s") and (stem_with_infix:find("x$") or ufind(stem_with_infix, com.cons_c .. "s$")) then
-					stem_with_ending = stem_with_infix .. ending:gsub("^s", "")
-				else
-					stem_with_ending = stem_with_infix .. ending
-				end
-				if clitic == "" then
-					return stem_with_ending
-				end
-				if slot == "dat_p" then
-					stem_with_ending = stem_with_ending:gsub("m$", "")
-				end
-				if clitic:find("^i.*[aiu]") then -- disyllabic clitics in i-
-					-- in practice, fem acc_s -ina, dat_s -inni, gen_s -innar
-					if ufind(stem_with_ending, com.vowel_c .. "$") then
-						drop_clitic_i()
-					end
-				elseif clitic:find("^i") then -- monosyllabic clitics in i-
-					local ending_for_clitic_dropping = ending_was_asterisk and base.lemma_ending or ending
-					if ending_for_clitic_dropping:find("[aiu]$") then
-						drop_clitic_i()
-					end
-				end
-				return stem_with_ending .. clitic
-			end
-
-			local combined_footnotes = iut.combine_footnotes(
-				iut.combine_footnotes(mut_footnotes, infix_footnotes),
-				iut.combine_footnotes(ending_footnotes, clitic_footnotes)
-			)
-			local clitic_with_notes = iut.combine_form_and_footnotes(clitic, combined_footnotes)
-			if not stem_in_effect then
-				interr("stem_in_effect is nil")
-			end
-			iut.add_forms(base.forms, slot_prefix .. slot, stem_in_effect, clitic_with_notes,
-				combine_stem_ending)
-		end
-	end
-end
-
-
 -- Add the definite and indefinite variants of a slot by combining the appropriate stem in `props` with (optionally) an
 -- infix in `props` and the endings in `endings`, tacking on the definite article clitic in the definite slot variant.
 -- This calls the underlying function add_slotval() twice, once for indefinite forms and once for definite forms, and is
@@ -866,31 +543,30 @@ end
 -- indefinite/definite table, the supplied set of endings is used for both indefinite and definite slot variants.
 -- `ending_override` and `endings_are_full` are as in add_slotval().
 local function add(data, slot, stemobj, ending)
-	if not endings then
+	local function combine_stem_ending(stem, endg)
+		if stem == "?" then
+			return "?"
+		end
+		-- Ending -st drops after -st; assimilates to -t after -s and -x; causes -tt, -t, -dd and -d to drop; and
+		-- otherwise is appended.
+		if endg:find("^st") then
+			if stem:find("st$") then
+				endg = endg:sub(3)
+			elseif stem:find("[sx]$") then
+				endg = endg:sub(2)
+			elseif stem:find("dd$") or stem:find("tt$") then
+				stem = stem:sub(1, -3)
+			elseif stem:find("[dt]$") then
+				stem = stem:sub(1, -2)
+			end
+		end
+		return stem .. endg
+	end
+
+	if not ending then
 		return
 	end
-	local indef_endings, def_endings
-	if type(endings) == "table" and (endings.indef or endings.def) then
-		indef_endings = endings.indef
-		def_endings = endings.def
-	else
-		indef_endings = endings
-		def_endings = endings
-	end
-	if indef_endings and base.definiteness ~= "def" then
-		add_slotval(base, "ind_", slot, props, indef_endings, nil, ending_override, endings_are_full)
-	end
-	if def_endings and (base.definiteness ~= "indef" and base.definiteness ~= "none") then
-		local clitic = clitic_articles[base.gender]
-		if not clitic then
-			error(("Internal error: Unrecognized value for base.gender: %s"):format(dump(base.gender)))
-		end
-		clitic = clitic[slot]
-		if not clitic then
-			error(("Internal error: Unrecognized value for `slot` in add(): %s"):format(dump(slot)))
-		end
-		add_slotval(base, "def_", slot, props, def_endings, clitic, ending_override, endings_are_full)
-	end
+	iut.add_forms(data.base.forms, slot, stemobj, ending, combine_stem_ending)
 end
 
 
@@ -2421,11 +2097,19 @@ local principal_part_stem_conjugations = {
 				else
 					past_base_stem = data.base.infstem
 				end
-				dental_stem = form_default_dental_suffixed_stem(data, data.base.infstem)
+				dental_stem = form_default_dental_suffixed_stem(data, past_base_stem)
 			end
 			return {
 				form = dental_stem,
 			}
+		end,
+		conjugate = function(data, stemobj)
+			if stemobj.ending == "i" then
+				add_personal_tense(data, "past", stemobj, "i", "ir", "i")
+			else
+				-- Assimilations involving -st are handled in combine_stem_ending() in add().
+				add_personal_tense(data, "past", stemobj, "", "st", "")
+			end
 		end,
 	}},
 	{"past_indic_pl", {
@@ -2462,6 +2146,9 @@ local principal_part_stem_conjugations = {
 				end
 			end
 			return values
+		end,
+		conjugate = function(data, stemobj)
+			add_personal_tense(data, "past", stemobj, nil, nil, nil, "um", "uð", "u")
 		end,
 	}},
 	{"past_subj_sg", {
@@ -2503,6 +2190,9 @@ local principal_part_stem_conjugations = {
 			end
 			return values
 		end,
+		conjugate = function(data, stemobj)
+			add_personal_tense(data, "past", stemobj, "i", "ir", "i")
+		end,
 	}},
 	{"past_subj_pl", {
 		desc = "past subjunctive plural",
@@ -2517,7 +2207,55 @@ local principal_part_stem_conjugations = {
 		default_if_unspecified = not_if_no_past_indic_sg,
 		generate_default = function(data)
 			local values = {}
-			if data.verbclass:find("^s") then
+			-- Sometimes it makes more sense to use the past indicative plural to form the past subjunctive plural
+			-- stem(s), and sometimes to use the past subjunctive singular. There are several examples where we need to
+			-- use the past subjunctive singular:
+			-- * [[skulu]] has no past indicative at all and has past subjunctive singular skyldi, with the same
+			--   stem skyld- in the plural.
+			-- * [[sverja]] has past indicative plural sórum but past subjunctive singular sværi, with past subjunctive
+			--   plural sværum.
+			-- * [[vefa]] works much like [[sverja]].
+			-- * [[þiggja]] has past indicative plural þáðum or þágum but past subjunctive singular þægi or þæði, with
+			--   past subjunctive plural þægjum or þæðum. Even if we allow for umlauting the past indicative plural, we
+			--   get the wrong order.
+			-- * [[gala]] has past indicative plural göluðum or gólum but past subjunctive singular only galaði, and
+			--   past subjunctive plural only göluðum.
+			-- * [[skapa]] works much like [[gala]].
+			-- * [[búa]] has past indicative plural bjuggum but past subjunctive singular byggi or bjyggi, with past
+			--   subjunctive plural byggjum or bjyggjum.
+			-- * [[ausa]] and [[höggva]] work much like [[búa]].
+			-- Contrariwise, [[frýja]] has past indicative singular frýjaði or frýði but past indicative plural only
+			-- frýjuðum, with the past subjunctive identical to the past indicative. Here we need to use the indicative
+			-- plural.
+			--
+			-- What seems to characterize all the cases that need to use the past subjunctive singular is that it's
+			-- specified explicitly, either with a form or with - to omit it. In [[frýja]], however, the past
+			-- subjunctive singular is not given. This suggests that we should use the past subjunctive singular if
+			-- given and otherwise use the past indicative plural. For this to work, we need to ensure that the umlaut
+			-- spec from the past indicative singular is propagated to the past indicative plural when the stem is
+			-- copied.
+			if data.base.past.subjunctive.singular then
+				local stems = data.base.stems.past_subj_sg
+				if not stems then
+					return nil
+				end
+				for _, formobj in ipairs(data.base.stems.past_indic_sg) do
+					local form = formobj.form
+					local weak_4_stem = form:match("^(.*)að$")
+					if weak_4_stem then
+						local umut_stems = apply_umut_to_stem(data, weak_4_stem, formobj.footnotes)
+						for _, umut_stem in ipairs(umut_stems) do
+							umut_stem.form = umut_stem.form .. "uð"
+							iut.insert_form_into_list(values, umut_stem)
+						end
+					else
+						for _, umut_stem in ipairs(apply_umut_to_stem(data, form, formobj.footnotes)) do
+							umut_stem.form = add_j_before_u_past_subj_pl(umut_stem.form)
+							iut.insert_form_into_list(values, umut_stem)
+						end
+					end
+				end
+			else
 				local past_pl_stems = data.base.stems.past_indic_pl
 				if not past_pl_stems then
 					return nil
@@ -2527,21 +2265,11 @@ local principal_part_stem_conjugations = {
 				-- in the past indicative plural. There is also no need to drop a final -j- because no verbs have a -j-
 				-- in the past indicative.
 				apply_parenthesized_umlaut_spec(data, values, past_pl_stems, "^")
-			else
-				local past_sg_stems = data.base.stems.past_indic_sg
-				if not past_sg_stems then
-					return nil
-				end
-				-- Weak verbs use the past indicative singular to form the subjunctive singular, by default umlauted if
-				-- weak 1 and not otherwise (although there are some weak-3 verbs with subjunctive umlaut). This avoids
-				-- the need to undo u-mutation in the plural, which does exist for some verbs, and there are several
-				-- irregular weak verbs where the singular and plural past indicative use different stems, with the same
-				-- irregularity duplicated in the subjunctive singular and plural. An example is frýja, which is weak 4
-				-- or weak 1 in the present indicative singular (frýja or frý) and past singular (frýjaði or frýði, the
-				-- latter in place of expected *frúði), with past plural only frýjuðum.
-				apply_parenthesized_umlaut_spec(data, values, past_sg_stems, data.verbclass == "w1" and "^" or "-^")
 			end
 			return values
+		end,
+		conjugate = function(data, stemobj)
+			add_personal_tense(data, "pastsub", stemobj, nil, nil, nil, "um", "uð", "u")
 		end,
 	}},
 }
@@ -3123,103 +2851,119 @@ end
 local function make_table(alternant_multiword_spec)
 	local forms = alternant_multiword_spec.forms
 
-	local function template_prelude(palette)
+	local function template_prelude(palette, title)
 		return m_inflection_table.make_top {
-			title = "{title}{annotation}",
+			title = title,
 			palette = palette,
 			tall = "yes",
 		}
 	end
 
-	local function template_postlude()
+	local function template_postlude(lemma_type)
 		return m_inflection_table.make_bottom {
-			notes = "{footnote}",
+			notes = "{" .. lemma_type .. "_footnote}",
 		}
 	end
 
+	local function substitute_links(text)
+		-- <<sm!...>> = "small mention" = <small> + {{m|is|...}}
+		text = text:gsub("<<sm!(.-)>>", function(term)
+			return ('<span class="small">(%s)</span>'):format(link_term(term, "term"))
+		end)
+		-- <<la!...>> = {{lang|is|...}}
+		text = text:gsub("<<la!(.-)>>", link_alt)
+		return text
+	end
+
 	local function get_verb_table_spec(voice, include_pastinf)
-		local palette = voice == "act" and "blue" or "green"
+		local palette = voice == "act" and "blue" or "teal"
+		local title
+		if voice == "act" then
+			title = "{formatted_act_lemma} – active voice <<sm!germynd>>{act_annotation}"
+		else
+			title = "{formatted_mid_lemma} – middle voice <<sm!miðmynd>>{mid_annotation}"
+		end
 		local spec = [=[
-! colspan=3 | infinitive <<s!nafnháttur>>
+! colspan=3 | infinitive <<sm!nafnháttur>>
 | colspan=5 data-accel-col=1 | {VOICEad_inf}
 ]=] .. (not include_pastinf and "" or [=[
 |-
-! colspan=3 | past infinitive<br /><<s!nafnháttur>> <<s!þátíð>>
+! colspan=3 | past infinitive<br /><<sm!nafnháttur>> <<sm!þátíð>>
 | colspan=5 data-accel-col=6 | {VOICEpastinf}
 ]=]) .. [=[
 |-
-! colspan=3 | supine <<s!sagnbót>>
+! colspan=3 | supine <<sm!sagnbót>>
 | colspan=5 data-accel-col=1 | {VOICEsup}
 ]=] .. (voice == "mid" and "" or [=[
 |-
-! colspan=3 | present participle<br /><<s!lýsingarháttur nútíðar>>
+! colspan=3 | present participle<br /><<sm!lýsingarháttur nútíðar>>
 | colspan=5 data-accel-col=7 | {presp}
 ]=]) .. [=[
 |-
 | colspan=999 class="separator" |
 |-
 ! colspan=3 class="outer" |
-! colspan=2 class="outer" | indicative<br /><<s!framsöguháttur>>
+! colspan=2 class="outer" | indicative<br /><<sm!framsöguháttur>>
 | rowspan=8 class="separator" |
-! colspan=3 class="outer" | subjunctive<br /><<s!viðtengingarháttur>>
+! colspan=3 class="outer" | subjunctive<br /><<sm!viðtengingarháttur>>
 |-
 ! colspan=3 |
-! present<br /><<s!nútíð>>
-! past<br /><<s!þátíð>>
-! present<br /><<s!nútíð>>
-! past<br /><<s!þátíð>>
+! present<br /><<sm!nútíð>>
+! past<br /><<sm!þátíð>>
+! present<br /><<sm!nútíð>>
+! past<br /><<sm!þátíð>>
 |-
-! rowspan=4 | singular<br /><<s!eintala>>
+! rowspan=4 | singular<br /><<sm!eintala>>
 ! class="secondary" | first
-! class="secondary" | <<l!ég>>
+! class="secondary" | <<la!ég>>
 | data-accel-col=2 | {VOICEpres1s}
 | data-accel-col=3 | {VOICEpast1s}
 | data-accel-col=4 | {VOICEpressub1s}
 | data-accel-col=5 | {VOICEpastsub1s}
 |-
 ! class="secondary" | second
-! class="secondary" | <<l!þú>>
+! class="secondary" | <<la!þú>>
 | data-accel-col=2 | {VOICEpres2s}
 | data-accel-col=3 | {VOICEpast2s}
 | data-accel-col=4 | {VOICEpressub2s}
 | data-accel-col=5 | {VOICEpastsub2s}
 |-
 ! class="secondary" | third
-! class="secondary" | <<l!hann, hún, það>>
+! class="secondary" | <<la!hann, hún, það>>
 | data-accel-col=2 | {VOICEpres3s}
 | data-accel-col=3 | {VOICEpast3s}
 | data-accel-col=4 | {VOICEpressub3s}
 | data-accel-col=5 | {VOICEpastsub3s}
 |-
-! colspan=2 class="secondary" | second-person question form<br /><<s!spurnarmynd>>
+! colspan=2 class="secondary" | second-person question form<br /><<sm!spurnarmynd>>
 | data-accel-col=2 | {VOICEqform_pres2s}
 | data-accel-col=3 | {VOICEqform_past2s}
 | data-accel-col=4 | {VOICEqform_pressub2s}
 | data-accel-col=5 | {VOICEqform_pastsub2s}
 |-
-! rowspan=4 | plural<br /><<s!fleirtala>>
+! rowspan=4 | plural<br /><<sm!fleirtala>>
 ! class="secondary" | first
-! class="secondary" | <<l!við>>
+! class="secondary" | <<la!við>>
 | data-accel-col=2 | {VOICEpres1p}
 | data-accel-col=3 | {VOICEpast1p}
 | data-accel-col=4 | {VOICEpressub1p}
 | data-accel-col=5 | {VOICEpastsub1p}
 |-
 ! class="secondary" | second
-! class="secondary" | <<l!þið>>
+! class="secondary" | <<la!þið>>
 | data-accel-col=2 | {VOICEpres2p}
 | data-accel-col=3 | {VOICEpast2p}
 | data-accel-col=4 | {VOICEpressub2p}
 | data-accel-col=5 | {VOICEpastsub2p}
 |-
 ! class="secondary" | third
-! class="secondary" | <<l!þeir, þær, þau>>
+! class="secondary" | <<la!þeir, þær, þau>>
 | data-accel-col=2 | {VOICEpres3p}
 | data-accel-col=3 | {VOICEpast3p}
 | data-accel-col=4 | {VOICEpressub3p}
 | data-accel-col=5 | {VOICEpastsub3p}
 |-
-! colspan=2 class="secondary" | second-person question form<br /><<s!spurnarmynd>>
+! colspan=2 class="secondary" | second-person question form<br /><<sm!spurnarmynd>>
 | data-accel-col=2 | {VOICEqform_pres2p}
 | data-accel-col=3 | {VOICEqform_past2p}
 | data-accel-col=4 | {VOICEqform_pressub2p}
@@ -3229,33 +2973,24 @@ local function make_table(alternant_multiword_spec)
 | colspan=3 rowspan=5 class="blank-end-row" |
 |-
 ! colspan=3 class="outer" | 
-! colspan=2 class="outer" | imperative <<s!boðháttur>>
+! colspan=2 class="outer" | imperative <<sm!boðháttur>>
 |-
-! rowspan=2 | singular<br /><<s!eintala>>
+! rowspan=2 | singular<br /><<sm!eintala>>
 ! rowspan=3 class="secondary" | second
-! class="secondary" | clipped<br /><<s!stýfður>>
+! class="secondary" | clipped<br /><<sm!stýfður>>
 | colspan=2 data-accel-col=6 | {VOICEimp2s}
 |-
-! class="secondary" | suffixed<br /><<s!viðskeyttur>>
+! class="secondary" | suffixed<br /><<sm!viðskeyttur>>
 | colspan=2 data-accel-col=7 | {VOICEimp2ss}
 |-
-! plural<br /><<s!fleirtala>>
+! plural<br /><<sm!fleirtala>>
 | colspan=2 data-accel-col=6 | {VOICEimp2p}, {VOICEimp2ps}
 ]=]
-		return template_prelude(palette) .. spec:gsub("VOICE", voice == "act" and "" or "mid_") .. template_postlude
+		spec = template_prelude(palette, title) .. spec:gsub("VOICE", voice == "act" and "" or "mid_") ..
+			template_postlude(voice)
+		return substitute_links(spec)
 	end
 
-	if alternant_multiword_spec.title then
-		forms.title = alternant_multiword_spec.title
-	else
-		forms.title = 'Declension of <i lang="is">' .. forms.lemma .. '</i>'
-	end
-
-	-- Active title: {{m|is||{{{1|{{PAGENAME}}}}}}} – active voice <span class="small">({{m|is|germynd}})</span> [blue]
-	-- Middle title: {{m|is||{{{1|{{PAGENAME}}}}}}} – middle voice <span class="small">({{m|is|miðmynd}})</span> [teal]
-	-- Active past participle title: {{m-self|is|{{{1|{{PAGENAME}}}}}}} — past participle <small>([[lýsingarháttur þátíðar]])</small> [purple]
-	-- Middle past participle title: {{m-self|is|{{{1|{{PAGENAME}}}}}}} — middle past participle <small>([[lýsingarháttur þátíðar]] [[af]] [[miðmynd]])</small> [red]
-	--  only [[sestur]] and [[lagstur]]
 	local annotation = alternant_multiword_spec.annotation
 	if annotation == "" then
 		forms.annotation = ""
@@ -3263,30 +2998,19 @@ local function make_table(alternant_multiword_spec)
 		forms.annotation = " (<span style=\"font-size: smaller;\">" .. annotation .. "</span>)"
 	end
 
-	local number, numcode
-	if alternant_multiword_spec.actual_number == "sg" then
-		number, numcode = "singular", "s"
-	elseif alternant_multiword_spec.actual_number == "pl" then
-		number, numcode = "plural", "p"
-	elseif alternant_multiword_spec.actual_number == "none" then -- used for [[sebe]]
-		-- FIXME: Update for Icelandic
-		number, numcode = "", "s"
+	local table_parts = {}
+	if alternant_multiword_spec.actual_voice == "both" or alternant_multiword_spec.actual_voice == "act" then
+		-- FIXME: determine has_past_infinitive
+		insert(table_parts, get_verb_table_spec("act", alternant_multiword_spec.has_past_infinitive))
 	end
-
-	local definiteness, defcode
-	if alternant_multiword_spec.definiteness == "indef" then
-		definiteness, defcode = "indefinite", "ind"
-	elseif alternant_multiword_spec.definiteness == "def" then
-		definiteness, defcode = "definite", "def"
-	elseif alternant_multiword_spec.definiteness == "none" then
-		definiteness, defcode = "", "ind"
+	if alternant_multiword_spec.actual_voice == "both" or alternant_multiword_spec.actual_voice == "mid" then
+		insert(table_parts, get_verb_table_spec("mid"))
 	end
-
-	local table_spec =
-		alternant_multiword_spec.actual_number ~= "both" and alternant_multiword_spec.definiteness ~= "bothdef" and
-		get_table_spec_one_number_one_def(number, numcode, definiteness, defcode) or
-		alternant_multiword_spec.actual_number == "both" and table_spec_both or
-		get_table_spec_one_number(number, numcode)
+	-- FIXME: past participles
+	-- Active past participle title: {{m-self|is|{{{1|{{PAGENAME}}}}}}} — past participle <small>([[lýsingarháttur þátíðar]])</small> [purple]
+	-- Middle past participle title: {{m-self|is|{{{1|{{PAGENAME}}}}}}} — middle past participle <small>([[lýsingarháttur þátíðar]] [[af]] [[miðmynd]])</small> [red]
+	--  only [[sestur]] and [[lagstur]]
+	local table_spec = concat(table_parts)
 	return m_string_utilities.format(table_spec, forms)
 end
 
