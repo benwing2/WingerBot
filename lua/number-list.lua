@@ -1,6 +1,20 @@
 local export = {}
 
 local m_links = require("Module:links")
+local m_str_utils = require("Module:string utilities")
+
+local char = string.char
+local concat = table.concat
+local gsub = m_str_utils.gsub
+local insert = table.insert
+local list_to_set = require("Module:table").listToSet
+local sort = table.sort
+local split = m_str_utils.split
+local u = m_str_utils.char
+local unpack = unpack or table.unpack -- Lua 5.2 compatibility
+local upper = string.upper
+
+local decimal_strategy
 
 --[=[
 
@@ -19,7 +33,7 @@ Tag list = a list of tags in the order they are specified in the data, e.g. {"vi
 Combined tag = the string representation of a tag list, using ||| to separate individual tags
 ]=]
 
-local form_types = {
+local default_form_types = {
 	{key = "cardinal", display = "[[cardinal number|Cardinal]]"},
 	{key = "ordinal", display = "[[ordinal number|Ordinal]]"},
 	{key = "ordinal_abbr", display = "[[ordinal number|Ordinal]] [[abbreviation]]"},
@@ -84,24 +98,17 @@ local function set_intersection(set1, set2)
 	return intersection
 end
 
-local function list_to_set(list)
-	local set = {}
-	for _, item in ipairs(list) do
-		set[item] = true
+-- Count keys in a set table (never use `#` on these; it is not the set cardinality).
+local function set_size(set)
+	local n = 0
+	for _ in pairs(set) do
+		n = n + 1
 	end
-	return set
+	return n
 end
 
-function export.get_data_module_name(langcode, must_exist)
-	local module_name = "Module:User:Benwing2/number list/data/" .. langcode
-	if must_exist and not mw.title.new(module_name).exists then
-		error(("Data module [[%s]] for language code '%s' does not exist"):format(module_name, langcode))
-	end
-	return module_name
-end
-
-local function power_of(n)
-	return "1" .. string.rep("0", n)
+function export.get_data_module_name(langcode)
+	return "Module:number list/data/" .. langcode
 end
 
 -- Format a number (either a Lua number or a string) in fixed point without any decimal point or scientific notation.
@@ -116,7 +123,7 @@ end
 
 -- Parse a form with modifiers such as 'vuitanta-vuit<tag:Central>' or 'سیزده<tr:sizdah>'
 -- or 'سیزده<tr:sizdah><tag:Iranian>' into its component parts. Return a form object, i.e. an object with fields
--- `form` for the form, and `tr`, `tag`, `q`, `qq` or `link` for the modifiers. The `tag` field is a tag list
+-- `form` for the form, and `tr`, `tag`, `q`, `qq`, `g` or `link` for the modifiers. The `tag` field is a tag list
 -- (see above).
 function export.parse_form_and_modifiers(form_with_modifiers)
 	local retval = {}
@@ -133,11 +140,11 @@ function export.parse_form_and_modifiers(form_with_modifiers)
 		end
 		if prefix == "tag" then
 			if retval.tag then
-				table.insert(retval.tag, content)
+				insert(retval.tag, content)
 			else
 				retval.tag = {content}
 			end
-		elseif prefix == "q" or prefix == "qq" or prefix == "tr" or prefix == "link" then
+		elseif prefix == "q" or prefix == "qq" or prefix == "tr" or prefix == "link" or prefix == "id" or prefix == "g" or prefix == "alt" then
 			if retval[prefix] then
 				error(("Duplicate modifier '%s' in data module form, already saw value '%s': %s"):format(prefix,
 					retval[prefix], form_with_modifiers))
@@ -179,6 +186,108 @@ function export.numbers_greater_than(a, b)
 	return export.numbers_less_than(b, a)
 end
 
+local POSITIONAL_DIGITS = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
+local MAX_SAFE_INTEGER = 9007199254740991
+
+local function get_digit_maps(base, digit_alphabet)
+	digit_alphabet = digit_alphabet or POSITIONAL_DIGITS
+	if #digit_alphabet < base then
+		error(("Number system base %s exceeds available digits in digit alphabet"):format(base))
+	end
+	local digit_to_value = {}
+	local value_to_digit = {}
+	for i = 1, base do
+		local digit = digit_alphabet:sub(i, i)
+		digit_to_value[digit] = i - 1
+		value_to_digit[i - 1] = digit
+	end
+	return digit_to_value, value_to_digit
+end
+
+local function decimal_to_base(num, base, value_to_digit)
+	if num == 0 then
+		return value_to_digit[0]
+	end
+	local parts = {}
+	while num > 0 do
+		insert(parts, 1, value_to_digit[num % base])
+		num = math.floor(num / base)
+	end
+	return concat(parts)
+end
+
+local function parse_positional_to_number(key, base, digit_to_value)
+	local n = 0
+	for i = 1, #key do
+		local value = digit_to_value[key:sub(i, i)]
+		if not value then
+			return nil
+		end
+		n = n * base + value
+		if n > MAX_SAFE_INTEGER then
+			return nil
+		end
+	end
+	return n
+end
+
+local function safe_integer_power(base, exp)
+	local result = 1
+	for _ = 1, exp do
+		if result > MAX_SAFE_INTEGER / base then
+			return nil
+		end
+		result = result * base
+	end
+	return result
+end
+
+local function normalize_positional_key(raw_number, opts)
+	local base = opts.base
+	local case_insensitive = opts.case_insensitive
+	local digit_to_value = opts.digit_to_value
+	local value_to_digit = opts.value_to_digit
+	local strip_separator = opts.strip_separator
+	local interpret_plain_decimal = opts.interpret_plain_decimal
+	local zero_digit = opts.zero_digit
+	local key
+
+	if type(raw_number) == "number" then
+		if raw_number < 0 or raw_number % 1 ~= 0 then
+			error(("Non-negative integer expected for positional number system, got '%s'"):format(raw_number))
+		end
+		key = decimal_to_base(raw_number, base, value_to_digit)
+	else
+		key = tostring(raw_number)
+		if strip_separator and strip_separator ~= "" then
+			key = gsub(key, strip_separator, "")
+		end
+		-- For compatibility with existing data/modules, plain decimal-digit *input* can be interpreted
+		-- as decimal and then converted into the configured positional key space.
+		if interpret_plain_decimal and key:find("^%d+$") then
+			key = decimal_to_base(tonumber(key), base, value_to_digit)
+		end
+	end
+
+	if case_insensitive then
+		key = upper(key)
+	end
+
+	if key == "" then
+		return zero_digit
+	end
+
+	for i = 1, #key do
+		local digit = key:sub(i, i)
+		if not digit_to_value[digit] then
+			error(("Extraneous characters in number: '%s'"):format(key))
+		end
+	end
+
+	key = key:gsub("^" .. zero_digit .. "+", "")
+	return key == "" and zero_digit or key
+end
+
 -- Given a number form, convert it to its independent (un-affixed) form. This only makes sense for certain languages
 -- where there is a difference between independent and affixed forms of numerals. Currently the only such language
 -- is Swahili, where e.g. the cardinal number form for 3 is affixed [[-tatu]], independent [[tatu]], and the ordinal
@@ -192,15 +301,16 @@ local function maybe_unaffix(m_data, form)
 	end
 	for _, entry in ipairs(m_data.unaffix) do
 		local from, to = unpack(entry)
-		form = mw.ustring.gsub(form, from, to)
+		form = gsub(form, from, to)
 	end
 	return form
 end
 
 -- Convert the given number form (taken from the data for `lang`, after parsing the form for modifiers and stripping
--- the modifiers) to an entry name. The form may have links and/or accent/length marks that need to be stripped.
-local function form_to_entry_name(form, lang)
-	return lang:makeEntryName(m_links.remove_links(form))
+-- the modifiers) to the stripped-text version of the form. The form may have links and/or accent/length marks that need
+-- to be stripped.
+local function form_to_stripped_form(form, lang)
+	return lang:stripDiacritics(m_links.remove_links(form))
 end
 
 -- Return true if the given number form object (taken from the data for `lang`, after parsing the form for modifiers)
@@ -212,14 +322,23 @@ local function form_equals_pagename(formobj, pagename, m_data, lang)
 	if formobj.link == pagename then
 		return true
 	end
-	local entry_name = form_to_entry_name(formobj.form, lang)
-	return entry_name == pagename or maybe_unaffix(m_data, entry_name) == pagename
+	local stripped_form = form_to_stripped_form(formobj.form, lang)
+	if stripped_form == pagename or maybe_unaffix(m_data, stripped_form) == pagename then
+		return true
+	end
+	if formobj.alt then
+		local stripped_alt = form_to_stripped_form(formobj.alt, lang)
+		if stripped_alt == pagename or maybe_unaffix(m_data, stripped_alt) == pagename then
+			return true
+		end
+	end
+	return false
 end
 
 -- Given the data for a language and a number (which should be in string representation), find the next and previous
 -- numbers to display (in string representation).
-local function get_next_and_prev_keys(m_data, numstr)
-	local numdata = export.lookup_data(m_data, numstr)
+local function get_next_and_prev_keys(m_data, numstr, strategy, lookup_data)
+	local numdata = lookup_data(numstr)
 	if not numdata then
 		return nil, nil
 	end
@@ -228,18 +347,23 @@ local function get_next_and_prev_keys(m_data, numstr)
 	if not nextnum or not prevnum then
 		-- Find the next/previous numbers by sorting all the keys and locating the number in question among them.
 		local sorted_list = {}
+		local seen = {}
 		local index = 1
 		for key, _ in pairs(m_data.numbers) do
-			sorted_list[index] = key
-			index = index + 1
+			local normalized_key = strategy.normalize_data_key(key)
+			if not seen[normalized_key] then
+				seen[normalized_key] = true
+				sorted_list[index] = normalized_key
+				index = index + 1
+			end
 		end
 
-		table.sort(sorted_list, export.numbers_less_than)
+		sort(sorted_list, strategy.compare_keys)
 
 		-- We could binary search to save time, but given that we already sort, which is supra-linear, it won't
 		-- matter to search linearly.
 		for i, key in ipairs(sorted_list) do
-			if export.format_fixed(key) == numstr then
+			if key == numstr then
 				nextnum = nextnum or sorted_list[i + 1]
 				prevnum = prevnum or sorted_list[i - 1]
 				break
@@ -248,10 +372,10 @@ local function get_next_and_prev_keys(m_data, numstr)
 	end
 
 	if nextnum then
-		nextnum = export.format_fixed(nextnum)
+		nextnum = strategy.normalize_data_key(nextnum)
 	end
 	if prevnum then
-		prevnum = export.format_fixed(prevnum)
+		prevnum = strategy.normalize_data_key(prevnum)
 	end
 
 	return nextnum, prevnum
@@ -269,7 +393,7 @@ local function lookup_number_by_form(lang, m_data, pagename, matching_type)
 			-- or accent marks. The calling code is OK with multiple entries for a given number (which can also occur
 			-- with different types, e.g. the ordinal and fractional forms for a given number are the same), but will
 			-- throw an error if different numbers are seen.
-			table.insert(retval, {num, typ})
+			insert(retval, {num, typ})
 		end
 	end
 
@@ -290,55 +414,57 @@ local function lookup_number_by_form(lang, m_data, pagename, matching_type)
 	return retval
 end
 
-local function index_of_number_type(t, type)
-	for i, subtable in ipairs(t) do
-		if subtable.key == type then
-			return i
-		end
-	end
-end
-
 -- additional_types is an array of tables like form_types,
 -- but each table can contain the keys "before" or "after", which specify
 -- the numeral type that the form should appear before or after.
 -- The transformations are applied in order.
-local function add_form_types(additional_types)
-	local types = require("Module:table").deepcopy(form_types)
-	for _, type in ipairs(additional_types) do
-		type = require("Module:table").shallowcopy(type)
-		local i
-		if type.before or type.after then
-			i = index_of_number_type(types, type.before or type.after)
-		end
-		-- For now, simply log an error message
-		-- if the "before" or "after" number type was not found,
-		-- and insert the number type at the end.
-		if i then
-			if type.before then
-				table.insert(types, i - 1, type)
-			else
-				table.insert(types, i + 1, type)
-			end
+local function add_form_types(form_types, additional_types)
+	local types = require("Module:table").deepCopy(form_types)
+	for _, additional_type in ipairs(additional_types) do
+		if not (additional_type.before or additional_type.after) then
+			insert(types, additional_type)
 		else
-			table.insert(types, type)
-			if type.before or type.after then
+			if additional_type.before and additional_type.after then
+				error("The form type '" .. additional_type.key .. "' is specifying both before and after, which is not allowed")
+			end
+
+			local anchor, index = additional_type.before or additional_type.after
+
+			for i, another_type in ipairs(types) do
+				if another_type.key == anchor then
+					index = i
+					break
+				end
+			end
+
+			if index and additional_type.after then
+				index = index + 1
+			end
+
+			additional_type = require("Module:table").shallowCopy(additional_type)
+			additional_type.before, additional_type.after = nil, nil
+			
+			if not index then
 				mw.log("Number type "
-					.. (type.before or type.after)
+					.. (additional_type.before or additional_type.after)
 					.. " was not found.")
+				insert(types, additional_type)
+			else
+				insert(types, index, additional_type)
 			end
 		end
-		type.before, type.after = nil, nil
 	end
 	return types
 end
 
 -- Return all form types for the language in question, in order.
 function export.get_number_types(m_data)
-	local final_form_types = form_types
+	local form_types = default_form_types
 	if m_data.additional_number_types then
-		final_form_types = add_form_types(m_data.additional_number_types)
+		return add_form_types(form_types, m_data.additional_number_types)
+	else
+		return form_types
 	end
-	return final_form_types
 end
 
 -- Convert a number type object (an object with `display` and `key` fields) to its displayed form.
@@ -346,7 +472,7 @@ function export.display_number_type(number_type)
 	if number_type.display then
 		return number_type.display
 	else
-		return (number_type.key:gsub("^.", string.upper):gsub("_", " "))
+		return (number_type.key:gsub("^.", upper):gsub("_", " "))
 	end
 end
 
@@ -359,10 +485,10 @@ local function add_separator(numstr, separator, group, start)
 
 	local parts = { numstr:sub(-start) }
 	for i = start + 1, #numstr, group do
-		table.insert(parts, 1, numstr:sub(-(i + group - 1), -i))
+		insert(parts, 1, numstr:sub(-(i + group - 1), -i))
 	end
 
-	return table.concat(parts, separator)
+	return concat(parts, separator)
 end
 
 function export.add_thousands_separator(numstr, separator)
@@ -402,8 +528,8 @@ function export.generate_non_arabic_numeral(numeral_config, numstr)
 		numstr = add_Indic_separator(numstr, Indic_separator)
 	end
 
-	return numstr:gsub("[0-9]", function (digit)
-		return mw.ustring.char(zero_codepoint + tonumber(digit))
+	return numstr:gsub("%d", function (digit)
+		return u(zero_codepoint + tonumber(digit))
 	end)
 end
 
@@ -428,9 +554,9 @@ function export.format_number_for_display(number)
 	if kstr == "1" then
 		mantissa = ""
 	elseif #kstr == 1 then
-		mantissa = kstr .. " x "
+		mantissa = kstr .. " × "
 	else
-		mantissa = kstr:gsub("^([0-9])", "%1.") .. " x "
+		mantissa = kstr:gsub("^([0-9])", "%1.") .. " × "
 	end
 	local scientific = mantissa .. exponent
 	if #numstr >= MIN_NUM_DIGITS_FOR_SCIENTIFIC_ONLY then
@@ -440,10 +566,441 @@ function export.format_number_for_display(number)
 	end
 end
 
+local function derive_related_numbers_decimal(cur_num, cur_data, next_num, prev_num, lookup_data)
+	local k, m
+	if cur_num == "0" then
+		k = 0
+		m = 1
+	else
+		local kstr, mstr = cur_num:match("^([0-9]*[1-9])(0*)$")
+		if not kstr then
+			error("Internal error: Unable to match number '" .. cur_num .. "'")
+		elseif #kstr > 15 then
+			error("Can't handle number with more than 15 digits before the trailing zeros: '" .. cur_num .. "'")
+		end
+		k = tonumber(kstr)
+		m = #mstr
+	end
+
+	local function make_greater_power_of_ten(power)
+		return cur_num .. ("0"):rep(power)
+	end
+
+	local function make_lesser_power_of_ten(power)
+		local desired_zeros = m - power
+		if desired_zeros < 0 then
+			return nil
+		end
+		return k .. ("0"):rep(desired_zeros)
+	end
+
+	local next_outer_data, prev_outer_data
+	local next_outer_num, prev_outer_num = cur_data.next_outer, cur_data.prev_outer
+	local power_of_10_sequence = { 1, 3, 2, 6 }
+
+	if next_outer_num then
+		next_outer_data = lookup_data(next_outer_num, "next outer")
+	else
+		local function try(num)
+			local data = (not next_num or export.numbers_greater_than(num, next_num)) and lookup_data(num) or nil
+			if data then
+				next_outer_num = num
+				next_outer_data = data
+			end
+			return data
+		end
+		if not try((k + 1) .. ("0"):rep(m)) and k == 1 then
+			for _, power_of_10 in ipairs(power_of_10_sequence) do
+				if try(make_greater_power_of_ten(power_of_10)) then
+					break
+				end
+			end
+		end
+	end
+
+	if prev_outer_num then
+		prev_outer_data = lookup_data(prev_outer_num, "previous outer")
+	else
+		local function try(num)
+			local data = (not prev_num or export.numbers_less_than(num, prev_num)) and lookup_data(num) or nil
+			if data then
+				prev_outer_num = num
+				prev_outer_data = data
+			end
+			return data
+		end
+		if not (k == 0 or m == 0) then
+			local num_to_try
+			if k == 1 then
+				num_to_try = "9" .. ("0"):rep(m - 1)
+			else
+				num_to_try = (k - 1) .. ("0"):rep(m)
+			end
+			if not try(num_to_try) and k == 1 then
+				for _, power_of_10 in ipairs(power_of_10_sequence) do
+					local power_num_to_try = make_lesser_power_of_ten(power_of_10)
+					if power_num_to_try and try(power_num_to_try) then
+						break
+					end
+				end
+			end
+		end
+	end
+
+	local upper_data, lower_data
+	local upper_num, lower_num = cur_data.upper, cur_data.lower
+
+	if upper_num then
+		upper_data = lookup_data(upper_num, "upper")
+	else
+		upper_num = make_greater_power_of_ten(1)
+		if upper_num == next_num or cur_num == "0" then
+			upper_num = nil
+		else
+			upper_data = lookup_data(upper_num)
+		end
+	end
+
+	if lower_num then
+		lower_data = lookup_data(lower_num, "lower")
+	elseif not (k == 0 or m == 0) then
+		lower_num = make_lesser_power_of_ten(1)
+		if lower_num == prev_num then
+			lower_num = nil
+		else
+			lower_data = lookup_data(lower_num)
+		end
+	end
+
+	return next_outer_num, next_outer_data, prev_outer_num, prev_outer_data, upper_num, upper_data, lower_num, lower_data
+end
+
+local function derive_related_numbers_positional(strategy, cur_num, cur_data, next_num, prev_num, lookup_data)
+	local zero_digit = strategy.zero_digit
+	local base = strategy.base
+	local power_base = strategy.power_base
+	local value_to_digit = strategy.value_to_digit
+	local digit_to_value = strategy.digit_to_value
+	local power_sequence = strategy.power_sequence
+	local significant = cur_num:gsub(zero_digit .. "+$", "")
+	local m = #cur_num - #significant
+	local kstr = significant == "" and zero_digit or significant
+	local k_value = parse_positional_to_number(kstr, base, digit_to_value)
+	local next_outer_data, prev_outer_data
+	local next_outer_num, prev_outer_num = cur_data.next_outer, cur_data.prev_outer
+
+	local function value_to_key(value)
+		return decimal_to_base(value, base, value_to_digit)
+	end
+
+	local function make_greater_power(power)
+		if not k_value then
+			return nil
+		end
+		local factor = safe_integer_power(power_base, power)
+		if not factor then
+			return nil
+		end
+		local cur_value = parse_positional_to_number(cur_num, base, digit_to_value)
+		if not cur_value or cur_value > MAX_SAFE_INTEGER / factor then
+			return nil
+		end
+		return value_to_key(cur_value * factor)
+	end
+
+	local function make_lesser_power(power)
+		local factor = safe_integer_power(power_base, power)
+		if not factor then
+			return nil
+		end
+		local cur_value = parse_positional_to_number(cur_num, base, digit_to_value)
+		if not cur_value or cur_value % factor ~= 0 then
+			return nil
+		end
+		return value_to_key(cur_value / factor)
+	end
+
+	if next_outer_num then
+		next_outer_data = lookup_data(next_outer_num, "next outer")
+	else
+		local function try(num)
+			local data = (not next_num or strategy.compare_keys(next_num, num)) and lookup_data(num) or nil
+			if data then
+				next_outer_num = num
+				next_outer_data = data
+			end
+			return data
+		end
+		if k_value then
+			if not try(decimal_to_base(k_value + 1, base, value_to_digit) .. zero_digit:rep(m)) and k_value == 1 then
+				for _, power in ipairs(power_sequence) do
+					if try(make_greater_power(power)) then
+						break
+					end
+				end
+			end
+		end
+	end
+
+	if prev_outer_num then
+		prev_outer_data = lookup_data(prev_outer_num, "previous outer")
+	else
+		local function try(num)
+			local data = (not prev_num or strategy.compare_keys(num, prev_num)) and lookup_data(num) or nil
+			if data then
+				prev_outer_num = num
+				prev_outer_data = data
+			end
+			return data
+		end
+		if not (cur_num == zero_digit or m == 0) and k_value then
+			local num_to_try
+			if k_value == 1 then
+				num_to_try = value_to_digit[base - 1] .. zero_digit:rep(m - 1)
+			else
+				num_to_try = decimal_to_base(k_value - 1, base, value_to_digit) .. zero_digit:rep(m)
+			end
+			if not try(num_to_try) and k_value == 1 then
+				for _, power in ipairs(power_sequence) do
+					local power_num_to_try = make_lesser_power(power)
+					if power_num_to_try and try(power_num_to_try) then
+						break
+					end
+				end
+			end
+		end
+	end
+
+	local upper_data, lower_data
+	local upper_num, lower_num = cur_data.upper, cur_data.lower
+	if upper_num then
+		upper_data = lookup_data(upper_num, "upper")
+	else
+		upper_num = make_greater_power(1)
+		if upper_num == next_num or cur_num == zero_digit then
+			upper_num = nil
+		else
+			upper_data = lookup_data(upper_num)
+		end
+	end
+
+	if lower_num then
+		lower_data = lookup_data(lower_num, "lower")
+	elseif not (cur_num == zero_digit or m == 0) then
+		lower_num = make_lesser_power(1)
+		if lower_num == prev_num then
+			lower_num = nil
+		else
+			lower_data = lookup_data(lower_num)
+		end
+	end
+
+	return next_outer_num, next_outer_data, prev_outer_num, prev_outer_data, upper_num, upper_data, lower_num, lower_data
+end
+
+local function create_positional_strategy(config)
+	local base = config.base
+	local digit_alphabet = config.digit_alphabet or POSITIONAL_DIGITS
+	local case_insensitive = config.case_insensitive
+	if case_insensitive == nil then
+		case_insensitive = base <= 36
+	end
+	local strip_separator = config.strip_separator or ","
+	local digit_to_value, value_to_digit = get_digit_maps(base, digit_alphabet)
+	local zero_digit = value_to_digit[0]
+	local display_separator = config.display_separator
+	local display_group = config.display_group
+	local display_group_start = config.display_group_start
+	local display_indic = config.display_indic
+	local display_keys_as_decimal = config.display_keys_as_decimal
+	if display_keys_as_decimal == nil then
+		display_keys_as_decimal = true
+	end
+	local power_sequence = config.power_sequence or {1, 3, 2, 6}
+	local power_base = config.power_base or 10
+
+	local strategy = {
+		id = config.id or ("base" .. base),
+		base = base,
+		power_base = power_base,
+		digit_to_value = digit_to_value,
+		value_to_digit = value_to_digit,
+		zero_digit = zero_digit,
+		power_sequence = power_sequence,
+	}
+
+	function strategy.normalize_data_key(raw_number)
+		return normalize_positional_key(raw_number, {
+			base = base,
+			case_insensitive = case_insensitive,
+			digit_to_value = digit_to_value,
+			value_to_digit = value_to_digit,
+			strip_separator = nil,
+			interpret_plain_decimal = false,
+			zero_digit = zero_digit,
+		})
+	end
+
+	function strategy.normalize_input(raw_number)
+		return normalize_positional_key(raw_number, {
+			base = base,
+			case_insensitive = case_insensitive,
+			digit_to_value = digit_to_value,
+			value_to_digit = value_to_digit,
+			strip_separator = strip_separator,
+			interpret_plain_decimal = true,
+			zero_digit = zero_digit,
+		})
+	end
+
+	function strategy.normalize_input_candidates(raw_number)
+		local key_as_system = normalize_positional_key(raw_number, {
+			base = base,
+			case_insensitive = case_insensitive,
+			digit_to_value = digit_to_value,
+			value_to_digit = value_to_digit,
+			strip_separator = strip_separator,
+			interpret_plain_decimal = false,
+			zero_digit = zero_digit,
+		})
+		local key_as_decimal = normalize_positional_key(raw_number, {
+			base = base,
+			case_insensitive = case_insensitive,
+			digit_to_value = digit_to_value,
+			value_to_digit = value_to_digit,
+			strip_separator = strip_separator,
+			interpret_plain_decimal = true,
+			zero_digit = zero_digit,
+		})
+		if key_as_system == key_as_decimal then
+			return {key_as_system}
+		end
+		return {key_as_system, key_as_decimal}
+	end
+
+	function strategy.lookup_data(m_data, key)
+		key = strategy.normalize_data_key(key)
+		local direct = m_data.numbers[key]
+		if direct then
+			return direct
+		end
+		local parsed = parse_positional_to_number(key, base, digit_to_value)
+		return parsed and m_data.numbers[parsed] or nil
+	end
+
+	function strategy.compare_keys(a, b)
+		a = strategy.normalize_data_key(a)
+		b = strategy.normalize_data_key(b)
+		if #a ~= #b then
+			return #a < #b
+		end
+		return a < b
+	end
+
+	function strategy.format_key_for_display(key)
+		key = strategy.normalize_data_key(key)
+		if display_keys_as_decimal then
+			local decimal_value = parse_positional_to_number(key, base, digit_to_value)
+			if decimal_value then
+				return export.format_number_for_display(decimal_value)
+			end
+		end
+		if display_separator then
+			if display_indic then
+				return add_separator(key, display_separator, 2, 3)
+			end
+			return add_separator(key, display_separator, display_group or 3, display_group_start)
+		end
+		return key
+	end
+
+	function strategy.derive_related_numbers(cur_num, cur_data, next_num, prev_num, lookup_data)
+		return derive_related_numbers_positional(strategy, cur_num, cur_data, next_num, prev_num, lookup_data)
+	end
+
+	return strategy
+end
+
+decimal_strategy = {
+	id = "decimal",
+	base = 10,
+	zero_digit = "0",
+	power_sequence = {1, 3, 2, 6},
+}
+
+function decimal_strategy.normalize_data_key(raw_number)
+	return export.format_fixed(raw_number)
+end
+
+function decimal_strategy.normalize_input(raw_number)
+	local normalized = tostring(raw_number):gsub(",", "")
+	if not normalized:find("^%d+$") then
+		error("Extraneous characters in parameter 2: should be decimal number (integer): '" .. normalized .. "'")
+	end
+	return normalized
+end
+
+function decimal_strategy.normalize_input_candidates(raw_number)
+	return {decimal_strategy.normalize_input(raw_number)}
+end
+
+function decimal_strategy.lookup_data(m_data, key)
+	return export.lookup_data(m_data, key)
+end
+
+function decimal_strategy.compare_keys(a, b)
+	return export.numbers_less_than(a, b)
+end
+
+function decimal_strategy.format_key_for_display(key)
+	return export.format_number_for_display(key)
+end
+
+function decimal_strategy.derive_related_numbers(cur_num, cur_data, next_num, prev_num, lookup_data)
+	return derive_related_numbers_decimal(cur_num, cur_data, next_num, prev_num, lookup_data)
+end
+
+local function resolve_number_system(m_data)
+	local config = m_data.number_system
+	if not config then
+		return decimal_strategy
+	end
+
+	if type(config) == "string" then
+		config = {id = config}
+	end
+
+	if config.id == "decimal" then
+		return decimal_strategy
+	end
+	if config.id == "base20" then
+		config.base = config.base or 20
+	elseif config.id == "base60" then
+		config.base = config.base or 60
+	elseif config.id == "positional" then
+		-- base should be explicitly given or derived below.
+	elseif config.id == "custom" then
+		if not (config.module and config.func) then
+			error("custom number_system requires both module and func")
+		end
+		local custom_strategy = require("Module:" .. config.module)[config.func](config)
+		return custom_strategy
+	end
+
+	config.base = config.base or tonumber(config.id and config.id:match("^base(%d+)$"))
+	if not config.base then
+		error("Unsupported number_system id '" .. tostring(config.id) .. "'")
+	end
+	if config.base < 2 then
+		error("number_system base must be >= 2")
+	end
+	return create_positional_strategy(config)
+end
+
 -- Map a list of tags to a single string that is equivalent. We need to do this because we can't easily put lists in the
 -- keys of tables.
 local function tag_list_to_combined_tag(tag_list)
-	return table.concat(tag_list, "|||")
+	return concat(tag_list, "|||")
 end
 
 -- Given a list of forms with attached inline modifiers (e.g. 'huitanta-huit<tag:Valencian>' or
@@ -463,14 +1020,14 @@ function export.group_numeral_forms_by_tag(forms)
 
 	for _, form in ipairs(forms) do
 		local formobj = export.parse_form_and_modifiers(form)
-		table.insert(seen_forms, formobj)
+		insert(seen_forms, formobj)
 		local combined_tag = formobj.tag and tag_list_to_combined_tag(formobj.tag) or ""
 		if not forms_by_tag[combined_tag] then
-			table.insert(seen_tags, combined_tag)
+			insert(seen_tags, combined_tag)
 			forms_by_tag[combined_tag] = {}
 			combined_tags_to_tag_lists[combined_tag] = formobj.tag or {}
 		end
-		table.insert(forms_by_tag[combined_tag], formobj)
+		insert(forms_by_tag[combined_tag], formobj)
 	end
 
 	return seen_forms, forms_by_tag, seen_tags, combined_tags_to_tag_lists
@@ -479,10 +1036,16 @@ end
 -- Given a form object (as returned by parse_form_and_modifiers()), format as appropriate for the current language.
 function export.format_formobj(formobj, m_data, lang)
 	local left_q = formobj.q and require("Module:qualifier").format_qualifier(formobj.q) .. " " or ""
-	local right_q = formobj.qq and " " .. require("Module:qualifier").format_qualifier(formobj.qq) or ""
-	return left_q .. m_links.full_link({
-		lang = lang, term = maybe_unaffix(m_data, formobj.form), alt = formobj.form, tr = formobj.tr,
-	}) .. right_q
+	local right_q = ((formobj.g and " " .. require("Module:gender and number").format_genders(split(formobj.g, ",")) or "") 
+				.. (formobj.qq and " " .. require("Module:qualifier").format_qualifier(formobj.qq) or ""))
+	local term = maybe_unaffix(m_data, formobj.form)
+	local alt = formobj.alt
+	if not alt and term ~= formobj.form then
+		alt = formobj.form
+	end
+	return left_q .. m_links.full_link{
+		lang = lang, term = term, alt = alt, tr = formobj.tr, id = formobj.id,
+	} .. right_q
 end
 
 -- Implementation of {{number box}}.
@@ -490,28 +1053,28 @@ function export.show_box(frame)
 	local full_link = m_links.full_link
 
 	local params = {
-		[1] = {required = true},
-		[2] = {},
-		["pagename"] = {},
-		["type"] = {},
+		[1] = {required = true, type = "language", default = "und"},
+		[2] = true,
+		["pagename"] = true,
+		["type"] = true,
 	}
 
 	local parent_args = frame:getParent().args
 	if parent_args.pagename then
 		track("show-box-pagename")
 	end
-	local args = require("Module:parameters").process(parent_args, params)
+	local args = require("Module:parameters").process(parent_args, params, nil, "number list", "show_box")
 
-	local langcode = args[1] or "und"
-	local lang = require("Module:languages").getByCode(langcode, "1")
+	local lang = args[1]
+	local langcode = lang:getCode()
 
 	-- Get the data from the data module. Some modules (e.g. currently [[Module:number list/data/ka]]) have to be
 	-- loaded with require() because the exported numbers table has a metatable.
-	local module_name = export.get_data_module_name(langcode, "must exist")
+	local module_name = export.get_data_module_name(langcode)
 	local m_data = require(module_name)
+	local number_system = resolve_number_system(m_data)
 
-	local pagename = args.pagename or (mw.title.getCurrentTitle().nsText == "Reconstruction" and "*" or "") .. mw.title.getCurrentTitle().subpageText
-
+	local pagename = args.pagename or (mw.title.getCurrentTitle().nsText == "Reconstruction" and "*" or "") .. mw.loadData("Module:headword/data").pagename
 	local cur_type = args.type
 
 	-- We represent all numbers as strings in this function to deal with the limited precision inherent in Lua numbers.
@@ -535,31 +1098,60 @@ function export.show_box(frame)
 				module_name .. "]]. Check the data module or the spelling of the page.")
 		end
 		for _, num_and_type in ipairs(nums_and_types) do
-			local num, typ = unpack(num_and_type)
-			num = export.format_fixed(num)
+			local num = num_and_type[1]
+			num = number_system.normalize_data_key(num)
 			if cur_num and num ~= cur_num then
 				local errparts = {}
-				for _, num_and_type in ipairs(nums_and_types) do
-					local num, typ = unpack(num_and_type)
-					table.insert(errparts, ("%s (%s)"):format(num, typ))
+				for _, err_num_and_type in ipairs(nums_and_types) do
+					local err_num, err_typ = unpack(err_num_and_type)
+					err_num = number_system.normalize_data_key(err_num)
+					insert(errparts, ("%s (%s)"):format(err_num, err_typ))
 				end
 				error("The current page name '" .. pagename .. "' matches the spelling of multiple numbers in [[" ..
-					module_name .. "]]: " .. table.concat(errparts, ",") .. ". Please specify the number explicitly.")
+					module_name .. "]]: " .. concat(errparts, ",") .. ". Please specify the number explicitly.")
 			else
 				cur_num = num
 			end
 		end
 	end
 
-	cur_num = cur_num:gsub(",", "") -- remove thousands separators
-	if not cur_num:find("^%d+$") then
-		error("Extraneous characters in parameter 2: should be decimal number (integer): '" .. cur_num .. "'")
+	local function candidate_matches_pagename(candidate_num)
+		local candidate_data = number_system.lookup_data(m_data, candidate_num)
+		if not candidate_data then
+			return false
+		end
+		for numtype, forms in pairs(candidate_data) do
+			if not non_form_types[numtype] and (not cur_type or numtype == cur_type) then
+				local form_list = type(forms) == "table" and forms or {forms}
+				for _, form in ipairs(form_list) do
+					local formobj = export.parse_form_and_modifiers(form)
+					if form_equals_pagename(formobj, pagename, m_data, lang) then
+						return true
+					end
+				end
+			end
+		end
+		return false
+	end
+
+	local cur_num_candidates = number_system.normalize_input_candidates and
+		number_system.normalize_input_candidates(cur_num) or
+		{number_system.normalize_input(cur_num)}
+	cur_num = cur_num_candidates[1]
+	if #cur_num_candidates > 1 then
+		for _, candidate in ipairs(cur_num_candidates) do
+			if candidate_matches_pagename(candidate) then
+				cur_num = candidate
+				break
+			end
+		end
 	end
 
 	-- Wrapper around `export.lookup_data` that may throw an error if the number can't be found (specifically if
 	-- param_for_error is given).
 	local function lookup_data(numstr, param_for_error)
-		local retval = export.lookup_data(m_data, numstr)
+		numstr = number_system.normalize_data_key(numstr)
+		local retval = number_system.lookup_data(m_data, numstr)
 		if not retval and param_for_error then
 			error(('The %s number "%s" specified in the "numbers" table entry for "%s" cannot be found in '
 				.. "[[%s]]; please fix the module."):format(param_for_error, numstr, cur_num, module_name))
@@ -583,7 +1175,7 @@ function export.show_box(frame)
 	local cur_tag_list, cur_combined_tag
 
 	local form_types = export.get_number_types(m_data)
-
+	
 	-- LONG COMMENT EXPLAINING TAG HANDLING:
 	--
 	-- For each form type (see `form_types` at top of file), group the entries for that form type by tag and figure out
@@ -631,14 +1223,9 @@ function export.show_box(frame)
 	for _, form_type in ipairs(form_types) do
 		local numeral = cur_data[form_type.key]
 		if numeral then
-			local numerals
-			if type(numeral) == "string" then
-				numerals = {numeral}
-			elseif type(numeral) == "table" then
-				numerals = numeral
-			end
-
-			local seen_forms, forms_by_tag, seen_tags, combined_tags_to_tag_lists = export.group_numeral_forms_by_tag(numerals)
+			local seen_forms, forms_by_tag, seen_tags, combined_tags_to_tag_lists = export.group_numeral_forms_by_tag(
+				type(numeral) == "table" and numeral or {numeral}
+			)
 			forms_by_tag_per_form_type[form_type] = forms_by_tag
 			seen_tags_per_form_type[form_type] = seen_tags
 			combined_tags_to_tag_lists_per_form_type[form_type] = combined_tags_to_tag_lists
@@ -663,7 +1250,8 @@ function export.show_box(frame)
 	-- Now, format all the forms for all form types for the current number.
 
 	local function sort_combined_tags(combined_tags, seen_tags, combined_tags_to_tag_lists)
-		local cur_tag_set = list_to_set(cur_tag_list)
+		-- cur_tag_list should normally never be nil, but can be so in template space
+		local cur_tag_set = list_to_set(cur_tag_list or {})
 		local tags_to_order = {}
 		for i, tag in ipairs(seen_tags) do
 			tags_to_order[tag] = i
@@ -675,13 +1263,13 @@ function export.show_box(frame)
 			local tag_list2 = combined_tags_to_tag_lists[tag2]
 			local common1 = set_intersection(cur_tag_set, list_to_set(tag_list1))
 			local common2 = set_intersection(cur_tag_set, list_to_set(tag_list2))
-			if #common1 ~= #common2 then
-				return #common1 < #common2
+			local n_common1, n_common2 = set_size(common1), set_size(common2)
+			if n_common1 ~= n_common2 then
+				return n_common1 > n_common2 -- larger overlap with current tag list first
 			end
-			-- Then compare inversely by number of tags not in common with the current tag list (which is equivalent to
-			-- comparing by total number of tags, since tags should be distinct).
+			-- When overlap ties, shorter tag lists first (untagged default before explicit <tag:...> rows).
 			if #tag_list1 ~= #tag_list2 then
-				return #tag_list1 > #tag_list2
+				return #tag_list1 < #tag_list2
 			end
 			-- Finally, compare by the original ordering in the number data, but if a tag is the same as the current
 			-- tag, put it first, and if somehow we encounter a tag that's not in the original ordering, put it last.
@@ -689,7 +1277,7 @@ function export.show_box(frame)
 			local index2 = tag2 == cur_combined_tag and 0 or tags_to_order[tag2] or #seen_tags + 1
 			return index1 < index2
 		end
-		table.sort(combined_tags, compare_tags)
+		sort(combined_tags, compare_tags)
 	end
 
 	for _, form_type in ipairs(form_types) do
@@ -702,7 +1290,7 @@ function export.show_box(frame)
 
 				local pagename_among_forms = false
 				for _, formobj in ipairs(forms_by_tag[tag]) do
-					table.insert(formatted_tag_forms, export.format_formobj(formobj, m_data, lang))
+					insert(formatted_tag_forms, export.format_formobj(formobj, m_data, lang))
 					if form_equals_pagename(formobj, pagename, m_data, lang) then
 						pagename_among_forms = true
 					end
@@ -710,15 +1298,15 @@ function export.show_box(frame)
 
 				if tag ~= "" then
 					local tag_list = combined_tags_to_tag_lists[tag]
-					tag = table.concat(tag_list, " / ")
+					tag = concat(tag_list, " / ")
 				end
 				local displayed_number_type = export.display_number_type(form_type) .. (tag == "" and "" or (" (%s)"):format(tag))
 				if pagename_among_forms then
 					displayed_number_type = "'''" .. displayed_number_type .. "'''"
 				end
 
-				table.insert(formatted_forms, " &nbsp;&nbsp;&nbsp; ''" .. displayed_number_type .. "'': " ..
-					table.concat(formatted_tag_forms, ", "))
+				insert(formatted_forms, " &nbsp;&nbsp;&nbsp; ''" .. displayed_number_type .. "'': " ..
+					concat(formatted_tag_forms, ", "))
 			end
 
 			sort_combined_tags(seen_tags, seen_tags, combined_tags_to_tag_lists)
@@ -729,17 +1317,17 @@ function export.show_box(frame)
 	end
 
 	-- Current number in header
-	local cur_display = export.format_number_for_display(cur_num)
+	local cur_display = number_system.format_key_for_display(cur_num)
 
 	local numeral
 	if m_data.numeral_config then
 		numeral = export.generate_non_arabic_numeral(m_data.numeral_config, cur_num)
 	elseif cur_data["numeral"] then
-		numeral = export.format_fixed(cur_data["numeral"])
+		numeral = number_system.normalize_data_key(cur_data["numeral"])
 	end
 
 	if numeral then
-		cur_display = full_link({lang = lang, alt = numeral, tr = "-"}) .. "<br/><span style=\"font-size: smaller;\">" .. cur_display .. "</span>"
+		cur_display = full_link{lang = lang, alt = numeral, tr = "-"} .. "<br/><span style=\"font-size: smaller;\">" .. cur_display .. "</span>"
 	end
 
 	--------------------- Determine next/prev, next/prev outer, and upper/lower numbers. ----------------------
@@ -755,152 +1343,11 @@ function export.show_box(frame)
 	--    for an individual number using `upper`/`lower`. These are always 10x greater or less than the number in
 	--    question, number not considering a number if it's the same as the next/previous number.
 
-	local next_num, prev_num = get_next_and_prev_keys(m_data, cur_num)
+	local next_num, prev_num = get_next_and_prev_keys(m_data, cur_num, number_system, lookup_data)
 	local next_data = next_num and lookup_data(next_num, "next")
 	local prev_data = prev_num and lookup_data(prev_num, "previous")
-
-	--------- Decompose number into mantissa (k) and exponent (m). ----------
-
-	local k, m
-	if cur_num == "0" then
-		k = 0
-		m = 1
-	else
-		local kstr, mstr = cur_num:match("^([0-9]*[1-9])(0*)$")
-		if not kstr then
-			error("Internal error: Unable to match number '" .. cur_num .. "'")
-		elseif #kstr > 15 then
-			-- This is because some numbers with 16 or more digits can't be represented exactly.
-			error("Can't handle number with more than 15 digits before the trailing zeros: '" .. cur_num .. "'")
-		end
-		k = tonumber(kstr)
-		m = #mstr
-	end
-
-	-- Find the next greater power of 10 for cur_num, up to 10^6. `try` should look up the data for a power of 10
-	-- and return it if it's available and the number passes any checks, otherwise nil.
-	local function make_greater_power_of_ten(power)
-		return cur_num .. string.rep("0", power)
-	end
-
-	-- Find the next lesser power of 10 for cur_num, up to 10^6. `try` should look up the data for a power of 10
-	-- and return it if it's available and the number passes any checks, otherwise nil.
-	local function make_lesser_power_of_ten(power)
-		local desired_zeros = m - power
-		if desired_zeros < 0 then
-			return nil
-		end
-		return k .. string.rep("0", desired_zeros)
-	end
-
-
-	local next_outer_data, prev_outer_data
-	local next_outer_num, prev_outer_num = cur_data.next_outer, cur_data.prev_outer
-
-	-- When trying to find then next/previous outer numbers, first, if the base-10 mantissa is not 1 or 0, we add 1 to
-	-- or subtract 1 from the mantissa, keeping the same number of zeros. Hence, for 300, we try 400 for the next outer,
-	-- 200 for the previous outer. For 900, we try 1000 for the next outer and 800 for the previous outer. If the
-	-- mantissa is 1, the next outer is computed the same but for the previous outer we use 9 followed by one fewer
-	-- zero. Hence, for 100 we try 200 for the next outer but 90 for the previous outer. If the mantissa is 0 (i.e. the
-	-- entire number is 0), we try 10 for the next outer, and have no previous outer.
-	--
-	-- Next, if the number is an even power of 10, we try 10x, 1000x greater, 100x greater and 1,000,000x greater, in
-	-- that sequence. Essentially, first we try the next power of 10; then we try the next short-scale number (billion,
-	-- trillion, etc. where large numbers follow a 10^3 sequence); then we try the next long-scale number (where large
-	-- numbers follow a 10^6 sequence); then we try the next Indic-scale number (where large numbers follow a 10^2
-	-- sequence: lakh, crore, arab, ...). We don't just try powers of 10 in order because then if e.g. we have entries
-	-- for one million, ten million, one hundred million and one billion, and the current number is one million, the
-	-- next number will be ten million and the next outer number one hundred million, when it would be cleaner to have
-	-- one billion as the outer number (and in many cases, there is no Wiktionary entry for one hundred million).
-	--
-	-- For the previous outer number, we do an analogous algorithm but make sure we don't try numbers less than 1.
-	local power_of_10_sequence = { 1, 3, 2, 6 }
-
-	--------- Determine next outer number. ----------
-	if next_outer_num then
-		next_outer_data = lookup_data(next_outer_num, "next outer")
-	else
-		local function try(num)
-			local data = (not next_num or export.numbers_greater_than(num, next_num)) and lookup_data(num) or nil
-			if data then
-				next_outer_num = num
-				next_outer_data = data
-			end
-			return data
-		end
-		if not try((k + 1) .. string.rep("0", m)) and k == 1 then
-			-- Try looking up a greater power of ten instead.
-			for _, power_of_10 in ipairs(power_of_10_sequence) do
-				if try(make_greater_power_of_ten(power_of_10)) then
-					break
-				end
-			end
-		end
-	end
-
-	--------- Determine previous outer number. ----------
-	if prev_outer_num then
-		prev_outer_data = lookup_data(prev_outer_num, "previous outer")
-	else
-		local function try(num)
-			local data = (not prev_num or export.numbers_less_than(num, prev_num)) and lookup_data(num) or nil
-			if data then
-				prev_outer_num = num
-				prev_outer_data = data
-			end
-			return data
-		end
-		if k == 0 or m == 0 then
-			-- less than 10; no previous outer num
-		else
-			local num_to_try
-			if k == 1 then
-				num_to_try = "9" .. string.rep("0", m - 1)
-			else
-				num_to_try = (k - 1) .. string.rep("0", m)
-			end
-			if not try(num_to_try) and k == 1 then
-				-- Try looking up a smaller power of ten instead.
-				for _, power_of_10 in ipairs(power_of_10_sequence) do
-					local num_to_try = make_lesser_power_of_ten(power_of_10)
-					if num_to_try and try(num_to_try) then
-						break
-					end
-				end
-			end
-		end
-	end
-
-	local upper_data, lower_data
-	local upper_num, lower_num = cur_data.upper, cur_data.lower
-
-	--------- Determine upper number. ----------
-	if upper_num then
-		upper_data = lookup_data(upper_num, "upper")
-	else
-		-- Try looking up the next power of ten.
-		upper_num = make_greater_power_of_ten(1)
-		if upper_num == next_num then
-			upper_num = nil
-		else
-			upper_data = lookup_data(upper_num)
-		end
-	end
-
-	--------- Determine lower number. ----------
-	if lower_num then
-		lower_data = lookup_data(lower_num, "lower")
-	elseif k == 0 or m == 0 then
-		-- less than 10; no lower num
-	else
-		-- Try looking up the previous power or 10.
-		lower_num = make_lesser_power_of_ten(1)
-		if lower_num == prev_num then
-			lower_num = nil
-		else
-			lower_data = lookup_data(lower_num)
-		end
-	end
+	local next_outer_num, next_outer_data, prev_outer_num, prev_outer_data, upper_num, upper_data, lower_num, lower_data =
+		number_system.derive_related_numbers(cur_num, cur_data, next_num, prev_num, lookup_data)
 
 	-- For a number `num` (an "adjacent" number to the current number, i.e. either next, previous, next/previous outer,
 	-- or upper/lower) with corresponding entry data `num_data`, display link(s) to the form(s) for this number that
@@ -930,17 +1377,16 @@ function export.show_box(frame)
 		if not num_data then
 			return nil
 		end
-		local num_type_data = num_data[cur_type]
-		if not num_type_data then
+		local forms = num_data[cur_type]
+		if not forms then
 			return nil
-		end
-		local forms = num_type_data
-		if type(forms) ~= "table" then
+		elseif type(forms) ~= "table" then
 			forms = {forms}
 		end
 
 		local seen_forms, forms_by_tag = export.group_numeral_forms_by_tag(forms)
 
+		-- FIXME: `cur_tag` is not defined. This seems to have been missed when multiple tag handling was added in [[Special:Diff/68978046]].
 		local forms_to_display
 		if cur_tag and forms_by_tag[cur_tag] then
 			forms_to_display = forms_by_tag[cur_tag]
@@ -950,19 +1396,23 @@ function export.show_box(frame)
 
 		for i, form_to_display in ipairs(forms_to_display) do
 			forms_to_display[i] = form_to_display.link or maybe_unaffix(m_data,
-				form_to_entry_name(form_to_display.form, lang))
+				form_to_stripped_form(form_to_display.form, lang))
 		end
 
 		local seen_pagenames = {}
 		local pagenames_to_display = {}
 		for _, form in ipairs(forms_to_display) do
 			if not seen_pagenames[form] then
-				table.insert(pagenames_to_display, form)
+				insert(pagenames_to_display, form)
 				seen_pagenames[form] = true
 			end
 		end
 
-		num = export.format_number_for_display(num)
+		if #pagenames_to_display == 0 then
+			return nil
+		end
+
+		num = number_system.format_key_for_display(num)
 		local num_arrow =
 			arrow == "rarrow" and num .. "&nbsp;&nbsp;→&nbsp;" or
 			arrow == "larrow" and "&nbsp;←&nbsp;&nbsp;" .. num or
@@ -971,9 +1421,9 @@ function export.show_box(frame)
 			local a = ("a"):byte()
 			local links = {}
 			for i, term in ipairs(pagenames_to_display) do
-				links[i] = m_links.language_link{lang = lang, term = term, alt = "[" .. string.char(a + i - 1) .. "]"}
+				links[i] = m_links.language_link{lang = lang, term = term, alt = "[" .. char(a + i - 1) .. "]"}
 			end
-			links = "<sup>" .. table.concat(links, ", ") .. "</sup>"
+			links = "<sup>" .. concat(links, ", ") .. "</sup>"
 			return arrow == "larrow" and links .. num_arrow or num_arrow .. links
 		else
 			return m_links.language_link {
@@ -1001,9 +1451,9 @@ function export.show_box(frame)
 	local appendix2 = canonical_name .. " numbers"
 	local appendix
 	local title
-	if mw.title.new(appendix1, "Appendix").exists then
+	if mw.title.new(appendix1, "Appendix"):getContent() then
 		appendix = appendix1
-	elseif mw.title.new(appendix2, "Appendix").exists then
+	elseif mw.title.new(appendix2, "Appendix"):getContent() then
 		appendix = appendix2
 	end
 
@@ -1013,12 +1463,11 @@ function export.show_box(frame)
 		title = appendix2
 	end
 
-	local function format_cell(contents, font_size, background, colspan, bold)
-		font_size = font_size and (" font-size:%s;"):format(font_size) or ""
-		background = background and (" background:%s;"):format(background) or ""
+	local function format_cell(contents, class_name, colspan, bold)
+		class_name = class_name and (" " .. class_name) or ""
 		colspan = colspan and ('colspan="%s" '):format(colspan) or ""
 		bold = bold and "!" or "|"
-		return ('%s %sstyle="min-width: 6em;%s%s | %s\n'):format(bold, colspan, font_size, background, contents)
+		return ('%s %sclass="table-cell %s | %s\n'):format(bold, colspan, class_name, contents)
 	end
 
 	local has_outer_display = not not (prev_outer_display or next_outer_display)
@@ -1029,36 +1478,36 @@ function export.show_box(frame)
 		else
 			blank_cell = "|\n"
 		end
-		local parts = {'|- style="text-align: center; background:#dddddd;"\n'}
-		table.insert(parts, blank_cell)
-		table.insert(parts, format_cell(display, "smaller"))
-		table.insert(parts, blank_cell)
-		return table.concat(parts)
+		local parts = {'|- class="adjacent-panel"\n'}
+		insert(parts, blank_cell)
+		insert(parts, format_cell(display, "adjacent-number"))
+		insert(parts, blank_cell)
+		return concat(parts)
 	end
 
 	upper_display = upper_display and format_upper_lower_display_row(upper_display) or ""
 	lower_display = lower_display and format_upper_lower_display_row(lower_display) or ""
 
 	local function format_display_cell(display)
-		return format_cell(display, "smaller", "#dddddd")
+		return format_cell(display, "adjacent-number")
 	end
 
 	prev_display = format_display_cell(prev_display)
 	next_display = format_display_cell(next_display)
 	prev_outer_display = has_outer_display and format_display_cell(prev_outer_display or "") or ""
 	next_outer_display = has_outer_display and format_display_cell(next_outer_display or "") or ""
-	cur_display = format_cell(cur_display, "larger", nil, nil, "bold")
+	cur_display = format_cell(cur_display, "current-number", nil, "bold")
 
 	local forms_display = ('| colspan="%s" style="text-align: center;" | %s\n'):format(
-		has_outer_display and 5 or 3, table.concat(formatted_forms, "<br/>"))
+		has_outer_display and 5 or 3, concat(formatted_forms, "<br/>"))
 
 	local footer_display
 	if cur_data.wplink then
 		local footer =
-			"[[w:" .. lang:getCode() .. ":Main Page|" .. lang:getCanonicalName() .. " Wikipedia]] article on " ..
-			m_links.full_link({lang = lang, term = "w:" .. lang:getCode() .. ":" .. cur_data.wplink,
-			alt = export.format_number_for_display(cur_num)})
-		footer_display = '|- style="text-align: center;"\n' .. format_cell(footer, nil, "#dddddd", has_outer_display and 5 or 3)
+			"[[w:" .. lang:getCode() .. ":|" .. lang:getCanonicalName() .. " Wikipedia]] article on " ..
+			m_links.full_link{lang = lang, term = "w:" .. lang:getCode() .. ":" .. cur_data.wplink,
+			alt = number_system.format_key_for_display(cur_num)}
+		footer_display = '|- style="text-align: center;"\n' .. format_cell(footer, "footer-cell", has_outer_display and 5 or 3)
 	else
 		footer_display = ""
 	end
@@ -1067,72 +1516,75 @@ function export.show_box(frame)
 		tostring(mw.uri.fullUrl(module_name, { action = "edit" })) ..
 		" edit]</span>)</sup>"
 
-	return [=[{| class="floatright" cellpadding="5" cellspacing="0" style="background: #ffffff; border: 1px #aaa solid; border-collapse: collapse; margin-top: .5em;" rules="all"
+	return [=[{| class="floatright number-box" cellpadding="5" cellspacing="0" style="background: var(--wikt-palette-white, #ffffff); color: inherit; border: 1px var(--border-color-base,#aaa) solid; border-collapse: collapse; margin-top: .5em;" rules="all"
 |+ ''']=] .. title .. edit_link .. "'''\n" ..
 	upper_display .. '|- style="text-align: center;"\n' ..
 	prev_outer_display .. prev_display .. cur_display .. next_display .. next_outer_display .. "|-\n" ..
 	lower_display .. "|-\n" ..
-	forms_display .. footer_display .. "|}"
-end
-
-
--- Assumes string or nil (or false), the types that can be found in an args table.
-local function if_not_empty(val)
-	if val and mw.text.trim(val) == "" then
-		return nil
-	else
-		return val
-	end
+	forms_display .. footer_display .. "|}" ..
+	require("Module:TemplateStyles")("Template:number box/styles.css")
 end
 
 
 function export.show_box_manual(frame)
-	local m_links = require("Module:links")
 	local num_type = frame.args["type"]
 
-	local args = {}
-	--cloning parent's args while also assigning nil to empty strings
-	for pname, param in pairs(frame:getParent().args) do
-		args[pname] = if_not_empty(param)
-	end
+	local args = require("Module:parameters").process(frame:getParent().args, {
+		[1] = {required = true, type = "language", default = "und"},
+		sc = {type = "script"},
+		headlink = true,
+		wplink = true,
+		alt = true,
+		tr = true,
+		[2] = true, -- prev_symbol
+		[3] = true, -- cur_symbol
+		[4] = true, -- next_symbol
+		[5] = true, -- prev_term
+		[6] = true, -- next_term
+		card = true, cardalt = true, cardtr = true,
+		ord = true, ordalt = true, ordtr = true,
+		adv = true, advalt = true, advtr = true,
+		mult = true, multalt = true, multtr = true,
+		dis = true, disalt = true, distr = true,
+		coll = true, collalt = true, colltr = true,
+		frac = true, fracalt = true, fractr = true,
+		opt = true, optx = true, optxalt = true, optxtr = true,
+		opt2 = true, opt2x = true, opt2xalt = true, opt2xtr = true,
+	})
 
-	local lang = args[1] or (mw.title.getCurrentTitle().nsText == "Template" and "und") or error("Language code has not been specified. Please pass parameter 1 to the template.")
-	local sc = args["sc"];
-	local headlink = args["headlink"]
-	local wplink = args["wplink"]
-	local alt = args["alt"]
-	local tr = args["tr"]
+	local lang = args[1]
+	local sc = args.sc
+	local headlink = args.headlink
+	local wplink = args.wplink
+	local alt = args.alt
+	local tr = args.tr
 
-	local prev_symbol = if_not_empty(args[2])
-	local cur_symbol = if_not_empty(args[3]);
-	local next_symbol = if_not_empty(args[4])
+	local prev_symbol = args[2]
+	local cur_symbol = args[3]
+	local next_symbol = args[4]
 
-	local prev_term = if_not_empty(args[5])
-	local next_term = if_not_empty(args[6])
+	local prev_term = args[5]
+	local next_term = args[6]
 
-	local cardinal_term = args["card"]; local cardinal_alt = args["cardalt"]; local cardinal_tr = args["cardtr"]
+	local cardinal_term = args.card; local cardinal_alt = args.cardalt; local cardinal_tr = args.cardtr
 
-	local ordinal_term = args["ord"]; local ordinal_alt = args["ordalt"]; local ordinal_tr = args["ordtr"]
+	local ordinal_term = args.ord; local ordinal_alt = args.ordalt; local ordinal_tr = args.ordtr
 
-	local adverbial_term = args["adv"]; local adverbial_alt = args["advalt"]; local adverbial_tr = args["advtr"]
+	local adverbial_term = args.adv; local adverbial_alt = args.advalt; local adverbial_tr = args.advtr
 
-	local multiplier_term = args["mult"]; local multiplier_alt = args["multalt"]; local multiplier_tr = args["multtr"]
+	local multiplier_term = args.mult; local multiplier_alt = args.multalt; local multiplier_tr = args.multtr
 
-	local distributive_term = args["dis"]; local distributive_alt = args["disalt"]; local distributive_tr = args["distr"]
+	local distributive_term = args.dis; local distributive_alt = args.disalt; local distributive_tr = args.distr
 
-	local collective_term = args["coll"]; local collective_alt = args["collalt"]; local collective_tr = args["colltr"]
+	local collective_term = args.coll; local collective_alt = args.collalt; local collective_tr = args.colltr
 
-	local fractional_term = args["frac"]; local fractional_alt = args["fracalt"]; local fractional_tr = args["fractr"]
+	local fractional_term = args.frac; local fractional_alt = args.fracalt; local fractional_tr = args.fractr
 
-	local optional1_title = args["opt"]
-	local optional1_term = args["optx"]; local optional1_alt = args["optxalt"]; local optional1_tr = args["optxtr"]
+	local optional1_title = args.opt
+	local optional1_term = args.optx; local optional1_alt = args.optxalt; local optional1_tr = args.optxtr
 
-	local optional2_title = args["opt2"]
-	local optional2_term = args["opt2x"]; local optional2_alt = args["opt2xalt"]; local optional2_tr = args["opt2xtr"]
-
-
-	lang = require("Module:languages").getByCode(lang) or error("The language code \"" .. lang .. "\" is not valid.")
-	sc = (sc and (require("Module:scripts").getByCode(sc) or error("The script code \"" .. sc .. "\" is not valid.")) or nil)
+	local optional2_title = args.opt2
+	local optional2_term = args.opt2x; local optional2_alt = args.opt2xalt; local optional2_tr = args.opt2xtr
 
 	track(lang:getCode())
 
@@ -1156,19 +1608,21 @@ function export.show_box_manual(frame)
 		track("xalt")
 	end
 
-	local lang_type = lang:getType()
-	local subpage = mw.title.getCurrentTitle().subpageText
-	local is_reconstructed = lang_type == "reconstructed" or mw.title.getCurrentTitle().nsText == "Reconstruction"
-	alt = alt or (is_reconstructed and "*" or "") .. subpage
+	local subpage = mw.loadData("Module:headword/data").pagename
+	local is_reconstructed = lang:hasType("reconstructed") or mw.title.getCurrentTitle().nsText == "Reconstruction"
+	
+	-- Commenting out this line prevents passing redundant alts to full_link;
+	-- however, there may have been a purpose to it.
+	-- alt = alt or (is_reconstructed and "*" or "") .. subpage
 
 	if num_type == "cardinal" then
-		cardinal_term = (is_reconstructed and "*" or "") .. subpage
-		cardinal_alt = alt
-		cardinal_tr = tr
+		cardinal_term = cardinal_term or (is_reconstructed and "*" or "") .. subpage
+		cardinal_alt = cardinal_alt or alt
+		cardinal_tr = cardinal_tr or tr
 	elseif num_type == "ordinal" then
-		ordinal_term = (is_reconstructed and "*" or "") .. subpage
-		ordinal_alt = alt
-		ordinal_tr = tr
+		ordinal_term = ordinal_term or (is_reconstructed and "*" or "") .. subpage
+		ordinal_alt = ordinal_alt or alt
+		ordinal_tr = ordinal_tr or tr
 	end
 
 	local header = lang:getCanonicalName() .. " " .. num_type .. " numbers"
@@ -1180,79 +1634,79 @@ function export.show_box_manual(frame)
 	local previous = ""
 
 	if prev_term or prev_symbol then
-		previous = m_links.full_link({lang = lang, sc = sc, term = prev_term, alt = "&nbsp;&lt;&nbsp;&nbsp;" .. prev_symbol, tr = "-"})
+		previous = m_links.full_link{lang = lang, sc = sc, term = prev_term, alt = "&nbsp;&lt;&nbsp;&nbsp;" .. prev_symbol, tr = "-", no_alt_ast = true}
 	end
 
-	local current = m_links.full_link({lang = lang, sc = sc, alt = cur_symbol, tr = "-"})
+	local current = m_links.full_link{lang = lang, sc = sc, alt = cur_symbol, tr = "-", no_alt_ast = true}
 
 	local next = ""
 
 	if next_term or next_symbol then
-		next = m_links.full_link({lang = lang, sc = sc, term = next_term, alt = next_symbol .. "&nbsp;&nbsp;&gt;&nbsp;", tr = "-"})
+		next = m_links.full_link{lang = lang, sc = sc, term = next_term, alt = next_symbol .. "&nbsp;&nbsp;&gt;&nbsp;", tr = "-", no_alt_ast = true}
 	end
 
 	local forms = {}
 
 	if cardinal_term then
-		table.insert(forms, " &nbsp;&nbsp;&nbsp; ''[[cardinal number|Cardinal]]'' : " .. m_links.full_link({lang = lang, sc = sc, term = cardinal_term, alt = cardinal_alt, tr = cardinal_tr}))
+		insert(forms, " &nbsp;&nbsp;&nbsp; ''[[cardinal number|Cardinal]]'' : " .. m_links.full_link{lang = lang, sc = sc, term = cardinal_term, alt = cardinal_alt, tr = cardinal_tr})
 	end
 
 	if ordinal_term then
-		table.insert(forms, " &nbsp;&nbsp;&nbsp; ''[[ordinal number|Ordinal]]'' : " .. m_links.full_link({lang = lang, sc = sc, term = ordinal_term, alt = ordinal_alt, tr = ordinal_tr}))
+		insert(forms, " &nbsp;&nbsp;&nbsp; ''[[ordinal number|Ordinal]]'' : " .. m_links.full_link{lang = lang, sc = sc, term = ordinal_term, alt = ordinal_alt, tr = ordinal_tr})
 	end
 
 	if adverbial_term then
-		table.insert(forms, " &nbsp;&nbsp;&nbsp; ''[[adverbial number|Adverbial]]'' : " .. m_links.full_link({lang = lang, sc = sc, term = adverbial_term, alt = adverbial_alt, tr = adverbial_tr}))
+		insert(forms, " &nbsp;&nbsp;&nbsp; ''[[adverbial number|Adverbial]]'' : " .. m_links.full_link{lang = lang, sc = sc, term = adverbial_term, alt = adverbial_alt, tr = adverbial_tr})
 	end
 
 	if multiplier_term then
-		table.insert(forms, " &nbsp;&nbsp;&nbsp; ''[[multiplier|Multiplier]]'' : " .. m_links.full_link({lang = lang, sc = sc, term = multiplier_term, alt = multiplier_alt, tr = multiplier_tr}))
+		insert(forms, " &nbsp;&nbsp;&nbsp; ''[[multiplier|Multiplier]]'' : " .. m_links.full_link{lang = lang, sc = sc, term = multiplier_term, alt = multiplier_alt, tr = multiplier_tr})
 	end
 
 	if distributive_term then
-		table.insert(forms, " &nbsp;&nbsp;&nbsp; ''[[distributive number|Distributive]]'' : " .. m_links.full_link({lang = lang, sc = sc, term = distributive_term, alt = distributive_alt, tr = distributive_tr}))
+		insert(forms, " &nbsp;&nbsp;&nbsp; ''[[distributive number|Distributive]]'' : " .. m_links.full_link{lang = lang, sc = sc, term = distributive_term, alt = distributive_alt, tr = distributive_tr})
 	end
 
 	if collective_term then
-		table.insert(forms, " &nbsp;&nbsp;&nbsp; ''[[collective number|Collective]]'' : " .. m_links.full_link({lang = lang, sc = sc, term = collective_term, alt = collective_alt, tr = collective_tr}))
+		insert(forms, " &nbsp;&nbsp;&nbsp; ''[[collective number|Collective]]'' : " .. m_links.full_link{lang = lang, sc = sc, term = collective_term, alt = collective_alt, tr = collective_tr})
 	end
 
 	if fractional_term then
-		table.insert(forms, " &nbsp;&nbsp;&nbsp; ''[[fractional|Fractional]]'' : " .. m_links.full_link({lang = lang, sc = sc, term = fractional_term, alt = fractional_alt, tr = fractional_tr}))
+		insert(forms, " &nbsp;&nbsp;&nbsp; ''[[fractional|Fractional]]'' : " .. m_links.full_link{lang = lang, sc = sc, term = fractional_term, alt = fractional_alt, tr = fractional_tr})
 	end
 
 	if optional1_title then
-		table.insert(forms, " &nbsp;&nbsp;&nbsp; ''" .. optional1_title .. "'' : " .. m_links.full_link({lang = lang, sc = sc, term = optional1_term, alt = optional1_alt, tr = optional1_tr}))
+		insert(forms, " &nbsp;&nbsp;&nbsp; ''" .. optional1_title .. "'' : " .. m_links.full_link{lang = lang, sc = sc, term = optional1_term, alt = optional1_alt, tr = optional1_tr})
 	end
 
 	if optional2_title then
-		table.insert(forms, " &nbsp;&nbsp;&nbsp; ''" .. optional2_title .. "'' : " .. m_links.full_link({lang = lang, sc = sc, term = optional2_term, alt = optional2_alt, tr = optional2_tr}))
+		insert(forms, " &nbsp;&nbsp;&nbsp; ''" .. optional2_title .. "'' : " .. m_links.full_link{lang = lang, sc = sc, term = optional2_term, alt = optional2_alt, tr = optional2_tr})
 	end
 
 	local footer = ""
 
 	if wplink then
 		footer =
-			"[[w:" .. lang:getCode() .. ":Main Page|" .. lang:getCanonicalName() .. " Wikipedia]] article on " ..
-			m_links.full_link({lang = lang, sc = sc, term = "w:" .. lang:getCode() .. ":" .. wplink, alt = alt, tr = tr})
+			"[[w:" .. lang:getCode() .. ":|" .. lang:getCanonicalName() .. " Wikipedia]] article on " ..
+			m_links.full_link{lang = lang, sc = sc, term = "w:" .. lang:getCode() .. ":" .. wplink, alt = alt, tr = tr}
 	end
 
-	return [=[{| class="floatright" cellpadding="5" cellspacing="0" style="background: #ffffff; border: 1px #aaa solid; border-collapse: collapse; margin-top: .5em;" rules="all"
+	return [=[{| class="floatright number-box" cellpadding="5" cellspacing="0" rules="all"
 |+ ''']=] .. header .. [=['''
 |-
-| style="width: 64px; background:#dddddd; text-align: center; font-size:smaller;" | ]=] .. previous .. [=[
+| class="adjacent-slot" | ]=] .. previous .. [=[
 
-! style="width: 98px; text-align: center; font-size:larger;" | ]=] .. current .. [=[
+! class="current-slot" | ]=] .. current .. [=[
 
-| style="width: 64px; text-align: center; background:#dddddd; font-size:smaller;" | ]=] .. next .. [=[
-
-|-
-| colspan="3" style="text-align: center;" | ]=] .. table.concat(forms, "<br/>") .. [=[
+| class="adjacent-slot" | ]=] .. next .. [=[
 
 |-
-| colspan="3" style="text-align: center; background: #dddddd;" | ]=] .. footer .. [=[
+| colspan="3" class="form-slot" | ]=] .. concat(forms, "<br/>") .. [=[
 
-|}]=]
+|-
+| colspan="3" class="footer-slot" | ]=] .. footer .. [=[
+
+|}]=] .. require("Module:TemplateStyles")("Template:number box/styles.css")
 end
 
 return export
