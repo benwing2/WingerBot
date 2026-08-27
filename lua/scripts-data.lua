@@ -149,7 +149,7 @@ m["Arab"] = process_ranges{
 	"Arabic",
 	1828555,
 	"abjad", -- more precisely, impure abjad
-	varieties = {"Jawi", {"Nastaliq", "Nastaleeq"}},
+	varieties = {"Jawi", "Perso-Arabic"},
 	ranges = {
 		0x0600, 0x06FF,
 		0x0750, 0x077F,
@@ -216,48 +216,42 @@ m["Arab"] = process_ranges{
 		m["Arab"][3],
 		ranges = m["Arab"].ranges,
 		characters = m["Arab"].characters,
-		otherNames = {"Perso-Arabic"},
+		aliases = {"Perso-Arabic"},
 		direction = "rtl",
 		parent = "Arab",
 		normalizationFixes = m["Arab"].normalizationFixes,
 	}
 
-	m["kk-Arab"] = {
-		"Arabic",
-		90681452,
-		m["Arab"][3],
-		ranges = m["Arab"].ranges,
-		characters = m["Arab"].characters,
-		direction = "rtl",
-		parent = "Arab",
-		normalizationFixes = m["Arab"].normalizationFixes,
-	}
-	
 	m["ks-Arab"] = m["fa-Arab"]
 	m["ku-Arab"] = m["fa-Arab"]
-	m["ms-Arab"] = m["kk-Arab"]
-	m["mzn-Arab"] = m["fa-Arab"]
-	m["ota-Arab"] = m["fa-Arab"]
-	
+
 	m["pa-Arab"] = {
 		"Shahmukhi",
 		133800,
 		m["Arab"][3],
 		ranges = m["Arab"].ranges,
 		characters = m["Arab"].characters,
-		otherNames = {"Arabic"},
 		direction = "rtl",
 		parent = "Arab",
 		normalizationFixes = m["Arab"].normalizationFixes,
 	}
-	
+
 	m["ps-Arab"] = m["fa-Arab"]
 	m["sd-Arab"] = m["fa-Arab"]
-	m["tt-Arab"] = m["fa-Arab"]
 	m["ug-Arab"] = m["fa-Arab"]
-	m["ur-Arab"] = m["fa-Arab"]
 
--- Aran (Nastaliq) is subsumed into Arab
+	m["Aran"] = {
+		"Nastaliq",
+		1133121,
+		m["Arab"][3],
+		ranges = m["Arab"].ranges,
+		characters = m["Arab"].characters,
+		aliases = {"Nastaleeq"},
+		varieties = {"Shahmukhi"},
+		direction = "rtl",
+		parent = "Arab",
+		normalizationFixes = m["Arab"].normalizationFixes,
+	}
 
 m["Armi"] = process_ranges{
 	"Imperial Aramaic",
@@ -389,7 +383,7 @@ m["Beng"] = process_ranges{
 		"Assamese",
 		191272,
 		m["Beng"][3],
-		otherNames = {"Eastern Nagari"},
+		other_names = {"Eastern Nagari"},
 		ranges = {
 			0x0951, 0x0952,
 			0x0964, 0x0965,
@@ -843,6 +837,7 @@ m["Ethi"] = process_ranges{
 		0x1E7F0, 0x1E7FE,
 	},
 	sort_key = "Ethi-sortkey",
+	strip_diacritics = {remove_diacritics = u(0x135D) .. u(0x135E) .. u(0x135F)} 
 }
 
 m["Gara"] = process_ranges{
@@ -1019,8 +1014,8 @@ m["Grek"] = process_ranges{
 		0x1D200, 0x1D245,
 	},
 	capitalized = true,
-	display_text = cs["Grek-displaytext"],
-	strip_diacritics = cs["Grek-stripdiacritics"],
+	display_text = "Grek-common",
+	strip_diacritics = "Grek-common",
 	sort_key = {
 		remove_diacritics = "'ʼ;·`¨´῀" .. c.grave .. c.acute .. c.diaer .. c.caron .. c.turnedcommaabove .. c.commaabove .. c.revcommaabove .. c.macron .. c.breve .. c.diaerbelow .. c.brevebelow .. c.perispomeni .. c.ypogegrammeni .. c.RSQuo .. c.prime .. c.keraia .. c.lowerkeraia .. c.tonos .. c.coronis .. c.psili .. c.dasia,
 		from = {"ϝ", "ͷ", "ϛ", "ͱ", "ͺ", "ϳ", "ϻ", "[ϟϙ]", "[ςϲ]", "ͳ"},
@@ -1216,7 +1211,7 @@ m["Hani"] = process_ranges{
 		0x2EBF0, 0x2EE5D,
 		0x2F800, 0x2FA1D,
 		0x30000, 0x3134A,
-		0x31350, 0x323AF,
+		0x31350, 0x3347F,
 	},
 	varieties = {"Hanzi", "Kanji", "Hanja", "Chu Nom"},
 	spaces = false,
@@ -1730,7 +1725,7 @@ m["Latn"] = process_ranges{
 		m["Latn"][3],
 		ranges = m["Latn"].ranges,
 		characters = m["Latn"].characters,
-		otherNames = {"Blackletter"}, -- Blackletter is actually the parent "script"
+		other_names = {"Blackletter"}, -- Blackletter is actually the parent "script"
 		capitalized = m["Latn"].capitalized,
 		translit = m["Latn"].translit,
 		parent = "Latn",
@@ -1742,7 +1737,7 @@ m["Latn"] = process_ranges{
 		m["Latn"][3],
 		ranges = m["Latn"].ranges,
 		characters = m["Latn"].characters,
-		otherNames = {"Irish"},
+		other_names = {"Irish"},
 		capitalized = m["Latn"].capitalized,
 		translit = m["Latn"].translit,
 		parent = "Latn",
@@ -1839,8 +1834,6 @@ m["Lisu"] = process_ranges{
 		from = {"𑾰"},
 		to = {"ꓬ" .. p[1]}
 	},
-}
-
 }
 
 m["Loma"] = {
@@ -2411,6 +2404,7 @@ m["Osge"] = process_ranges{
 		0x104D8, 0x104FB,
 	},
 	capitalized = true,
+	translit = "Osge-translit",
 }
 
 m["Osma"] = process_ranges{
@@ -2980,7 +2974,7 @@ m["Tang"] = process_ranges{
 		0x18D00, 0x18D08,
 	},
 	spaces = false,
-	translit = "Tang-translit",
+	translit = "txg-translit",
 }
 
 m["Tavt"] = process_ranges{
@@ -2994,13 +2988,18 @@ m["Tavt"] = process_ranges{
 	spaces = false,
 }
 
-m["Tayo"] = {
+m["Tayo"] = process_ranges{
 	"Lai Tay",
 	16306701,
 	"abugida",
 	aliases = {"Tai Yo"},
 	direction = "vertical-rtl",
-	-- Not in Unicode
+	ranges = {
+		0x1E6C0, 0x1E6DE,
+		0x1E6E0, 0x1E6F5,
+		0x1E6FE, 0x1E6FF,
+	},
+	spaces = false,
 }
 
 m["Telu"] = process_ranges{
@@ -3046,7 +3045,7 @@ m["Tfng"] = process_ranges{
 		0x2D6F, 0x2D70,
 		0x2D7F, 0x2D7F,
 	},
-	otherNames = {"Libyco-Berber", "Berber"}, -- per Wikipedia, Libyco-Berber is the parent
+	other_names = {"Libyco-Berber", "Berber"}, -- per Wikipedia, Libyco-Berber is the parent
 }
 
 m["Tglg"] = process_ranges{
@@ -3126,7 +3125,7 @@ do
 			m["Tibt"][3],
 			-- There is no inheritance of properties currently implemented for scripts. Per [[User:Theknightwho]], this
 			-- is because it's tricky to do since there are several types of child scripts: those that are mere display
-			-- variants (like fa-Arab, kk-Arab), which should be eliminated in favor of CSS language selectors to
+			-- variants (like fa-Arab), which should be eliminated in favor of CSS language selectors to
 			-- handle the font differences; those that are genuinely different scripts that happen to share the same
 			-- Unicode codepoints but have mostly different properties (e.g. Manchu vs. Mongolian); and those that are
 			-- somewhere in between (like Tamyig vs. Tibetan). As a result, we currently have to manually specify
@@ -3597,6 +3596,14 @@ m["Zsym"] = process_ranges{
 		0x1FB94, 0x1FBCA,
 		0x1FBF0, 0x1FBF9,
 	},
+	translit = false,
+	character_category = false, -- none
+}
+
+m["Zxxx"] = {
+	"unwritten",
+	104839715,
+	-- This should not have any characters listed
 	translit = false,
 	character_category = false, -- none
 }
