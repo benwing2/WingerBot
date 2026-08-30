@@ -137,6 +137,8 @@ Parse a single inflection or headword form or list of such forms. In either case
   (which is a Lua pattern, as in `parse_inline_modifiers` in [[Module:parse utilities]]). Most commonly, `splitchar` is
   a single comma and the values are comma-separated (in this case, splitting will not happen if a space follows the
   comma).
+* `parse_lang_prefix`: If specified, allow a language prefix to precede a form, and if found, store into the `.lang`
+  field of the returned object.
 * `preserve_splitchar`, `delimiter_key`, `escape_fun`, `unescape_fun`, `pre_normalize_modifiers`: As in
   `parse_inline_modifiers` in [[Module:parse utilities]].
 Returns an object suitable for storing as one element of one of the lists in `headdata.inflections`, where `headdata`
@@ -171,7 +173,16 @@ function export.parse_term_with_modifiers(data)
 		if frob then
 			term = frob(term, parse_err)
 		end
-		return {term = term}
+		if data.parse_lang_prefix and term:find(":") then
+			return require(parse_utilities_module).generate_obj_maybe_parsing_lang_prefix {
+				term = term,
+				paramname = paramname,
+				parse_lang_prefix = true,
+				parse_err = parse_err,
+			}
+		else
+			return {term = term}
+		end
 	end
 
 	-- Check for inline modifier, e.g. מרים<tr:Miryem>. But exclude top-level HTML entry with <span ...>,
@@ -250,8 +261,8 @@ Parse a list of inflection forms that may have inline modifiers attached. `data`
 * `qualifiers`: If specified, a possibly gappy list of left qualifiers to add to the parsed terms (for compatibility
   purposes).
 * `splitchar`: As in `parse_term_with_modifiers()`. The resulting per-term lists will be flattened.
-* `frob`, `include_mods`, `exclude_mods`, `is_head`, `preserve_splitchar`, `delimiter_key`, `escape_fun`,
-  `unescape_fun`, `pre_normalize_modifiers`: As in `parse_term_with_modifiers()`.
+* `frob`, `include_mods`, `exclude_mods`, `is_head`, `preserve_splitchar`, `parse_lang_prefix`, `delimiter_key`,
+  `escape_fun`, `unescape_fun`, `pre_normalize_modifiers`: As in `parse_term_with_modifiers()`.
 Returns a list of objects, suitable for storing as one of the lists in `headdata.inflections` (once a label is added),
 where `headdata` is the structure passed to [[Module:headword]].
 ]==]
@@ -289,32 +300,6 @@ function export.parse_term_list_with_modifiers(data)
 		end
 	end
 	return terms
-end
-
-
---[==[
-Check if any of a list of parsed terms (as returned by `parse_term_list_with_modifiers()`) are red links (i.e.
-nonexistent pages). If so, a category such as [[Category:Spanish nouns with red links in their headword lines]] is added
-to `headdata.categories`. `data` is an object with the following fields:
-* `headdata`: The headword structure passed to [[Module:headword]]. Required.
-* `terms`: The list of parsed terms. Required.
-* `lang`: The language object for the language of the terms. Required.
-* `plpos`: The plural part of speech, for the category name. Required.
-]==]
-function export.check_term_list_missing(data)
-	local headdata, terms, lang, plpos = data.headdata, data.terms, data.lang, data.plpos
-	for _, term in ipairs(terms) do
-		if type(term) == "table" then
-			term = term.term
-		end
-		if term then
-			local title = mw.title.new(term)
-			if title and not title:getContent() then
-				insert(headdata.categories, lang:getFullName() .. " " .. plpos ..
-					" with red links in their headword lines")
-			end
-		end
-	end
 end
 
 
@@ -374,15 +359,20 @@ Insert previously-parsed terms into an `inflections` field. The `inflections` fi
 * `accel`: If specified, a full accelerator object to add to the inflections.
 * `request`: If specified and no terms are given, insert a label with a request for inflections to be given.
 * `enable_auto_translit`: If specified and terms are given, display automatic transliteration of the terms.
-* `check_missing`: If specified, check the parsed terms for red links, and if so, add a category such as
-  [[Category:Spanish nouns with red links in their headword lines]] to `headdata.categories`. If this is given, so must
-  `lang` and `plpos`.
-* `lang`: The language object for the language of the terms. Required if `check_missing` is given.
-* `plpos`: The plural part of speech, for the category name. Required if `check_missing` is given.
+
+The return value indicates whether the inflection exists and how many terms are in it. It is an object with the
+following fields:
+* `exists`: {"yes"} if one or more terms were specified; {"no"} if the value was given as {"-"}; {"usually no"} if
+  the first value was given as {"-"} but additional terms were supplied; otherwise {nil}, indicating that the status
+  is unspecified.
+* `numterms`: Number of terms in the inflection. Will be 0 unless `exists` has the value {"yes"} or {"usually no"}.
+* `request`: True if no terms were specified but a term request was inserted into the inflection (because
+  `data.request` was specified). Otherwise {nil}.
 ]==]
 function export.insert_inflection(data)
 	local headdata, terms, label = data.headdata, data.terms, data.label
 	local inflobj = data.inflobj or headdata
+	local retval = {}
 	if terms and terms[1] then
 		if terms[1].term == "-" then
 			if terms[2] then
@@ -393,6 +383,8 @@ function export.insert_inflection(data)
 					label = data.usually_no_label or "usually no " .. label,
 				}
 				remove(terms, 1)
+				retval.numterms = #terms
+				retval.exists = "usually no"
 			else
 				export.insert_fixed_inflection {
 					headdata = headdata,
@@ -400,16 +392,16 @@ function export.insert_inflection(data)
 					originating_term = terms[1],
 					label = data.no_label or "no " .. label,
 				}
-				return
+				retval.numterms = 0
+				retval.exists = "no"
+				return retval
 			end
+		else
+			retval.numterms = #terms
+			retval.exists = "yes"
 		end
 		if data.check_missing then
-			export.check_term_list_missing {
-				headdata = headdata,
-				terms = terms,
-				lang = data.lang,
-				plpos = data.plpos,
-			}
+			error("check_missing support removed; use checkredlinks=true in [[Module:headword]]")
 		end
 		terms.label = export.replace_glossary_links_in_label(label)
 		if data.accel then
@@ -424,7 +416,14 @@ function export.insert_inflection(data)
 			label = export.replace_glossary_links_in_label(label),
 			request = true,
 		})
+		retval.numterms = 0
+		-- retval.exists == nil
+		retval.request = true
+	else
+		retval.numterms = 0
+		-- retval.exists == nil
 	end
+	return retval
 end
 
 
@@ -437,7 +436,9 @@ significant additional processing) into `headdata.inflections`. `data` is an obj
 * `label`: As in `insert_inflection()`. Required.
 * `qualifiers`, `frob`, `include_mods`, `exclude_mods`, `is_head`, `splitchar`, `preserve_splitchar`, `delimiter_key`,
   `escape_fun`, `unescape_fun`, `pre_normalize_modifiers`: As in `parse_term_list_with_modifiers()`.
-* `accel`, `check_missing`, `lang`, `plpos`: As in `insert_inflection()`.
+* `accel`: As in `insert_inflection()`.
+
+Return value is as in `insert_inflection()`.
 ]==]
 function export.parse_and_insert_inflection(data)
 	local forms = data.forms
@@ -445,8 +446,11 @@ function export.parse_and_insert_inflection(data)
 		data = shallow_copy(data)
 		data.forms = forms
 		data.terms = export.parse_term_list_with_modifiers(data)
-		export.insert_inflection(data)
+		return export.insert_inflection(data)
 	end
+	return {
+		numterms = 0
+	}
 end
 
 
@@ -633,7 +637,7 @@ function export.remove_termobj_field_modifiers(termobj)
 			end
 		end
 	end
-	
+
 	remove_field_modifiers("q")
 	remove_field_modifiers("qq")
 	remove_field_modifiers("l")
@@ -661,7 +665,7 @@ function export.insert_termobj_combining_duplicates(destobjs, termobj)
 							local filtered_values = {}
 							for _, val in ipairs(destobj[field]) do
 								local field_mods, _ = extract_termobj_field_modifiers(val)
-								if not val:find("%*") then
+								if not field_mods:find("%*") then
 									insert(filtered_values, val)
 								end
 							end
@@ -672,11 +676,11 @@ function export.insert_termobj_combining_duplicates(destobjs, termobj)
 							end
 						end
 					end
-	
-					local any_values_with_plus = false
+
+					local any_footnotes_with_plus = false
 					for _, val in ipairs(termobj[field]) do
 						local field_mods, _ = extract_termobj_field_modifiers(val)
-						if val:find("%+") then
+						if field_mods:find("%+") then
 							any_footnotes_with_plus = true
 							break
 						end
@@ -690,9 +694,9 @@ function export.insert_termobj_combining_duplicates(destobjs, termobj)
 						for _, val in ipairs(termobj[field]) do
 							local already_seen = false
 							local field_mods, field_without_mods = extract_termobj_field_modifiers(val)
-							if val:find("%+") then
+							if field_mods:find("%+") then
 								for _, existing_val in ipairs(destobj[field]) do
-									local existing_field_mods, existing_field_without_mods =
+									local _, existing_field_without_mods =
 										extract_termobj_field_modifiers(existing_val)
 									if existing_field_without_mods == field_without_mods then
 										already_seen = true
