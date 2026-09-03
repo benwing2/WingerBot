@@ -3,7 +3,6 @@ local pos_functions = {}
 
 local headword_utilities_module = "Module:headword utilities"
 local lang = require("Module:languages").getByCode("aii")
-local insert = table.insert
 
 -- The main entry point.
 function export.show(frame)
@@ -22,13 +21,13 @@ local gender_param_with_default = {type = "genders", default = "?"}
 local gender_param_no_default = {type = "genders"}
 
 local function handle_gender(data, args)
-	data:validate_genders(args[1], valid_genders)
-	data.genders = args[1]
+	data:validate_genders(args[2], valid_genders)
+	data.genders = args[2]
 end
 
 pos_functions["nouns"] = {
 	params = {
-		[1] = gender_param_with_default,
+		[2] = gender_param_with_default,
 		pl = true,
 		pauc = true,
 		f = true,
@@ -47,7 +46,7 @@ pos_functions["nouns"] = {
 
 pos_functions["numerals"] = {
 	params = {
-		[1] = gender_param_no_default,
+		[2] = gender_param_no_default,
 		pl = true,
 		pauc = true,
 		f = true,
@@ -69,7 +68,7 @@ pos_functions["proper nouns"] = pos_functions["nouns"]
 
 local function do_pronouns_interjections(plpos)
 	local params = {
-		[1] = plpos == "pronouns" and gender_param_with_default or gender_param_no_default,
+		[2] = plpos == "pronouns" and gender_param_with_default or gender_param_no_default,
 		sg = true,
 		m = true,
 		msg = true,
@@ -101,7 +100,7 @@ pos_functions.interjections = do_pronouns_interjections("interjections")
 
 pos_functions["determiners"] = {
 	params = {
-		[1] = gender_param_no_default,
+		[2] = gender_param_no_default,
 		m = true,
 		f = true,
 		pl = true,
@@ -132,7 +131,7 @@ pos_functions["adjectives"] = {
 -- FIXME: Eliminate this.
 pos_functions["suffixes"] = {
 	params = {
-		[1] = gender_param_no_default,
+		[2] = gender_param_no_default,
 		f = true,
 		pl = true,
 	},
