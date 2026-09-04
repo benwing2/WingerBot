@@ -54,7 +54,7 @@ local function handle_comp_sup(data)
 	sups = data:resolve_special(sups, function(termdata)
 		return termdata.head .. "scht"
 	end)
-	data:insert_inflection(data, sups, "<<superlative>>")
+	data:insert_inflection(sups, "<<superlative>>")
 end
 
 local function insert_comp_sup(params)
