@@ -1,6 +1,7 @@
 local export = {}
 
 local affix_module = "Module:affix"
+local debug_track_module = "Module:debug/track"
 local en_utilities_module = "Module:en-utilities"
 local fun_is_callable_module = "Module:fun/isCallable"
 local headword_module = "Module:headword"
@@ -14,6 +15,7 @@ local string_pattern_escape_module = "Module:string/patternEscape"
 local string_replacement_escape_module = "Module:string/replacementEscape"
 local string_utilities_module = "Module:string utilities"
 local table_module = "Module:table"
+local yesno_module = "Module:yesno"
 
 local dump = mw.dumpObject
 local unpack = unpack or table.unpack -- Lua 5.2 compatibility
@@ -368,8 +370,8 @@ Insert previously-parsed terms into an `inflections` field. The `inflections` fi
    to be set for nested inflections, which are specified for an inflection object rather than the headword data
    structure as a whole.
 * `terms`: The list of parsed terms. If {nil} or omitted, nothing happens unless `request` is set.
-* `label`: The label that the inflections are given; any parts of the label surrounded in <<...>> are linked to the
-   glossary. (If the contents of <<...> contain a | in them, they are a two-part link.) Required.
+* `label`: The label that the inflections are given; any parts of the label surrounded in `<<...>>` are linked to the
+   glossary. (If the contents of `<<...>>` contain a `|` in them, they are a two-part link.) Required.
 * `no_label`: If the term is {"-"} and there are no other terms, insert a fixed label with this value. Defaults to
    {"no "} plus the label.
 * `usually_no_label`: If the term is {"-"} and there are other terms, insert a fixed label with this value. Defaults to
@@ -520,6 +522,38 @@ function export.parse_and_insert_inflection(data)
 	}
 end
 
+
+--[==[
+Canonicalize a single term or term object or a list of either into a list of term objects.
+]==]
+function export.canonicalize_termobj_list(abterms)
+	if type(abterms) == "string" then
+		return {{term = abterms}}
+	elseif abterms.term then
+		return {abterms}
+	else
+		-- Check if already in full list term and return directly if so.
+		local must_convert = false
+		for _, term in ipairs(abterms) do
+			if type(term) == "string" then
+				must_convert = true
+				break
+			end
+		end
+		if not must_convert then
+			return abterms
+		end
+	end
+	local retval = {}
+	for _, term in ipairs(abterms) do
+		if type(term) == "string" then
+			insert(retval, {term = term})
+		else
+			insert(retval, term)
+		end
+	end
+	return retval
+end
 
 --[==[
 Combine two sets of qualifiers or labels. If either is {nil}, just return the other, and if both are {nil}, return
@@ -1350,13 +1384,13 @@ local inflection_to_cats = {
 	},
 }
 
-local headdata_methods = {}
+local Headdata = {}
 
-function headdata_methods:get_canonicalized_plpos()
+function Headdata:get_canonicalized_plpos()
 	return (self.pos_category:gsub("proper noun", "noun"))
 end
 
-function headdata_methods:canonicalize_category(category)
+function Headdata:canonicalize_category(category)
 	if type(category) ~= "string" then
 		return category
 	end
@@ -1367,7 +1401,7 @@ function headdata_methods:canonicalize_category(category)
 	return self.langfullname .. " " .. category
 end
 
-function headdata_methods:canonicalize_categories(categories)
+function Headdata:canonicalize_categories(categories)
 	if not categories then
 		return categories
 	end
@@ -1378,18 +1412,40 @@ function headdata_methods:canonicalize_categories(categories)
 	return canon_cats
 end
 
-function headdata_methods:insert_category(category)
+--[==[
+Insert a category into the `categories` list in the headword `data` structure. `category` is normally a string naming
+the category, which will have the language prepended to it and any occurrences of `PLPOS` in the string replaced with
+the actual plural part of speech (with some canonicalization; specifically, `proper nouns` is converted to `nouns` when
+replacing `PLPOS`). Alternatively, `category` can be a table of the form accepted by `format_categories()` in
+[[Module:utilities]]. This can be used, for example, to specify a sort key or sort base or to insert a category that
+does not have the language prepended to it. The structure has the following fields:
+* `cat` (the full category name, not further processed);
+* `lang` (an optional language, overriding the overall headword language);
+* `sort_key` (optional sort key);
+* `sort_base` (optional sort base);
+* `sc` (optional overriding script).
+]==]
+function Headdata:insert_category(category)
 	insert(self.categories, self:canonicalize_category(category))
 end
 
-function headdata_methods:validate_genders(genders, valid_genders, props)
+--[==[
+Validate the genders in `genders` (a list of gender spec objects, as produced by {type = "genders"} in
+[[Module:parameters]] and accepted by [[Module:gender and number]]), checking that all specified genders are in the list
+given in `valid_genders`. Optional `props` controls how the validation happens. In particular, unless `props.no_augment`
+is given, then for any gender beginning with `m`, if a corresponding gender beginning with `f` occurs, analogous genders
+beginning with `mf`, `mfbysense` and `mfequiv` are also allowed. For example, if `m-d` (masculine dual) and `f-d`
+(feminine dual) both occur, genders `mf-d`, `mfbysense-d` and `mfequiv-d` are also allowed. If a disallowed gender is
+given, an error occurs, giving the disallowed gender along with the list of all allowed genders.
+]==]
+function Headdata:validate_genders(genders, valid_genders, props)
 	if not genders then
 		return
 	end
 	props = props or {}
 	local gender_type, no_augment = props.gender_type, props.no_augment
 	gender_type = gender_type or "headword"
-	local valid_gender_set = require(table_module).list_to_set(valid_genders)
+	local valid_gender_set = require(table_module).listToSet(valid_genders)
 	local augmented_gender_set
 	if no_augment then
 		augmented_gender_set = valid_gender_set
@@ -1408,20 +1464,47 @@ function headdata_methods:validate_genders(genders, valid_genders, props)
 	for _, gspec in ipairs(genders) do
 		local g = gspec.spec
 		if not augmented_gender_set[g] then
-			error(("Invalid %s gender: %s"):format(gender_type, g))
+			local valid_gender_list = {}
+			for valid_g, _ in pairs(augmented_gender_set) do
+				insert(valid_gender_list, valid_g)
+			end
+			table.sort(valid_gender_list)
+			error(("Invalid %s gender: %s; expected one of %s"):format(gender_type, g,
+				mw.text.listToText(valid_gender_list)))
 		end
 	end
 end
 
-function headdata_methods:parse_inflection(field, props)
-	local val = self.args[field]
+--[==[
+Parse an inflection specified in `field`, the name of a parameter holding an inflection. If the parameter is numeric,
+the field should be given as a number (as with the `params` structure passed to [[Module:parameters]]), not a string
+containing the representation of a number. The field can specify multiple comma-separated terms, and each term can have
+associated inline modifiers that will be parsed (unless there is top-level HTML in the parameter, i.e. HTML not
+contained inside an inline modifier, e.g. as may be generated by using {{tl|l}} or similar template inside a parameter).
+This is a wrapper around the top-level `parse_term_with_modifiers()` function. `props` is an optional structure
+containing additional properties, including all additional properties documented for the top-level
+`parse_term_with_modifiers()` function.
+
+If the parameter in `field` is unspecified, the return value of this function will be an empty list, not {nil}, so it
+is always safe to iterate over the return value.
+
+By default, the allowed modifiers are the same as for `parse_term_with_modifiers()`, except that (normally) the
+`<tr:...>` modifier will be allowed if `include_tr` was specified in the original call to `process_headword()`, and
+likewise `<sc:...>` will be allowed if `include_sc` was specified in the original call to `process_headword()`. If you
+pass in your own `include_mods` list of additional allowed modifiers, it will (normally) automatically be augmented with
+{"tr"} and/or {"sc"} if `include_tr` and/or `include_sc` was specified when calling `process_headword()`. To disable
+automatic augmentation of the {"tr"} and {"sc"} modifiers (whether or not you specify an `include_mods` property),
+specify {no_augment_include_mods = true} in `props`.
+]==]
+function Headdata:parse_inflection(field, props)
+	local val = self.process_props.args[field]
 	if not val then
 		return {}
 	end
 	props = props and shallow_copy(props) or {}
 	local include_mods = props.include_mods
 	local data = self.process_props.data
-	if data.include_tr or data.include_sc then
+	if not props.no_augment_include_mods and (data.include_tr or data.include_sc) then
 		include_mods = include_mods and shallow_copy(include_mods) or {}
 		if data.include_tr then
 			insert_if_not(include_mods, "tr")
@@ -1438,24 +1521,26 @@ function headdata_methods:parse_inflection(field, props)
 end
 
 --[==[
-Insert previously-parsed terms into an `inflections` field. The `inflections` field will be initialized if needed.
-`data` is an object with the following fields:
-* `headdata`: The headword structure passed to [[Module:headword]]. Required.
-* `inflobj`: The object whose `inflections` field the terms are inserted into. Defaults to `headdata`. Only needs
-   to be set for nested inflections, which are specified for an inflection object rather than the headword data
-   structure as a whole.
-* `terms`: The list of parsed terms. If {nil} or omitted, nothing happens unless `request` is set.
-* `label`: The label that the inflections are given; any parts of the label surrounded in <<...>> are linked to the
-   glossary. (If the contents of <<...> contain a | in them, they are a two-part link.) Required.
-* `no_label`: If the term is {"-"} and there are no other terms, insert a fixed label with this value. Defaults to
-   {"no "} plus the label.
-* `usually_no_label`: If the term is {"-"} and there are other terms, insert a fixed label with this value. Defaults to
-   {"usually no "} plus the label.
-* `accel`: If specified, a full accelerator object to add to the inflections.
-* `request`: If specified and no terms are given, insert a label with a request for inflections to be given.
-* `enable_auto_translit`: If specified and terms are given, display automatic transliteration of the terms.
+Insert previously-parsed terms into the `inflections` of the headword `data` structure. This is a wrapper around
+the top-level `insert_inflection()` function. `terms` is the list of parsed terms. (If {nil}, nothing happens unless
+`request` is set in `props`.) `label` is the the label that the inflections are given; any parts of the label surrounded
+in `<<...>>` are linked to the glossary. (If the contents of `<<...>>` contain a `|` in them, they are a two-part link.)
+`props` is an optional structure containing additional properties, including all additional properties documented for
+the top-level `insert_inflection()` function.
+
+Unless `no_augment_cats` is given in `props`, certain labels automatically trigger the insertion of additional
+categories in specific circumstances. This is controlled by the `inflection_to_cats` structure in
+[[Module:headword utilities]]. For example, if the part of speech is {"nouns"} or {"proper nouns"} and the label (after
+removing any links and `<<...>>` glossary specs) is {"plural"}, an additional category
+<code><var>lang</var> countable nouns</code> will be added if a plural value is given (i.e. the value is not {"-"}). If
+the value is {"-"} (which indicates that there is no plural and triggers the insertion of the fixed inflection label
+{"no plural"}), <code><var>lang</var> uncountable nouns</code> will be inserted instead, and if both {"-"} and a value
+are given (which triggers the insertion of the {"usually no plural"} fixed inflection label), both categories are added.
+Similar categories are inserted when a comparative is given (with a label {"comparative"}), and if the label is
+{"female equivalent"} or {"male equivalent"} and the value is not {"-"}, a category such as
+<code><var>lang</var> nouns with other-gender equivalents</code> is inserted.
 ]==]
-function headdata_methods:insert_inflection(terms, label, props)
+function Headdata:insert_inflection(terms, label, props)
 	props = props and shallow_copy(props) or {}
 	if not props.no_augment_cats then
 		local bare_label = label
@@ -1486,14 +1571,27 @@ function headdata_methods:insert_inflection(terms, label, props)
 	return export.insert_inflection(props)
 end
 
-function headdata_methods:insert_fixed_inflection(label, props)
+--[==[
+Insert a "fixed" inflection (a label without associated values) into the `inflections` table of the headword `data`
+structure, labeled according to `label` (which can have glossary links in it specified using `<<...>>`, exactly as for
+`:insert_inflection()`). An example label (from {{tl|mn-noun}} in [[Module:mn-headword]]) is {"hidden-g declension"},
+specifying that the noun belongs to the hidden-''g'' declension. This is a direct wrapper around the top-level function
+`insert_fixed_inflection()`; see that function for more details on optional `props`.
+]==]
+function Headdata:insert_fixed_inflection(label, props)
 	props = props and shallow_copy(props) or {}
 	props.headdata = self
 	props.label = label
 	export.insert_fixed_inflection(props)
 end
 
-function headdata_methods:parse_and_insert_inflection(field, label, props)
+--[==[
+Parse the inflection(s) specified in `field` and insert them into the `inflections` table of the headword `data`
+structure, labeled according to `label`. This is equivalent to calling {terms = data:parse_inflection(field, props)}
+followed by {return data:insert_inflection(terms, label, props)} and behaves the same as the combination of those two
+functions. See their documentation for more details.
+]==]
+function Headdata:parse_and_insert_inflection(field, label, props)
 	local terms = self:parse_inflection(field, props)
 	return self:insert_inflection(terms, label, props)
 end
@@ -1507,16 +1605,16 @@ end
 -- nil. A nil head will be ignored, and otherwise the qualifiers/labels/etc. specified on the `+` term will be combined
 -- with the qualifiers/labels/etc. specified on the head. The return value is a list of inflections where no requests
 -- for the default inflection remain.
-function headdata_methods:resolve_special(terms, props)
+function Headdata:resolve_special(terms, handle_special, props)
 	props = props or {}
 	local infls = {}
-	local is_special = props.is_special or function(infl) return infl == "+" end
+	local is_special = props.is_special or function(infl) return infl.term == "+" end
 	for _, termobj in ipairs(terms) do
-		if not is_special(termobj.term) then
+		if not is_special(termobj) then
 			insert(infls, termobj)
 		else
 			for _, headobj in ipairs(self.heads) do
-				local head = headobj.term or data.pagename
+				local head = headobj.term or self.pagename
 				local head_no_links
 				if props.with_links then
 					head = head:find("%[") and head or require(headword_module).add_multiword_links(head, not headobj.term)
@@ -1525,31 +1623,159 @@ function headdata_methods:resolve_special(terms, props)
 					head = require(links_module).remove_links(head)
 					head_no_links = head
 				end
-				local tr = headobj.tr
-				local sccode = self.lang:findBestScript(head_no_links):getCode()
-				head, tr = props.handle_special(head, tr, sccode)
-				if head then
-					local inflobj = shallow_copy(termobj)
-					inflobj.term = head
-					inflobj.tr = tr
-					export.combine_termobj_qualifiers_labels(inflobj, headobj)
-					insert(infls, inflobj)
+				local newterms = handle_special {
+					head = head,
+					tr = headobj.tr,
+					infl = termobj,
+					sc = self.lang:findBestScript(head_no_links),
+				}
+				if newterms then
+					newterms = export.canonicalize_termobj_list(newterms)
+					for _, newterm in ipairs(newterms) do
+						if not props.no_combine_handle_special_retval_with_origin then
+							export.combine_termobj_qualifiers_labels(newterm, termobj)
+						end
+						if not props.no_combine_handle_special_retval_with_head then
+							export.combine_termobj_qualifiers_labels(newterm, headobj)
+						end
+						insert(infls, newterm)
+					end
 				end
 			end
 		end
 	end
 	return infls
 end
+
+--[==[
+Add the current page to a tracking page named `Wiktionary:Tracking/``lang``-headword/``page```, where ``lang`` is the
+language code of the current language. For example, if the current language is `mak` and `page` is {"redundant-lon"},
+the current page will get added to the tracking page `Wiktionary:Tracking/mak-headword/redundant-lon`. All pages added
+to that tracking page can be seen by going to [[Special:WhatLinksHere/Wiktionary:Tracking/mak-headword/redundant-lon]].
+This is typically used to track issues occurring in user-specified parameters that do not rise to the level of errors
+(e.g. redundant parameters, deprecated usages or other dispreferred values).
+]==]
+function Headdata:track(page)
+	return require(debug_track_module)(self.langcode .. "-headword/" .. page)
 end
 
 local boolean_param = {type = "boolean"}
 
 --[==[
-Main entry point. Takes these params:
-; {{para|1}}
-: The part of speech, pluralized; omit for {{cd|*-head}} templates such as {{tl|hi-head}}, {{tl|pa-head}} and {{tl|ur-head}}.
-; {{para|def}}
-: Optional default value for the template page.
+Process an arbitrary headword in an arbitrary language, handling generic and language-specific arguments and calling
+`full_headword()` in [[Module:headword]]. This is intended for use in implementing headword modules (e.g.
+[[Module:uz-headword]] for Uzbek, [[Module:mn-headword]] for Uzbek, [[Module:gsw-headword]] for Alemannic German, etc.)
+and provides a general implementation of such modules. On input, `data` is an object with the following fields:
+* `lang`: The language object of the language being handled. '''Required.'''
+* `frame`: The frame object passed into the `show()` function of your module, which implements headword-handling for
+  all parts of speech in the module, including a generic POS-handling template (e.g. {{tl|uz-head}} or {{tl|mn-head}}),
+  which allows arbitrary parts of speech to be handled. '''Required.'''
+* `pos_functions`: A table listing, for each part of speech requiring special handling, the extra parameters (if any)
+  that the part of speech accepts, and a function to handle those parameters. See examples below. '''Required.'''
+* `head_in_1`: If true, explicit headwords are specified in {{para|1}} (or {{para|2}} for generic POS templates such
+  as {{tl|mn-head}}) instead of in {{para|head}}.
+* `include_tr`: If true, allow explicit transliteration to be specified. The transliteration(s) for the headword(s)
+  themselves is/are specified in {{para|tr}} or through the {{cd|<tr:...>}} inline modifier on headwords, and
+  transliterations of inflections are specified through the {{cd|<tr:...>}} inline modifier. This should generally be
+  given when a headword for the language may be in a script other than Latin.
+* `include_sc`: If true, allow an explicit script code to be specified. The overall script code for the headword(s)
+  themselves can be specified using {{para|sc}}, and per-headword or per-inflection script codes are specified using the
+  {{cd|<sc:...>}} inline modifier. This should generally be given when a language supports multiple scripts.
+* `augment_params`: A callback function to add extra generic parameters that apply to all parts of speech. This should
+  not be used to add part-of-speech-specific parameters; those are handled through the appropriate setting in
+  `pos_functions`. See below for the format of the argument passed in. This function is called after initializing the
+  `params` table and just before adding part-of-speech-specific parameters (from `pos_functions`) to this table. Thus,
+  it can override any generic parameters but may itself be overridden by a part-of-speech-specific parameter.
+* `augment_headdata`: A callback function to modify the `headdata` object passed to `full_headword()` in
+  [[Module:headword]]. This should not be used to for part-of-speech-specific parameter handling; this is handled
+  through the appropriate setting in `pos_functions`. See below for the format of the argument passed in. This can be
+  used, for example, to override the value of a generic setting in `headdata` (e.g. [[Module:uz-headword]] uses this to
+  mark non-Latin terms as variant forms by setting `headdata.var`, being careful not to override a value already set by
+  the user) or to handle extra generic parameters added through the `augment_params` callback. This function is called
+  after initializing the `headdata` table with all information taken from generic parameters, and just before calling
+  the appropriate part-of-speech-specific handler function in `pos_functions`. Thus, it can override any value set
+  during generic parameter processing but may itself be overridden by a part-of-speech-specific handler.
+* `force_cat`: If true, add the headword to the appropriate categories even on non-mainspace pages. This can be used for
+  testing category handling in sample template calls on userspace test pages or template documentation pages. It should
+  not be set in production code.
+* `enable_auto_translit`: If true, turn on automatic transliteration of inflections at a global level (i.e. applying to
+  all inflections). This has no effect on headwords, which are automatically transliterated by default if in a non-Latin
+  script and automatic transliteration is available for the language. You can also set this value for particular
+  inflections in the `insert_inflection()` function.
+
+The `augment_params` callback is passed a single argument, a table with the following fields:
+* `params`: The parameters object itself, of the format accepted by `process()` in [[Module:parameters]]. This object
+  should be side-effected as necessary.
+* `poscat`: The canonicalized part of speech of the headword being processed. This comes either from the invocation
+  parameter {{para|1}} to `process_headword` (for specific part-of-speech templates such as {{tl|uz-noun}}) or from the
+  template parameter {{para|1}} passed to a generic part-of-speech template such as {{tl|uz-head}}. It is always
+  canonicalized to full form and pluralized (e.g. `pcl` will be converted to `particles`).
+* `indexing_poscat`: The canonicalized part of speech of the headword used to index into `pos_functions`. This is the
+  same as `poscat` for specific part-of-speech templates such as {{tl|uz-noun}}, but has the value {"head"} for generic
+  part-of-speech templates such as {{tl|uz-head}}.
+* `generic_pos_template`: True if a a generic POS templates like {{tl|uz-head}} or {{tl|mn-head}} was used. (This is
+  signaled by omitting the invocation parameter {{para|1}} to `process_headword`.)
+* `head_param`: The parameter holding the explicit headword. If `head_in_1` was specified (as for Mongolian headword
+  templates), this has the value {2} for generic POS templates like {{tl|mn-head}} and {1} for specific POS templates
+  like {{tl|mn-noun}}. Otherwise, it has the value {"head"}.
+
+The `augment_headdata` callback is passed a single argument, a table with the following fields:
+* `headdata`: The headdata object itself, i.e. the object that will be passed to `full_headword()` in
+  [[Module:headword]]. It should be side-effected as necessary.
+* `args`: The parsed arguments table holding all the user-specified arguments.
+* `indexing_poscat`, `generic_pos_template`, `head_param`: Same as for the `augment_params` callback.
+Note that other information on the headword can be found in the `process_props` field of `headdata`. (For example, the
+table in this field contains all of the above fields except for `headdata` itself.)
+
+The `pos_functions` table contains an entry for each part of speech needing special handling, where the key is the
+canonical plural part of speech (e.g. {"adverbs"} or {"proper nouns"}). The value associated with each key is a table
+containing two fields, `params` and `func`. `params` is a table containing extra parameters to add to the overall
+`params` object passed to the `process()` function in [[Module:parameters]]. `func` is a function of two arguments,
+normally called `data` (the headword data structure `headdata`) and `args` (the processed arguments table). A simple
+example, as used to handle verbs for Mongolian, is
+
+{
+pos_functions["verbs"] = {
+	params = {
+		caus = true,
+		pass = true,
+	},
+	func = function(data, args)
+		data:parse_and_insert_inflection("caus", "causative")
+		data:parse_and_insert_inflection("pass", "passive")
+	end
+}
+}
+
+The `params` structure sets two extra user-specifiable parameters {{para|caus}} and {{para|pass}}, and the `func`
+handler processes those parameters. Note how this is done by calling methods on the headword `data` structure. Each
+such parameter can have multiple comma-separated values, and each value can have inline modifiers attached to it to
+specify further properties of the value.
+
+These methods are implemented through a metatable set on the headword `data` structure, which is removed before calling
+`full_headword()` in [[Module:headword]]. The methods access extra information related to headword processing (such as
+the `args` table) that is stored in the `process_props` field of the headword `data` strucuture. This field is also
+removed prior to calling `full_headword()`.
+
+The methods available on the headword `data` structure are as follows. Each one also has its own documentation.
+* {parse_inflection(field, props)}: Parse value(s) specified in `field` (a user-specified parameter in the `args` table)
+  and return a list of term objects. Optional `props` specifies additional properties controlling the parsing.
+* {insert_inflection(terms, label, props)}: Insert the terms in `terms` (a list of term objects as returned by
+  `parse_inflection()`) into the `inflections` list in the headword `data` structure, giving the inflection the label as
+  specified in `label`. Optional `props` specifies additional properties controlling the parsing.
+* {parse_and_insert_inflection(field, label, props)}: A combination of `parse_inflection()` and `insert_inflection()`,
+  if no further processing of the parsed values needs to be done before insertion.
+* {insert_fixed_inflection(label, props)}: Insert a "fixed" inflection (a label without associated values) into the
+  `inflections` table. An example (from {{tl|mn-noun}} in [[Module:mn-headword]]) is {"hidden-g declension"}, specifying
+  that the noun belongs to the hidden-''g'' declension.
+* {resolve_special(terms, handle_special, props)}: Resolve "special" indicators as specified by the user in an inflection
+  parameter. A typical example is {"+"}, requesting a default value. `terms` is the list of parsed term objects and
+  `handle_special` is a handler function to process special indicators and convert them to their actual values.
+* {validate_genders(genders, valid_genders, props)}: Validate that the user-specified genders in `genders` all belong to
+  the list given in `valid_genders`, throwing an error if not.
+* {insert_category(category)}: Insert a category into the `categories` list in the headword `data` structure. `category`
+  is normally a string naming the category, which will have the language prepended to it and any occurrences of `PLPOS`
+  in the string replaced with the actual plural part of speech.
 ]==]
 function export.process_headword(data)
 	local lang, frame, pos_functions, head_in_1, include_tr, include_sc, force_cat, enable_auto_translit,
@@ -1566,15 +1792,15 @@ function export.process_headword(data)
 
 	local parargs = frame:getParent().args
 	local poscat = iargs[1]
-	local pos_in_1 = not poscat
-	if pos_in_1 then
+	local generic_pos_template = not poscat
+	if generic_pos_template then
 		poscat = ine(parargs[1]) or
 			mw.title.getCurrentTitle().fullText == ("Template:%s-head"):format(langcode) and "interjection" or
 			error("Part of speech must be specified in 1=")
 		poscat = require(headword_module).canonicalize_pos(poscat)
 	end
-	local head_param = head_in_1 and (pos_in_1 and 2 or 1) or "head"
-	local indexing_poscat = pos_in_1 and "head" or poscat
+	local head_param = head_in_1 and (generic_pos_template and 2 or 1) or "head"
+	local indexing_poscat = generic_pos_template and "head" or poscat
 
 	local params = {
 		[head_param] = {template_default = iargs.def},
@@ -1586,6 +1812,7 @@ function export.process_headword(data)
 		nolinkhead = {type = "boolean", alias_of = "nolink"},
 		suffix = boolean_param,
 		nosuffix = boolean_param,
+		clitic = true,
 		addlpos = true,
 		var = {type = "boolean", allow = {"both"}},
 		json = boolean_param,
@@ -1599,7 +1826,7 @@ function export.process_headword(data)
 		params.tr2 = {replaced_by = false, instead = "use comma-separated |tr= or <tr:...> inline modifier on head"}
 	end
 
-	if pos_in_1 then
+	if generic_pos_template then
 		params[1] = {required = true} -- required but ignored as already processed above
 	end
 
@@ -1608,8 +1835,8 @@ function export.process_headword(data)
 			params = params,
 			poscat = poscat,
 			indexing_poscat = indexing_poscat,
+			generic_pos_template = generic_pos_template,
 			head_param = head_param,
-			pos_in_1 = pos_in_1,
 		}
 	end
 
@@ -1636,8 +1863,9 @@ function export.process_headword(data)
 			namespace = namespace,
 			data = data,
 			indexing_poscat = indexing_poscat,
+			generic_pos_template = generic_pos_template,
 			head_param = head_param,
-			pos_in_1 = pos_in_1,
+			is_suffix = false,
 		},
 		pos_category = poscat,
 		orig_poscat = poscat, -- preserve user-specified poscat in case pos_category is changed to 'suffixes'
@@ -1649,11 +1877,12 @@ function export.process_headword(data)
 		sort_key = args.sort,
 		force_cat_output = force_cat,
 		no_redundant_head_cat = true,
-		pos_in_1 = pos_in_1,
+		-- No redundant script cat unless the user explicitly gave sc=
+		no_script_code_cat = not args.sc,
 		var = args.var,
 	}
 
-	setmetatable(headdata, {__index = headdata_methods})
+	setmetatable(headdata, {__index = Headdata})
 
 	local extra_term_mods = {}
 	if include_tr then
@@ -1667,9 +1896,9 @@ function export.process_headword(data)
 	end
 	local trs = args.tr and split_on_comma(args.tr) or {}
 	local num_trs = #trs
-	local heads = args.head and export.parse_term_with_modifiers {
-		val = args.head,
-		paramname = "head",
+	local heads = args[head_param] and export.parse_term_with_modifiers {
+		val = args[head_param],
+		paramname = head_param,
 		splitchar = ",",
 		is_head = true,
 		include_mods = extra_term_mods,
@@ -1721,21 +1950,30 @@ function export.process_headword(data)
 		end
 	end
 
-	headdata.is_suffix = false
-	if args.suffix or (
+	local clitic_label
+	if args.clitic then
+		clitic_label = require(yesno_module)(args.clitic, args.clitic)
+	end
+	if clitic_label == true then
+		clitic_label = "clitic"
+	end
+	if clitic_label then
+		headdata:insert_category("clitics")
+		headdata:insert_fixed_inflection(clitic_label)
+	elseif args.suffix or (
 		not args.nosuffix and pagename_is_suffix() and poscat ~= "suffixes" and poscat ~= "suffix forms"
 	) then
-		headdata.is_suffix = true
+		headdata.process_props.is_suffix = true
 		local function handle_suffix_pos(pos, is_first)
 			local form_type = pos:match("^(.*) forms$")
 			local actual_poscat
 			if form_type then
 				headdata:insert_category(("%s suffix forms"):format(form_type))
-				insert(headdata.inflections, {label = form_type .. " suffix form"})
+				headdata:insert_fixed_inflection(form_type .. " suffix form")
 			else
 				local singular_pos = require(en_utilities_module).singularize(pos)
 				headdata:insert_category(("%s-forming suffixes"):format(singular_pos))
-				insert(headdata.inflections, {label = singular_pos .. "-forming suffix"})
+				headdata:insert_fixed_inflection(singular_pos .. "-forming suffix")
 			end
 			local postype = require(headword_module).pos_lemma_or_nonlemma(pos)
 			if not postype then
@@ -1768,11 +2006,11 @@ function export.process_headword(data)
 
 	if augment_headdata then
 		augment_headdata {
-			headdata = data,
+			headdata = headdata,
 			args = args,
 			indexing_poscat = indexing_poscat,
 			head_param = head_param,
-			pos_in_1 = pos_in_1,
+			generic_pos_template = generic_pos_template,
 		}
 	end
 
