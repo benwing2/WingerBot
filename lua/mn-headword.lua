@@ -25,12 +25,12 @@ function export.show(frame)
 		include_sc = true,
 		force_cat = force_cat,
 		augment_params = function(data)
-			local other_script_index = data.pos_in_1 and 2 or 1
+			local other_script_index = data.generic_pos_template and 2 or 1
 			data.params[other_script_index] = true
 		end,
 		augment_headdata = function(data)
 			local headdata = data.headdata
-			local other_script_index = data.pos_in_1 and 2 or 1
+			local other_script_index = data.generic_pos_template and 2 or 1
 			local other_scripts = headdata:parse_inflection(other_script_index)
 			if other_scripts[1] then
 				local heading
@@ -45,10 +45,10 @@ function export.show(frame)
 							other_script.term, this_name
 						))
 					end
-					headdata:insert_inflection(other_scripts, heading, {
-						enable_auto_translit = true,
-					})
 				end
+				headdata:insert_inflection(other_scripts, heading, {
+					enable_auto_translit = true,
+				})
 			end
 			if not headdata.pagename:find("^%-") and not headdata.pagename:find(" ") and headdata.sc:getCode() == "Cyrl" then
 				-- FIXME, should be done by {{mn-IPA}}
@@ -90,7 +90,7 @@ pos_functions["verbs"] = {
 		caus = true,
 		pass = true,
 	},
-	func = function(data, args)
+	func = function(data, _args)
 		data:parse_and_insert_inflection("caus", "causative")
 		data:parse_and_insert_inflection("pass", "passive")
 	end
