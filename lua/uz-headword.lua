@@ -29,8 +29,9 @@ function export.show(frame)
 		include_sc = true,
 		force_cat = force_cat,
 		augment_headdata = function(data)
-			if data.var == nil then
-				data.var = data.sc:getCode() ~= "Latn"
+			local headdata = data.headdata
+			if headdata.var == nil then
+				headdata.var = headdata.sc:getCode() ~= "Latn"
 			end
 		end,
 	}
@@ -38,8 +39,8 @@ end
 
 local function handle_indeclinable(data, args)
 	if args.indecl then
-		data.insert_fixed_inflection("<<indeclinable>>")
-		data.insert_category("indeclinable PLPOS")
+		data:insert_fixed_inflection("<<indeclinable>>")
+		data:insert_category("indeclinable PLPOS")
 	end
 end
 
@@ -52,58 +53,53 @@ local function join_arabic(term, ending)
 end
 
 local function handle_comp_sup(data, with_default)
-	local comps = data.parse_inflection("comp")
+	local comps = data:parse_inflection("comp")
 	local user_specified_comps = not not comps[1]
 	if not comps[1] and with_default then
 		comps[1] = {term = "+"}
 	end
-	comps = data.resolve_special(comps, {
-		include_sc = true,
-		handle_special = function(termdata)
-			local head = termdata.head
-			local tr = termdata.tr
-			local sccode = termdata.sc:getCode()
-			if sccode == "Latn" then
-				return {term = head .. "roq"}
-			elseif sccode == "Cyrl" then
-				return {term = head .. "роқ", tr = tr and tr .. "roq" or nil}
-			elseif sccode == "Arab" then
-				return {term = join_arabic(head, "راق"), tr = tr and tr .. "roq" or nil}
-			elseif user_specified_comps then
-				error(("Unable to resolve comp=+ with script code '%s'"):format(sccode))
-			end
-		end,
-	})
-	local insert_spec = data.insert_inflection(comps, "<<comparative>>", {
+	comps = data:resolve_special(comps, function(termdata)
+		local head = termdata.head
+		local tr = termdata.tr
+		local sccode = termdata.sc:getCode()
+		if sccode == "Latn" then
+			return {term = head .. "roq"}
+		elseif sccode == "Cyrl" then
+			return {term = head .. "роқ", tr = tr and tr .. "roq" or nil}
+		elseif sccode == "Arab" then
+			return {term = join_arabic(head, "راق"), tr = tr and tr .. "roq" or nil}
+		elseif user_specified_comps then
+			error(("Unable to resolve comp=+ with script code '%s'"):format(sccode))
+		end
+	end)
+	local insert_spec = data:insert_inflection(comps, "<<comparative>>", {
 		-- For now, only add 'comparable adjectives' and 'uncomparable adjectives' when the comparative is explicitly
 		-- given. When we've reviewed all the adjectives to make sure they are appropriately specifying comp=- for
 		-- uncomparable adjectives, we can remove this restriction.
 		no_auto_cats = not user_specified_comps,
 	})
-	local sups = data.parse_inflection("sup")
+	local sups = data:parse_inflection("sup")
 	local user_specified_sups = not not sups[1]
 	if not sups[1] and (not insert_spec and with_default or insert_spec and insert_spec.exists ~= "no") then
 		sups[1] = {term = "+"}
 	end
-	sups = data.resolve_special(sups, {
+	sups = data:resolve_special(sups, function(termdata)
+		local head = termdata.head
+		local tr = termdata.tr
+		local sccode = termdata.sc:getCode()
+		if sccode == "Latn" then
+			return {term = "[[eng]] " .. head}
+		elseif sccode == "Cyrl" then
+			return {term = "[[энг]] " .. head, tr = tr and "eng " .. tr}
+		elseif sccode:find("Arab$") then
+			return {term = "[[اېنْگ]] " .. head, tr = tr and "eng " .. tr}
+		elseif user_specified_sups then
+			error(("Unable to resolve sup=+ with script code '%s'"):format(sccode))
+		end
+	end, {
 		with_links = true,
-		include_sc = true,
-		handle_special = function(termdata)
-			local head = termdata.head
-			local tr = termdata.tr
-			local sccode = termdata.sc:getCode()
-			if sccode == "Latn" then
-				return {term = "[[eng]] " .. head}
-			elseif sccode == "Cyrl" then
-				return {term = "[[энг]] " .. head, tr = tr and "eng " .. tr}
-			elseif sccode:find("Arab$") then
-				return {term = "[[اېنْگ]] " .. head, tr = tr and "eng " .. tr}
-			elseif user_specified_sups then
-				error(("Unable to resolve sup=+ with script code '%s'"):format(sccode))
-			end
-		end,
 	})
-	data.insert_inflection(sups, "<<superlative>>")
+	data:insert_inflection(sups, "<<superlative>>")
 end
 
 local function insert_comp_sup(params)
@@ -128,7 +124,7 @@ local function adjectives(plpos)
 			if plpos == "adjectives" then
 				handle_comp_sup(data, true)
 			end
-			data.parse_and_insert_inflection("intens", "intensive")
+			data:parse_and_insert_inflection("intens", "intensive")
 		end,
 	}
 end
@@ -141,7 +137,7 @@ pos_functions["adverbs"] = (function()
 	insert_comp_sup(params)
 	return {
 		params = params,
-		func = function(data, args)
+		func = function(data, _args)
 			handle_comp_sup(data, false)
 		end,
 	}
@@ -159,29 +155,26 @@ pos_functions["nouns"] = {
 			data.genders = {"p"}
 		end
 		if not args.indecl and not args.pltant then
-			local pls = data.parse_inflection("pl")
+			local pls = data:parse_inflection("pl")
 			local user_specified_pls = not not pls[1]
 			if not pls[1] and data.orig_poscat == "nouns" then
 				pls[1] = {term = "+"}
 			end
-			pls = data.resolve_special(pls, {
-				include_sc = true,
-				handle_special = function(termdata)
-					local head = termdata.head
-					local tr = termdata.tr
-					local sccode = termdata.sc:getCode()
-					if sccode == "Latn" then
-						return {term = head .. "lar"}
-					elseif sccode == "Cyrl" then
-						return {term = head .. "лар", tr = tr and tr .. "lar" or nil}
-					elseif sccode == "Arab" then
-						return {term = join_arabic(head, "لَر"), tr = tr and tr .. "lar" or nil}
-					elseif user_specified_pls then
-						error(("Unable to resolve pl=+ with script code '%s'"):format(sccode))
-					end
-				end,
-			})
-			data.insert_inflection(pls, "plural", {
+			pls = data:resolve_special(pls, function(termdata)
+				local head = termdata.head
+				local tr = termdata.tr
+				local sccode = termdata.sc:getCode()
+				if sccode == "Latn" then
+					return {term = head .. "lar"}
+				elseif sccode == "Cyrl" then
+					return {term = head .. "лар", tr = tr and tr .. "lar" or nil}
+				elseif sccode == "Arab" then
+					return {term = join_arabic(head, "لَر"), tr = tr and tr .. "lar" or nil}
+				elseif user_specified_pls then
+					error(("Unable to resolve pl=+ with script code '%s'"):format(sccode))
+				end
+			end)
+			data:insert_inflection(pls, "plural", {
 				-- For now, only add 'countable nouns' and 'uncountable nouns' when the plural is explicitly given.
 				-- When we've reviewed all the nouns to make sure they are appropriately specifying pl=- for
 				-- uncountable nouns, we can remove this restriction.
