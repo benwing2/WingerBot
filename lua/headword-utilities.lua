@@ -2214,12 +2214,15 @@ function export.process_headword(data)
 
 	local function augment_headdata_from_infls(infls)
 		for _, infl in ipairs(infls) do
+			local function interr(txt)
+				error(("Internal error: %s (coming from infls spec %s)"):format(txt, dump(infl)))
+			end
 			local param = infl[1]
+			local vals
 			if param then
 				param = resolve_prop(param)
 				if type(param) ~= "string" and type(param) ~= "number" then
-					error(("Internal error: Parameter name %s must be a string or number (coming from infls spec %s)"):format(
-						dump(param), dump(infl)))
+					interr(("Parameter name %s must be a string or number"):format(dump(param)))
 				end
 				if infl.type == "genders" then
 					local genders = params[param]
@@ -2261,7 +2264,7 @@ function export.process_headword(data)
 							parse_inflection_props.no_augment_include_mods = no_augment_include_mods
 						end
 					end
-					local vals = data:parse_inflection(param, parse_inflection_props)
+					vals = data:parse_inflection(param, parse_inflection_props)
 					if vals == nil then
 						vals = export.canonicalize_termobj_list(resolve_prop(infl.default), "term", "default")
 					end
@@ -2294,8 +2297,9 @@ function export.process_headword(data)
 					end
 					if vals ~= nil then
 						if not infl.label and not infl.fixed_label and not infl.all_fixed_label then
-							error(("Internal error: Parameter %s generated value%s %s but there is no label to attach the values to, and no fixed label (coming from infls spec %s)"):format(
-								dump(param), vals[2] and "s" or "", dump(vals), dump(infl)))
+							local vals_pl = type(vals) == "table" and vals[2] and "s" or ""
+							interr(("Parameter %s generated value%s %s but there is no label to attach the value%s to, and no fixed label"):format(
+								dump(param), vals_pl, dump(vals), vals_pl))
 						end
 						if infl.label then
 							local label = resolve_prop(infl.label, vals)
@@ -2332,7 +2336,7 @@ function export.process_headword(data)
 								for _, valobj in ipairs(vals) do
 									local labelobjs = resolve_prop(infl.fixed_label, val)
 									process_labelobjs(labelobjs, valobj, function(label, termobj)
-										label = label:gsub("{val}", valobj.term)
+										label = label:gsub("{val}", replacement_escape(valobj.term))
 										data:insert_fixed_inflection(label, {
 											originating_term = termobj
 										})
@@ -2341,28 +2345,21 @@ function export.process_headword(data)
 							elseif infl.all_fixed_label then
 								local labelobjs = resolve_prop(infl.all_fixed_label, vals)
 								process_labelobjs(labelobjs, nil, function(label, termobj)
-									label = label:gsub("{vals}", valobj.term)
-									data:insert_fixed_inflection(label, {
-										originating_term = termobj
-									})
+									if label:find("{vals}") then
+										local formatted_labels = {}
+										for _, valobj in ipairs(vals) do
+											insert(formatted_labels, add_qualifiers_and_refs(valobj.term, valobj, lang))
+										end
+										label = label:gsub("{vals}", replacement_escape(serial_comma_join(formatted_labels)))
+									end
+									data:insert_fixed_inflection(label, termobj)
 								end)
-								if type(labelobj) == "string" then
-									label = labelobj
-									termobj = valobj
-								else
-									label = labelobj.term
-									termobj = labelobj
-								end
-
-							i
-
-
-
-
-
-
-
-
+							else
+								interr("Should not get here")
+							end
+						end
+					end
+				end
 			end
 		end
 	end
