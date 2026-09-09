@@ -1,9 +1,10 @@
 local export = {}
 local pos_functions = {}
 
+local force_cat = false -- for testing; if true, categories appear in non-mainspace pages
+
 local headword_utilities_module = "Module:headword utilities"
 local lang = require("Module:languages").getByCode("tru")
-local insert = table.insert
 
 -- The main entry point.
 function export.show(frame)
@@ -11,82 +12,54 @@ function export.show(frame)
 		lang = lang,
 		frame = frame,
 		pos_functions = pos_functions,
+		force_cat = force_cat,
 		include_tr = true,
 		enable_auto_translit = true,
+		numbered_head = true,
 	}
 end
 
 local valid_genders = {"m", "f", "m-p", "f-p", "p", "?"}
-local gender_param = {type = "genders", default = "?"}
-
-local function handle_gender(data, args)
-	data:validate_genders(args[1], valid_genders)
-	data.genders = args[1]
-end
-
-local function handle_plural_paucal(data)
-	-- countable/uncountable cats added automatically
-	data:parse_and_insert_inflection("pl", "plural")
-	data:parse_and_insert_inflection("pauc", "paucal")
-end
-
--- Nouns and numerals have the same params but interpret m/f differently.
-local noun_numeral_params = {
-	[1] = gender_param,
-	pl = true,
-	pauc = true,
-	f = true,
-	m = true,
-}
 
 pos_functions["nouns"] = {
-	params = noun_numeral_params,
-	func = function(data, args)
-		handle_gender(data, args)
-		handle_plural_paucal(args)
-		-- 'nouns with other-gender equivalents' get added automatically
-		data:parse_and_insert_inflection("f", "female equivalent")
-		data:parse_and_insert_inflection("m", "male equivalent")
-	end,
+	infls = {
+		{2, type = "genders", validate = valid_genders, default = "?"},
+		-- countable/uncountable cats added automatically
+		{"pl", label = "plural"},
+		{"pauc", label = "paucal"},
+		-- 'nouns with other-gender equivalents' gets added automatically
+		{"f", label = "female equivalent"},
+		{"m", label = "male equivalent"},
+	},
 }
 
 pos_functions["numerals"] = {
-	params = noun_numeral_params,
-	func = function(data, args)
-		data:insert_category("cardinal numbers")
-		handle_gender(data, args)
-		handle_plural_paucal(args)
-		data:parse_and_insert_inflection("f", "feminine")
-		data:parse_and_insert_inflection("m", "masculine")
-	end,
+	infls = {
+		{2, type = "genders", validate = valid_genders},
+		{"pl", label = "plural"},
+		{"pauc", label = "paucal"},
+		{"f", label = "feminine"},
+		{"m", label = "masculine"},
+		{cat = "cardinal numbers"},
+	},
 }
 
 pos_functions["proper nouns"] = pos_functions["nouns"]
 
 pos_functions["pronouns"] = {
-	params = {
-		[1] = gender_param,
-		f = true,
-		pl = true,
+	infls = {
+		{2, type = "genders", validate = valid_genders},
+		{"f", label = "feminine"},
+		{"pl", label = "plural"},
 	},
-	func = function(data, args)
-		handle_gender(data, args)
-		data:parse_and_insert_inflection("f", "feminine")
-		data:parse_and_insert_inflection("pl", "plural")
-	end,
 }
 
 pos_functions["adjectives"] = {
-	params = {
-		f = true,
-		mpl = true,
-		fpl = true,
+	infls = {
+		{"f", label = "feminine"},
+		{"mpl", label = "masculine plural"},
+		{"fpl", label = "feminine plural"},
 	},
-	func = function(data, args)
-		data:parse_and_insert_inflection("f", "feminine singular")
-		data:parse_and_insert_inflection("mpl", "masculine plural")
-		data:parse_and_insert_inflection("fpl", "feminine plural")
-	end
 }
 
 return export

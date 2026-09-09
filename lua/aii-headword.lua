@@ -1,6 +1,8 @@
 local export = {}
 local pos_functions = {}
 
+local force_cat = false -- for testing; if true, categories appear in non-mainspace pages
+
 local headword_utilities_module = "Module:headword utilities"
 local lang = require("Module:languages").getByCode("aii")
 
@@ -10,87 +12,54 @@ function export.show(frame)
 		lang = lang,
 		frame = frame,
 		pos_functions = pos_functions,
+		force_cat = force_cat,
 		include_tr = true,
 		enable_auto_translit = true,
-		head_in_1 = true,
+		numbered_head = true,
 	}
 end
 
 local valid_genders = {"m", "f", "m-p", "f-p", "p", "?"}
-local gender_param_with_default = {type = "genders", default = "?"}
-local gender_param_no_default = {type = "genders"}
-
-local function handle_gender(data, args)
-	data:validate_genders(args[2], valid_genders)
-	data.genders = args[2]
-end
 
 pos_functions["nouns"] = {
-	params = {
-		[2] = gender_param_with_default,
-		pl = true,
-		pauc = true,
-		f = true,
-		m = true,
-	},
-	func = function(data, args)
-		handle_gender(data, args)
+	infls = {
+		{2, type = "genders", valid_genders = valid_genders, default = "?"},
 		-- countable/uncountable cats added automatically
-		data:parse_and_insert_inflection("pl", "plural")
-		data:parse_and_insert_inflection("pauc", "paucal")
-		-- 'nouns with other-gender equivalents' get added automatically
-		data:parse_and_insert_inflection("f", "female equivalent")
-		data:parse_and_insert_inflection("m", "male equivalent")
-	end,
+		{"pl", label = "plural"},
+		{"pauc", label = "paucal"},
+		-- 'nouns with other-gender equivalents' gets added automatically
+		{"f", label = "female equivalent"},
+		{"m", label = "male equivalent"},
+	},
 }
 
 pos_functions["numerals"] = {
-	params = {
-		[2] = gender_param_no_default,
-		pl = true,
-		pauc = true,
-		f = true,
-		m = true,
-		cons = true,
+	infls = {
+		{cat = "cardinal numbers"},
+		{2, type = "genders", valid_genders = valid_genders},
+		{"pl", label = "plural"},
+		{"f", label = "feminine"},
+		{"m", label = "masculine"},
+		{"cons", label = "construct"},
 	},
-	func = function(data, args)
-		data:insert_category("cardinal numbers")
-		handle_gender(data, args)
-		data:parse_and_insert_inflection("pl", "plural")
-		data:parse_and_insert_inflection("pauc", "paucal")
-		data:parse_and_insert_inflection("f", "feminine")
-		data:parse_and_insert_inflection("m", "masculine")
-		data:parse_and_insert_inflection("cons", "construct")
-	end,
 }
 
 pos_functions["proper nouns"] = pos_functions["nouns"]
 
 local function do_pronouns_interjections(plpos)
-	local params = {
-		[2] = plpos == "pronouns" and gender_param_with_default or gender_param_no_default,
-		sg = true,
-		m = true,
-		msg = true,
-		f = true,
-		fsg = true,
-		pl = true,
-		mpl = true,
-		fpl = true,
-	}
 	return {
-		params = params,
-		func = function(data, args)
-			handle_gender(data, args)
-			data:parse_and_insert_inflection("sg", "singular")
-			data:parse_and_insert_inflection("m", "feminine")
-			data:parse_and_insert_inflection("msg", "masculine singular")
-			data:parse_and_insert_inflection("f", "feminine")
-			data:parse_and_insert_inflection("fsg", "feminine singular")
-			data:parse_and_insert_inflection("pl", "plural")
-			data:parse_and_insert_inflection("mpl", "masculine plural")
-			data:parse_and_insert_inflection("fpl", "feminine plural")
-		end,
+		infls = {
+			{2, type = "genders", valid_genders = valid_genders, default = plpos == "pronouns" and "?" or nil},
+			{"sg", label = "singular", comma_desc = "used when the {pos} is plural and the singular is not distinguished for gender"},
+			{"m", label = "masculine", comma_desc = "used when the {pos} is feminine singular"},
+			{"msg", label = "masculine singular", comma_desc = "used when the {pos} is plural and the singular is distinguished for gender"},
+			{"f", label = "feminine", comma_desc = "used when the {pos} is masculine singular"},
+			{"fsg", label = "feminine singular", comma_desc = "used when the {pos} is plural and the singular is distinguished for gender"},
+			{"pl", label = "plural", comma_desc = "used when the {pos} is singular and the plural is not distinguished for gender"},
+			{"mpl", label = "masculine plural", comma_desc = "used when the {pos} is singular (and the plural is distinguished for gender) or the POS is feminine plural"},
+			{"fpl", label = "feminine plural", comma_desc = "used when the {pos} is singular (and the plural is distinguished for gender) or the POS is masculine plural"},
+			{"pauc", label = "paucal"},
+		},
 	}
 end
 
@@ -99,60 +68,30 @@ pos_functions.pronouns = do_pronouns_interjections("pronouns")
 pos_functions.interjections = do_pronouns_interjections("interjections")
 
 pos_functions["determiners"] = {
-	params = {
-		[2] = gender_param_no_default,
-		m = true,
-		f = true,
-		pl = true,
+	infls = {
+		{2, type = "genders", valid_genders = valid_genders},
+		{"m", label = "masculine"},
+		{"f", label = "feminine"},
+		{"pl", label = "plural"},
 	},
-	func = function(data, args)
-		handle_gender(data, args)
-		data:parse_and_insert_inflection("m", "feminine")
-		data:parse_and_insert_inflection("f", "feminine")
-		data:parse_and_insert_inflection("pl", "plural")
-	end
 }
 
 pos_functions["adjectives"] = {
-	params = {
-		f = true,
-		pl = true,
-		mpl = true,
-		fpl = true,
+	infls = {
+		{"f", label = "feminine"},
+		{"pl", label = "plural"},
+		{"mpl", label = "masculine plural"},
+		{"fpl", label = "feminine plural"},
 	},
-	func = function(data, _args)
-		data:parse_and_insert_inflection("f", "feminine")
-		data:parse_and_insert_inflection("pl", "plural")
-		data:parse_and_insert_inflection("mpl", "masculine plural")
-		data:parse_and_insert_inflection("fpl", "feminine plural")
-	end
-}
-
--- FIXME: Eliminate this.
-pos_functions["suffixes"] = {
-	params = {
-		[2] = gender_param_no_default,
-		f = true,
-		pl = true,
-	},
-	func = function(data, args)
-		handle_gender(data, args)
-		data:parse_and_insert_inflection("f", "feminine")
-		data:parse_and_insert_inflection("pl", "plural")
-	end
 }
 
 --- Non-lemma forms
 
 pos_functions["past participles"] = {
-	params = {
-		f = true,
-		pl = true,
+	infls = {
+		{"f", label = "feminine"},
+		{"pl", label = "plural"},
 	},
-	func = function(data, _args)
-		data:parse_and_insert_inflection("f", "feminine")
-		data:parse_and_insert_inflection("pl", "plural")
-	end
 }
 
 return export

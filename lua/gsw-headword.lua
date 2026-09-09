@@ -8,8 +8,6 @@ local force_cat = false -- for testing; if true, categories appear in non-mainsp
 local m_table = require("Module:table")
 local headword_utilities_module = "Module:headword utilities"
 
-local boolean_param = {type = "boolean"}
-
 local insert = table.insert
 
 local valid_genders = {
@@ -34,51 +32,38 @@ function export.show(frame)
 	}
 end
 
-local function handle_indeclinable(data, args)
-	if args.indecl then
-		data:insert_fixed_inflection("<<indeclinable>>")
-		data:insert_category("indeclinable PLPOS")
-	end
+local function insert_indeclinable(infls)
+	insert(infls, {"indecl", type = "boolean", fixed_label = "<<indeclinable>>", cat = "indeclinable {plpos}"})
 end
 
-local function handle_comp_sup(data)
-	local comps = data:parse_inflection("comp")
-	comps = data:resolve_special(comps, function(termdata)
-		return termdata.head .. "er"
-	end)
-	local insert_spec = data:insert_inflection(comps, "<<comparative>>")
-	local sups = data:parse_inflection("sup")
-	if not sups[1] and (insert_spec and insert_spec.exists ~= "no") then
-		sups[1] = {term = "+"}
-	end
-	sups = data:resolve_special(sups, function(termdata)
-		return termdata.head .. "scht"
-	end)
-	data:insert_inflection(sups, "<<superlative>>")
-end
-
-local function insert_comp_sup(params)
-	params.comp = true
-	params.comp2 = {replaced_by = false, instead = "use comma-separated |comp="}
-	params.sup = true
-	params.sup2 = {replaced_by = false, instead = "use comma-separated |sup="}
+local function insert_comp_sup(infls)
+	insert(infls, {
+		"comp", label = "<<comparative>>", resolve_special = function(termdata)
+			return termdata.head .. "er"
+		end,
+	})
+	insert(infls, {
+		"sup", label = "<<superlative>>", resolve_special = function(termdata)
+			return termdata.head .. "scht"
+		end,
+		default = function(data)
+			-- If a comparative other than '-' was given, include a default superlative.
+			local comp_insert_spec = data.process_props.insert_specs.comp
+			if comp_insert_spec and comp_insert_spec.exists ~= "no" then
+				return {term = "+"}
+			end
+		end,
+	})
 end
 
 local function adjectives(plpos)
-	local params = {
-		indecl = boolean_param,
-	}
+	local infls = {}
+	insert_indeclinable(infls)
 	if plpos == "adjectives" then
-		insert_comp_sup(params)
+		insert_comp_sup(infls)
 	end
 	return {
-		params = params,
-		func = function(data, args)
-			handle_indeclinable(data, args)
-			if plpos == "adjectives" then
-				handle_comp_sup(data)
-			end
-		end,
+		infls = infls,
 	}
 end
 
@@ -86,13 +71,10 @@ pos_functions["adjectives"] = adjectives("adjectives")
 pos_functions["determiners"] = adjectives("determiners")
 
 pos_functions["adverbs"] = (function()
-	local params = {}
-	insert_comp_sup(params)
+	local infls = {}
+	insert_comp_sup(infls)
 	return {
-		params = params,
-		func = function(data, _args)
-			handle_comp_sup(data)
-		end,
+		infls = infls,
 	}
 end)()
 
@@ -112,27 +94,15 @@ local lemma_for_articles = {
 }
 
 local function nouns(plpos)
-	local params = {
-		[1] = {type = "genders", default = "?"},
-		[2] = true, -- plural
-		dim = true, -- diminutive
-		m = true, -- male equivalent
-		f = true, -- female equivalent
-		indecl = boolean_param,
+	local infls = {
+		{1, type = "genders", valid_genders = valid_genders, default = "?"},
 	}
 	if plpos == "proper nouns" then
-		params.art = true
-	end
-	return {
-		params = params,
-		func = function(data, args)
-			data:validate_genders(args[1], valid_genders)
-			data.genders = args[1]
-
-			if args.art then
-				local arts = data:parse_inflection("art")
+		insert(infls,
+			{"art", doclabel = "headword article",
+			process_after_parse = function(data, vals)
 				local heads = {}
-				for _, artobj in ipairs(arts) do
+				for _, artobj in ipairs(vals) do
 					local art = artobj.term
 					local paren_art = art:match("^%((.*)%)$")
 					local with_paren = false
@@ -163,52 +133,57 @@ local function nouns(plpos)
 					end
 				end
 				data.heads = heads
-			end
-
-			handle_indeclinable(data, args)
-			if not args.indecl then
-				local pls = data:parse_inflection(2)
-				pls = data:resolve_special(pls, function(termdata)
-					local infl = termdata.infl.term
-					if infl == "#" then
-						infl = ""
-					end
-					return termdata.head .. infl
-				end, {
-					is_special = function(infl)
-						return special_noun_plurals[infl.term]
-					end,
-				})
-				data:insert_inflection(pls, "plural")
-			end
-
-			local dims = data:parse_inflection("dim", {
-				include_mods = {"g"}
-			})
-			dims = data:resolve_special(dims, function(termdata)
-				return termdata.head .. "li"
-			end)
-			for _, dimobj in ipairs(dims) do
-				if not dimobj.genders or not dimobj.genders[1] then
-					dimobj.genders = {{
-						spec = "n"
-					}}
-				else
-					data:validate_genders(dimobj.genders, valid_genders, {
-						gender_type = "diminutive"
-					})
+				-- Don't return anything. The articles don't get inserted as an inflection.
+			end,
+		})
+	end
+	insert_indeclinable(infls)
+	m_table.extend(infls, {
+		{2, label = "plural",
+			resolve_special = function(termdata)
+				local infl = termdata.infl.term
+				if infl == "#" then
+					infl = ""
 				end
-			end
-			data:insert_inflection(dims, "diminutive")
-
-			local fs = data:parse_inflection("f")
-			fs = data:resolve_special(fs, function(termdata)
+				return termdata.head .. infl
+			end,
+			is_special = function(data, infl)
+				return special_noun_plurals[infl.term]
+			end,
+			validate = function(data, pls)
+				if data.process_props.args.indecl then
+					error("Can't specify plurals when indecl=")
+				end
+			end,
+		},
+		{"dim", label = "diminutive", include_mods = {"g"},
+			resolve_special = function(termdata)
+				return termdata.head .. "li"
+			end,
+			process_after_parse = function(data, dims)
+				for _, dimobj in ipairs(dims) do
+					if not dimobj.genders or not dimobj.genders[1] then
+						dimobj.genders = {{
+							spec = "n"
+						}}
+					else
+						data:validate_genders(dimobj.genders, valid_genders, {
+							gender_type = "diminutive"
+						})
+					end
+				end
+				return dims
+			end,
+		},
+		{"f", label = "female equivalent",
+			resolve_special = function(termdata)
 				return termdata.head .. "in"
-			end)
-			data:insert_inflection(fs, "female equivalent")
-
-			data:parse_and_insert_inflection("m", "male equivalent")
-		end,
+			end,
+		},
+		{"m", label = "male equivalent"},
+	})
+	return {
+		infls = infls,
 	}
 end
 
@@ -217,28 +192,14 @@ pos_functions["proper nouns"] = nouns("proper nouns")
 pos_functions["numerals"] = nouns("numerals")
 
 pos_functions["verbs"] = {
-	params = {
-		class = true,
-		[1] = true, -- 3s present
-		[2] = true, -- past participle
-		pressub = true, -- present subjunctive
-		pastsub = true, -- past subjunctive
-		aux = true, -- auxiliary
+	infls = {
+		{"class", doclabel = "verb class", all_fixed_label = "class {vals}"},
+		{1, label = "third-person singular simple present"},
+		{2, label = "past participle"},
+		{"pressub", label = "present subjunctive"},
+		{"pastsub", label = "past subjunctive"},
+		{"aux", label = "auxiliary"},
 	},
-	func = function(data, _args)
-		-- The class(es) should not be linked.
-		local classes = data:parse_inflection("class")
-		for _, classobj in ipairs(classes) do
-			classobj.alt = classobj.term
-			classobj.term = nil
-		end
-		data:insert_inflection(classes, "class")
-		data:parse_and_insert_inflection(1, "third-person singular simple present")
-		data:parse_and_insert_inflection(2, "past participle")
-		data:parse_and_insert_inflection("pressub", "present subjunctive")
-		data:parse_and_insert_inflection("pastsub", "past subjunctive")
-		data:parse_and_insert_inflection("aux", "auxiliary")
-	end,
 }
 
 return export

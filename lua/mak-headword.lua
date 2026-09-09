@@ -38,73 +38,88 @@ function export.show(frame)
 		include_tr = true,
 		include_sc = true,
 		force_cat = force_cat,
-		augment_params = function(data)
-			data.params.lon = true
-		end,
-		augment_headdata = function(data)
-			local headdata = data.headdata
-			local sc = headdata.sc
-			if headdata.var == nil then
-				headdata.var = sc:getCode() ~= "Latn"
-			end
-			local lons = headdata:parse_inflection("lon")
-			if sc:getCode() == "Latn" then
-				local tr_bugi = require("Module:mak-Latn-Bugi-translit").tr(headdata.pagename, "mak", sc:getCode())
-				local tr_maka = require("Module:mak-Latn-Maka-translit").tr(headdata.pagename, "mak", sc:getCode())
-				if lons[1] then
-					for _, lon in ipairs(lons) do
-						if lon.term == tr_bugi or lon.term == tr_maka then
-							headdata:track("redundant-lon")
-						else
-							headdata:track("nonredundant-lon")
+		infls = {
+			{"lon", label = "Lontara spelling",
+				resolve_special = function(termdata)
+					if termdata.sc:getCode() == "Latn" then
+						local tr_bugi = require("Module:mak-Latn-Bugi-translit").tr(termdata.head, "mak", "Latn")
+						local tr_maka = require("Module:mak-Latn-Maka-translit").tr(termdata.head, "mak", "Latn")
+						local lons = {}
+						if tr_bugi then
+							insert(lons, tr_bugi)
+						end
+						if tr_maka then
+							insert(lons, tr_maka)
+						end
+						return lons
+					else
+						error(("Unable to form default Lontara spelling for non-Latin head '%s'"):format(termdata.head))
+					end
+				end,
+				default = function(data)
+					if data.sc:getCode() == "Latn" then
+						return "+"
+					end
+				end,
+				process_after_parse = function(data, vals)
+					if data.sc:getCode() == "Latn" then
+						local tr_bugi, tr_maka
+						for _, val in ipairs(vals) do
+							if val.origin ~= "default" and val.origin ~= "resolve_special" then
+								if tr_bugi == nil then
+									tr_bugi	= require("Module:mak-Latn-Bugi-translit").tr(data.pagename, "mak", "Latn") or false
+									tr_maka = require("Module:mak-Latn-Maka-translit").tr(data.pagename, "mak", "Latn") or false
+								end
+								if val.term == tr_bugi or val.term == tr_maka then
+									data:track("redundant-lon")
+								else
+									data:track("nonredundant-lon")
+								end
+							end
 						end
 					end
-				else
-					if tr_bugi then
-						insert(lons, {term = tr_bugi})
-					end
-					if tr_maka then
-						insert(lons, {term = tr_maka})
-					end
-				end
+					return vals
+				end,
+			},
+		},
+		augment_headdata = function(data)
+			if data.var == nil then
+				data.var = data.sc:getCode() ~= "Latn"
 			end
-			headdata:insert_inflection(lons, "Lontara spelling")
 		end,
 	}
 end
 
 pos_functions["verbs"] = {
-	params = {
-		st = true,
-		pass = true,
-	},
-	func = function(data, args)
-		data:parse_and_insert_inflection("st", "semi-transitive")
-		local passobjs = data:parse_inflection("pass")
-		if args.st and not passobjs[1] and data.sc:getCode() == "Latn" then
-			-- If Latin and no passive (and also only if a semi-transitive exists; why do we do this?),
-			-- add a default passive.
-			passobjs[1] = {term = "+"}
-		end
-		passobjs = data:resolve_special(passobjs, function(termdata)
-			return "ni" .. termdata.head
-		end)
-		data:insert_inflection(passobjs, "passive")
-	end
+	infls = {
+		{"st", label = "semi-transitive"},
+		{"pass", label = "passive",
+			default = function(data)
+				-- If Latin and no passive (and also only if a semi-transitive exists; why do we do this?),
+				-- add a default passive.
+				if data.sc:getCode() == "Latn" then
+					local st_insert_spec = data.process_props.insert_specs.st
+					if st_insert_spec and st_insert_spec ~= "no" then
+						return "+"
+					end
+				end
+			end,
+			resolve_special = function(termdata)
+				return "ni" .. termdata.head
+			end,
+		}
+	}
 }
 
 pos_functions["nouns"] = {
-	params = {
-		def = true,
-		poss = true,
-	},
-	func = function(data, _args)
-		if data.sc:getCode() == "Latn" then
-			local defobjs = data:parse_inflection("def")
-			if not defobjs[1] then
-				defobjs = {{term = "+"}}
-			end
-			defobjs = data:resolve_special(defobjs, function(termdata)
+	infls = {
+		{"def", label = "definite",
+			default = function(data)
+				if data.sc:getCode() == "Latn" then
+					return "+"
+				end
+			end,
+			resolve_special = function(termdata)
 				local head = remove_accents(termdata.head)
 				local last_char = usub(head, -1)
 				local def_form
@@ -118,14 +133,15 @@ pos_functions["nouns"] = {
 					def_form = head .. "a"
 				end
 				return def_form
-			end)
-			data:insert_inflection(defobjs, "definite")
-
-			local possobjs = data:parse_inflection("poss")
-			if not possobjs[1] then
-				possobjs = {{term = "+def"}}
-			end
-			possobjs = data:resolve_special(possobjs, function(termdata)
+			end,
+		},
+		{"pass", label = "3rd person possessive",
+			default = function(data)
+				if data.sc:getCode() == "Latn" then
+					return "+"
+				end
+			end,
+			resolve_special = function(termdata)
 				local head = remove_accents(termdata.head)
 				local last_char = usub(head, -1)
 				local infl = termdata.infl.term
@@ -134,7 +150,7 @@ pos_functions["nouns"] = {
 				elseif infl == "+na" then
 					return head .. "na"
 				elseif last_char:find("[aeiou]") then
-					if infl == "+" then
+					if infl == "+" and termdata.infl.origin ~= "default" then
 						error(("Head %s ends in a vowel; no default available, specify either `+na`, `+nna` or `+nna,+na` for both"):format(termdata.head))
 					else
 						return nil
@@ -144,28 +160,20 @@ pos_functions["nouns"] = {
 				else
 					return head .. "na"
 				end
-			end, {
-				is_special = function(inflobj)
-					local term = inflobj.term
-					return term == "+nna" or term == "+na" or term == "+" or term == "+def"
-				end,
-			})
-			data:insert_inflection(possobjs, "3rd person possessive")
-		else
-			data:parse_and_insert_inflection("def", "definite")
-			data:parse_and_insert_inflection("poss", "3rd person possessive")
-		end
-	end
+			end,
+			is_special = function(data, infl)
+				local term = infl.term
+				return term == "+" or term == "+nna" or term == "+na"
+			end,
+		},
+	}
 }
 
 pos_functions["adjectives"] = {
-	params = {
-		ma = true,
-	},
-	func = function(data, _args)
+	infls = {
 		-- Manual input for stative/adjectival prefix ma- (e.g., |ma=mabajiʼ or simply |mabajiʼ as 1st parameter)
-		data:parse_and_insert_inflection("ma", "stative")
-	end
+		{"ma", label = "stative"},
+	},
 }
 
 return export
