@@ -27,6 +27,7 @@ function export.show(frame)
 		force_cat = force_cat,
 		augment_params = function(data)
 			data.params.sun = true
+			data.params.peg = true
 		end,
 		augment_headdata = function(data)
 			local headdata = data.headdata
@@ -38,7 +39,7 @@ function export.show(frame)
 			if sc:getCode() == "Latn" then
 				local tr_sund = require("Module:su-Latn-Sund-translit").tr(headdata.pagename)
 				if suns[1] then
-					for _, sun in ipairs(suns[1]) do
+					for _, sun in ipairs(suns) do
 						if sun.term == tr_sund then
 							headdata:track("redundant-sun")
 						else
@@ -50,6 +51,7 @@ function export.show(frame)
 				end
 			end
 			headdata:insert_inflection(suns, "Sundanese spelling")
+			headdata:parse_and_insert_inflection("peg", "Pegon spelling")
 		end,
 	}
 end
@@ -123,9 +125,11 @@ pos_functions["verbs"] = {
 pos_functions["nouns"] = {
 	params = {
 		def = true,
+		pl = true,
 	},
 	func = function(data, _args)
 		data:parse_and_insert_inflection("def", "definite")
+		data:parse_and_insert_inflection("pl", "plural")
 	end
 }
 
