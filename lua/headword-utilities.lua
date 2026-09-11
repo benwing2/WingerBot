@@ -381,6 +381,12 @@ Insert previously-parsed terms into an `inflections` field. The `inflections` fi
    {"no "} plus the label.
 * `usually_no_label`: If the term is {"-"} and there are other terms, insert a fixed label with this value. Defaults to
    {"usually no "} plus the label.
+* `cats`: List of categories to insert when terms are given that are not {"-"}. Each category is a string naming a full
+   category to insert (including the appropriate language name prefixed).
+* `no_cats`: List of categories to insert when a term is given as {"-"}.
+* `usually_no_cats`: List of categories to insert when a term is given as {"-"} and additional terms are specified as
+   well (representing, e.g. for the inflection {"plural"}, a term which usually has no plural but does under some
+   circumstances). If omitted, both the categories in `cats` and `no_cats` are inserted.
 * `accel`: If specified, a full accelerator object to add to the inflections.
 * `request`: If specified and no terms are given, insert a label with a request for inflections to be given.
 * `enable_auto_translit`: If specified and terms are given, display automatic transliteration of the terms.
@@ -1415,17 +1421,19 @@ local inflection_to_cats = {
 }
 
 --[=[
-Validate the items in `items` against either the list of valid items in `valid_list` or the set of items in `valid_set`.
-If `field` is given, fetch the item to check from that-named field of each object in `items`; otherwise use the items in
-`items` directly. If an error occurs, `item_type` specifies the type of item to mention in the error message, which will
-also list the allowed items (either taken directly from `valid_list` or from the sorted keys of `valid_set`).
+Validate the items in `items` against the list or set of valid items in `valid_items`. If `field` is given, fetch the
+item to check from that-named field of each object in `items`; otherwise use the items in `items` directly. If an error
+occurs, `item_type` specifies the type of item to mention in the error message, which will also list the allowed items
+(either taken directly from `valid_items` if a list, or from the sorted keys if a set).
 ]=]
 local function validate_items(data)
-	local items, field, valid_list, valid_set, item_type =
-		data.items, data.field, data.valid_list, data.valid_set, data.item_type
-
-	if not valid_set then
-		valid_set = list_to_set(valid_list)
+	local items, field, valid_items, item_type =
+		data.items, data.field, data.valid_items, data.item_type
+	local valid_set
+	if valid_items[1] then
+		valid_set = list_to_set(valid_items)
+	else
+		valid_set = valid_items
 	end
 
 	for _, item in ipairs(items) do
@@ -1433,9 +1441,12 @@ local function validate_items(data)
 			item = item[field]
 		end
 		if not valid_set[item] then
-			if not valid_list then
-				local valid_list = {}
-				for valid_item, _ in pairs(valid_set) do
+			local valid_list
+			if valid_items[1] then
+				valid_list = valid_items
+			else
+				valid_list = {}
+				for valid_item, _ in pairs(valid_items) do
 					insert(valid_list, valid_item)
 				end
 				table.sort(valid_list)
@@ -1451,17 +1462,29 @@ function Headdata:get_canonicalized_plpos()
 	return (self.pos_category:gsub("proper noun", "noun"))
 end
 
+--[==[
+Canonicalize a category. The category string will have the full language name (i.e. the name of the L2 language under
+which an entry is inserted, which may a parent language if the language in question is an etymology-only language)
+prepended to it, and any occurrences of `{plpos}` in the string replaced with the actual plural part of speech (with
+some canonicalization; specifically, `proper nouns` is converted to `nouns` when replacing `{plpos}`). To specify a
+full category and not have the language name prepended to it, precede it with {"Category:"}, which will be removed.
+]==]
 function Headdata:canonicalize_category(category)
-	if type(category) ~= "string" then
-		return category
-	end
 	if category:find("{plpos}") then
 		local plpos = self:get_canonicalized_plpos()
 		category = category:gsub("{plpos}", plpos)
 	end
-	return self.langfullname .. " " .. category
+	if category:find("^Category:") then
+		return (category:gsub("^Category:", ""))
+	else
+		return self.langfullname .. " " .. category
+	end
 end
 
+--[==[
+Canonicalize a list of categories according to the process described in `Headdata:canonicalize_category`. This simply
+loops over each category in `categories` and calls `Headdata:canonicalize_category` on each one.
+]==]
 function Headdata:canonicalize_categories(categories)
 	if not categories then
 		return categories
@@ -1475,16 +1498,10 @@ end
 
 --[==[
 Insert a category into the `categories` list in the headword `data` structure. `category` is normally a string naming
-the category, which will have the language prepended to it and any occurrences of `{plpos}` in the string replaced with
-the actual plural part of speech (with some canonicalization; specifically, `proper nouns` is converted to `nouns` when
-replacing `{plpos}`). Alternatively, `category` can be a table of the form accepted by `format_categories()` in
-[[Module:utilities]]. This can be used, for example, to specify a sort key or sort base or to insert a category that
-does not have the language prepended to it. The structure has the following fields:
-* `cat` (the full category name, not further processed);
-* `lang` (an optional language, overriding the overall headword language);
-* `sort_key` (optional sort key);
-* `sort_base` (optional sort base);
-* `sc` (optional overriding script).
+the category, which will have the full language name prepended to it and any occurrences of `{plpos}` in the string
+replaced with the actual plural part of speech (with some canonicalization; specifically, `proper nouns` is converted to
+`nouns` when replacing `{plpos}`). To specify a full category and not have the language name prepended to it, precede it
+with {"Category:"}.
 ]==]
 function Headdata:insert_category(category)
 	insert(self.categories, self:canonicalize_category(category))
@@ -1525,7 +1542,7 @@ function Headdata:validate_genders(genders, valid_genders, props)
 	validate_items {
 		items = genders,
 		field = "spec",
-		valid_set = augmented_gender_set,
+		valid_items = augmented_gender_set,
 		item_type = ("%s gender"):format(gender_type),
 	}
 end
@@ -1559,7 +1576,7 @@ function Headdata:parse_inflection(field, props)
 	props = props and shallow_copy(props) or {}
 	local include_mods = props.include_mods
 	local data = self.process_props.data
-	if not props.no_augment_include_mods and (data.include_tr or data.include_sc) then
+	if not props.no_augment_include_mods and (data.include_tr or data.include_ts or data.include_sc) then
 		include_mods = include_mods and shallow_copy(include_mods) or {}
 		if data.include_tr then
 			insert_if_not(include_mods, "tr")
@@ -1654,21 +1671,23 @@ function Headdata:parse_and_insert_inflection(field, label, props)
 	return self:insert_inflection(terms, label, props)
 end
 
--- Generate an inflection that may be specified explicitly or defaulted (which involves looping over the specified or
--- defaulted heads and determining the script of each one, since the formation of the default depends on the script).
--- `data` is the data object passed into the POS handler. `terms` is the list of terms to process. Those where the term
--- itself is not `+` will be returned unchanged, while those where the term is `+` will be handled by generating the
--- appropriate inflections from the headwords using `make_inflection` (which is passed three arguments, `head`, `tr` and
--- `sccode`, i.e. the script code of `head`) and should return two values, term and translit, either of which can be
--- nil. A nil head will be ignored, and otherwise the qualifiers/labels/etc. specified on the `+` term will be combined
--- with the qualifiers/labels/etc. specified on the head. The return value is a list of inflections where no requests
--- for the default inflection remain.
+--[==[
+Generate an inflection that may be specified explicitly or defaulted (which involves looping over the specified or
+defaulted heads and determining the script of each one, since the formation of the default depends on the script).
+`data` is the data object passed into the POS handler. `terms` is the list of terms to process. Those where the term
+itself is not `+` will be returned unchanged, while those where the term is `+` will be handled by generating the
+appropriate inflections from the headwords using `make_inflection` (which is passed three arguments, `head`, `tr` and
+`sccode`, i.e. the script code of `head`) and should return two values, term and translit, either of which can be
+nil. A nil head will be ignored, and otherwise the qualifiers/labels/etc. specified on the `+` term will be combined
+with the qualifiers/labels/etc. specified on the head. The return value is a list of inflections where no requests
+for the default inflection remain.
+]==]
 function Headdata:resolve_special(terms, handle_special, props)
 	props = props or {}
 	local infls = {}
-	local is_special = props.is_special or function(infl) return infl.term == "+" end
+	local is_special = props.is_special or function(data, infl) return infl.term == "+" end
 	for _, termobj in ipairs(terms) do
-		if not is_special(termobj) then
+		if not is_special(self, termobj) then
 			insert(infls, termobj)
 		else
 			for _, headobj in ipairs(self.heads) do
@@ -1953,6 +1972,7 @@ function export.process_headword(data)
 			pos_param = pos_param,
 			head_param = head_param,
 			is_suffix = false,
+			insert_specs = {},
 		},
 		pos_category = poscat,
 		orig_poscat = poscat, -- preserve user-specified poscat in case pos_category is changed to 'suffixes'
@@ -1999,20 +2019,37 @@ function export.process_headword(data)
 		params[pos_param] = {required = true} -- required but ignored as already processed above
 	end
 
+	local function resolve_prop(prop, ...)
+		if type(prop) == "function" then
+			prop = prop(headdata, ...)
+		end
+		return prop
+	end
+
 	local function augment_params_from_infls(infls)
+		infls = resolve_prop(infls)
 		for _, infl in ipairs(infls) do
+			local function interr(txt)
+				error(("Internal error: %s (coming from infls spec %s)"):format(txt, dump(infl)))
+			end
 			local param = infl[1]
 			if param then
-				if type(param) == "function" then
-					param = param(headdata)
-				end
+				param = resolve_prop(param)
 				if type(param) ~= "string" and type(param) ~= "number" then
-					error(("Internal error: Parameter name %s must be a string or number (coming from infls spec %s)"):format(
-						dump(param), dump(infl)))
+					interr(("Parameter name %s must be a string or number"):format(dump(param)))
 				end
 				-- We handle defaults as well as validation ourselves.
-				params[param] = {type = infl.type, required = infl.required, allow = infl.allow,
-					template_default = infl.template_default}
+				local typ = resolve_prop(infl.type) or "string"
+				if typ ~= "genders" and typ ~= "boolean" and typ ~= "string" then
+					-- FIXME: Handle more types.
+					interr(('Unrecognized type %s; can only currently handle "genders", "boolean" and "string" (the default)'):format(
+						dump(typ)))
+				end
+
+				params[param] = {type = typ, required = resolve_prop(infl.required), template_default = resolve_prop(infl.template_default)}
+				if typ ~= "boolean" and type(param) == "string" then
+					params[param .. "2"] = {replaced_by = false, instead = ("use comma-separated |%s="):format(param)}
+				end
 			end
 		end
 	end
@@ -2205,49 +2242,70 @@ function export.process_headword(data)
 		end
 	end
 
-	local function resolve_prop(prop, ...)
-		if type(prop) == "function" then
-			prop = prop(headdata, ...)
-		end
-		return prop
-	end
-
 	local function augment_headdata_from_infls(infls)
+		infls = resolve_prop(infls)
 		for _, infl in ipairs(infls) do
 			local function interr(txt)
 				error(("Internal error: %s (coming from infls spec %s)"):format(txt, dump(infl)))
 			end
+			local function process_labelobjs(labelobjs, originating_term, handle_labelobj)
+				if labelobjs == nil then
+					return
+				end
+				if type(labelobjs) ~= "string" and type(labelobjs) ~= "table" then
+					interr(("Wrong type '%s' for label object(s) %s, expected string or table"):format(
+						type(labelobjs), dump(labelobjs)
+					))
+				end
+				if type(labelobjs) == "string" or type(labelobjs) == "table" and not labelobjs[1] then
+					labelobjs = {labelobjs}
+				end
+				for _, labelobj in ipairs(labelobjs) do
+					local label, termobj
+					if type(labelobj) == "string" then
+						label = labelobj
+						termobj = originating_term
+					elseif type(labelobj) ~= "table" then
+						interr(("Wrong type '%s' for label object %s, expected string or table"):format(
+							type(labelobj), dump(labelobj)
+						))
+						label = labelobj.term
+						if type(label) ~= "string" then
+							interr(("Wrong type '%s' for label %s from label object %s, expected string"):format(
+								type(label), dump(label), dump(labelobj)
+							))
+						end
+						termobj = labelobj
+					end
+					handle_labelobj(label, termobj)
+				end
+			end
+
 			local param = infl[1]
-			local vals
 			if param then
+				local vals
+
+				-- Fetch the param and make sure it's a string or number.
 				param = resolve_prop(param)
 				if type(param) ~= "string" and type(param) ~= "number" then
 					interr(("Parameter name %s must be a string or number"):format(dump(param)))
 				end
-				if infl.type == "genders" then
-					local genders = params[param]
-					if not genders and infl.default ~= nil then
-						genders = export.canonicalize_termobj_list(resolve_prop(infl.default), "spec", "default")
-					end
-					if genders then
-						if infl.validate then
-							if type(infl.validate) == "function" then
-								infl.validate(headdata, genders)
-							else
-								headdata:validate_genders(genders, infl.validate)
-							end
-						end
-						headdata.genders = genders
-					end
-				elseif infl.type == "boolean" then
-					local bool = params[param]
-					if bool == nil and infl.default ~= nil then
-						bool = resolve_prop(infl.default)
-					end
-					if bool ~= nil then
-						...
-					end
-				else
+
+				-- Fetch the type and validate.
+				local typ = resolve_prop(infl.type)
+				if typ == nil then
+					typ = "string"
+				end
+				if typ ~= "genders" and typ ~= "boolean" and typ ~= "string" then
+					-- FIXME: Handle more types.
+					interr(('Unrecognized type %s; can only currently handle "genders", "boolean" and "string" (the default)'):format(
+						dump(typ)))
+				end
+
+				-- Fetch the value(s).
+				if typ == "genders" or typ == "boolean" then
+					vals = args[param]
+				elseif typ == "string" then
 					local parse_inflection_props = resolve_prop(infl.parse_inflection_props)
 					local include_mods = resolve_prop(infl.include_mods)
 					local no_augment_include_mods = resolve_prop(infl.no_augment_include_mods)
@@ -2264,45 +2322,160 @@ function export.process_headword(data)
 							parse_inflection_props.no_augment_include_mods = no_augment_include_mods
 						end
 					end
-					vals = data:parse_inflection(param, parse_inflection_props)
-					if vals == nil then
-						vals = export.canonicalize_termobj_list(resolve_prop(infl.default), "term", "default")
+					vals = headdata:parse_inflection(param, parse_inflection_props)
+					-- Convert an empty list to nil for consistent checking below.
+					if not vals[1] then
+						vals = nil
 					end
-					if vals ~= nil and infl.resolve_special then
-						local resolve_special_props = resolve_prop(infl.resolve_special_props, vals)
-						if infl.is_special ~= nil then
-							if resolve_special_props == nil then
-								resolve_special_props = {}
-							else
-								resolve_special_props = shallow_copy(resolve_special_props)
-							end
-							resolve_special_props.is_special = infl.is_special
-						end
-						vals = data:resolve_special(vals, infl.resolve_special, resolve_special_props)
+				else
+					interr(("Unrecognized type '%s"):format(typ))
+				end
+
+				-- If value(s) nil, fetch the default.
+				if vals == nil and infl.default ~= nil then
+					local default = resolve_prop(infl.default)
+					if typ == "genders" then
+						vals = export.canonicalize_termobj_list(default, "spec", "default")
+					elseif typ == "boolean" then
+						vals = default
+					elseif typ == "string" then
+						vals = export.canonicalize_termobj_list(default, "term", "default")
+					else
+						interr(("Unrecognized type '%s"):format(typ))
 					end
-					if vals ~= nil and infl.validate then
-						if type(infl.validate) == "function" then
-							infl.validate(headdata, vals)
+				end
+
+				-- Resolve "special" values (special signals a string values, such as requesting the default with "+").
+				if vals ~= nil and infl.resolve_special then
+					if typ ~= "string" then
+						interr(("Cannot specify resolve_special= for type %s"):format(dump(typ)))
+					end
+					local resolve_special_props = resolve_prop(infl.resolve_special_props, vals)
+					if infl.is_special ~= nil then
+						if resolve_special_props == nil then
+							resolve_special_props = {}
 						else
-							validate_items {
-								items = vals,
-								field = "term",
-								valid_list = infl.validate,
-								item_type = ("values in |%s="):format(param),
-							}
+							resolve_special_props = shallow_copy(resolve_special_props)
 						end
+						resolve_special_props.is_special = infl.is_special
 					end
-					if vals ~= nil and infl.process_after_parse then
-						vals = infl.process_after_parse(data, vals)
+					vals = headdata:resolve_special(vals, infl.resolve_special, resolve_special_props)
+				end
+
+				-- Validate the value(s).
+				if vals ~= nil and infl.validate ~= nil then
+					if typ == "boolean" then
+						interr('Cannot specify validate= when type is "boolean"')
+					elseif type(infl.validate) == "function" then
+						infl.validate(headdata, vals)
+					elseif typ == "genders" then
+						headdata:validate_genders(vals, infl.validate)
+					elseif typ == "string" then
+						validate_items {
+							items = vals,
+							field = "term",
+							valid_items = infl.validate,
+							item_type = ("values in |%s="):format(param),
+						}
+					else
+						interr(("Unrecognized type '%s"):format(typ))
 					end
-					if vals ~= nil then
-						if not infl.label and not infl.fixed_label and not infl.all_fixed_label then
-							local vals_pl = type(vals) == "table" and vals[2] and "s" or ""
-							interr(("Parameter %s generated value%s %s but there is no label to attach the value%s to, and no fixed label"):format(
-								dump(param), vals_pl, dump(vals), vals_pl))
+				end
+
+				-- Run the process_after_parse handler, if it exists.
+				if vals ~= nil and infl.process_after_parse ~= nil then
+					local intentionally_nil
+					vals, intentionally_nil = infl.process_after_parse(headdata, vals)
+					if vals == nil and not intentionally_nil then
+						interr("If you return nil from process_after_parse, you must return a second non-nil return " ..
+							"value to indicate that the nil return value was intentional")
+					end
+				end
+
+				-- "Implement" the values, if non-falsy (i.e. we don't want to fire on boolean false or empty list).
+				-- If a fixed label is specified, insert it. Then, depending on the type, attach the values to a label
+				-- as an inflection, set the `genders` field, or do nothing if boolean (throwing an error if there was
+				-- no fixed label).
+				if vals == true or type(vals) == "table" and vals[1] then
+					if infl.fixed_label and infl.all_fixed_label then
+						interr("Cannot specify both fixed_label= and all_fixed_label=; specify one or the other")
+					end
+					local function check_fixed_label_references_val(label)
+						if type(label) == "table" and label[1] then
+							for _, lab in ipairs(label) do
+								if check_fixed_label_references_val(lab) then
+									return true
+								end
+							end
+							return false
 						end
-						if infl.label then
-							local label = resolve_prop(infl.label, vals)
+						if type(label) == "table" then
+							if not label.term then
+								interr(("Fixed label structure %s does not have a value for `.term`"):format(dump(label)))
+							end
+							label = label.term
+						end
+						if type(label) ~= "string" then
+							interr(("Wrong type for fixed label %s, should be string"):format(type(label)))
+						end
+						return not not label:find("{val}")
+					end
+					local fixed_label = infl.fixed_label
+					local all_fixed_label = infl.all_fixed_label
+					-- If the value being processed is boolean, there's only one value so treat a fixed_label as an
+					-- all_fixed_label and output only once; likewise if the caller specified a fixed_label without
+					-- {val} in it.
+					if fixed_label and (typ == "boolean" or type(fixed_label) ~= "function" and not
+						check_fixed_label_references_val(fixed_label)) then
+						all_fixed_label = fixed_label
+						fixed_label = nil
+					end
+					local inserted_fixed_label
+					if fixed_label then
+						if typ == "boolean" then
+							interr("Boolean fixed_label values should have been converted to all_fixed_label")
+						end
+						for _, valobj in ipairs(vals) do
+							local labelobjs = resolve_prop(fixed_label, valobj)
+							process_labelobjs(labelobjs, valobj, function(label, termobj)
+								if label:find("{val}") then
+									if typ ~= "string" then
+										interr(('Cannot specify {val} in fixed_label %s when type is "%s"'):format(dump(label), typ))
+									end
+									label = label:gsub("{val}", replacement_escape(valobj.term))
+								end
+								headdata:insert_fixed_inflection(label, {
+									originating_term = termobj
+								})
+								inserted_fixed_label = true
+							end)
+						end
+					elseif all_fixed_label then
+						local labelobjs = resolve_prop(all_fixed_label, vals)
+						process_labelobjs(labelobjs, nil, function(label, termobj)
+							if label:find("{vals}") then
+								if typ ~= "string" then
+									interr(('Cannot specify {vals} in all_fixed_label %s when type is "%s"'):format(dump(label), typ))
+								end
+								local formatted_labels = {}
+								for _, valobj in ipairs(vals) do
+									insert(formatted_labels, add_qualifiers_and_refs(valobj.term, valobj, lang))
+								end
+								label = label:gsub("{vals}", replacement_escape(serial_comma_join(formatted_labels)))
+							end
+							headdata:insert_fixed_inflection(label, termobj)
+							inserted_fixed_label = true
+						end)
+					end
+					local inserted_vals
+					if infl.label ~= nil then
+						if typ ~= "string" then
+							interr(("label=%s can only be specified for type 'string', not '%s'"):format(
+								dump(infl.label), typ
+							))
+						end
+						local label = resolve_prop(infl.label, vals)
+						if label ~= nil then
 							local insert_inflection_props = resolve_prop(infl.insert_inflection_props, vals)
 							local no_auto_cats = resolve_prop(infl.no_auto_cats, vals)
 							if no_auto_cats ~= nil then
@@ -2313,50 +2486,79 @@ function export.process_headword(data)
 								end
 								insert_inflection_props.no_auto_cats = infl.no_auto_cats
 							end
-							data:insert_inflection(vals, label, insert_inflection_props)
-						else
-							local function process_labelobjs(labelobjs, originating_term, handle_labelobj)
-								if type(labelobjs) == "string" or type(labelobjs) == "table" and not labelobjs[1] then
-									labelobjs = {labelobjs}
-								end
-								for _, labelobj in ipairs(labelobjs) do
-									local label, termobj
-									if type(labelobj) == "string" then
-										label = labelobj
-										termobj = originating_term
-									else
-										label = labelobj.term
-										termobj = labelobj
+							local insert_spec = headdata:insert_inflection(vals, label, insert_inflection_props)
+							headdata.process_props.insert_specs[param] = insert_spec
+							inserted_vals = true
+						end
+					end
+					if typ == "genders" then
+						headdata.genders = vals
+					end
+
+					local inserted_cat
+					if infl.cat then
+						local allcats = {}
+						for _, valobj in ipairs(vals) do
+							local cats = resolve_prop(infl.cat, valobj)
+							if type(cats) == "string" then
+								cats = {cats}
+							end
+							if cats ~= nil then
+								for _, cat in ipairs(cats) do
+									if cat:find("{val}") then
+										cat = cat:gsub("{val}", replacement_escape(valobj.term))
 									end
-									handle_labelobj(label, termobj)
+									insert_if_not(allcats, cat)
 								end
 							end
-							
-							if infl.fixed_label then
-								for _, valobj in ipairs(vals) do
-									local labelobjs = resolve_prop(infl.fixed_label, val)
-									process_labelobjs(labelobjs, valobj, function(label, termobj)
-										label = label:gsub("{val}", replacement_escape(valobj.term))
-										data:insert_fixed_inflection(label, {
-											originating_term = termobj
-										})
-									end)
-								end
-							elseif infl.all_fixed_label then
-								local labelobjs = resolve_prop(infl.all_fixed_label, vals)
-								process_labelobjs(labelobjs, nil, function(label, termobj)
-									if label:find("{vals}") then
-										local formatted_labels = {}
-										for _, valobj in ipairs(vals) do
-											insert(formatted_labels, add_qualifiers_and_refs(valobj.term, valobj, lang))
-										end
-										label = label:gsub("{vals}", replacement_escape(serial_comma_join(formatted_labels)))
-									end
-									data:insert_fixed_inflection(label, termobj)
-								end)
-							else
-								interr("Should not get here")
+						end
+						for _, cat in ipairs(allcats) do
+							headdata:insert_category(cat)
+							inserted_cat = true
+						end
+					end
+
+					if typ == "boolean" then
+						if not inserted_fixed_label and not inserted_cat then
+							interr(("User set boolean setting for %s= but no fixed label added and no category " ..
+								"inserted; if you took action in process_after_parse(), make sure to return " ..
+								"`nil, true`"):format(param))
+						end
+					elseif typ == "string" then
+						if not inserted_vals and not inserted_fixed_label then
+							interr(("User set value(s) %s for %s= but no inflection inserted and no fixed label " ..
+								"added; if you took action in process_after_parse(), make sure to return " ..
+								"`nil, true`"):format(dump(vals), param))
+						end
+					end
+				end
+			else -- no param specified
+				if infl.label or infl.all_fixed_label then
+					interr("Cannot have label= or all_fixed_label= without specifying a param")
+				end
+				if infl.fixed_label then
+					local labelobjs = resolve_prop(infl.fixed_label)
+					process_labelobjs(labelobjs, nil, function(label, termobj)
+						if label:find("{val}") then
+							interr("Cannot specify {val} in a fixed_label= value without specifying a param")
+						end
+						headdata:insert_fixed_inflection(label, {
+							originating_term = termobj
+						})
+					end)
+				end
+
+				if infl.cat then
+					local cats = resolve_prop(infl.cat)
+					if type(cats) == "string" then
+						cats = {cats}
+					end
+					if cats ~= nil then
+						for _, cat in ipairs(cats) do
+							if cat:find("{val}") then
+								interr("Cannot specify {val} in a cat= value without specifying a param")
 							end
+							headdata:insert_category(cat)
 						end
 					end
 				end
@@ -2364,11 +2566,19 @@ function export.process_headword(data)
 		end
 	end
 
+	if infls then
+		augment_headdata_from_infls(infls)
+	end
+
 	if augment_headdata then
 		augment_headdata(headdata, args)
 	end
 
 	if pos_functions[indexing_poscat] then
+		local pos_infls = pos_functions[indexing_poscat].infls
+		if pos_infls then
+			augment_headdata_from_infls(pos_infls)
+		end
 		local func = pos_functions[indexing_poscat].func
 		if func then
 			func(headdata, args)
