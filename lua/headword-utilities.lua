@@ -359,6 +359,7 @@ function export.insert_fixed_inflection(data)
 			error(("It doesn't make sense to pass in an ID '%s' for label '%s' in conjunction with a term value '%s'"
 				):format(origterm.id, label, origterm.term))
 		end
+		origterm = shallow_copy(origterm)
 		-- Preserve qualifiers, labels, references
 		origterm.term = nil
 		origterm.label = export.replace_glossary_links_in_label(label)
@@ -438,6 +439,7 @@ function export.insert_inflection(data)
 	end
 
 	if terms and terms[1] then
+		terms = shallow_copy(terms)
 		if terms[1].term == "-" then
 			if terms[2] then
 				export.insert_fixed_inflection {
@@ -1685,7 +1687,7 @@ for the default inflection remain.
 function Headdata:resolve_special(terms, handle_special, props)
 	props = props or {}
 	local infls = {}
-	local is_special = props.is_special or function(data, infl) return infl.term == "+" end
+	local is_special = props.is_special or function(_data, infl) return infl.term == "+" end
 	for _, termobj in ipairs(terms) do
 		if not is_special(self, termobj) then
 			insert(infls, termobj)
@@ -1749,7 +1751,7 @@ and provides a general implementation of such modules. On input, `data` is an ob
   all parts of speech in the module, including a generic POS-handling template (e.g. {{tl|uz-head}} or {{tl|mn-head}}),
   which allows arbitrary parts of speech to be handled. '''Required.'''
 * `pos_functions`: A table listing, for each part of speech requiring special handling, the extra parameters (if any)
-  that the part of speech accepts, and a function to handle those parameters. See examples below. '''Required.'''
+  that the part of speech accepts, along with how to handle them. See the examples below. '''Required.'''
 * `validate_lang`: If {lang = true} is specified, this is a function of one argument (a language object, based on the
   language specified in {{para|1}}) that should throw an error if the language object is disallowed. If omitted, all
   languages are allowed.
@@ -1770,20 +1772,27 @@ and provides a general implementation of such modules. On input, `data` is an ob
 * `include_sc`: If true, allow an explicit script code to be specified. The overall script code for the headword(s)
   themselves can be specified using {{para|sc}}, and per-headword or per-inflection script codes are specified using the
   {{cd|<sc:...>}} inline modifier. This should generally be given when a language supports multiple scripts.
-* `augment_params`: A callback function to add extra generic parameters that apply to all parts of speech. This should
-  not be used to add part-of-speech-specific parameters; those are handled through the appropriate setting in
-  `pos_functions`. See below for the format of the argument passed in. This function is called after initializing the
-  `params` table and just before adding part-of-speech-specific parameters (from `pos_functions`) to this table. Thus,
-  it can override any generic parameters but may itself be overridden by a part-of-speech-specific parameter.
+* `infls`: An inflections structure specifying extra generic parameters that apply to all parts of speech and how to
+  handle them. The format is the same as for the `infls` structure in `pos_functions`.
+* `augment_params`: A callback function to add extra generic parameters, or modify existing generic parameters in the
+  `params` structure; but in general, extra generic parameters should be added through the `infls` structure instead.
+  This callback should not be used to add part-of-speech-specific parameters; those are handled through the appropriate
+  setting in `pos_functions`. It is passed two single arguments, the `headdata` object and the `params` table to be
+  augmented. See below for extra fields stored in the `process_props` structure of the `headdata` object. This function
+  is called after initializing the `params` table and processing the overall `infls` structure, but just before adding
+  part-of-speech-specific parameters (from `pos_functions`) to `params`. Thus, it can override any generic parameters
+  but may itself be overridden by a part-of-speech-specific parameter.
 * `augment_headdata`: A callback function to modify the `headdata` object passed to `full_headword()` in
   [[Module:headword]]. This should not be used to for part-of-speech-specific parameter handling; this is handled
-  through the appropriate setting in `pos_functions`. See below for the format of the argument passed in. This can be
-  used, for example, to override the value of a generic setting in `headdata` (e.g. [[Module:uz-headword]] uses this to
-  mark non-Latin terms as variant forms by setting `headdata.var`, being careful not to override a value already set by
-  the user) or to handle extra generic parameters added through the `augment_params` callback. This function is called
-  after initializing the `headdata` table with all information taken from generic parameters, and just before calling
-  the appropriate part-of-speech-specific handler function in `pos_functions`. Thus, it can override any value set
-  during generic parameter processing but may itself be overridden by a part-of-speech-specific handler.
+  through the appropriate setting in `pos_functions`. It is passed a single argument, the `headdata` object, as for
+  `augment_params`; but the `process_props` structure and other fields will be more filled out, as this callback is
+  called later. This can be used, for example, to override the value of a generic setting in `headdata` (e.g.
+  [[Module:uz-headword]] uses this to mark non-Latin terms as variant forms by setting `headdata.var`, being careful not
+  to override a value already set by the user). This function is called after initializing the `headdata` table with all
+  information taken from generic parameters and processing generic parameters specified in the overall `infls`
+  structure, and just before processing the appropriate part-of-speech-specific `infls` structure in `pos_functions`
+  (which in turn is followed by any handler function in `pos_functions`). Thus, it can override any value set during
+  generic parameter processing but may itself be overridden by a part-of-speech-specific parameter or handler.
 * `force_cat`: If true, add the headword to the appropriate categories even on non-mainspace pages. This can be used for
   testing category handling in sample template calls on userspace test pages or template documentation pages. It should
   not be set in production code.
@@ -1792,30 +1801,35 @@ and provides a general implementation of such modules. On input, `data` is an ob
   script and automatic transliteration is available for the language. You can also set this value for particular
   inflections in the `insert_inflection()` function.
 
-The `augment_params` callback is passed a single argument, a table with the following fields:
-* `params`: The parameters object itself, of the format accepted by `process()` in [[Module:parameters]]. This object
-  should be side-effected as necessary.
-* `poscat`: The canonicalized part of speech of the headword being processed. This comes either from the invocation
-  parameter {{para|1}} to `process_headword` (for specific part-of-speech templates such as {{tl|uz-noun}}) or from the
-  template parameter {{para|1}} passed to a generic part-of-speech template such as {{tl|uz-head}}. It is always
-  canonicalized to full form and pluralized (e.g. `pcl` will be converted to `particles`).
+The `headdata` headword data structure has an extra field in it called `process_props` that is specific to the
+`process_headword()` function, containing various extra properies. As the operation of `process_headword()` proceeds,
+this object gets filled out with more fields. For example, once parameter parsing happens, the resulting values are
+available in the `args` field of `process_props`. The following fields are found in `process_props` (note that `poscat`,
+the canonicalized plural part of speech of the headword being processed, is *not* present here; it's directly on
+`headdata`):
+* `namespace`: The name of the current namespace; an empty string for the mainspace. This references the namespace of
+  the actual page and isn't affected by the {{para|pagename}} parameter.
 * `indexing_poscat`: The canonicalized part of speech of the headword used to index into `pos_functions`. This is the
   same as `poscat` for specific part-of-speech templates such as {{tl|uz-noun}}, but has the value {"head"} for generic
-  part-of-speech templates such as {{tl|uz-head}}.
-* `generic_pos_template`: True if a a generic POS templates like {{tl|uz-head}} or {{tl|mn-head}} was used. (This is
+  part-of-speech templates such as {{tl|uz-head}}. (Note that `poscat` is directly available on `headdata`.)
+* `generic_pos_template`: True if a generic POS templates like {{tl|uz-head}} or {{tl|mn-head}} was used. (This is
   signaled by omitting the invocation parameter {{para|1}} to `process_headword`.)
+* `lang_in_1`: True if the language code is to be fetched from {{para|1}}.
+* `pos_param`: The parameter holding the part of speech, if a generic POS tempalte like {{tl|mn-head}} is being
+  processed (i.e. `generic_pos_template` is set). In such a case, it will have the value of {1} or {2}, depending on
+  whether the language code is being fetched from {{para|1}} (see `lang_in_1`). Otherwise it will be {nil}.
 * `head_param`: The parameter holding the explicit headword. If `numbered_head` was specified (as for Mongolian headword
-  templates), this has the value {1}, {2} or {3} depending on whether {lang = true} is set and whether a generic POS
-  template like {{tl|mn-head}} is being processed; see the definition of `numbered_head` above. Otherwise, it has the
-  value {"head"}.
-
-The `augment_headdata` callback is passed a single argument, a table with the following fields:
-* `headdata`: The headdata object itself, i.e. the object that will be passed to `full_headword()` in
-  [[Module:headword]]. It should be side-effected as necessary.
-* `args`: The parsed arguments table holding all the user-specified arguments.
-* `indexing_poscat`, `generic_pos_template`, `head_param`: Same as for the `augment_params` callback.
-Note that other information on the headword can be found in the `process_props` field of `headdata`. (For example, the
-table in this field contains all of the above fields except for `headdata` itself.)
+  templates), this has the value {1}, {2} or {3} depending on whether the language code is being fetched from {{para|1}}
+  (see `lang_in_1`) and whether a generic POS template like {{tl|mn-head}} is being processed (see
+  `generic_pos_template`). Otherwise, it has the value {"head"}. Also see the `lang` and `numbered_head` properties in
+  the `data` structure sent to `process_headword()`.
+* `is_suffix`: True if the current term is a suffix. This is set when processing the `suffix`, `nosuffix` and `clitic`
+  parameters; it is always {false} beforehand (i.e. during `augment_params` and processing of the general `infls`
+  structure).
+* `insert_specs`: This is a table mapping parameter names to the return value of `Headdata:insert_inflection()`, filled
+  out as parameter values are processed. This lets a given parameter processing function in `infls` gain access to the
+  result of calling `insert_inflection()` on previous parameters (which indicates the number of items inserted as well
+  as whether `-` was specified).
 
 The `pos_functions` table contains an entry for each part of speech needing special handling, where the key is the
 canonical plural part of speech (e.g. {"adverbs"} or {"proper nouns"}). The value associated with each key is a table
@@ -2059,15 +2073,7 @@ function export.process_headword(data)
 	end
 
 	if augment_params then
-		augment_params {
-			params = params,
-			poscat = poscat,
-			indexing_poscat = indexing_poscat,
-			generic_pos_template = generic_pos_template,
-			lang_in_1 = lang_in_1,
-			pos_param = pos_param,
-			head_param = head_param,
-		}
+		augment_params(headdata, params)
 	end
 
 	if pos_functions[indexing_poscat] then
