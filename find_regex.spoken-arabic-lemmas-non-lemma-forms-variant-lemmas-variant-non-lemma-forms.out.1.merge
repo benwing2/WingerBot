@@ -343,7 +343,7 @@ Page 51 ما: Found match for regex: <begin> {{ary-head|pcl|tr=ma}} <end>
 Page 51 ما: Found match for regex: <begin> {{ary-head|pron|tr=mā}} <end>
 Page 51 ما: Found match for regex: <begin> {{ajp-head|pcl|tr=mā,ma}} <end>
 Page 51 ما: Found match for regex: <begin> {{ajp-head|pcl|tr=ma}} <end>
-Page 51 ما: Found match for regex: <begin> {{head|aeb|noun|tr=me|g=m}} <end>
+Page 51 ما: Found match for regex: <begin> {{aeb-head|noun|m|tr=me}} <end>
 Page 51 ما: Found match for regex: <begin> {{aeb-head|pcl|tr=mə}} <end>
 Page 51 ما: Found match for regex: <begin> {{aeb-head|conj|tr=ma}} <end>
 Page 51 ما: Found match for regex: <begin> {{aeb-head|conj|tr=ma}} <end>
@@ -386,7 +386,7 @@ Page 57 نهار: Found match for regex: <begin> {{arq-head|noun|m|tr=nhār|pl=�
 Page 57 نهار: Found match for regex: <begin> {{ary-head|noun|m|tr=nhār|pl=نهارات<tr:nhārāt>,نهاريات<tr:nhāriyyāt>}} <end>
 Page 57 نهار: Found match for regex: <begin> {{ajp-head|noun|m|tr=nhār|pl=نهارات<tr:nhārāt>}} <end>
 Page 57 نهار: Skipped, no changes
-Page 58 واه: Found match for regex: <begin> {{head|arq|adverb}} <end>
+Page 58 واه: Found match for regex: <begin> {{arq-head|adv}} <end>
 Page 58 واه: Found match for regex: <begin> {{ary-head|intj|tr=wāh}} <end>
 Page 58 واه: Skipped, no changes
 Page 59 وقت: Found match for regex: <begin> {{arq-head|noun|m|tr=waqt}} <end>
@@ -421,7 +421,7 @@ Page 60 ولد: Found match for regex: <begin> {{ajp-head|noun|m|tr=walad|pl=و�
 Page 60 ولد: Skipped, no changes
 Page 61 ڥاني: Found match for regex: <begin> {{arq-head|noun|f|tr=vani}} <end>
 Page 61 ڥاني: Skipped, no changes
-Page 62 ڨالمة: Found match for regex: <begin> {{head|arq|propn|tr=gālima|g=f}} <end>
+Page 62 ڨالمة: Found match for regex: <begin> {{arq-head|propn|f|tr=gālima}} <end>
 Page 62 ڨالمة: Skipped, no changes
 Page 63 ڨيره: Found match for regex: <begin> {{arq-head|noun|f|tr=girra}} <end>
 Page 63 ڨيره: Skipped, no changes
@@ -431,7 +431,7 @@ Page 66 Category:Algerian Arabic morphemes: Skipped, no changes
 Page 67 Category:Algerian Arabic nouns: Skipped, no changes
 Page 68 Category:Algerian Arabic prepositions: Skipped, no changes
 Page 69 Category:Algerian Arabic verbs: Skipped, no changes
-Page 1 aškad: Found match for regex: <begin> {{head|xaa|verb}} <end>
+Page 1 aškad: Found match for regex: <begin> {{xaa-head|verb}} <end>
 Page 1 aškad: Skipped, no changes
 Page 2 bedústar: Found match for regex: <begin> {{xaa-head|noun|?}} <end>
 Page 2 bedústar: Skipped, no changes
@@ -439,21 +439,21 @@ Page 3 chírba: Found match for regex: <begin> {{head|xaa|noun|plural|chiráb|g=
 Page 3 chírba: Skipped, no changes
 Page 4 escaláira: Found match for regex: <begin> {{xaa-head|noun|f}} <end>
 Page 4 escaláira: Skipped, no changes
-Page 5 portocǎli: Found match for regex: <begin> {{head|xaa|adj|plural|portocaliǐn}} <end>
+Page 5 portocǎli: Found match for regex: <begin> {{xaa-head|adj|pl=portocaliǐn}} <end>
 Page 5 portocǎli: Skipped, no changes
 Page 6 tefeia: Found match for regex: <begin> {{xaa-head|noun}} <end>
 Page 6 tefeia: Skipped, no changes
-Page 7 ubriquǐn: Found match for regex: <begin> {{head|xaa|noun|plural|ubriquǐt}} <end>
+Page 7 ubriquǐn: Found match for regex: <begin> {{xaa-head|noun|pl=ubriquǐt}} <end>
 Page 7 ubriquǐn: Skipped, no changes
-Page 8 çǔmri: Found match for regex: <begin> {{head|xaa|noun|plural|çumǐri}} <end>
+Page 8 çǔmri: Found match for regex: <begin> {{xaa-head|noun|pl=çumǐri}} <end>
 Page 8 çǔmri: Skipped, no changes
 Page 9 ارصبشب: Found match for regex: <begin> {{xaa-head|noun|tr=arṣubišbu}} <end>
 Page 9 ارصبشب: Skipped, no changes
 Page 10 اشفقلاطور: Found match for regex: <begin> {{xaa-head|noun|tr=išfiqlatúr}} <end>
 Page 10 اشفقلاطور: Skipped, no changes
-Page 11 اشكولة: Found match for regex: <begin> {{head|xaa|noun|head=اشكولة|g=f|tr=ʔiškūla}} <end>
+Page 11 اشكولة: Found match for regex: <begin> {{xaa-head|noun|f|head=اشكولة<tr:ʔiškūla>}} <end>
 Page 11 اشكولة: Skipped, no changes
-Page 12 بشط: Found match for regex: <begin> {{head|xaa|noun|head=بِشْط|g=m|tr=bišṭ, pišṭ}} <end>
+Page 12 بشط: Found match for regex: <begin> {{xaa-head|noun|m|head=بِشْط<tr:bišṭ,pišṭ>}} <end>
 Page 12 بشط: Skipped, no changes
 Page 13 ديسوس: Found match for regex: <begin> {{xaa-head|noun|head=دَيْسُوس<tr:daysūs>|pl=دَوَاسِيس<tr:dawāsīs>}} <end>
 Page 13 ديسوس: Skipped, no changes
@@ -509,9 +509,9 @@ Page 29 Category:Andalusian Arabic adjectives: Skipped, no changes
 Page 30 Category:Andalusian Arabic morphemes: Skipped, no changes
 Page 31 Category:Andalusian Arabic nouns: Skipped, no changes
 Page 32 Category:Andalusian Arabic verbs: Skipped, no changes
-Page 1 بوبر: Found match for regex: <begin> {{head|abv|noun|tr=bōbar|g=m}} <end>
+Page 1 بوبر: Found match for regex: <begin> {{abv-head|noun|m|tr=bōbar}} <end>
 Page 1 بوبر: Found match for regex: <begin> {{afb-head|noun|m|tr=bōbar}} <end>
-Page 1 بوبر: Found match for regex: <begin> {{head|acx|noun|tr=bōbar|g=m}} <end>
+Page 1 بوبر: Found match for regex: <begin> {{acx-head|noun|m|tr=bōbar}} <end>
 Page 1 بوبر: Skipped, no changes
 Page 2 خاشوقة: Found match for regex: <begin> {{abv-head|noun|f|head=خَاشُوقَة<tr:ḵāšūga>|pl=خَوَاشِيق<tr:ḵawāšīg>}} <end>
 Page 2 خاشوقة: Found match for regex: <begin> {{arz-head|noun|f|tr=ḵāšūqa|pl=خواشيق<tr:ḵawāšīq>}} {{tlb|arz|obsolete}} <end>
@@ -533,10 +533,10 @@ Page 3 خاشوكة: Found match for regex: <begin> {{apc-head|noun|f|head=خَ�
 Page 3 خاشوكة: Found match for regex: <begin> {{ayp-head|noun|f|head=خَاشُوكَة<tr:ḵāšūqa, ḵāšūga>|pl=خَوَاشِيك<tr:ḵawāšīq, ḵawāšīg>}} <end>
 Page 3 خاشوكة: Found match for regex: <begin> {{ajp-head|noun|f|head=خَاشُوكَة<tr:ḵāšūqa, ḵāšūga>|pl=خَوَاشِيك<tr:ḵawāšīq, ḵawāšīg>}} <end>
 Page 3 خاشوكة: Skipped, no changes
-Page 4 عمبلوص: Found match for regex: <begin> {{head|abv|noun|tr=ʕambalūṣ|g=m}} <end>
+Page 4 عمبلوص: Found match for regex: <begin> {{abv-head|noun|m|tr=ʕambalūṣ}} <end>
 Page 4 عمبلوص: Skipped, no changes
-Page 5 مي: Found match for regex: <begin> {{head|abv|noun|tr=me|g=m}} <end>
-Page 5 مي: Found match for regex: <begin> {{head|ayl|noun|tr=me|g=m}} <end>
+Page 5 مي: Found match for regex: <begin> {{abv-head|noun|m|tr=me}} <end>
+Page 5 مي: Found match for regex: <begin> {{ayl-head|noun|m|tr=me}} <end>
 Page 5 مي: Found match for regex: <begin> {{head|apc|noun|g=f|tr=ṃayy|plural|ميات|or|ميايا|f2l=Syria|f1tr=ṃayyāt|f2tr=ṃayāya|construct state|مية|f3tr=ṃayyit}} <end>
 Page 5 مي: Found match for regex: <begin> {{apc-head|adj|tr=ṃayy}} <end>
 Page 5 مي: Found match for regex: <begin> {{ajp-head|noun|f|tr=ṃayy|pl=ميات<tr:ṃayyāt>|cons=مية<tr:ṃayyet>}} <end>
@@ -750,7 +750,7 @@ Page 49 حلقوم: Found match for regex: <begin> {{aeb-head|noun|m|tr=ḥalqū
 Page 49 حلقوم: Found match for regex: <begin> {{aeb-head|noun|m|tr=ḥalqūm|pl=حلِاقِم<tr:ḥlēqem>|dim=حلِيقِم<tr:ḥlīqem>}} <end>
 Page 49 حلقوم: Skipped, no changes
 Page 50 حوت: Found match for regex: <begin> {{shu-head|collnoun|tr=hūt|sing=حوتاي<tr:hūtāy>}} <end>
-Page 50 حوت: Found match for regex: <begin> {{head|ayl|noun|tr=ḥūt|g=m}} <end>
+Page 50 حوت: Found match for regex: <begin> {{ayl-head|noun|m|tr=ḥūt}} <end>
 Page 50 حوت: Found match for regex: <begin> {{ary-head|collnoun|tr=ḥūt|sing=حوتة<tr:ḥūta>|pauc=حوتات<tr:ḥūtāt>}} <end>
 Page 50 حوت: Found match for regex: <begin> {{ajp-head|noun|m|tr=ḥūt|pl=حوات<tr:ḥwāt>,حيتان<tr:ḥitān>}} <end>
 Page 50 حوت: Found match for regex: <begin> {{ajp-zodiac}} <end>
@@ -1000,7 +1000,7 @@ Page 94 شوافة: Found match for regex: <begin> {{shu-head|noun|f|tr=šawwāf
 Page 94 شوافة: Skipped, no changes
 Page 95 شين: Found match for regex: <begin> {{shu-root|ش ي ن}} <end>
 Page 95 شين: Found match for regex: <begin> {{shu-head|adj|tr=šēn|f=شينة<tr:šēne>|cpl=شينين<tr:šēnīn>}} <end>
-Page 95 شين: Found match for regex: <begin> {{head|afb|adj|tr=šēn|g=m}} <end>
+Page 95 شين: Found match for regex: <begin> {{afb-head|adj|m|tr=šēn}} <end>
 Page 95 شين: Found match for regex: <begin> {{aeb-head|noun|m|tr=šayn}} <end>
 Page 95 شين: Skipped, no changes
 Page 96 صبب: Found match for regex: <begin> {{shu-root|ص ب ب}} <end>
@@ -1265,7 +1265,7 @@ Page 136 قلب: Found match for regex: <begin> {{ajp-head|noun|m|tr=ʔalb|pl=ق
 Page 136 قلب: Skipped, no changes
 Page 137 قمر: Found match for regex: <begin> {{shu-root|ق م ر}} <end>
 Page 137 قمر: Found match for regex: <begin> {{shu-head|noun|m|tr=gamar|pl=أقمار<tr:ʔagmār>}} <end>
-Page 137 قمر: Found match for regex: <begin> {{head|arz|propn|tr=amar|g=m}} <end>
+Page 137 قمر: Found match for regex: <begin> {{arz-head|propn|m|tr=amar}} <end>
 Page 137 قمر: Found match for regex: <begin> {{arz-head|noun|m|tr=amar|pl=اقمار<tr:aqmār>}} <end>
 Page 137 قمر: Found match for regex: <begin> {{arz-head|adj|tr=amar}}  <end>
 Page 137 قمر: Found match for regex: <begin> {{afb-head|noun|m|tr=gumar|d=قمرين<tr:gumarēn>|pl=اقمار<tr:aqmār>,اقمار<tr:agmār>}} <end>
@@ -1823,9 +1823,9 @@ Page 47 أمير: Found match for regex: <begin> {{arz-head|noun|m|tr=ʔamīr|pl
 Page 47 أمير: Found match for regex: <begin> {{arz-head|propn|m|tr=ʔamīr}} <end>
 Page 47 أمير: Found match for regex: <begin> {{arz-head|noun|m|tr=ʔarmīr}} <end>
 Page 47 أمير: Skipped, no changes
-Page 48 أنا ما بتكلمش إنجليزي: Found match for regex: <begin> {{arz-head|phrase|tr=anā ma batkallimš ingilīzi}} <end>
+Page 48 أنا ما بتكلمش إنجليزي: Found match for regex: <begin> {{arz-head|phr|tr=anā ma batkallimš ingilīzi}} <end>
 Page 48 أنا ما بتكلمش إنجليزي: Skipped, no changes
-Page 49 أنا مبتكلمش عربي: Found match for regex: <begin> {{arz-head|phrase|head=أَنَا مَبَتْكَلِّمْش عَرَبِي<tr:ʔanā mabatkallimš ʕarabi>}} <end>
+Page 49 أنا مبتكلمش عربي: Found match for regex: <begin> {{arz-head|phr|head=أَنَا مَبَتْكَلِّمْش عَرَبِي<tr:ʔanā mabatkallimš ʕarabi>}} <end>
 Page 49 أنا مبتكلمش عربي: Skipped, no changes
 Page 50 أنبا: Found match for regex: <begin> {{arz-head|noun|m|tr=ʔanba}} <end>
 Page 50 أنبا: Skipped, no changes
@@ -1914,8 +1914,8 @@ Page 72 ابو قردان: Found match for regex: <begin> {{arz-head|noun|m|tr=�
 Page 72 ابو قردان: Skipped, no changes
 Page 73 ات: Found match for regex: <begin> {{arz-head|nounf|head=ـات<tr:-āt>}} <end>
 Page 73 ات: Found match for regex: <begin> {{arz-head|prefix|head=اتـ<tr:it->,اتّـ<tr:itt->}} <end>
-Page 73 ات: Found match for regex: <begin> {{head|acm|pron|head=اتَّ|g=m|tr=ʔitta}} <end>
-Page 73 ات: Found match for regex: <begin> {{head|acm|pron|head=اتِّ|g=f|tr=ʔitti}} <end>
+Page 73 ات: Found match for regex: <begin> {{acm-head|pron|m|head=اتَّ<tr:ʔitta>}} <end>
+Page 73 ات: Found match for regex: <begin> {{acm-head|pron|f|head=اتِّ<tr:ʔitti>}} <end>
 Page 73 ات: Found match for regex: <begin> {{ajp-head|nounf|f-p,m-p<l:occasionally>|head=ـات<tr:-āt>}} <end>
 Page 73 ات: Skipped, no changes
 Page 74 اتبسط: Found match for regex: <begin> {{arz-root|ب س ط}} <end>
@@ -2004,17 +2004,17 @@ Page 92 احمر: Found match for regex: <begin> {{ajp-root|ح م ر}} <end>
 Page 92 احمر: Found match for regex: <begin> {{ajp-head|verb|IX|head=احمرّ<tr:iḥmarr>|pres=بحمرّ<tr:biḥmarr>}} <end>
 Page 92 احمر: Found match for regex: <begin> {{ajp-conj/9A|ح|م|ر|ḥ|m|r}} <end>
 Page 92 احمر: Skipped, no changes
-Page 93 احنا: Found match for regex: <begin> {{arz-head|pron|tr=iḥna|encl=ـنا<tr:-nā>}} <end>
+Page 93 احنا: Found match for regex: <begin> {{arz-head|pron|p|tr=iḥna|encl=ـنا<tr:-nā>}} <end>
 Page 93 احنا: Found match for regex: <begin> {{arz-personal pronouns}} <end>
-Page 93 احنا: Found match for regex: <begin> {{afb-head|pron|tr=aḥna,iḥna}} <end>
+Page 93 احنا: Found match for regex: <begin> {{afb-head|pron|p|tr=aḥna,iḥna}} <end>
 Page 93 احنا: Found match for regex: <begin> {{afb-personal pronouns}} <end>
-Page 93 احنا: Found match for regex: <begin> {{head|acw|pron|head=اِحْنَا|tr=ʔiḥna|g=p}} <end>
+Page 93 احنا: Found match for regex: <begin> {{acw-head|pron|p|head=اِحْنَا<tr:ʔiḥna>}} <end>
 Page 93 احنا: Found match for regex: <begin> {{acw-personal pronouns}} <end>
-Page 93 احنا: Found match for regex: <begin> {{acm-head|pron|head=اِحْنَا<tr:iḥna>}} <end>
+Page 93 احنا: Found match for regex: <begin> {{acm-head|pron|p|head=اِحْنَا<tr:iḥna>}} <end>
 Page 93 احنا: Found match for regex: <begin> {{acm-personal pronouns}} <end>
 Page 93 احنا: Found match for regex: <begin> {{ajp-head|pron|p|head=إحنا<tr:ʔiḥna>|encl=ـنا<tr:-na>}} <end>
 Page 93 احنا: Found match for regex: <begin> {{ajp-personal pronouns}} <end>
-Page 93 احنا: Found match for regex: <begin> {{aeb-head|pron|head=اَحنَا<tr:aḥnə>}} <end>
+Page 93 احنا: Found match for regex: <begin> {{aeb-head|pron|p|head=اَحنَا<tr:aḥnə>}} <end>
 Page 93 احنا: Skipped, no changes
 Page 94 اخ: Found match for regex: <begin> {{arz-head|noun|m|tr=aḵ|cons=اخو<tr:aḵu>|pl=اخوات<tr:iḵwāt>|f=اخت<tr:uḵt>}} <end>
 Page 94 اخ: Skipped, no changes
@@ -2028,8 +2028,8 @@ Page 98 ازاى: Found match for regex: <begin> {{arz-head|adv|tr=izzāy}} <end
 Page 98 ازاى: Skipped, no changes
 Page 99 ازاي: Found match for regex: <begin> {{arz-head|adv|tr=izzāy}} <end>
 Page 99 ازاي: Skipped, no changes
-Page 100 ازيك: Found match for regex: <begin> {{head|arz|phrase|tr=izzáyyak?|head=اِزَّيَّك؟}} <end>
-Page 100 ازيك: Found match for regex: <begin> {{head|arz|phrase|tr=izzáyyik?|head=اِزَّيِّك؟}} <end>
+Page 100 ازيك: Found match for regex: <begin> {{arz-head|phr|head=اِزَّيَّك؟<tr:izzáyyak?>}} <end>
+Page 100 ازيك: Found match for regex: <begin> {{arz-head|phr|head=اِزَّيِّك؟<tr:izzáyyik?>}} <end>
 Page 100 ازيك: Skipped, no changes
 Page 101 استاذ: Found match for regex: <begin> {{arz-head|noun|m|tr=ustāz|pl=اساتذة<tr:asatza>|f=استاذة<tr:ustāza>}} <end>
 Page 101 استاذ: Found match for regex: <begin> {{afb-head|noun|m|head=اِسْتاذ<tr:istāḏ>|f=اَبْلة<tr:abḷa>|pl=اَساتِذة<tr:asātiḏa>}} <end>
@@ -2128,15 +2128,15 @@ Page 119 افندي: Found match for regex: <begin> {{arz-head|noun|m|tr=afandi}
 Page 119 افندي: Skipped, no changes
 Page 120 اقول تور، يقول احلبوه: Found match for regex: <begin> {{head|arz|proverb|tr=aʔūl tūr, yiʔūl iḥlibūh|head=[[قول|اقول]] [[تور]], [[قول|يقول]] [[حلب|احلبوه]]}} <end>
 Page 120 اقول تور، يقول احلبوه: Skipped, no changes
-Page 121 ال: Found match for regex: <begin> {{head|arz|head=الـ|article|tr=il-}} <end>
-Page 121 ال: Found match for regex: <begin> {{afb-head|article|head=اِلـ<tr:il->}} <end>
+Page 121 ال: Found match for regex: <begin> {{arz-head|art|head=الـ<tr:il->}} <end>
+Page 121 ال: Found match for regex: <begin> {{afb-head|art|head=اِلـ<tr:il->}} <end>
 Page 121 ال: Found match for regex: <begin> {{afb-head|pron|head=اِلـ<tr:il->}} <end>
 Page 121 ال: Found match for regex: <begin> {{afb-head|prep|head=اِلـ<tr:il->}} <end>
-Page 121 ال: Found match for regex: <begin> {{acw-head|article|head=الـ<tr:al->}} <end>
-Page 121 ال: Found match for regex: <begin> {{apc-head|article|head=الـ<tr:l->}} <end>
+Page 121 ال: Found match for regex: <begin> {{acw-head|art|head=الـ<tr:al->}} <end>
+Page 121 ال: Found match for regex: <begin> {{apc-head|art|head=الـ<tr:l->}} <end>
 Page 121 ال: Found match for regex: <begin> {{apc-head|pron|tr=l-}} <end>
 Page 121 ال: Found match for regex: <begin> {{apc-head|conj|tr=l-}} <end>
-Page 121 ال: Found match for regex: <begin> {{ajp-head|article|head=الـ<tr:l->}} <end>
+Page 121 ال: Found match for regex: <begin> {{ajp-head|art|head=الـ<tr:l->}} <end>
 Page 121 ال: Skipped, no changes
 Page 122 الأقصر: Found match for regex: <begin> {{arz-head|propn|f|tr=il-uʔṣur,il-ugṣur}}  <end>
 Page 122 الأقصر: Skipped, no changes
@@ -2176,7 +2176,7 @@ Page 135 القاهرة: Found match for regex: <begin> {{ajp-head|propn|f|tr=il
 Page 135 القاهرة: Skipped, no changes
 Page 136 القليوبية: Found match for regex: <begin> {{arz-head|propn|f|tr=il-ʔalyubiyya,il-galyubiyya}}  <end>
 Page 136 القليوبية: Skipped, no changes
-Page 137 الله: Found match for regex: <begin> {{head|arz|propn|tr=allā|g=m}} <end>
+Page 137 الله: Found match for regex: <begin> {{arz-head|propn|m|tr=allā}} <end>
 Page 137 الله: Found match for regex: <begin> {{arz-head|intj|tr=allā}} <end>
 Page 137 الله: Found match for regex: <begin> {{acw-head|propn|m|tr=aḷḷā}} <end>
 Page 137 الله: Found match for regex: <begin> {{acw-head|intj|head=الله<tr:aḷḷā>}} <end>
@@ -2184,7 +2184,7 @@ Page 137 الله: Found match for regex: <begin> {{acw-head|intj|head=الله<
 Page 137 الله: Found match for regex: <begin> {{apc-head|propn|m|tr=ʔaḷḷa}} <end>
 Page 137 الله: Found match for regex: <begin> {{ajp-head|propn|m|tr=ʔaḷḷa,ʔaḷḷāh}} <end>
 Page 137 الله: Skipped, no changes
-Page 138 الله يسهلك: Found match for regex: <begin> {{head|arz|phrase|tr=allah yisahhillak, allah yisahhillik|head=[[الله]] [[سهل|يسهلك]]}} <end>
+Page 138 الله يسهلك: Found match for regex: <begin> {{head|arz|phr|tr=allah yisahhillak, allah yisahhillik|head=[[الله]] [[سهل|يسهلك]]}} <end>
 Page 138 الله يسهلك: Skipped, no changes
 Page 139 اللي: Found match for regex: <begin> {{arz-head|pron|tr=lli, illi}} <end>
 Page 139 اللي: Found match for regex: <begin> {{apc-head|pron|tr=lli, illi}} <end>
@@ -2234,11 +2234,11 @@ Page 152 انا: Found match for regex: <begin> {{arz-personal pronouns}} <end>
 Page 152 انا: Found match for regex: <begin> {{ajp-head|pron|m,f|tr=ʔana}} <end>
 Page 152 انا: Found match for regex: <begin> {{head|aeb|pron|head=آنَا|tr=ēnə|g=m|g2=f}} <end>
 Page 152 انا: Skipped, no changes
-Page 153 انا جيى: Found match for regex: <begin> {{arz-head|phrase|tr=anā gē}} <end>
+Page 153 انا جيى: Found match for regex: <begin> {{arz-head|phr|tr=anā gē}} <end>
 Page 153 انا جيى: Skipped, no changes
-Page 154 انا مش متدين: Found match for regex: <begin> {{head|arz|phrase|tr=ána miš mutadayyin|head=[[انا]] [[مش]] [[متدين]]|g=m|female|انا مش متدينة}} <end>
+Page 154 انا مش متدين: Found match for regex: <begin> {{head|arz|phr|tr=ána miš mutadayyin|head=[[انا]] [[مش]] [[متدين]]|g=m|female|انا مش متدينة}} <end>
 Page 154 انا مش متدين: Skipped, no changes
-Page 155 انت متدين: Found match for regex: <begin> {{head|arz|phrase|head=[[انت]] [[متدين]]؟|tr=inta mutadayyin?|g=m}} <end>
+Page 155 انت متدين: Found match for regex: <begin> {{arz-head|phr|m|head=[[انت]] [[متدين]]؟<tr:inta mutadayyin?>}} <end>
 Page 155 انت متدين: Skipped, no changes
 Page 156 انتا: Found match for regex: <begin> {{arz-head|pron|m|tr=inta}} <end>
 Page 156 انتا: Found match for regex: <begin> {{ajp-head|pron|m|head=إنتا<tr:ʔinta,ʔinte>}} <end>
@@ -2262,7 +2262,7 @@ Page 159 انتو: Found match for regex: <begin> {{ajp-head|pron|p|head=إنت�
 Page 159 انتو: Found match for regex: <begin> {{ajp-personal pronouns}} <end>
 Page 159 انتو: Skipped, no changes
 Page 160 انتوا: Found match for regex: <begin> {{arz-head|pron|p|tr=intū}} <end>
-Page 160 انتوا: Found match for regex: <begin> {{head|ayl|pron|head=إنْتُوا|tr=’íntu|g=p}} <end>
+Page 160 انتوا: Found match for regex: <begin> {{ayl-head|pron|p|head=إنْتُوا<tr:ʔíntu>}} <end>
 Page 160 انتوا: Found match for regex: <begin> {{apc-head|pron|p|head=إنتوا<tr:ʔintu>}} <end>
 Page 160 انتوا: Found match for regex: <begin> {{ajp-head|pron|p|head=إنتوا<tr:ʔintu>}} <end>
 Page 160 انتوا: Skipped, no changes
@@ -2403,7 +2403,7 @@ Page 194 بجد: Found match for regex: <begin> {{arz-root|ج د د}} <end>
 Page 194 بجد: Found match for regex: <begin> {{arz-head|adv|tr=bigadd}} <end>
 Page 194 بجد: Found match for regex: <begin> {{aeb-head|intj|tr=b-jedd}} <end>
 Page 194 بجد: Skipped, no changes
-Page 195 بحبك: Found match for regex: <begin> {{arz-head|phrase|tr=baḥíbbak, baḥíbbik}} <end>
+Page 195 بحبك: Found match for regex: <begin> {{arz-head|phr|tr=baḥíbbak, baḥíbbik}} <end>
 Page 195 بحبك: Skipped, no changes
 Page 196 بحلق: Found match for regex: <begin> {{arz-root|ب ح ل ق}} <end>
 Page 196 بحلق: Found match for regex: <begin> {{arz-head|verb|Iq|tr=baḥlaʔ,baḥlag|np=يبحلق<tr:yibaḥlaʔ,yibaḥlag>}} <end>
@@ -2538,7 +2538,7 @@ Page 227 بطر: Found match for regex: <begin> {{acw-head|verb|I|tr=baṭar|np=
 Page 227 بطر: Found match for regex: <begin> {{acw-conj/I-sound-a-u|ب|ط|ر|b|ṭ|r}} <end>
 Page 227 بطر: Skipped, no changes
 Page 228 بطريق: Found match for regex: <begin> {{arz-head|noun|m|tr=baṭrīq|pl=بطاريق<tr:baṭārīq>}} <end>
-Page 228 بطريق: Found match for regex: <begin> {{acw-head|noun|m|head=بَطْريق<tr:baṭrīg>}} (plural {{l|acw|بَطَاريق}} (baṭārīg)) <end>
+Page 228 بطريق: Found match for regex: <begin> {{acw-head|noun|m|head=بَطْريق<tr:baṭrīg>|pl=بَطَاريق<tr:baṭārīg>}} <end>
 Page 228 بطريق: Skipped, no changes
 Page 229 بعت: Found match for regex: <begin> {{arz-root|ب ع ت}} <end>
 Page 229 بعت: Found match for regex: <begin> {{arz-head|verb|I|tr=baʕat|np=يبعت<tr:yibʕat>}} <end>
@@ -2666,7 +2666,7 @@ Page 252 بنك: Found match for regex: <begin> {{ary-head|noun|m|tr=bank|pl=ب�
 Page 252 بنك: Found match for regex: <begin> {{apc-head|noun|m|tr=bank|pl=بنوك<tr:bnūk>}} <end>
 Page 252 بنك: Found match for regex: <begin> {{apc-head|verb|II|head=بنّك<tr:bannak>|np=يبنك<tr:ybannik>}} <end>
 Page 252 بنك: Found match for regex: <begin> {{apc-conj/II-sound|ب|ن|ك|b|n|k}} <end>
-Page 252 بنك: Found match for regex: <begin> {{head|acx|noun|tr=bunk|g=m}} <end>
+Page 252 بنك: Found match for regex: <begin> {{acx-head|noun|m|tr=bunk}} <end>
 Page 252 بنك: Found match for regex: <begin> {{ajp-head|noun|m|tr=bank|pl=بنوك<tr:bnūk>}} <end>
 Page 252 بنك: Skipped, no changes
 Page 253 بنى ادم: Found match for regex: <begin> {{arz-head|noun|m|tr=bani ādam|pl=بني ادمين<tr:bani admīn>|f=بني ادمة<tr:bani adma>}} <end>
@@ -2848,7 +2848,7 @@ Page 288 تعلب: Skipped, no changes
 Page 289 تقويم: Found match for regex: <begin> {{arz-root|ق و م}} <end>
 Page 289 تقويم: Found match for regex: <begin> {{arz-head|noun|m|tr=taqwīm|pl=تَقاويم<tr:taqawīm>,تقويمات<tr:taqwimāt>}} <end>
 Page 289 تقويم: Found match for regex: <begin> {{acw-head|noun|m|head=تَقْوِيم<tr:tagwīm>|pl=تَقاويم<tr:tagāwīm>}} <end>
-Page 289 تقويم: Found match for regex: <begin> {{ajp-head|noun|m|head=تَقْوِيم<tr:ta’wīm>|pl=تَقاويم<tr:ta’āwīm>}} <end>
+Page 289 تقويم: Found match for regex: <begin> {{ajp-head|noun|m|head=تَقْوِيم<tr:taʔwīm>|pl=تَقاويم<tr:taʔāwīm>}} <end>
 Page 289 تقويم: Skipped, no changes
 Page 290 تقيل: Found match for regex: <begin> {{arz-root|ت ق ل}} <end>
 Page 290 تقيل: Found match for regex: <begin> {{arz-head|adj|tr=tiʔīl|pl=تقال<tr:tuʔāl>|f=تقيلة<tr:tiʔīla>}} <end>
@@ -3242,7 +3242,7 @@ Page 376 حاجة: Skipped, no changes
 Page 377 حارة: Found match for regex: <begin> {{arz-root|ح و ر}} <end>
 Page 377 حارة: Found match for regex: <begin> {{arz-head|noun|f|tr=ḥāra|pl=حارات<tr:ḥarāt>,حواري<tr:ḥawāri>}} <end>
 Page 377 حارة: Found match for regex: <begin> {{afb-head|noun|f|tr=ḥāra|d=حارْتين<tr:ḥārtēn>|pl=حارات<tr:ḥārāt>}} <end>
-Page 377 حارة: Found match for regex: <begin> {{afb-head|adjective feminine form|tr=ḥārra}} <end>
+Page 377 حارة: Found match for regex: <begin> {{afb-head|adjf|f|tr=ḥārra}} <end>
 Page 377 حارة: Found match for regex: <begin> {{apc-head|noun|f|tr=ḥāra}} <end>
 Page 377 حارة: Found match for regex: <begin> {{ajp-root|ح و ر}} <end>
 Page 377 حارة: Found match for regex: <begin> {{ajp-head|noun|f|tr=ḥāra|pl=حارات<tr:ḥārāt>}} <end>
@@ -3487,7 +3487,7 @@ Page 411 حوض: Found match for regex: <begin> {{acw-head|noun|m|tr=ḥōḍ|d=
 Page 411 حوض: Skipped, no changes
 Page 412 حيط: Found match for regex: <begin> {{arz-root|ح و ط}} <end>
 Page 412 حيط: Found match for regex: <begin> {{arz-head|noun|m|tr=ḥēṭ}} <end>
-Page 412 حيط: Found match for regex: <begin> {{head|ayl|noun|tr=ḥēṭ|g=m}} <end>
+Page 412 حيط: Found match for regex: <begin> {{ayl-head|noun|m|tr=ḥēṭ}} <end>
 Page 412 حيط: Found match for regex: <begin> {{ary-head|noun|m|head=حَيْط<tr:ḥīṭ>,حَيْط<tr:ḥayṭ>|pl=حيطان<tr:ḥīṭān>,حيوط<tr:ḥyūṭ>,حيوطة<tr:ḥyūṭa>}} <end>
 Page 412 حيط: Found match for regex: <begin> {{ajp-head|noun|m|tr=ḥēṭ|pl=حيطان<tr:ḥīṭān>}} <end>
 Page 412 حيط: Skipped, no changes
@@ -4554,7 +4554,7 @@ Page 604 شقة: Found match for regex: <begin> {{arz-root|ش ق ق}} <end>
 Page 604 شقة: Found match for regex: <begin> {{arz-head|noun|f|tr=šaʔʔa,šagga|pl=شقق<tr:šuʔaʔ,šugag,šiʔaʔ,šigag>,شقات<tr:šaʔʔāt,šaggāt>}} <end>
 Page 604 شقة: Found match for regex: <begin> {{acw-root|ش ق ق}} <end>
 Page 604 شقة: Found match for regex: <begin> {{acw-head|noun|f|head=شِقَّة<tr:šigga>,شُقَّة<tr:šugga>|pl=شِقَق<tr:šigag>,شُقَق<tr:šugag>}} <end>
-Page 604 شقة: Found match for regex: <begin> {{head|acm|noun|tr=šaqa|g=m}} <end>
+Page 604 شقة: Found match for regex: <begin> {{acm-head|noun|m|tr=šaqa}} <end>
 Page 604 شقة: Found match for regex: <begin> {{ary-root|ش ق ق}} <end>
 Page 604 شقة: Found match for regex: <begin> {{ary-head|noun|f|tr=šuqqa|pl=شقق<tr:šuqaq>,شقات<tr:šuqqāt>}} <end>
 Page 604 شقة: Found match for regex: <begin> {{ary-head|noun|f|tr=šaqqa|pl=شقات<tr:šaqqāt>}} <end>
@@ -4915,7 +4915,7 @@ Page 673 طير: Skipped, no changes
 Page 674 طيز: Found match for regex: <begin> {{arz-head|noun|tr=ṭīz}} <end>
 Page 674 طيز: Found match for regex: <begin> {{acw-root|ط ي ز}} <end>
 Page 674 طيز: Found match for regex: <begin> {{acw-head|noun|m|head=طيز<tr:ṭīz>|pl=طِيُوز<tr:ṭiyūz>}} <end>
-Page 674 طيز: Found match for regex: <begin> {{head|ayl|noun|tr=ṭīẓ|g=m}} <end>
+Page 674 طيز: Found match for regex: <begin> {{ayl-head|noun|m|tr=ṭīẓ}} <end>
 Page 674 طيز: Found match for regex: <begin> {{apc-head|noun|m|tr=ṭīz}} <end>
 Page 674 طيز: Found match for regex: <begin> {{ajp-head|noun|tr=ṭīz}} <end>
 Page 674 طيز: Skipped, no changes
@@ -4925,7 +4925,7 @@ Page 676 ظبط: Found match for regex: <begin> {{arz-head|verb|I|tr=ẓabaṭ|n
 Page 676 ظبط: Found match for regex: <begin> {{arz-conj/I-sound-aa-uu|ظ|ب|ط|ẓ|b|ṭ}} <end>
 Page 676 ظبط: Skipped, no changes
 Page 677 ع: Found match for regex: <begin> {{arz-head|prep|tr=ʕa}} <end>
-Page 677 ع: Found match for regex: <begin> {{head|apc|preposition}} <end>
+Page 677 ع: Found match for regex: <begin> {{apc-head|prep}} <end>
 Page 677 ع: Found match for regex: <begin> {{ajp-head|prep|head=عـ<tr:ʕa->}} <end>
 Page 677 ع: Skipped, no changes
 Page 678 عارف: Found match for regex: <begin> {{arz-head|adj|tr=ʕārif|f=عارفة<tr:ʕarfa>|pl=عارفين<tr:ʕarfīn>}} <end>
@@ -4951,9 +4951,9 @@ Page 681 عاشر: Found match for regex: <begin> {{arz-head|adj|tr=ʕāšir|f=�
 Page 681 عاشر: Found match for regex: <begin> {{ary-head|adj|tr=ʕāšar|f=عاشرة<tr:ʕāšra>|mpl=عاشرين<tr:ʕāšrīn>|fpl=عاشرات<tr:ʕāšrāt>}} <end>
 Page 681 عاشر: Found match for regex: <begin> {{ajp-head|adj|tr=ʕāšer|f=عاشرة<tr:ʕāšra>}} <end>
 Page 681 عاشر: Skipped, no changes
-Page 682 عامل ايه: Found match for regex: <begin> {{head|arz|phrase|head=عامل ايه؟|g=m|tr=ʕāmel ē?}} <end>
+Page 682 عامل ايه: Found match for regex: <begin> {{arz-head|phr|m|head=عامل ايه؟<tr:ʕāmel ē?>}} <end>
 Page 682 عامل ايه: Skipped, no changes
-Page 683 عاملة ايه: Found match for regex: <begin> {{arz-head|phrase|head=عاملة ايه؟<tr:ʕamla ē?>}} <end>
+Page 683 عاملة ايه: Found match for regex: <begin> {{arz-head|phr|head=عاملة ايه؟<tr:ʕamla ē?>}} <end>
 Page 683 عاملة ايه: Skipped, no changes
 Page 684 عبقري: Found match for regex: <begin> {{arz-head|adj|tr=ʕabqari|f=عبقريَّة<tr:ʕabqariyya>|cpl=عبقريِّين<tr:ʕabqariyyīn>,عَبَاقرة<tr:ʕabāqra>}} <end>
 Page 684 عبقري: Found match for regex: <begin> {{acw-head|adj|tr=ʕabgari|f=عبقريَّة<tr:ʕabgariyya>|cpl=عبقريِّين<tr:ʕabgariyyīn>,عَبَاقرة<tr:ʕabāgra>}} <end>
@@ -5471,7 +5471,7 @@ Page 767 في: Found match for regex: <begin> {{aeb-head|pcl|tr=fī}} <end>
 Page 767 في: Skipped, no changes
 Page 768 في المشمش: Found match for regex: <begin> {{arz-head|adv|tr=fi-l-mišmiš}} <end>
 Page 768 في المشمش: Skipped, no changes
-Page 769 في ستين داهية: Found match for regex: <begin> {{arz-head|phrase|tr=fi-sittīn dahya}} <end>
+Page 769 في ستين داهية: Found match for regex: <begin> {{arz-head|phr|tr=fi-sittīn dahya}} <end>
 Page 769 في ستين داهية: Skipped, no changes
 Page 770 فيشة: Found match for regex: <begin> {{arz-head|noun|f|tr=fīša|pl=فِيَش<tr:fiyaš>}} <end>
 Page 770 فيشة: Found match for regex: <begin> {{afb-head|noun|f|tr=fīša|pl=فِيَش<tr:fiyaš>}} <end>
@@ -5576,7 +5576,7 @@ Page 782 قرا: Found match for regex: <begin> {{ary-conj/II-weak-madd|ق|ر|q|
 Page 782 قرا: Found match for regex: <begin> {{ajp-root|ق ر ي}} <end>
 Page 782 قرا: Found match for regex: <begin> {{ajp-head|verb|I|tr=ʔara|pres=بقرا<tr:biʔra>}} <end>
 Page 782 قرا: Found match for regex: <begin> {{ajp-conj/BA|ق|ر|ʔ|r}} <end>
-Page 782 قرا: Found match for regex: <begin> {{head|aeb|verb|tr=qra|head=قرَا}} <end>
+Page 782 قرا: Found match for regex: <begin> {{aeb-head|verb|head=قرَا<tr:qra>}} <end>
 Page 782 قرا: Found match for regex: <begin> {{aeb-head|verb|II|head=قَرَّا<tr:qarra>}} <end>
 Page 782 قرا: Found match for regex: <begin> {{aeb-verb/conj|qraa|a|px=1|cx=1}} <end>
 Page 782 قرا: Skipped, no changes
@@ -5587,7 +5587,7 @@ Page 784 قراية: Found match for regex: <begin> {{arz-root|ق ر ي}} <end>
 Page 784 قراية: Found match for regex: <begin> {{arz-head|noun|f|tr=ʔirāya|pl=قرايات<tr:ʔirāyāt>}} <end>
 Page 784 قراية: Found match for regex: <begin> {{afb-head|noun|f|tr=grāya|pl=قرايات}} <end>
 Page 784 قراية: Found match for regex: <begin> {{afb-head|noun|f|tr=garrāya}} <end>
-Page 784 قراية: Found match for regex: <begin> {{afb-head|adjective feminine form|f|tr=garrāya}} <end>
+Page 784 قراية: Found match for regex: <begin> {{afb-head|adjf|f|tr=garrāya}} <end>
 Page 784 قراية: Found match for regex: <begin> {{acw-head|noun|f|tr=girāya|pl=قِرَايات<tr:girāyāt>}} <end>
 Page 784 قراية: Found match for regex: <begin> {{ary-rootbox|ق ر ي}} <end>
 Page 784 قراية: Found match for regex: <begin> {{ary-head|noun|f|tr=qrāya|pl=قرايات<tr:qrāyāt>}} <end>
@@ -5605,8 +5605,8 @@ Page 786 قرش: Found match for regex: <begin> {{arz-conj/I-sound-aa-uu|ق|ر|�
 Page 786 قرش: Found match for regex: <begin> {{arz-head|noun|m|tr=ʔirš,girš|pl=قروش<tr:ʔurūš,gurūš>}} <end>
 Page 786 قرش: Found match for regex: <begin> {{arz-head|noun|m|tr=ʔirš,girš|pl=قروش<tr:ʔurūš,gurūš>}} <end>
 Page 786 قرش: Found match for regex: <begin> {{acw-root|ق ر ش}} <end>
-Page 786 قرش: Found match for regex: <begin> {{acw-head|noun|m|head=قِرْش<tr:girš>}} (plural {{l|acw|قُروش}} (gurūš)) <end>
-Page 786 قرش: Found match for regex: <begin> {{acw-head|noun|m|head=قِرْش<tr:girš>}} (plural {{l|acw|قُروش}} (gurūš)) <end>
+Page 786 قرش: Found match for regex: <begin> {{acw-head|noun|m|head=قِرْش<tr:girš>|pl=قُروش<tr:gurūš>}} <end>
+Page 786 قرش: Found match for regex: <begin> {{acw-head|noun|m|head=قِرْش<tr:girš>|pl=قُروش<tr:gurūš>}} <end>
 Page 786 قرش: Found match for regex: <begin> {{apc-head|verb|I|tr=ʔaraš}} <end>
 Page 786 قرش: Found match for regex: <begin> {{ajp-head|noun|m|head=قِرْش<tr:qirš>}} <end>
 Page 786 قرش: Found match for regex: <begin> {{ajp-head|noun|m|tr=qirš|pl=قروش<tr:qrūš>}} <end>
@@ -5918,9 +5918,9 @@ Page 839 كس: Found match for regex: <begin> {{arz-head|noun|m|tr=kuss}} <end>
 Page 839 كس: Found match for regex: <begin> {{apc-head|noun|m|tr=kiss}} <end>
 Page 839 كس: Found match for regex: <begin> {{aeb-head|intj|tr=kes}} <end>
 Page 839 كس: Skipped, no changes
-Page 840 كس أختك: Found match for regex: <begin> {{head|arz|intj|head=[[كُس]] [[أخت|أُخْتَك]]|tr=kuss uḵtak}} <end>
+Page 840 كس أختك: Found match for regex: <begin> {{arz-head|intj|head=[[كُس]] [[أخت|أُخْتَك]]<tr:kuss uḵtak>}} <end>
 Page 840 كس أختك: Skipped, no changes
-Page 841 كس أمك: Found match for regex: <begin> {{head|arz|intj|head=[[كُس]] [[أم|أمك]]|tr=kuss ummak}} <end>
+Page 841 كس أمك: Found match for regex: <begin> {{arz-head|intj|head=[[كُس]] [[أم|أمك]]<tr:kuss ummak>}} <end>
 Page 841 كس أمك: Skipped, no changes
 Page 842 كس اختك: Found match for regex: <begin> {{arz-head|intj|tr=kuss uḵtak}} <end>
 Page 842 كس اختك: Skipped, no changes
@@ -5964,7 +5964,7 @@ Page 854 كل: Found match for regex: <begin> {{ary-pron-inflection <end>
 Page 854 كل: Found match for regex: <begin> {{ajp-head|noun|m|head=كلّ<tr:kull>}} <end>
 Page 854 كل: Found match for regex: <begin> {{ajp-head|det|head=كلّ<tr:kull>}} <end>
 Page 854 كل: Skipped, no changes
-Page 855 كل سنة وانت طيب: Found match for regex: <begin> {{arz-head|phrase|head=كل سنة وانت طيب<tr:kulli sina wi-inta ṭayyib>}} <end>
+Page 855 كل سنة وانت طيب: Found match for regex: <begin> {{arz-head|phr|head=كل سنة وانت طيب<tr:kulli sina wi-inta ṭayyib>}} <end>
 Page 855 كل سنة وانت طيب: Skipped, no changes
 Page 856 كلة: Found match for regex: <begin> {{apc-head|noun|f|tr=gille|pl=كلل<tr:gulal>,كلول<tr:glūl>,كلال <tr:glāl>}} <end>
 Page 856 كلة: Skipped, no changes
@@ -6183,13 +6183,13 @@ Page 900 لنج: Skipped, no changes
 Page 901 لو: Found match for regex: <begin> {{arz-head|conj|tr=law}} <end>
 Page 901 لو: Found match for regex: <begin> {{ajp-head|conj|tr=law}} <end>
 Page 901 لو: Skipped, no changes
-Page 902 لو سمحت: Found match for regex: <begin> {{arz-head|phrase|head=لَو سَمَحت<tr:law samaḥt>}} <end>
-Page 902 لو سمحت: Found match for regex: <begin> {{acw-head|phrase|head=لَو سَمَحت<tr:law samaḥt>}} <end>
-Page 902 لو سمحت: Found match for regex: <begin> {{head|ajp|phrase|head=[[لو]] [[سمح|سمحت]]|tr=law samaḥt|g=m}} <end>
+Page 902 لو سمحت: Found match for regex: <begin> {{arz-head|phr|head=لَو سَمَحت<tr:law samaḥt>}} <end>
+Page 902 لو سمحت: Found match for regex: <begin> {{acw-head|phr|head=لَو سَمَحت<tr:law samaḥt>}} <end>
+Page 902 لو سمحت: Found match for regex: <begin> {{ajp-head|phr|m|head=[[لو]] [[سمح|سمحت]]<tr:law samaḥt>}} <end>
 Page 902 لو سمحت: Skipped, no changes
-Page 903 لو سمحتي: Found match for regex: <begin> {{arz-head|phrase|tr=law samaḥti}} <end>
-Page 903 لو سمحتي: Found match for regex: <begin> {{acw-head|phrase|tr=law samaḥti}} <end>
-Page 903 لو سمحتي: Found match for regex: <begin> {{head|ajp|phrase|head=[[لو]] [[سمح|سمحتي]]|tr=law samaḥti|g=f}} <end>
+Page 903 لو سمحتي: Found match for regex: <begin> {{arz-head|phr|tr=law samaḥti}} <end>
+Page 903 لو سمحتي: Found match for regex: <begin> {{acw-head|phr|tr=law samaḥti}} <end>
+Page 903 لو سمحتي: Found match for regex: <begin> {{ajp-head|phr|f|head=[[لو]] [[سمح|سمحتي]]<tr:law samaḥti>}} <end>
 Page 903 لو سمحتي: Skipped, no changes
 Page 904 لوح: Found match for regex: <begin> {{arz-head|noun|m|tr=lōḥ}} <end>
 Page 904 لوح: Found match for regex: <begin> {{ayl-head|noun|m|tr=lōḥ}} <end>
@@ -6661,7 +6661,7 @@ Page 1008 من: Found match for regex: <begin> {{arz-head|prep|tr=min}} <end>
 Page 1008 من: Found match for regex: <begin> {{arz-prep-inflection <end>
 Page 1008 من: Found match for regex: <begin> {{apc-head|prep|tr=min, mni-}} <end>
 Page 1008 من: Found match for regex: <begin> {{apc-head|conj|tr=min}} <end>
-Page 1008 من: Found match for regex: <begin> {{apc-head|article|head=مِن<tr:min>}} <end>
+Page 1008 من: Found match for regex: <begin> {{apc-head|art|head=مِن<tr:min>}} <end>
 Page 1008 من: Found match for regex: <begin> {{apc-head|adv|tr=mann}} <end>
 Page 1008 من: Found match for regex: <begin> {{ajp-head|prep|tr=min}} <end>
 Page 1008 من: Found match for regex: <begin> {{ajp-prep-inflection <end>
@@ -6785,7 +6785,7 @@ Page 1036 ميه: Found match for regex: <begin> {{arz-head|noun|f|tr=mayya}} <e
 Page 1036 ميه: Skipped, no changes
 Page 1037 ن: Found match for regex: <begin> {{arz-head|prefix|head=نِـ<tr:ni->}} <end>
 Page 1037 ن: Found match for regex: <begin> {{apc-head|root suffix|head=ـن<tr:n>}} <end>
-Page 1037 ن: Found match for regex: <begin> {{head|apc|suffix|head=ـن|g=p|tr=-un, -wun, -yun}} <end>
+Page 1037 ن: Found match for regex: <begin> {{apc-head|suffix|p|head=ـن<tr:-un, -wun, -yun>}} <end>
 Page 1037 ن: Found match for regex: <begin> {{aeb-head|pcl|tr=n}} <end>
 Page 1037 ن: Skipped, no changes
 Page 1038 نا: Found match for regex: <begin> {{arz-head|pron|p|clitic=1|head=ـنا<tr:-nā>}} <end> FIXME: change header to Pronoun
@@ -6917,7 +6917,7 @@ Page 1060 نمرة: Found match for regex: <begin> {{arz-head|noun|f|tr=nimra}} 
 Page 1060 نمرة: Found match for regex: <begin> {{ary-head|noun|f|tr=namra|pl=نماري<tr:nmāri>,نوامر<tr:nwāmar>,نمرات<tr:namrāt>}} <end>
 Page 1060 نمرة: Found match for regex: <begin> {{ajp-head|noun|f|tr=numra|pl=نمر<tr:numar>}} <end>
 Page 1060 نمرة: Skipped, no changes
-Page 1061 نهارك سعيد: Found match for regex: <begin> {{head|arz|phrase|tr=nahārak saʕīd|head=[[نهار|نهارك]] [[سعيد]]}} <end>
+Page 1061 نهارك سعيد: Found match for regex: <begin> {{head|arz|phr|tr=nahārak saʕīd|head=[[نهار|نهارك]] [[سعيد]]}} <end>
 Page 1061 نهارك سعيد: Skipped, no changes
 Page 1062 نهر: Found match for regex: <begin> {{arz-root|ن ه ر}} <end>
 Page 1062 نهر: Found match for regex: <begin> {{arz-head|noun|m|tr=nahr}} <end>
@@ -7166,7 +7166,7 @@ Page 1097 يا: Found match for regex: <begin> {{arz-enclitic pronouns}} <end>
 Page 1097 يا: Found match for regex: <begin> {{arz-head|conj|tr=ya}} <end>
 Page 1097 يا: Found match for regex: <begin> {{arz-head|adv|head=ـيّاً<tr:-iyyan>,ـيًّا<tr:->}} <end>
 Page 1097 يا: Found match for regex: <begin> {{afb-head|pcl|tr=ya}} <end>
-Page 1097 يا: Found match for regex: <begin> {{afb-head|conj|head=يا|tr=ya}} <end>
+Page 1097 يا: Found match for regex: <begin> {{afb-head|conj|head=يا<tr:ya>}} <end>
 Page 1097 يا: Found match for regex: <begin> {{ary-head|pcl|tr=yā}} <end>
 Page 1097 يا: Found match for regex: <begin> {{ary-head|adv|tr=yā}} <end>
 Page 1097 يا: Found match for regex: <begin> {{ary-head|pcl|tr=yā}} <end>
@@ -7180,9 +7180,9 @@ Page 1097 يا: Skipped, no changes
 Page 1098 يا دوب: Found match for regex: <begin> {{arz-head|adv|tr=ya dōb}} <end>
 Page 1098 يا دوب: Found match for regex: <begin> {{acw-head|adv|head=يا دوب<tr:yā dūb>}} <end>
 Page 1098 يا دوب: Skipped, no changes
-Page 1099 يا ريت: Found match for regex: <begin> {{arz-head|phrase|head=يا ريت<tr:ya rīt>}} <end>
-Page 1099 يا ريت: Found match for regex: <begin> {{acw-head|phrase|head=يا ريت<tr:yā rēt>}} <end>
-Page 1099 يا ريت: Found match for regex: <begin> {{ajp-head|phrase|head=يا ريت<tr:ya rēt>}} <end>
+Page 1099 يا ريت: Found match for regex: <begin> {{arz-head|phr|head=يا ريت<tr:ya rīt>}} <end>
+Page 1099 يا ريت: Found match for regex: <begin> {{acw-head|phr|head=يا ريت<tr:yā rēt>}} <end>
+Page 1099 يا ريت: Found match for regex: <begin> {{ajp-head|phr|head=يا ريت<tr:ya rēt>}} <end>
 Page 1099 يا ريت: Skipped, no changes
 Page 1100 ياترى: Found match for regex: <begin> {{arz-head|pcl|tr=yatara}} <end>
 Page 1100 ياترى: Found match for regex: <begin> {{apc-head|pcl|tr=yatara}} <end>
@@ -7298,7 +7298,7 @@ Page 12 اخترع: Found match for regex: <begin> {{ajp-conj/8A|خ|ر|ع|ḵ|r|
 Page 12 اخترع: Skipped, no changes
 Page 13 اذون: Found match for regex: <begin> {{afb-head|noun|f|tr=aḏūn|d=اذنين<tr:iḏnēn>,اذونين<tr:aḏūnēn>|pl=اذاني<tr:aḏāni>}} <end>
 Page 13 اذون: Skipped, no changes
-Page 14 ارحبو: Found match for regex: <begin> {{afb-head|phrase|tr=irħabo}} <end>
+Page 14 ارحبو: Found match for regex: <begin> {{afb-head|phr|tr=irħabo}} <end>
 Page 14 ارحبو: Skipped, no changes
 Page 15 استانس: Found match for regex: <begin> {{afb-head|verb|head=اِسْتانَس<tr:ɪstanəs>}} <end>
 Page 15 استانس: Skipped, no changes
@@ -7335,7 +7335,7 @@ Page 27 الحين: Skipped, no changes
 Page 28 الدنمارك: Found match for regex: <begin> {{afb-head|propn|f|tr=id-dinimark}} <end>
 Page 28 الدنمارك: Found match for regex: <begin> {{ajp-head|propn|f|tr=id-danimark}} <end>
 Page 28 الدنمارك: Skipped, no changes
-Page 29 الذيب ما يهرول عبث: Found match for regex: <begin> {{head|afb|proverb|head=ال[[ذيب]] [[ما]] [[هرول|يهرول]] عبث|tr=iḏḏīb mā-yharwil ʕabaṯ}} <end>
+Page 29 الذيب ما يهرول عبث: Found match for regex: <begin> {{afb-head|proverb|head=ال[[ذيب]] [[ما]] [[هرول|يهرول]] عبث<tr:iḏḏīb mā-yharwil ʕabaṯ>}} <end>
 Page 29 الذيب ما يهرول عبث: Skipped, no changes
 Page 30 الشارقة: Found match for regex: <begin> {{afb-head|noun|f|tr=aš-šārja}} <end>
 Page 30 الشارقة: Skipped, no changes
@@ -7368,10 +7368,10 @@ Page 38 اهم: Skipped, no changes
 Page 39 اهمه: Found match for regex: <begin> {{head|afb|pron|head=اُهْمَه|tr=uhma|g=m|g2=f}} <end>
 Page 39 اهمه: Found match for regex: <begin> {{afb-personal pronouns}} <end>
 Page 39 اهمه: Skipped, no changes
-Page 40 اهو: Found match for regex: <begin> {{head|afb|pron|head=اُهو|tr=uhu|g=m}} <end>
+Page 40 اهو: Found match for regex: <begin> {{afb-head|pron|m|head=اُهو<tr:uhu>}} <end>
 Page 40 اهو: Found match for regex: <begin> {{afb-personal pronouns}} <end>
 Page 40 اهو: Skipped, no changes
-Page 41 اهوه: Found match for regex: <begin> {{head|afb|pron|head=اُهْوَه|tr=uhwa|g=m}} <end>
+Page 41 اهوه: Found match for regex: <begin> {{afb-head|pron|m|head=اُهْوَه<tr:uhwa>}} <end>
 Page 41 اهوه: Found match for regex: <begin> {{afb-personal pronouns}} <end>
 Page 41 اهوه: Skipped, no changes
 Page 42 اهي: Found match for regex: <begin> {{afb-head|pron|head=اِهي<tr:ihi>}} <end>
@@ -7503,7 +7503,7 @@ Page 82 بليل: Found match for regex: <begin> {{afb-head|adv|head=بِلّي�
 Page 82 بليل: Skipped, no changes
 Page 83 بنديرة: Found match for regex: <begin> {{afb-head|noun|f|tr=bindēra|pl=بنديرات<tr:bindērāt>,بنادر<tr:binādir>}} <end>
 Page 83 بنديرة: Skipped, no changes
-Page 84 بنسل: Found match for regex: <begin> {{head|afb|noun|head=بِنْسِل|g=m|tr=pinsil, binsil}} <end>
+Page 84 بنسل: Found match for regex: <begin> {{afb-head|noun|m|head=بِنْسِل<tr:pinsil, binsil>}} <end>
 Page 84 بنسل: Skipped, no changes
 Page 85 بنطرون: Found match for regex: <begin> {{afb-head|noun|m|head=بَنْطَرون<tr:banṭarōn>|pl=بَنْطَرونات<tr:banṭarōnāt>}} <end>
 Page 85 بنطرون: Skipped, no changes
@@ -7676,11 +7676,11 @@ Page 148 جون الكويت: Found match for regex: <begin> {{afb-head|propn|he
 Page 148 جون الكويت: Skipped, no changes
 Page 149 جونقر: Found match for regex: <begin> {{head|afb|noun|head=جونقر|tr=jongər|plural|جناقر}} <end>
 Page 149 جونقر: Skipped, no changes
-Page 150 جيك: Found match for regex: <begin> {{head|afb|propn|head=جِيك|tr=jēk|g=m}} <end>
+Page 150 جيك: Found match for regex: <begin> {{afb-head|propn|m|head=جِيك<tr:jēk>}} <end>
 Page 150 جيك: Found match for regex: <begin> {{head|afb|verb|head=جَيَّك|tr=čayyak|imperfective|يِجَيِّك|f1tr=yčayyik}} <end>
 Page 150 جيك: Found match for regex: <begin> {{head|afb|noun|head=جِيك|tr=čēk|plural|جِيكات|f1tr=čēkāt|g=m}} <end>
-Page 150 جيك: Found match for regex: <begin> {{head|afb|adj|head=جِيك|g=mf|tr=čīk}} <end>
-Page 150 جيك: Found match for regex: <begin> {{head|afb|propn|head=جِيك|g=f|tr=čīk}} <end>
+Page 150 جيك: Found match for regex: <begin> {{afb-head|adj|mf|head=جِيك<tr:čīk>}} <end>
+Page 150 جيك: Found match for regex: <begin> {{afb-head|propn|f|head=جِيك<tr:čīk>}} <end>
 Page 150 جيك: Skipped, no changes
 Page 151 جيكر: Found match for regex: <begin> {{afb-head|adj|head=جيكَر<tr:jēkar>|f=جيكَرة<tr:jēkara>|pl=جِياكِر<tr:jiyākir>}} <end>
 Page 151 جيكر: Found match for regex: <begin> {{afb-head|noun|m|head=جيكَر<tr:jēkar>|d=جيكَرين<tr:jēkarēn>}} <end>
@@ -7767,7 +7767,7 @@ Page 172 حمارة: Found match for regex: <begin> {{ary-head|noun|f|tr=ḥmār
 Page 172 حمارة: Skipped, no changes
 Page 173 حمرة: Found match for regex: <begin> {{afb-root|ح م ر}} <end>
 Page 173 حمرة: Found match for regex: <begin> {{afb-head|noun|f|head=حُمْرة<tr:ḥumra>|pl=حُمْرات<tr:ḥumrāt>,حُمَر<tr:ḥumar>}} <end>
-Page 173 حمرة: Found match for regex: <begin> {{afb-head|adjective feminine form|f|tr=ḥamra}} <end>
+Page 173 حمرة: Found match for regex: <begin> {{afb-head|adjf|f|tr=ḥamra}} <end>
 Page 173 حمرة: Found match for regex: <begin> {{ajp-root|ح م ر}} <end>
 Page 173 حمرة: Found match for regex: <begin> {{ajp-head|noun|f|tr=ḥumra}} <end>
 Page 173 حمرة: Skipped, no changes
@@ -7888,7 +7888,7 @@ Page 203 دقمة: Skipped, no changes
 Page 204 دقوس: Found match for regex: <begin> {{afb-head|noun|m|tr=daqqūs|pl=-}} <end>
 Page 204 دقوس: Skipped, no changes
 Page 205 دقيقة: Found match for regex: <begin> {{afb-head|noun|f|tr=digīga|d=دقيقتين<tr:digīgtēn>|pl=دِقايِق<tr:digāyig>}} <end>
-Page 205 دقيقة: Found match for regex: <begin> {{head|afb|adjf|tr=dəqiqa|g=f}} <end>
+Page 205 دقيقة: Found match for regex: <begin> {{afb-head|adjf|f|tr=dəqiqa}} <end>
 Page 205 دقيقة: Found match for regex: <begin> {{acw-head|noun|f|tr=dagīga|d=دقيقتين<tr:dagīgatēn>|pl=دقايق<tr:dagāyig>}} <end>
 Page 205 دقيقة: Found match for regex: <begin> {{acw-head|adj|tr=dagīga}} <end>
 Page 205 دقيقة: Found match for regex: <begin> {{ary-head|noun|f|tr=dqīqa|d=دقيقتين<tr:dqīqtayn>|pl=دقايق<tr:dqāyiq>}} <end>
@@ -7921,8 +7921,8 @@ Page 212 ديج: Found match for regex: <begin> {{afb-head|noun|m|tr=dīč}} <en
 Page 212 ديج: Skipped, no changes
 Page 213 ديد: Found match for regex: <begin> {{afb-head|noun|m|tr=dēd|d=ديدين<tr:dēdēn>|pl=ديود<tr:dyūd>}} <end>
 Page 213 ديد: Skipped, no changes
-Page 214 دير بالك: Found match for regex: <begin> {{afb-head|phrase|head=دِيرْ بَالِكْ<tr:dīr bālik>}} <end>
-Page 214 دير بالك: Found match for regex: <begin> {{ajp-head|phrase|head=دِيرْ بَالِكْ<tr:dīr bālik>}} <end>
+Page 214 دير بالك: Found match for regex: <begin> {{afb-head|phr|head=دِيرْ بَالِكْ<tr:dīr bālik>}} <end>
+Page 214 دير بالك: Found match for regex: <begin> {{ajp-head|phr|head=دِيرْ بَالِكْ<tr:dīr bālik>}} <end>
 Page 214 دير بالك: Skipped, no changes
 Page 215 ديرة: Found match for regex: <begin> {{head|afb|noun|g=f|tr=dīra|dual|ديرتين|f1tr=dīrtēn|plural|ديرات|or|دير|f2tr=dīrāt|f3tr=diyar}} <end>
 Page 215 ديرة: Skipped, no changes
@@ -8062,9 +8062,9 @@ Page 265 سنسون: Skipped, no changes
 Page 266 سنع: Found match for regex: <begin> {{head|afb|adj|head=سَنْع|tr=sanʕ|g=m|feminine and inanimate plural|سَنْعة|f1tr=sanʕa|animate plural|سَنْعين|f2tr=sanʕīn}} <end>
 Page 266 سنع: Found match for regex: <begin> {{head|afb|noun|head=سَنْع|tr=sanʕ|g=m|feminine and inanimate plural|سَنْعة|f1tr=sanʕa|animate plural|سَنْعين|f2tr=sanʕīn}} <end>
 Page 266 سنع: Skipped, no changes
-Page 267 سو خير وقطه بالبحر: Found match for regex: <begin> {{head|afb|proverb|head=[[سوى|سو]] [[خير]] و[[قط|قطه]] بال[[بحر]]|tr=saw ḵēr-u giṭṭa b-il-baḥar}} <end>
+Page 267 سو خير وقطه بالبحر: Found match for regex: <begin> {{afb-head|proverb|head=[[سوى|سو]] [[خير]] و[[قط|قطه]] بال[[بحر]]<tr:saw ḵēr-u giṭṭa b-il-baḥar>}} <end>
 Page 267 سو خير وقطه بالبحر: Skipped, no changes
-Page 268 سو خير وقطه بحر: Found match for regex: <begin> {{head|afb|proverb|head=[[سوى|سو]] [[خير]] و[[قط|قطه]] [[بحر]]|tr=saw ḵēr-u giṭṭa baḥar}} <end>
+Page 268 سو خير وقطه بحر: Found match for regex: <begin> {{afb-head|proverb|head=[[سوى|سو]] [[خير]] و[[قط|قطه]] [[بحر]]<tr:saw ḵēr-u giṭṭa baḥar>}} <end>
 Page 268 سو خير وقطه بحر: Skipped, no changes
 Page 269 سولف: Found match for regex: <begin> {{head|afb|verb|head=سولَف|tr=sōlaf|imperfective|يسولِف|f1tr=ysōlif|verbal noun|سالْفة|f2tr=sālfa}} <end>
 Page 269 سولف: Skipped, no changes
@@ -8133,8 +8133,8 @@ Page 285 شربت: Skipped, no changes
 Page 286 شريچة: Found match for regex: <begin> {{afb-root|ش ر ك}} <end>
 Page 286 شريچة: Found match for regex: <begin> {{afb-head|noun|f|head=شِريچة<tr:širīča>|pl=شريچات<tr:širīčāt>}} <end>
 Page 286 شريچة: Skipped, no changes
-Page 287 شقردي: Found match for regex: <begin> {{head|afb|noun|tr=ʃɪgərdi|g=m}} <end>
-Page 287 شقردي: Found match for regex: <begin> {{head|afb|adj|tr=ʃɪgərdi|g=m}} <end>
+Page 287 شقردي: Found match for regex: <begin> {{afb-head|noun|m|tr=ʃɪgərdi}} <end>
+Page 287 شقردي: Found match for regex: <begin> {{afb-head|adj|m|tr=ʃɪgərdi}} <end>
 Page 287 شقردي: Skipped, no changes
 Page 288 شكر: Found match for regex: <begin> {{afb-head|noun|m|tr=šikar,šakar,šakir}} <end>
 Page 288 شكر: Found match for regex: <begin> {{head|acm|noun|tr=šakar|head=شَكَر|g=m}} <end>
@@ -8272,7 +8272,7 @@ Page 321 طرش: Found match for regex: <begin> {{ary-head|adj|tr=ṭraš|f=طر
 Page 321 طرش: Skipped, no changes
 Page 322 طريج: Found match for regex: <begin> {{afb-head|noun|m|tr=ṭirīj|d=طريجين<tr:ṭirījēn>|pl=اطْرِجة<tr:aṭrija>,طُرُق<tr:ṭuruq>}} <end>
 Page 322 طريج: Skipped, no changes
-Page 323 طشت: Found match for regex: <begin> {{head|afb|noun|head=طَشْت|g=m|tr=ṭāst}} <end>
+Page 323 طشت: Found match for regex: <begin> {{afb-head|noun|m|head=طَشْت<tr:ṭāst>}} <end>
 Page 323 طشت: Found match for regex: <begin> {{acw-head|noun|f|tr=ṭās|pl=طُشوت<tr:ṭušut>}} <end>
 Page 323 طشت: Skipped, no changes
 Page 324 طق: Found match for regex: <begin> {{afb-root|ط ق ق}} <end>
@@ -8309,7 +8309,7 @@ Page 332 ظل: Found match for regex: <begin> {{afb-head|verb|I|tr=ḏ̣aḷḷ|
 Page 332 ظل: Found match for regex: <begin> {{acw-root|ظ ل ل}} <end>
 Page 332 ظل: Found match for regex: <begin> {{acw-head|noun|m|head=ظِلّ<tr:ḍill>|pl=ظلال<tr:ḍilāl>}} <end>
 Page 332 ظل: Found match for regex: <begin> {{acm-root|ظ ل ل}} <end>
-Page 332 ظل: Found match for regex: <begin> {{head|acm|noun|tr=ẓill|g=m}} <end>
+Page 332 ظل: Found match for regex: <begin> {{acm-head|noun|m|tr=ẓill}} <end>
 Page 332 ظل: Found match for regex: <begin> {{acm-head|verb|I|tr=ẓall|np=يظل<tr:yẓall>}} <end>
 Page 332 ظل: Found match for regex: <begin> {{acm-conj/I-gemm-a|ظ|ل|ẓ|l|l}} <end>
 Page 332 ظل: Skipped, no changes
@@ -8418,7 +8418,7 @@ Page 356 علوقة: Skipped, no changes
 Page 357 علچ: Found match for regex: <begin> {{afb-head|noun|m|head=عِلْچ<tr:ʕilč>|pl=عْلوچ<tr:ʕlūč>}} <end>
 Page 357 علچ: Found match for regex: <begin> {{afb-head|verb|II|head=عَلَّچ<tr:ʕallač>}} <end>
 Page 357 علچ: Skipped, no changes
-Page 358 عمره ما تبخر تبخر واحترق: Found match for regex: <begin> {{head|afb|proverb|head=[[عمر|عُمْرَه]] [[ما]] [[تبخر|تَبَخَّر]] تَبَخَّر [[و]][[احترق|اِحْتِرَق]]|tr=ʕumra mā tabaḵḵar, tabaḵḵar-we-ḥtirag}} <end>
+Page 358 عمره ما تبخر تبخر واحترق: Found match for regex: <begin> {{afb-head|proverb|head=[[عمر|عُمْرَه]] [[ما]] [[تبخر|تَبَخَّر]] تَبَخَّر [[و]][[احترق|اِحْتِرَق]]<tr:ʕumra mā tabaḵḵar, tabaḵḵar-we-ḥtirag>}} <end>
 Page 358 عمره ما تبخر تبخر واحترق: Skipped, no changes
 Page 359 عمي: Found match for regex: <begin> {{afb-root|ع م ي}} <end>
 Page 359 عمي: Found match for regex: <begin> {{afb-head|adj|head=عَمَيْ<tr:ʕamay>|f=عَمْية<tr:ʕamya>|cpl=عِمْيان<tr:ʕimyān>}} <end>
@@ -8463,7 +8463,7 @@ Page 372 غطا: Found match for regex: <begin> {{ary-rootbox|غ ط ي}} <end>
 Page 372 غطا: Found match for regex: <begin> {{ary-head|noun|m|tr=ḡṭa|pl=غطاوات<tr:ḡṭāwāt>}} <end>
 Page 372 غطا: Found match for regex: <begin> {{ajp-head|noun|m|tr=ḡaṭa|pl=غطي<tr:ḡuṭi>}} <end>
 Page 372 غطا: Skipped, no changes
-Page 373 غلطة الشاطر بألف: Found match for regex: <begin> {{head|afb|proverb|head=[[غلطة]] ال[[شاطر]] ب[[ألف]]|tr=ḡaḷṭat iššāṭir b-alf}} <end>
+Page 373 غلطة الشاطر بألف: Found match for regex: <begin> {{afb-head|proverb|head=[[غلطة]] ال[[شاطر]] ب[[ألف]]<tr:ḡaḷṭat iššāṭir b-alf>}} <end>
 Page 373 غلطة الشاطر بألف: Skipped, no changes
 Page 374 غلى: Found match for regex: <begin> {{afb-root|غ ل ي}} <end>
 Page 374 غلى: Found match for regex: <begin> {{afb-head|verb|I|head=غِلى<tr:ḡila>|np=يغلي<tr:yiḡli,yaḡli>}} <end>
@@ -8512,7 +8512,7 @@ Page 382 فطيرة: Skipped, no changes
 Page 383 فقارى: Found match for regex: <begin> {{afb-head|adj|head=فقارى<tr:faqāra,fuqāra,fiqāra>}} <end>
 Page 383 فقارى: Found match for regex: <begin> {{afb-head|noun|head=فقارى<tr:faqāra,fuqāra,fiqāra>}} <end>
 Page 383 فقارى: Skipped, no changes
-Page 384 فقع: Found match for regex: <begin> {{head|afb|noun|head=فَقِع|g=m|tr=fagéʕ}} <end>
+Page 384 فقع: Found match for regex: <begin> {{afb-head|noun|m|head=فَقِع<tr:fagéʕ>}} <end>
 Page 384 فقع: Found match for regex: <begin> {{acw-root|ف ق ع}} <end>
 Page 384 فقع: Found match for regex: <begin> {{acw-head|verb|I|tr=fagaʕ|np=يِفْقَع<tr:yifgaʕ>}} <end>
 Page 384 فقع: Found match for regex: <begin> {{acw-conj/I-sound-a-a|ف|ق|ع|f|g|ʕ}} <end>
@@ -8688,7 +8688,7 @@ Page 427 كبوت: Found match for regex: <begin> {{acw-head|noun|m|head=كَب�
 Page 427 كبوت: Skipped, no changes
 Page 428 كبوس: Found match for regex: <begin> {{afb-head|noun|m|head=كَبّوس<tr:kabbūs>|pl=كَبابيس<tr:kabābīs>,كِبابيس<tr:kibābīs>}} <end>
 Page 428 كبوس: Skipped, no changes
-Page 429 كثر خيرك: Found match for regex: <begin> {{head|afb|phrase|tr=kaṯṯar ḵērak|head=[[كثر]] [[خير]]ك}} <end>
+Page 429 كثر خيرك: Found match for regex: <begin> {{head|afb|phr|tr=kaṯṯar ḵērak|head=[[كثر]] [[خير]]ك}} <end>
 Page 429 كثر خيرك: Skipped, no changes
 Page 430 كربون: Found match for regex: <begin> {{afb-head|intj|tr=kurbūn, kirbūn}} <end>
 Page 430 كربون: Skipped, no changes
@@ -8806,17 +8806,17 @@ Page 464 مأجور: Skipped, no changes
 Page 465 ما صارت: Found match for regex: <begin> {{afb-head|intj|tr=mā ṣārat}} <end>
 Page 465 ما صارت: Skipped, no changes
 Page 466 ماشة: Found match for regex: <begin> {{afb-head|noun|f|tr=māša|d=ماشتين<tr:māštēn>|pl=ماشات<tr:māšāt>}} <end>
-Page 466 ماشة: Found match for regex: <begin> {{head|afb|nounf|tr=māšša|g=f}} <end>
+Page 466 ماشة: Found match for regex: <begin> {{afb-head|nounf|f|tr=māšša}} <end>
 Page 466 ماشة: Skipped, no changes
 Page 467 ماصخ: Found match for regex: <begin> {{afb-head|adj|tr=māṣiḵ|f=ماصخة<tr:māṣḵa>|cpl=ماصخين<tr:māṣḵīn>}} <end>
 Page 467 ماصخ: Skipped, no changes
 Page 468 ماك چكن: Found match for regex: <begin> {{afb-head|noun|m,f|head=ماك چِكِن<tr:māk čikin>}} <end>
 Page 468 ماك چكن: Skipped, no changes
 Page 469 مال: Found match for regex: <begin> {{afb-head|adv|head=مال<tr:māl>}} <end>
-Page 469 مال: Found match for regex: <begin> {{ajp-head|phrase|tr=māl}} <end>
+Page 469 مال: Found match for regex: <begin> {{ajp-head|phr|tr=māl}} <end>
 Page 469 مال: Found match for regex: <begin> {{ajp-prep-inflection <end>
 Page 469 مال: Skipped, no changes
-Page 470 مال البخيل ياكله العيار: Found match for regex: <begin> {{head|afb|proverb|head=[[مال]] [[بخيل|اِلْبَخيل]] [[كلا|ياكْلَه]] [[عيار|اِلْعَيَّار]]|tr=māl il-bāḵil yakl-a-l-ʕayyar}} <end>
+Page 470 مال البخيل ياكله العيار: Found match for regex: <begin> {{afb-head|proverb|head=[[مال]] [[بخيل|اِلْبَخيل]] [[كلا|ياكْلَه]] [[عيار|اِلْعَيَّار]]<tr:māl il-bāḵil yakl-a-l-ʕayyar>}} <end>
 Page 470 مال البخيل ياكله العيار: Skipped, no changes
 Page 471 مالت عليك: Found match for regex: <begin> {{afb-head|intj|head=مالت عَليك<tr:mālat ʕalēk>}} <end>
 Page 471 مالت عليك: Found match for regex: <begin> {{afb-phrasal-verb-conj|مالت|علي|tr=mālat}} <end>
@@ -8899,7 +8899,7 @@ Page 494 معكرونية: Found match for regex: <begin> {{head|afb|noun|g=f|he
 Page 494 معكرونية: Skipped, no changes
 Page 495 مفيوح: Found match for regex: <begin> {{afb-head|adj|مَفْيوح|tr=mafyūḥ|f=مَفْيوحة<tr:mafyŭḥa>}} <end>
 Page 495 مفيوح: Skipped, no changes
-Page 496 مقارنات: Found match for regex: <begin> {{head|afb|noun|tr=mʊqarənat|g=f}} <end>
+Page 496 مقارنات: Found match for regex: <begin> {{afb-head|noun|f|tr=mʊqarənat}} <end>
 Page 496 مقارنات: Skipped, no changes
 Page 497 مقارنة: Found match for regex: <begin> {{head|afb|noun|g=f|head=مُقارَنة|tr=mʊqarənə|plural|مُقارَنات|f1tr=mʊqarənat|construct|مقارنة|f2tr=mʊqarənət}} <end>
 Page 497 مقارنة: Found match for regex: <begin> {{acw-root|ق ر ن}} <end>
@@ -8937,7 +8937,7 @@ Page 507 مليق: Skipped, no changes
 Page 508 ملچة: Found match for regex: <begin> {{afb-root|م ل ك}} <end>
 Page 508 ملچة: Found match for regex: <begin> {{afb-head|noun|f|tr=milča}} <end>
 Page 508 ملچة: Skipped, no changes
-Page 509 من قال ها سمع: Found match for regex: <begin> {{head|afb|proverb|head=من [[قال]] [[ها]] [[سمع]]|tr=min gāl hā simaʕ}} <end>
+Page 509 من قال ها سمع: Found match for regex: <begin> {{afb-head|proverb|head=من [[قال]] [[ها]] [[سمع]]<tr:min gāl hā simaʕ>}} <end>
 Page 509 من قال ها سمع: Skipped, no changes
 Page 510 منظرة: Found match for regex: <begin> {{head|afb|noun|g=f|head=مَنْظَرة|tr=manḏ̣ara|dual|مَنْظَرْتين|f1tr=manḏ̣artēn|plural|مَنْظَرات|f2tr=manḏ̣arāt|or|مَناظِر|f3tr=manāḏ̣ir}} <end>
 Page 510 منظرة: Skipped, no changes
@@ -8960,7 +8960,7 @@ Page 517 موعد: Found match for regex: <begin> {{head|afb|noun|g=m|head=مَ�
 Page 517 موعد: Found match for regex: <begin> {{acw-root|و ع د}} <end>
 Page 517 موعد: Found match for regex: <begin> {{acw-head|noun|m|head=مَوْعِد<tr:mawʕid>|pl=مَوَاعيد<tr:mawāʕīd>}} <end>
 Page 517 موعد: Skipped, no changes
-Page 518 ميخالف: Found match for regex: <begin> {{afb-head|phrase|head=مَيْخالِف<tr:mayḵālif>}} <end>
+Page 518 ميخالف: Found match for regex: <begin> {{afb-head|phr|head=مَيْخالِف<tr:mayḵālif>}} <end>
 Page 518 ميخالف: Skipped, no changes
 Page 519 ميز: Found match for regex: <begin> {{afb-head|noun|m|tr=mēz|d=ميزين<tr:mēzēn>|pl=أمياز<tr:ʔamyāz>}} <end>
 Page 519 ميز: Found match for regex: <begin> {{acm-head|noun|m|head=ميز<tr:mēz>}} <end>
@@ -9082,7 +9082,7 @@ Page 554 وناسة: Skipped, no changes
 Page 555 ويه: Found match for regex: <begin> {{afb-head|noun|m|tr=wayh|pl=ويوه<tr:wyūh>}} <end>
 Page 555 ويه: Found match for regex: <begin> {{afb-head|intj|tr=wē}} <end>
 Page 555 ويه: Skipped, no changes
-Page 556 يا علي: Found match for regex: <begin> {{head|afb|intj|head=[[يا]] [[عَلي]]|tr=yā ʕali}} <end>
+Page 556 يا علي: Found match for regex: <begin> {{afb-head|intj|head=[[يا]] [[عَلي]]<tr:yā ʕali>}} <end>
 Page 556 يا علي: Skipped, no changes
 Page 557 يا … يا: Found match for regex: <begin> {{head|afb|head=يا … يا|conj|tr=yā … yā}} <end>
 Page 557 يا … يا: Found match for regex: <begin> {{ajp-head|conj|head=یا ... یا<tr:ya … ya>}} <end>
@@ -9098,7 +9098,7 @@ Page 561 ياز: Found match for regex: <begin> {{afb-head|verb|tr=yaz}} <end>
 Page 561 ياز: Skipped, no changes
 Page 562 ياهل: Found match for regex: <begin> {{afb-head|noun|m,f|tr=yāhil|pl=يَهال<tr:yahāl>}} <end>
 Page 562 ياهل: Skipped, no changes
-Page 563 يجهز الدوا قبل الفلعة: Found match for regex: <begin> {{head|afb|proverb|head=[[جهز|يجهز]] ال[[دوا]] [[قبل]] الفلعة|tr=ijahhiz id-duwa gabḷil-falʕa}} <end>
+Page 563 يجهز الدوا قبل الفلعة: Found match for regex: <begin> {{afb-head|proverb|head=[[جهز|يجهز]] ال[[دوا]] [[قبل]] الفلعة<tr:ijahhiz id-duwa gabḷil-falʕa>}} <end>
 Page 563 يجهز الدوا قبل الفلعة: Skipped, no changes
 Page 564 يح: Found match for regex: <begin> {{afb-head|collnoun|tr=yiḥḥ|sing=يحة<tr:yiḥḥa>|pl=يحات<tr:yiḥḥāt>}} <end>
 Page 564 يح: Skipped, no changes
@@ -9107,8 +9107,8 @@ Page 565 يدة: Found match for regex: <begin> {{afb-head|noun|f|head=يَدّ�
 Page 565 يدة: Skipped, no changes
 Page 566 يريور: Found match for regex: <begin> {{afb-head|noun|m|tr=yaryūr|pl=يرايير<tr:yarāyīr>}} <end>
 Page 566 يريور: Skipped, no changes
-Page 567 يعطيك العافية: Found match for regex: <begin> {{head|afb|phrase|head=يَعْطيك العافْية|tr=yə3ṭik ɪl-3afyə|g=m}} <end>
-Page 567 يعطيك العافية: Found match for regex: <begin> {{acw-head|phrase|head=يِعْطيك العَافْية<tr:yiʕṭīk al-ʕāfya>}} <end>
+Page 567 يعطيك العافية: Found match for regex: <begin> {{afb-head|phr|m|head=يَعْطيك العافْية<tr:yə3ṭik ɪl-3afyə>}} <end>
+Page 567 يعطيك العافية: Found match for regex: <begin> {{acw-head|phr|head=يِعْطيك العَافْية<tr:yiʕṭīk al-ʕāfya>}} <end>
 Page 567 يعطيك العافية: Skipped, no changes
 Page 568 يعني: Found match for regex: <begin> {{afb-head|verb|head=يَعْنِي<tr:yaʕnī>}} <end>
 Page 568 يعني: Found match for regex: <begin> {{afb-head|intj|head=يَعْنِي<tr:yaʕnī>}} <end>
@@ -9126,7 +9126,7 @@ Page 570 يمناوي: Found match for regex: <begin> {{afb-head|adj|head=يِم
 Page 570 يمناوي: Skipped, no changes
 Page 571 يني: Found match for regex: <begin> {{afb-head|noun|head=يِنّي<tr:yinni>|pl=يَنانْوة<tr:yanānwa>}} <end>
 Page 571 يني: Skipped, no changes
-Page 572 يواش يواش: Found match for regex: <begin> {{afb-head|phrase|head=يَواش يَواش<tr:yawāš yawāš>}} <end>
+Page 572 يواش يواش: Found match for regex: <begin> {{afb-head|phr|head=يَواش يَواش<tr:yawāš yawāš>}} <end>
 Page 572 يواش يواش: Skipped, no changes
 Page 573 يوع: Found match for regex: <begin> {{afb-root|ي و ع}} <end>
 Page 573 يوع: Found match for regex: <begin> {{afb-head|noun|m|tr=yūʕ}} <end>
@@ -9147,7 +9147,7 @@ Page 579 چان: Found match for regex: <begin> {{acm-head|adv|tr=čān}} <end>
 Page 579 چان: Found match for regex: <begin> {{acm-head|verb|I|tr=čān|np=يصير<tr:yṣīr>}} <end>
 Page 579 چان: Skipped, no changes
 Page 580 چاي: Found match for regex: <begin> {{head|afb|noun|head=چاي|tr=čāy|countable and uncountable, dual|چايين|f1tr=čāyēn|plural|چايات|f2tr=čāyāt}} <end>
-Page 580 چاي: Found match for regex: <begin> {{head|acm|noun|tr=čāy|g=m}} <end>
+Page 580 چاي: Found match for regex: <begin> {{acm-head|noun|m|tr=čāy}} <end>
 Page 580 چاي: Skipped, no changes
 Page 581 چبريت: Found match for regex: <begin> {{afb-head|noun|m|tr=čibrīt|pl=چَبَارِيت<tr:čabārīt>}} <end>
 Page 581 چبريت: Skipped, no changes
@@ -9184,8 +9184,8 @@ Page 593 چيس: Found match for regex: <begin> {{acm-head|noun|m|tr=čīs|d=چ�
 Page 593 چيس: Skipped, no changes
 Page 594 چيك: Found match for regex: <begin> {{head|afb|verb|head=چَيَّك|tr=čayyak|imperfective|يِچَيِّك|f1tr=yčayyik}} <end>
 Page 594 چيك: Found match for regex: <begin> {{head|afb|noun|head=چِيك|tr=čēk|plural|چِيكات|f1tr=čēkāt|g=m}} <end>
-Page 594 چيك: Found match for regex: <begin> {{head|afb|adj|head=چِيك|g=mf|tr=čīk}} <end>
-Page 594 چيك: Found match for regex: <begin> {{head|afb|propn|head=چِيك|g=f|tr=čīk}} <end>
+Page 594 چيك: Found match for regex: <begin> {{afb-head|adj|mf|head=چِيك<tr:čīk>}} <end>
+Page 594 چيك: Found match for regex: <begin> {{afb-head|propn|f|head=چِيك<tr:čīk>}} <end>
 Page 594 چيك: Skipped, no changes
 Page 595 ڤيتامين و: Found match for regex: <begin> {{afb-head|noun|m|tr=vitamin waw}} <end>
 Page 595 ڤيتامين و: Skipped, no changes
@@ -9289,8 +9289,8 @@ Page 9 أح: Found match for regex: <begin> {{apc-head|adv|tr=ʔaḥ}} <end>
 Page 9 أح: Found match for regex: <begin> {{apc-head|intj|tr=ʔaḥḥ}} <end>
 Page 9 أح: Skipped, no changes
 Page 10 أحبك: Found match for regex: <begin> {{acw-root|ح ب ب}} <end>
-Page 10 أحبك: Found match for regex: <begin> {{acw-head|phrase|head=أَحُبَّك<tr:ʼaḥubbak>}} <end>
-Page 10 أحبك: Found match for regex: <begin> {{acw-head|phrase|head=أَحُبِّك<tr:ʼaḥubbik>}} <end>
+Page 10 أحبك: Found match for regex: <begin> {{acw-head|phr|head=أَحُبَّك<tr:ʼaḥubbak>}} <end>
+Page 10 أحبك: Found match for regex: <begin> {{acw-head|phr|head=أَحُبِّك<tr:ʼaḥubbik>}} <end>
 Page 10 أحبك: Skipped, no changes
 Page 11 أخت: Found match for regex: <begin> {{acw-head|noun|f|tr=uḵt|pl=أخوات<tr:ʔaḵwāt>}} <end>
 Page 11 أخت: Found match for regex: <begin> {{apc-head|noun|f|tr=ʔuḵt}} <end>
@@ -9418,9 +9418,9 @@ Page 54 إيرلندا: Skipped, no changes
 Page 55 إيش: Found match for regex: <begin> {{acw-head|pron|head=إِيش<tr:ʔēš>}} <end>
 Page 55 إيش: Found match for regex: <begin> {{ajp-head|pron|tr=ʔēš}} <end>
 Page 55 إيش: Skipped, no changes
-Page 56 إيش قاعد تسوي: Found match for regex: <begin> {{head|acw|phrase|tr=ʔēš gāʕid tisawwi?|head=إيش قاعد تسوي؟}} <end>
+Page 56 إيش قاعد تسوي: Found match for regex: <begin> {{acw-head|phr|head=إيش قاعد تسوي؟<tr:ʔēš gāʕid tisawwi?>}} <end>
 Page 56 إيش قاعد تسوي: Skipped, no changes
-Page 57 إيش مسوي: Found match for regex: <begin> {{head|acw|phrase|tr=ʔēš musawwi?|head=إيش مسوي؟}} <end>
+Page 57 إيش مسوي: Found match for regex: <begin> {{acw-head|phr|head=إيش مسوي؟<tr:ʔēš musawwi?>}} <end>
 Page 57 إيش مسوي: Skipped, no changes
 Page 58 إيقاع: Found match for regex: <begin> {{acw-head|noun|m|tr=ʔīgāʕ|pl=إيقاعات<tr:ʔīgāʕāt>}} <end>
 Page 58 إيقاع: Skipped, no changes
@@ -10128,8 +10128,8 @@ Page 254 بوسة: Found match for regex: <begin> {{acw-head|singnoun|f|tr=bōsa
 Page 254 بوسة: Found match for regex: <begin> {{ary-rootbox|ب و س}} <end>
 Page 254 بوسة: Found match for regex: <begin> {{ary-head|noun|f|tr=būsa|pl=بوسات<tr:būsāt>|dim=بويسة<tr:bwīsa>}} <end>
 Page 254 بوسة: Skipped, no changes
-Page 255 بوصة: Found match for regex: <begin> {{acw-head|noun|f|head=بوصة<tr:būṣa>}} (plural {{l|acw|بُوَص}} (buwaṣ)) <end>
-Page 255 بوصة: Found match for regex: <begin> {{acw-head|noun|f|head=بوصة<tr:būṣa>}} (plural {{l|acw|بُوصات}} (būṣāt)) <end>
+Page 255 بوصة: Found match for regex: <begin> {{acw-head|noun|f|head=بوصة<tr:būṣa>|pl=بُوَص<tr:buwaṣ>}} <end>
+Page 255 بوصة: Found match for regex: <begin> {{acw-head|noun|f|head=بوصة<tr:būṣa>|pl=بُوصات<tr:būṣāt>}} <end>
 Page 255 بوصة: Skipped, no changes
 Page 256 بول: Found match for regex: <begin> {{acw-head|noun|m|tr=bōl}} <end>
 Page 256 بول: Found match for regex: <begin> {{ary-rootbox|ب و ل}} <end>
@@ -10213,7 +10213,7 @@ Page 279 تشيلو: Skipped, no changes
 Page 280 تشيلي: Found match for regex: <begin> {{acw-head|propn|f|head=تْشِيلي<tr:tšīli>}} <end>
 Page 280 تشيلي: Found match for regex: <begin> {{acw-head|verbf|tr=tišīli}} <end>
 Page 280 تشيلي: Skipped, no changes
-Page 281 تصبح على خير: Found match for regex: <begin> {{acw-head|phrase|head=تِصْبَح على خير<tr:tiṣbaḥ ʕala ḵēr>}} <end>
+Page 281 تصبح على خير: Found match for regex: <begin> {{acw-head|phr|head=تِصْبَح على خير<tr:tiṣbaḥ ʕala ḵēr>}} <end>
 Page 281 تصبح على خير: Skipped, no changes
 Page 282 تصفيق: Found match for regex: <begin> {{acw-root|ص ف ق}} <end>
 Page 282 تصفيق: Found match for regex: <begin> {{acw-head|noun|m|tr=taṣfīg}} <end>
@@ -10272,9 +10272,9 @@ Page 297 تلفريك: Found match for regex: <begin> {{acw-head|noun|m|tr=tilif
 Page 297 تلفريك: Skipped, no changes
 Page 298 تليك: Found match for regex: <begin> {{acw-head|noun|m|head=تَلِّيك<tr:tallīk>}} <end>
 Page 298 تليك: Skipped, no changes
-Page 299 تمسي على خير: Found match for regex: <begin> {{acw-head|phrase|head=تِمْسي على خير<tr:timsi ʕala ḵēr>}} <end>
+Page 299 تمسي على خير: Found match for regex: <begin> {{acw-head|phr|head=تِمْسي على خير<tr:timsi ʕala ḵēr>}} <end>
 Page 299 تمسي على خير: Skipped, no changes
-Page 300 توصيلة: Found match for regex: <begin> {{acw-head|noun|f|head=تَوْصيلة<tr:tawṣīla>}} (plural {{l|acw|تَوْصيلات}} (tawṣīlāt)) <end>
+Page 300 توصيلة: Found match for regex: <begin> {{acw-head|noun|f|head=تَوْصيلة<tr:tawṣīla>|pl=تَوْصيلات<tr:tawṣīlāt>}} <end>
 Page 300 توصيلة: Skipped, no changes
 Page 301 توفو: Found match for regex: <begin> {{acw-head|collnoun|m|tr=tōfu}} <end>
 Page 301 توفو: Skipped, no changes
@@ -10851,7 +10851,7 @@ Page 433 خربط: Found match for regex: <begin> {{ajp-root|خ ر ب ط}} <end>
 Page 433 خربط: Found match for regex: <begin> {{ajp-head|verb|Iq|tr=ḵarbaṭ|pres=بخربط<tr:biḵarbeṭ>}} <end>
 Page 433 خربط: Found match for regex: <begin> {{ajp-conj/QA|خ|ر|ب|ط|ḵ|r|b|ṭ}} <end>
 Page 433 خربط: Skipped, no changes
-Page 434 خرتيت: Found match for regex: <begin> {{acw-head|noun|m|head=خَرْتيت<tr:ḵartīt>}} (plural {{l|acw|خَراتيت}} (ḵarātīt)) <end>
+Page 434 خرتيت: Found match for regex: <begin> {{acw-head|noun|m|head=خَرْتيت<tr:ḵartīt>|pl=خَراتيت<tr:ḵarātīt>}} <end>
 Page 434 خرتيت: Skipped, no changes
 Page 435 خرشوف: Found match for regex: <begin> {{acw-head|noun|m|tr=ḵaršūf|pl=خراشيف<tr:ḵarāšīf>}} <end>
 Page 435 خرشوف: Found match for regex: <begin> {{ary-head|collnoun|tr=ḵaršūf|sing=خرشوفة<tr:ḵaršūf>|pauc=خرشوفات<tr:ḵaršūfāt>}} <end>
@@ -11061,7 +11061,7 @@ Page 478 دق: Found match for regex: <begin> {{ajp-root|د ق ق}} <end>
 Page 478 دق: Found match for regex: <begin> {{ajp-head|verb|I|head=دقّ<tr:daʔʔ>|pres=بدقّ<tr:bidoʔʔ>}} <end>
 Page 478 دق: Found match for regex: <begin> {{ajp-conj/Cu|د|ق|d|ʔ}} <end>
 Page 478 دق: Skipped, no changes
-Page 479 دقاق: Found match for regex: <begin> {{acw-head|noun|m|head=دَقَّاق<tr:daggāg>}} (plural {{l|acw|دَقَّاقات}} (daggāgāt)) <end>
+Page 479 دقاق: Found match for regex: <begin> {{acw-head|noun|m|head=دَقَّاق<tr:daggāg>|pl=دَقَّاقات<tr:daggāgāt>}} <end>
 Page 479 دقاق: Skipped, no changes
 Page 480 دقة: Found match for regex: <begin> {{acw-root|د ق ق}} <end>
 Page 480 دقة: Found match for regex: <begin> {{acw-head|noun|f|tr=dugga}} <end>
@@ -11086,7 +11086,7 @@ Page 483 دقق: Found match for regex: <begin> {{ajp-conj/2A|د|ق|ق|d|ʔ|ʔ}}
 Page 483 دقق: Skipped, no changes
 Page 484 دلة: Found match for regex: <begin> {{acw-head|noun|f|head=دلّة<tr:dalla>|pl=دَلَّات<tr:dallāt>}} <end>
 Page 484 دلة: Skipped, no changes
-Page 485 دلفين: Found match for regex: <begin> {{acw-head|noun|m|head=دُلْفين<tr:dulfīn>}} (plural {{l|acw|دَلافين}} (dalāfīn)) <end>
+Page 485 دلفين: Found match for regex: <begin> {{acw-head|noun|m|head=دُلْفين<tr:dulfīn>|pl=دَلافين<tr:dalāfīn>}} <end>
 Page 485 دلفين: Skipped, no changes
 Page 486 دمع: Found match for regex: <begin> {{acw-root|د م ع}} <end>
 Page 486 دمع: Found match for regex: <begin> {{acw-head|verb|II|head=دَمَّع<tr:dammaʕ>|np=يِدَمِّع<tr:yidammiʕ>}} <end>
@@ -11196,8 +11196,8 @@ Page 511 رايح: Skipped, no changes
 Page 512 ربابة: Found match for regex: <begin> {{acw-root|ر ب ب}} <end>
 Page 512 ربابة: Found match for regex: <begin> {{acw-head|noun|f|tr=rabāba|pl=رَبَاب<tr:rabāb>,رَبَابَات<tr:rabābāt>}} <end>
 Page 512 ربابة: Skipped, no changes
-Page 513 ربوع: Found match for regex: <begin> {{head|acw|propn|tr=rabūʕ|g=m}} <end>
-Page 513 ربوع: Found match for regex: <begin> {{head|ayn|propn|tr=rabūʕ|g=m}} <end>
+Page 513 ربوع: Found match for regex: <begin> {{acw-head|propn|m|tr=rabūʕ}} <end>
+Page 513 ربوع: Found match for regex: <begin> {{ayn-head|propn|m|tr=rabūʕ}} <end>
 Page 513 ربوع: Skipped, no changes
 Page 514 رجال: Found match for regex: <begin> {{shu-head|nounf|m|tr=rujāl}} <end>
 Page 514 رجال: Found match for regex: <begin> {{acw-root|ر ج ل}} <end>
@@ -11558,7 +11558,7 @@ Page 591 سقى: Found match for regex: <begin> {{ary-rootbox|س ق ي}} <end>
 Page 591 سقى: Found match for regex: <begin> {{ary-head|verb|I|tr=sqa|np=يسقي<tr:yisqi>}} <end>
 Page 591 سقى: Found match for regex: <begin> {{ary-conj/I-weak-ii|س|ق|s|q}} <end>
 Page 591 سقى: Skipped, no changes
-Page 592 سلامات: Found match for regex: <begin> {{acw-head|phrase|head=سلامات<tr:salāmāt>}} <end>
+Page 592 سلامات: Found match for regex: <begin> {{acw-head|phr|head=سلامات<tr:salāmāt>}} <end>
 Page 592 سلامات: Skipped, no changes
 Page 593 سلسال: Found match for regex: <begin> {{acw-root|س ل س ل}} <end>
 Page 593 سلسال: Found match for regex: <begin> {{acw-head|noun|m|head=سِلْسال<tr:silsāl>|pl=سَلاسِل<tr:salāsil>}} <end>
@@ -11589,7 +11589,7 @@ Page 596 سلك: Found match for regex: <begin> {{ajp-root|س ل ك}} <end>
 Page 596 سلك: Found match for regex: <begin> {{ajp-head|verb|I|tr=salak|pres=بسلك<tr:boslok>}} <end>
 Page 596 سلك: Found match for regex: <begin> {{ajp-conj/Au|س|ل|ك|s|l|k}} <end>
 Page 596 سلك: Skipped, no changes
-Page 597 سلمات: Found match for regex: <begin> {{acw-head|phrase|head=سلمات<tr:salamāt>}} <end>
+Page 597 سلمات: Found match for regex: <begin> {{acw-head|phr|head=سلمات<tr:salamāt>}} <end>
 Page 597 سلمات: Skipped, no changes
 Page 598 سلمون: Found match for regex: <begin> {{acw-head|noun|m|head=سَلَمُون<tr:salamōn>,سَلْمُون<tr:salmōn>}} <end>
 Page 598 سلمون: Found match for regex: <begin> {{ajp-head|noun|m|head=سَلَمُون<tr:sálamon>}} <end>
@@ -11740,7 +11740,7 @@ Page 631 شرقي: Skipped, no changes
 Page 632 شطاف: Found match for regex: <begin> {{acw-root|ش ط ف}} <end>
 Page 632 شطاف: Found match for regex: <begin> {{acw-head|noun|m|head=شَطَّاف<tr:šaṭṭāf>|pl=شَطَّافات<tr:šaṭṭāfāt>}} <end>
 Page 632 شطاف: Skipped, no changes
-Page 633 شطرطون: Found match for regex: <begin> {{acw-head|noun|m|head=شَطَرْطون<tr:šaṭarṭōn>}} (plural {{l|acw|شَطَرْطونات}} (šaṭarṭōnāt)) <end>
+Page 633 شطرطون: Found match for regex: <begin> {{acw-head|noun|m|head=شَطَرْطون<tr:šaṭarṭōn>|pl=شَطَرْطونات<tr:šaṭarṭōnāt>}} <end>
 Page 633 شطرطون: Skipped, no changes
 Page 634 شعيرية: Found match for regex: <begin> {{acw-root|ش ع ر}} <end>
 Page 634 شعيرية: Found match for regex: <begin> {{acw-head|noun|f|tr=šiʕēriyya}} <end>
@@ -11788,7 +11788,7 @@ Page 646 شكلاطة: Skipped, no changes
 Page 647 شلال: Found match for regex: <begin> {{acw-root|ش ل ل}} <end>
 Page 647 شلال: Found match for regex: <begin> {{acw-head|noun|m|head=شّلَّال<tr:šallāl>|pl=شلّالات<tr:šallālāt>}} <end>
 Page 647 شلال: Found match for regex: <begin> {{head|ayl|noun|tr=šlāl|g=m|plural for sense 2|شلالات|f1tr=šlālāt}} <end>
-Page 647 شلال: Found match for regex: <begin> {{head|ayl|noun|tr=šəllāl|g=m}} <end>
+Page 647 شلال: Found match for regex: <begin> {{ayl-head|noun|m|tr=šəllāl}} <end>
 Page 647 شلال: Skipped, no changes
 Page 648 شلق: Found match for regex: <begin> {{acw-head|adj|tr=šalag}} <end>
 Page 648 شلق: Found match for regex: <begin> {{acw-head|noun|p|tr=šalag}} <end>
@@ -11849,7 +11849,7 @@ Page 660 شوى: Skipped, no changes
 Page 661 شي: Found match for regex: <begin> {{acw-head|noun|m|tr=šayy|pl=أشياء<tr:ʔašyāʔ>}} <end>
 Page 661 شي: Found match for regex: <begin> {{acw-head|pron|tr=šayy}} <end>
 Page 661 شي: Found match for regex: <begin> {{apc-head|noun|m|tr=šī|pl=إشيا<tr:ʔišya>,أشيا<tr:ʔašya>}} <end>
-Page 661 شي: Found match for regex: <begin> {{head|apc|pron|tr=šī|g=m}} <end>
+Page 661 شي: Found match for regex: <begin> {{apc-head|pron|m|tr=šī}} <end>
 Page 661 شي: Found match for regex: <begin> {{apc-head|det|tr=šī}} <end>
 Page 661 شي: Found match for regex: <begin> {{apc-head|adv|tr=šī}} <end>
 Page 661 شي: Found match for regex: <begin> {{apc-head|pcl|tr=šī}} <end>
@@ -11993,7 +11993,7 @@ Page 689 صيد: Found match for regex: <begin> {{acw-head|noun|m|tr=ṣēd}} <e
 Page 689 صيد: Found match for regex: <begin> {{acw-head|verb|II|head=صَيَّد<tr:ṣayyad>|np=يِصَيِّد<tr:yiṣayyid>}} <end>
 Page 689 صيد: Found match for regex: <begin> {{acw-conj/II|ص|ي|د|ṣ|y|d}} <end>
 Page 689 صيد: Found match for regex: <begin> {{acw-head|verbf|tr=ṣīd}} <end>
-Page 689 صيد: Found match for regex: <begin> {{head|ayl|noun|tr=ṣēd|g=m}} <end>
+Page 689 صيد: Found match for regex: <begin> {{ayl-head|noun|m|tr=ṣēd}} <end>
 Page 689 صيد: Found match for regex: <begin> {{ary-rootbox|ص ي د}} <end>
 Page 689 صيد: Found match for regex: <begin> {{ary-head|verb|II|tr=ṣayyad|np=يصَيّد<tr:yṣayyad>}} <end>
 Page 689 صيد: Found match for regex: <begin> {{ary-conj/II|ص|ي|د|ṣ|y|d}} <end>
@@ -12889,7 +12889,7 @@ Page 860 فقير: Found match for regex: <begin> {{apc-head|adj|tr=faʔīr|f=ف
 Page 860 فقير: Skipped, no changes
 Page 861 فلان: Found match for regex: <begin> {{acw-head|noun|m|tr=fulān|f=فلانة<tr:fulāna>}} <end>
 Page 861 فلان: Skipped, no changes
-Page 862 فلة: Found match for regex: <begin> {{acw-head|noun|f|head=فُلَّة<tr:fulla>}} (plural {{l|acw|فُلّ}} (full)) <end>
+Page 862 فلة: Found match for regex: <begin> {{acw-head|noun|f|head=فُلَّة<tr:fulla>|pl=فُلّ<tr:full>}} <end>
 Page 862 فلة: Found match for regex: <begin> {{acw-head|noun|f|head=فِلَّة<tr:filla>,فِلَّة<tr:villa>|d=فلتين<tr:fillatēn,villatēn>|cons=فِلَّةْ<tr:fillat,villat>|pl=فِلَل<tr:filal,vilal>}} <end>
 Page 862 فلة: Found match for regex: <begin> {{acw-head|adj|head=فَلَّة<tr:falla>}} <end>
 Page 862 فلة: Found match for regex: <begin> {{acw-head|noun|f|tr=falla}} <end>
@@ -13498,7 +13498,7 @@ Page 992 قمل: Skipped, no changes
 Page 993 قناص: Found match for regex: <begin> {{acw-root|ق ن ص}} <end>
 Page 993 قناص: Found match for regex: <begin> {{acw-head|noun|m|tr=gannāṣ|f=قَنَّاصة<tr:gannāṣa>|pl=قَنَّاصين<tr:gannāṣīn>}} <end>
 Page 993 قناص: Skipped, no changes
-Page 994 قنبلة: Found match for regex: <begin> {{acw-head|noun|f|head=قُنْبُلة<tr:gunbula>}} (plural {{l|acw|قَنابِل}} (ganābil)) <end>
+Page 994 قنبلة: Found match for regex: <begin> {{acw-head|noun|f|head=قُنْبُلة<tr:gunbula>|pl=قَنابِل<tr:ganābil>}} <end>
 Page 994 قنبلة: Skipped, no changes
 Page 995 قندول: Found match for regex: <begin> {{acw-head|noun|m|tr=gundōl|pl=قناديل<tr:ganādīl>}} <end>
 Page 995 قندول: Skipped, no changes
@@ -13672,7 +13672,7 @@ Page 1046 كريمة: Found match for regex: <begin> {{acw-head|noun|f|tr=krēma
 Page 1046 كريمة: Skipped, no changes
 Page 1047 كزبرة: Found match for regex: <begin> {{acw-head|noun|f|head=كُزْبَرَة<tr:kuzbara>}} <end>
 Page 1047 كزبرة: Skipped, no changes
-Page 1048 كسارة: Found match for regex: <begin> {{acw-head|noun|f|head=كَسَّارة<tr:kassāra>}} (plural {{l|acw|كَسَّارات}} (kassārāt)) <end>
+Page 1048 كسارة: Found match for regex: <begin> {{acw-head|noun|f|head=كَسَّارة<tr:kassāra>|pl=كَسَّارات<tr:kassārāt>}} <end>
 Page 1048 كسارة: Skipped, no changes
 Page 1049 كستنا: Found match for regex: <begin> {{acw-head|noun|f|head=كَسْتَنا<tr:kastana>}} <end>
 Page 1049 كستنا: Skipped, no changes
@@ -13721,7 +13721,7 @@ Page 1061 كلونيا: Found match for regex: <begin> {{acw-head|propn|f|tr=kul
 Page 1061 كلونيا: Skipped, no changes
 Page 1062 كمبيوتر: Found match for regex: <begin> {{acw-head|noun|m|head=كمبيوتر<tr:kambyūtar>|pl=كمبيوترات<tr:kambyūtarāt>}} <end>
 Page 1062 كمبيوتر: Skipped, no changes
-Page 1063 كمدينة: Found match for regex: <begin> {{acw-head|noun|f|head=كُمَدينة<tr:kumadīnā>}} (plural {{l|acw|كُمَدينات}} (kumadīnāt)) <end>
+Page 1063 كمدينة: Found match for regex: <begin> {{acw-head|noun|f|head=كُمَدينة<tr:kumadīnā>|pl=كُمَدينات<tr:kumadīnāt>}} <end>
 Page 1063 كمدينة: Found match for regex: <begin> {{ajp-head|noun|f|tr=komodīne|pl=كمدينات<tr:komodīnāt>}} <end>
 Page 1063 كمدينة: Skipped, no changes
 Page 1064 كمرة: Found match for regex: <begin> {{acw-head|noun|f|tr=kamira|pl=كمرات<tr:kamirāt>}} <end>
@@ -13739,7 +13739,7 @@ Page 1068 كوبنهاقن: Found match for regex: <begin> {{acw-head|propn|f|tr
 Page 1068 كوبنهاقن: Skipped, no changes
 Page 1069 كوبون: Found match for regex: <begin> {{acw-head|noun|m|tr=kōbōn,kūbōn,kūpōn|pl=كوبونات<tr:kōbōnāt,kūbōnāt,kūpōnāt>}} <end>
 Page 1069 كوبون: Skipped, no changes
-Page 1070 كورساج: Found match for regex: <begin> {{acw-head|noun|m|head=كورساج<tr:kōrsāj>}} (plural {{l|acw|كورساجات}} (kōrsājāt)) <end>
+Page 1070 كورساج: Found match for regex: <begin> {{acw-head|noun|m|head=كورساج<tr:kōrsāj>|pl=كورساجات<tr:kōrsājāt>}} <end>
 Page 1070 كورساج: Skipped, no changes
 Page 1071 كوريقرافيا: Found match for regex: <begin> {{acw-head|noun|f|tr=kōrīgrāfīya}} <end>
 Page 1071 كوريقرافيا: Skipped, no changes
@@ -13763,12 +13763,12 @@ Page 1073 كيف: Found match for regex: <begin> {{aeb-head|conj|head=كِيف<t
 Page 1073 كيف: Found match for regex: <begin> {{aeb-head|adv|head=كِيف<tr:kīf>}} <end>
 Page 1073 كيف: Found match for regex: <begin> {{aeb-head|adj|head=كِيف<tr:kīf>}} <end>
 Page 1073 كيف: Skipped, no changes
-Page 1074 كيفك: Found match for regex: <begin> {{head|acw|phrase|tr=kēfak?|head=كيفَك؟}} <end>
-Page 1074 كيفك: Found match for regex: <begin> {{head|acw|phrase|tr=kēfik?|head=كيفِك؟}} <end>
-Page 1074 كيفك: Found match for regex: <begin> {{head|apc|phrase|tr=kīfak?|head=كِيفَك؟}} <end>
-Page 1074 كيفك: Found match for regex: <begin> {{head|apc|phrase|tr=kīfik?|head=كِيفِك؟}} <end>
-Page 1074 كيفك: Found match for regex: <begin> {{head|ajp|phrase|tr=kīfak?|head=كيفك؟}} <end>
-Page 1074 كيفك: Found match for regex: <begin> {{head|ajp|phrase|tr=kīfek?|head=كيفك؟}} <end>
+Page 1074 كيفك: Found match for regex: <begin> {{acw-head|phr|head=كيفَك؟<tr:kēfak?>}} <end>
+Page 1074 كيفك: Found match for regex: <begin> {{acw-head|phr|head=كيفِك؟<tr:kēfik?>}} <end>
+Page 1074 كيفك: Found match for regex: <begin> {{apc-head|phr|head=كِيفَك؟<tr:kīfak?>}} <end>
+Page 1074 كيفك: Found match for regex: <begin> {{apc-head|phr|head=كِيفِك؟<tr:kīfik?>}} <end>
+Page 1074 كيفك: Found match for regex: <begin> {{ajp-head|phr|head=كيفك؟<tr:kīfak?>}} <end>
+Page 1074 كيفك: Found match for regex: <begin> {{ajp-head|phr|head=كيفك؟<tr:kīfek?>}} <end>
 Page 1074 كيفك: Skipped, no changes
 Page 1075 كيك: Found match for regex: <begin> {{acw-head|collnoun|tr=kēk|sing=كيكة<tr:kēka>|pl=كيكات<tr:kēkāt>}} <end>
 Page 1075 كيك: Skipped, no changes
@@ -13946,7 +13946,7 @@ Page 1110 لوز: Found match for regex: <begin> {{ajp-head|collnoun|tr=lōz|sin
 Page 1110 لوز: Skipped, no changes
 Page 1111 ليقو: Found match for regex: <begin> {{acw-head|noun|m-p|tr=līgu,lēgu}} <end>
 Page 1111 ليقو: Skipped, no changes
-Page 1112 ما أتكلم عربي: Found match for regex: <begin> {{acw-head|phrase|head=ما أَتْكَلَّم عَرَبي<tr:mā ʔatkallam ʕarabi>}} <end>
+Page 1112 ما أتكلم عربي: Found match for regex: <begin> {{acw-head|phr|head=ما أَتْكَلَّم عَرَبي<tr:mā ʔatkallam ʕarabi>}} <end>
 Page 1112 ما أتكلم عربي: Skipped, no changes
 Page 1113 ماخذ: Found match for regex: <begin> {{acw-root|ء خ ذ}} <end>
 Page 1113 ماخذ: Found match for regex: <begin> {{acw-head|adj|tr=māḵid|f=ماخذة<tr:māḵda>|cpl=ماخذين<tr:māḵdīn>}} <end>
@@ -13959,8 +13959,8 @@ Page 1114 ماضي: Found match for regex: <begin> {{ajp-root|م ض ي}} <end>
 Page 1114 ماضي: Found match for regex: <begin> {{ajp-head|adj|tr=māḍi|f=ماضية<tr:māḍye>}} <end>
 Page 1114 ماضي: Found match for regex: <begin> {{ajp-head|noun|m|tr=māḍi}} <end>
 Page 1114 ماضي: Skipped, no changes
-Page 1115 مافي: Found match for regex: <begin> {{acw-head|phrase|tr=māfi}} <end>
-Page 1115 مافي: Found match for regex: <begin> {{ajp-head|phrase|tr=mā-fi}} <end>
+Page 1115 مافي: Found match for regex: <begin> {{acw-head|phr|tr=māfi}} <end>
+Page 1115 مافي: Found match for regex: <begin> {{ajp-head|phr|tr=mā-fi}} <end>
 Page 1115 مافي: Skipped, no changes
 Page 1116 مالقة: Found match for regex: <begin> {{acw-head|propn|f|head=مَالقة<tr:Mālga>,مَالقة<tr:Mālaga>}} <end>
 Page 1116 مالقة: Skipped, no changes
@@ -14033,7 +14033,7 @@ Page 1135 مدري: Found match for regex: <begin> {{acw-head|verb|head=مَدْ
 Page 1135 مدري: Found match for regex: <begin> {{apc-head|verb|def|head=مِدْري<tr:midri>}} <end>
 Page 1135 مدري: Found match for regex: <begin> {{apc-head|conj|head=مِدْري<tr:midri>}} <end>
 Page 1135 مدري: Skipped, no changes
-Page 1136 مدوان: Found match for regex: <begin> {{acw-head|noun|m|head=مِدْوَان<tr:midwān>}} (plural {{l|acw|مَدَاوين}} (madāwīn)) <end>
+Page 1136 مدوان: Found match for regex: <begin> {{acw-head|noun|m|head=مِدْوَان<tr:midwān>|pl=مَدَاوين<tr:madāwīn>}} <end>
 Page 1136 مدوان: Skipped, no changes
 Page 1137 مراية: Found match for regex: <begin> {{acw-head|noun|f|tr=mirāya|pl=مِرايات<tr:mirāyāt>}} <end>
 Page 1137 مراية: Found match for regex: <begin> {{ary-head|noun|f|tr=mrāya|pl=مرايات<tr:mrāyāt>}} <end>
@@ -14349,7 +14349,7 @@ Page 1221 ملعقة: Found match for regex: <begin> {{apc-head|noun|f|head=مَ
 Page 1221 ملعقة: Found match for regex: <begin> {{ayn-root|ل ع ق}} <end>
 Page 1221 ملعقة: Found match for regex: <begin> {{ayn-head|noun|f|head=مِلْعَقَة<tr:milʕaqa>|pl=مَلاعِق<tr:malāʕiq>}} <end>
 Page 1221 ملعقة: Skipped, no changes
-Page 1222 مليون: Found match for regex: <begin> {{acw-head|num|m|head=مِليون<tr:milyōn>}} (plural {{l|acw|مَلايين}} (malāyīn)) <end>
+Page 1222 مليون: Found match for regex: <begin> {{acw-head|num|m|head=مِليون<tr:milyōn>|pl=مَلايين<tr:malāyīn>}} <end>
 Page 1222 مليون: Found match for regex: <begin> {{ary-head|num|m|tr=malyūn|pl=ملاين<tr:mlāyin>}} <end>
 Page 1222 مليون: Skipped, no changes
 Page 1223 من جد: Found match for regex: <begin> {{acw-head|adv|tr=min jidd}} <end>
@@ -15137,9 +15137,9 @@ Page 64 شاكو ماكو: Found match for regex: <begin> {{acm-head|phr|tr=šak
 Page 64 شاكو ماكو: Skipped, no changes
 Page 65 شفقة: Found match for regex: <begin> {{acm-head|noun|f|tr=šafqa}} <end>
 Page 65 شفقة: Skipped, no changes
-Page 66 شكو: Found match for regex: <begin> {{acm-head|phrase|head=?<tr:šakū?>}} <end>
+Page 66 شكو: Found match for regex: <begin> {{acm-head|phr|head=?<tr:šakū?>}} <end>
 Page 66 شكو: Skipped, no changes
-Page 67 شكو بيها: Found match for regex: <begin> {{acm-head|phrase|head=?<tr:šakū bīha?>}} <end>
+Page 67 شكو بيها: Found match for regex: <begin> {{acm-head|phr|head=?<tr:šakū bīha?>}} <end>
 Page 67 شكو بيها: Skipped, no changes
 Page 68 شلونك: Found match for regex: <begin> {{acm-head|phr|tr=šlōnik}} <end>
 Page 68 شلونك: Skipped, no changes
@@ -15168,7 +15168,7 @@ Page 78 عمالة: Found match for regex: <begin> {{acm-head|noun|f|tr=ʕammāl
 Page 78 عمالة: Skipped, no changes
 Page 79 عمبة: Found match for regex: <begin> {{acm-head|noun|f|tr=ʕamba}} <end>
 Page 79 عمبة: Skipped, no changes
-Page 80 عير: Found match for regex: <begin> {{head|acm|noun|head=عَيْر|tr=ʕēr|g=m}} <end>
+Page 80 عير: Found match for regex: <begin> {{acm-head|noun|m|head=عَيْر<tr:ʕēr>}} <end>
 Page 80 عير: Found match for regex: <begin> {{ajp-root|ع ي ر}} <end>
 Page 80 عير: Found match for regex: <begin> {{ajp-head|verb|II|head=عيّر<tr:ʕayyar>|pres=بعيّر<tr:biʕayyer>}} <end>
 Page 80 عير: Found match for regex: <begin> {{ajp-conj/2A|ع|ي|ر|ʕ|y|r}} <end>
@@ -15184,7 +15184,7 @@ Page 82 غسل: Found match for regex: <begin> {{ajp-conj/A1|غ|س|ل|ḡ|s|l}} 
 Page 82 غسل: Found match for regex: <begin> {{ajp-head|verb|II|head=غسّل<tr:ḡassal>|pres=بغسّل<tr:biḡassel>|ap=مغسّل<tr:mḡassel>}} <end>
 Page 82 غسل: Found match for regex: <begin> {{ajp-conj/2A|غ|س|ل|ḡ|s|l}} <end>
 Page 82 غسل: Skipped, no changes
-Page 83 فد: Found match for regex: <begin> {{acm-head|article|tr=fadd}} <end>
+Page 83 فد: Found match for regex: <begin> {{acm-head|art|tr=fadd}} <end>
 Page 83 فد: Found match for regex: <begin> {{aeb-root|ف د د}} <end>
 Page 83 فد: Found match for regex: <begin> {{aeb-head|verb|I|tr=fadd}} <end>
 Page 83 فد: Found match for regex: <begin> {{aeb-verb/conj|fadd|e|cx=1}} <end>
@@ -15377,9 +15377,9 @@ Page 154 Category:Iraqi Arabic verbs: Skipped, no changes
 Page 1 A: Skipped, no changes
 Page 2 a-: Found match for regex: <begin> {{acy-head|prefix}} <end>
 Page 2 a-: Skipped, no changes
-Page 3 allarxama: Found match for regex: <begin> {{acy-head|phrase|head=allarxáma}} <end>
+Page 3 allarxama: Found match for regex: <begin> {{acy-head|phr|head=allarxáma}} <end>
 Page 3 allarxama: Skipped, no changes
-Page 4 allerixmu: Found match for regex: <begin> {{acy-head|phrase|head=allérixmu}} <end>
+Page 4 allerixmu: Found match for regex: <begin> {{acy-head|phr|head=allérixmu}} <end>
 Page 4 allerixmu: Skipped, no changes
 Page 5 alok: Found match for regex: <begin> {{acy-root|'-k-t}} <end>
 Page 5 alok: Found match for regex: <begin> {{acy-head|adv}} <end>
@@ -15387,7 +15387,7 @@ Page 5 alok: Skipped, no changes
 Page 6 ana: Found match for regex: <begin> {{head|acy|pron|cat2=personal pronouns|g=mf-s}} <end>
 Page 6 ana: Found match for regex: <begin> {{acy-personal pronouns}} <end>
 Page 6 ana: Found match for regex: <begin> {{pga-IPA}} <end>
-Page 6 ana: Found match for regex: <begin> {{head|pga|pronoun}} <end>
+Page 6 ana: Found match for regex: <begin> {{pga-head|pron}} <end>
 Page 6 ana: Skipped, no changes
 Page 7 anataxt: Found match for regex: <begin> {{acy-root|t-x-t}} <end>
 Page 7 anataxt: Found match for regex: <begin> {{acy-head|adv|head=anatáxt}} <end>
@@ -15398,7 +15398,7 @@ Page 8 antaxt: Skipped, no changes
 Page 9 apkyaδ: Found match for regex: <begin> {{acy-root|p-y-δ}} <end>
 Page 9 apkyaδ: Found match for regex: <begin> {{acy-head|adj|f=peδa|cpl=piδ}} <end>
 Page 9 apkyaδ: Skipped, no changes
-Page 10 arnep: Found match for regex: <begin> {{head|acy|noun|plural|ranep}} <end>
+Page 10 arnep: Found match for regex: <begin> {{acy-head|noun|pl=ranep}} <end>
 Page 10 arnep: Skipped, no changes
 Page 11 avel: Found match for regex: <begin> {{acy-head|adv}} <end>
 Page 11 avel: Skipped, no changes
@@ -15470,7 +15470,7 @@ Page 37 fsici: Skipped, no changes
 Page 38 ikl: Found match for regex: <begin> {{acy-root|'-k-l}} <end>
 Page 38 ikl: Found match for regex: <begin> {{acy-head|noun|m}} <end>
 Page 38 ikl: Skipped, no changes
-Page 39 imps: Found match for regex: <begin> {{head|acy|adverb}} <end>
+Page 39 imps: Found match for regex: <begin> {{acy-head|adv}} <end>
 Page 39 imps: Skipped, no changes
 Page 40 int: Found match for regex: <begin> {{head|acy|pron|cat2=personal pronouns|g=m-s}} <end>
 Page 40 int: Found match for regex: <begin> {{acy-personal pronouns}} <end>
@@ -15493,7 +15493,7 @@ Page 46 isfet: Found match for regex: <begin> {{acy-head|adj|f=sawta|cpl=sut}} <
 Page 46 isfet: Skipped, no changes
 Page 47 iskof: Found match for regex: <begin> {{acy-head|noun|m|pl=skafe}} <end>
 Page 47 iskof: Skipped, no changes
-Page 48 ism: Found match for regex: <begin> {{head|acy|noun|plural|ismát}} <end>
+Page 48 ism: Found match for regex: <begin> {{acy-head|noun|pl=ismát}} <end>
 Page 48 ism: Skipped, no changes
 Page 49 ispec: Found match for regex: <begin> {{acy-head|noun|m|pl=specep}} <end>
 Page 49 ispec: Skipped, no changes
@@ -15504,7 +15504,7 @@ Page 51 it: Skipped, no changes
 Page 52 işataxt: Found match for regex: <begin> {{acy-root|t-x-t}} <end>
 Page 52 işataxt: Found match for regex: <begin> {{acy-head|adv|head=işatáxt}} <end>
 Page 52 işataxt: Skipped, no changes
-Page 53 işşalla: Found match for regex: <begin> {{head|acy|interjection}} <end>
+Page 53 işşalla: Found match for regex: <begin> {{acy-head|intj}} <end>
 Page 53 işşalla: Skipped, no changes
 Page 54 iδn: Found match for regex: <begin> {{acy-head|noun|f|pl=δanén}} <end>
 Page 54 iδn: Skipped, no changes
@@ -15551,7 +15551,7 @@ Page 68 jartuşe: Skipped, no changes
 Page 69 jaruşe: Found match for regex: <begin> {{acy-head|noun|f|pl=jveríş}} <end>
 Page 69 jaruşe: Skipped, no changes
 Page 70 java: Found match for regex: <begin> {{acy-root|j-v-v}} <end>
-Page 70 java: Found match for regex: <begin> {{head|acy|adverb}} <end>
+Page 70 java: Found match for regex: <begin> {{acy-head|adv}} <end>
 Page 70 java: Skipped, no changes
 Page 71 javlak: Found match for regex: <begin> {{acy-head|noun|m|pl=jvalek,jvelík}} <end>
 Page 71 javlak: Skipped, no changes
@@ -15615,10 +15615,10 @@ Page 92 jumaca: Found match for regex: <begin> {{acy-head|noun|f|head=júmăca|p
 Page 92 jumaca: Found match for regex: <begin> {{acy-head|noun|f|head=júmăca}} <end>
 Page 92 jumaca: Skipped, no changes
 Page 93 jump: Found match for regex: <begin> {{acy-root|j-m-p}} <end>
-Page 93 jump: Found match for regex: <begin> {{head|acy|preposition}} <end>
+Page 93 jump: Found match for regex: <begin> {{acy-head|prep}} <end>
 Page 93 jump: Skipped, no changes
 Page 94 jump-jump: Found match for regex: <begin> {{acy-root|j-m-p}} <end>
-Page 94 jump-jump: Found match for regex: <begin> {{head|acy|adverb}} <end>
+Page 94 jump-jump: Found match for regex: <begin> {{acy-head|adv}} <end>
 Page 94 jump-jump: Skipped, no changes
 Page 95 jupn: Found match for regex: <begin> {{acy-root|j-p-n}} <end>
 Page 95 jupn: Found match for regex: <begin> {{acy-head|noun|m}} <end>
@@ -15678,8 +15678,8 @@ Page 114 maptul: Found match for regex: <begin> {{acy-head|adj|head=maptúl|f=ma
 Page 114 maptul: Skipped, no changes
 Page 115 mara: Found match for regex: <begin> {{acy-head|noun|f|pl=nisfán|cons=mprat}} <end>
 Page 115 mara: Found match for regex: <begin> {{pga-IPA}} <end>
-Page 115 mara: Found match for regex: <begin> {{head|pga|noun|plural|niswaan}} <end>
-Page 115 mara: Found match for regex: <begin> {{head|pga|noun|plural|maraat}} <end>
+Page 115 mara: Found match for regex: <begin> {{pga-head|noun|pl=niswaan}} <end>
+Page 115 mara: Found match for regex: <begin> {{pga-head|noun|pl=maraat}} <end>
 Page 115 mara: Skipped, no changes
 Page 116 marax: Found match for regex: <begin> {{acy-root|m-r-x|sense=clean}} <end>
 Page 116 marax: Found match for regex: <begin> {{acy-head|verb|I|pres=pkyimprax}} <end>
@@ -15824,7 +15824,7 @@ Page 166 nayθie: Found match for regex: <begin> {{acy-head|noun|f|pl=nayθyát}
 Page 166 nayθie: Skipped, no changes
 Page 167 nes: Found match for regex: <begin> {{acy-head|noun|p}} <end>
 Page 167 nes: Skipped, no changes
-Page 168 nke: Found match for regex: <begin> {{head|acy|interjection}} <end>
+Page 168 nke: Found match for regex: <begin> {{acy-head|intj}} <end>
 Page 168 nke: Skipped, no changes
 Page 169 npitel: Found match for regex: <begin> {{acy-root|p-t-l}} <end>
 Page 169 npitel: Found match for regex: <begin> {{acy-head|verb|VII|pres=pkyíniptel}} {{tlb|acy|intransitive}} <end>
@@ -16013,7 +16013,7 @@ Page 234 pizz: Found match for regex: <begin> {{acy-root|p-z-z}} <end>
 Page 234 pizz: Found match for regex: <begin> {{acy-head|noun|m|pl=pzaz}} <end>
 Page 234 pizz: Skipped, no changes
 Page 235 piδ: Found match for regex: <begin> {{acy-root|p-y-δ}} <end>
-Page 235 piδ: Found match for regex: <begin> {{head|acy|adjective form}} <end>
+Page 235 piδ: Found match for regex: <begin> {{acy-head|adjf}} <end>
 Page 235 piδ: Found match for regex: <begin> {{acy-head|noun|p}} <end>
 Page 235 piδ: Skipped, no changes
 Page 236 pkyaδδa: Found match for regex: <begin> {{acy-root|p-y-δ}} <end>
@@ -16103,7 +16103,7 @@ Page 266 sitce: Found match for regex: <begin> {{acy-head|verb|I|pres=pyístaca}
 Page 266 sitce: Skipped, no changes
 Page 267 sotx: Found match for regex: <begin> {{acy-head|noun|m|pl=stux}} <end>
 Page 267 sotx: Skipped, no changes
-Page 268 soxtalla: Found match for regex: <begin> {{head|acy|interjection}} <end>
+Page 268 soxtalla: Found match for regex: <begin> {{acy-head|intj}} <end>
 Page 268 soxtalla: Skipped, no changes
 Page 269 stawfa: Found match for regex: <begin> {{acy-root|w-f-y}} <end>
 Page 269 stawfa: Found match for regex: <begin> {{acy-head|verb|X|pres=pkyistawfa}} <end>
@@ -16111,7 +16111,7 @@ Page 269 stawfa: Skipped, no changes
 Page 270 sumpsom: Found match for regex: <begin> {{acy-head|noun|m|pl=smemín}} <end>
 Page 270 sumpsom: Skipped, no changes
 Page 271 sut: Found match for regex: <begin> {{acy-root|s-f-d}} <end>
-Page 271 sut: Found match for regex: <begin> {{head|acy|adjective form}} <end>
+Page 271 sut: Found match for regex: <begin> {{acy-head|adjf}} <end>
 Page 271 sut: Found match for regex: <begin> {{acy-head|noun|p}} <end>
 Page 271 sut: Skipped, no changes
 Page 272 tacap: Found match for regex: <begin> {{acy-root|t-c-p}} <end>
@@ -16262,7 +16262,7 @@ Page 323 vafa: Skipped, no changes
 Page 324 vakca: Found match for regex: <begin> {{acy-root|v-k-c}} <end>
 Page 324 vakca: Found match for regex: <begin> {{acy-head|verb|I|pres=pkyukáca}} {{tlb|acy|intransitive}} <end>
 Page 324 vakca: Skipped, no changes
-Page 325 vallaxi-pillaxi: Found match for regex: <begin> {{head|acy|interjection}} <end>
+Page 325 vallaxi-pillaxi: Found match for regex: <begin> {{acy-head|intj}} <end>
 Page 325 vallaxi-pillaxi: Skipped, no changes
 Page 326 varka: Found match for regex: <begin> {{acy-root|v-r-k}} <end>
 Page 326 varka: Found match for regex: <begin> {{acy-head|noun|f|pl=varak}} <end>
@@ -16455,7 +16455,7 @@ Page 387 xδan: Skipped, no changes
 Page 388 yabbes: Found match for regex: <begin> {{acy-root|y-b-s}} <end>
 Page 388 yabbes: Found match for regex: <begin> {{acy-head|verb|II|pres=pkyabbes}} {{tlb|acy|transitive}} <end>
 Page 388 yabbes: Skipped, no changes
-Page 389 yamuxmis: Found match for regex: <begin> {{head|acy|adverb}} <end>
+Page 389 yamuxmis: Found match for regex: <begin> {{acy-head|adv}} <end>
 Page 389 yamuxmis: Skipped, no changes
 Page 390 yapat: Found match for regex: <begin> {{acy-head|noun|m|head=yapát|pl=yapatát}} <end>
 Page 390 yapat: Skipped, no changes
@@ -16571,9 +16571,9 @@ Page 4 بالعاني: Found match for regex: <begin> {{ary-head|adv|tr=b-el-ʕ�
 Page 4 بالعاني: Skipped, no changes
 Page 5 بالك: Found match for regex: <begin> {{ayl-head|adv|tr=bālk}} <end>
 Page 5 بالك: Skipped, no changes
-Page 6 باهي: Found match for regex: <begin> {{head|ayl|adj|tr=bāhi|g=m}} {{tlb|ayl|Western Libyan Arabic}} <end>
+Page 6 باهي: Found match for regex: <begin> {{ayl-head|adj|m|tr=bāhi}} {{tlb|ayl|Western Libyan Arabic}} <end>
 Page 6 باهي: Found match for regex: <begin> {{ayl-head|intj|tr=bāhi}} <end>
-Page 6 باهي: Found match for regex: <begin> {{head|aeb|adj|tr=bēhi|g=m}} <end>
+Page 6 باهي: Found match for regex: <begin> {{aeb-head|adj|m|tr=bēhi}} <end>
 Page 6 باهي: Found match for regex: <begin> {{aeb-head|adv|tr=bēhi}} <end>
 Page 6 باهي: Found match for regex: <begin> {{aeb-head|intj|tr=bēhi}} <end>
 Page 6 باهي: Skipped, no changes
@@ -16606,11 +16606,11 @@ Page 16 بو شبو: Found match for regex: <begin> {{ayl-head|noun|m}} <end>
 Page 16 بو شبو: Skipped, no changes
 Page 17 بو شوكة: Found match for regex: <begin> {{ayl-head|noun|m}} <end>
 Page 17 بو شوكة: Skipped, no changes
-Page 18 بو علوش: Found match for regex: <begin> {{head|ayl|noun|head=بو علّوش|g=m}} <end>
+Page 18 بو علوش: Found match for regex: <begin> {{ayl-head|noun|m|head=بو علّوش}} <end>
 Page 18 بو علوش: Skipped, no changes
-Page 19 بو كشاش: Found match for regex: <begin> {{head|ayl|noun|tr=būkəššāš|g=m}} <end>
+Page 19 بو كشاش: Found match for regex: <begin> {{ayl-head|noun|m|tr=būkəššāš}} <end>
 Page 19 بو كشاش: Skipped, no changes
-Page 20 بو نفاخ: Found match for regex: <begin> {{head|ayl|noun|head=بو نفّاخ|g=m}} <end>
+Page 20 بو نفاخ: Found match for regex: <begin> {{ayl-head|noun|m|head=بو نفّاخ}} <end>
 Page 20 بو نفاخ: Skipped, no changes
 Page 21 بوخة: Found match for regex: <begin> {{ayl-head|noun|f|tr=bōḵa}} <end>
 Page 21 بوخة: Skipped, no changes
@@ -16621,7 +16621,7 @@ Page 23 تزدان: Skipped, no changes
 Page 24 تعفلق: Found match for regex: <begin> {{ayl-root|ع ف ل ق}} <end>
 Page 24 تعفلق: Found match for regex: <begin> {{ayl-head|verb|IIq}} <end>
 Page 24 تعفلق: Skipped, no changes
-Page 25 تل: Found match for regex: <begin> {{head|ayl|noun|tr=tall|g=m}} <end>
+Page 25 تل: Found match for regex: <begin> {{ayl-head|noun|m|tr=tall}} <end>
 Page 25 تل: Found match for regex: <begin> {{ajp-root|ت ل ل}} <end>
 Page 25 تل: Found match for regex: <begin> {{ajp-head|noun|m|head=تلّ<tr:tall>|pl=تلال<tr:tlāl>}} <end>
 Page 25 تل: Skipped, no changes
@@ -16634,9 +16634,9 @@ Page 28 جبوجي: Found match for regex: <begin> {{ayl-head|noun|m|tr=jabbūji
 Page 28 جبوجي: Skipped, no changes
 Page 29 جلابية: Found match for regex: <begin> {{ayl-head|noun|f|head=جلابية<tr:jillābiyya>|pl=جلاليب<tr:jlālīb>}} <end>
 Page 29 جلابية: Skipped, no changes
-Page 30 جلجلان: Found match for regex: <begin> {{head|ayl|noun|head=جلجلان|g=m|tr=jəljlān}} <end>
+Page 30 جلجلان: Found match for regex: <begin> {{ayl-head|noun|m|head=جلجلان<tr:jəljlān>}} <end>
 Page 30 جلجلان: Skipped, no changes
-Page 31 حار: Found match for regex: <begin> {{head|ayl|adj|tr=ħārr|g=m}} <end>
+Page 31 حار: Found match for regex: <begin> {{ayl-head|adj|m|tr=ħārr}} <end>
 Page 31 حار: Found match for regex: <begin> {{ary-root|ح ر ر}} <end>
 Page 31 حار: Found match for regex: <begin> {{ary-head|adj|tr=hārr|f=حارة<tr:hārra>|mpl=حارين<tr:hārrīn>|fpl=حارات<tr:hārrāt>}} <end>
 Page 31 حار: Found match for regex: <begin> {{ajp-root|ح ر ر}} <end>
@@ -16674,7 +16674,7 @@ Page 44 دلزة: Found match for regex: <begin> {{ayl-head|noun|f|pl=دلاوز
 Page 44 دلزة: Skipped, no changes
 Page 45 دمالة: Found match for regex: <begin> {{ayl-head|noun|f}} <end>
 Page 45 دمالة: Skipped, no changes
-Page 46 دوب ما: Found match for regex: <begin> {{head|ayl|adverb}} <end>
+Page 46 دوب ما: Found match for regex: <begin> {{ayl-head|adv}} <end>
 Page 46 دوب ما: Skipped, no changes
 Page 47 دوى: Found match for regex: <begin> {{ayl-head|verb|I|tr=dwē}} {{tlb|ayl|Western Libyan Arabic}} <end>
 Page 47 دوى: Found match for regex: <begin> {{ary-rootbox|د و ي}} <end>
@@ -16816,7 +16816,7 @@ Page 105 قدافي: Skipped, no changes
 Page 106 قرجومة: Found match for regex: <begin> {{ayl-head|noun|f|tr=garjūma|pl=قراجيم<tr:grājīm>}} <end>
 Page 106 قرجومة: Skipped, no changes
 Page 107 قرقابة: Found match for regex: <begin> {{ayl-head|noun|f|tr=gərgāba}} <end>
-Page 107 قرقابة: Found match for regex: <begin> {{head|ayl|nounf|tr=gərgāba|g=p}} <end>
+Page 107 قرقابة: Found match for regex: <begin> {{ayl-head|nounf|p|tr=gərgāba}} <end>
 Page 107 قرقابة: Found match for regex: <begin> {{ary-head|noun|f|tr=qarqāba|pl=قرقابات<tr:qarqābāt>,قراقب<tr:qrāqib>}} <end>
 Page 107 قرقابة: Skipped, no changes
 Page 108 قرقب: Found match for regex: <begin> {{ayl-head|intj|tr=gurgubb}} <end>
@@ -16836,9 +16836,9 @@ Page 113 قطوسة: Found match for regex: <begin> {{ayl-head|noun|f|tr=gaṭ�
 Page 113 قطوسة: Skipped, no changes
 Page 114 قعمز: Found match for regex: <begin> {{ayl-head|verb|Iq}} <end>
 Page 114 قعمز: Skipped, no changes
-Page 115 قلالية: Found match for regex: <begin> {{head|ayl|noun|head=قلّاليّة|g=f}} <end>
+Page 115 قلالية: Found match for regex: <begin> {{ayl-head|noun|f|head=قلّاليّة}} <end>
 Page 115 قلالية: Skipped, no changes
-Page 116 قلعاوية: Found match for regex: <begin> {{head|ayl|noun|tr=gəlʕāwiyya|g=f}} <end>
+Page 116 قلعاوية: Found match for regex: <begin> {{ayl-head|noun|f|tr=gəlʕāwiyya}} <end>
 Page 116 قلعاوية: Skipped, no changes
 Page 117 قلفاط: Found match for regex: <begin> {{ayl-head|noun|m}} <end>
 Page 117 قلفاط: Skipped, no changes
@@ -16853,9 +16853,9 @@ Page 121 كرمود: Skipped, no changes
 Page 122 كرهبة: Found match for regex: <begin> {{ayl-head|noun|f|pl=كراهب|tr=karhba}} <end>
 Page 122 كرهبة: Found match for regex: <begin> {{aeb-head|noun|f|tr=karhba|pl=كراهب<tr:krāhib>}} <end>
 Page 122 كرهبة: Skipped, no changes
-Page 123 كلوط: Found match for regex: <begin> {{head|ayl|noun|head=كلّوط|g=m}} <end>
+Page 123 كلوط: Found match for regex: <begin> {{ayl-head|noun|m|head=كلّوط}} <end>
 Page 123 كلوط: Skipped, no changes
-Page 124 كمون حلو: Found match for regex: <begin> {{head|ayl|noun|head=كمّون حلو|g=m}} <end>
+Page 124 كمون حلو: Found match for regex: <begin> {{ayl-head|noun|m|head=كمّون حلو}} <end>
 Page 124 كمون حلو: Skipped, no changes
 Page 125 كوجينة: Found match for regex: <begin> {{ayl-head|noun|f|tr=kūjīna|pl=كوجينات<tr:kūjīnāt>}} <end>
 Page 125 كوجينة: Found match for regex: <begin> {{aeb-head|noun|f|tr=kūjīna|pl=كوجينات<tr:kūjīnāt>}} <end>
@@ -17112,7 +17112,7 @@ Page 58 القرد فعين امه غزال: Skipped, no changes
 Page 59 المغرب: Found match for regex: <begin> {{ary-head|propn|m|head=المَغْرِب<tr:el-maḡrib>,المُغْرِب<tr:el-muḡrib>}} <end>
 Page 59 المغرب: Found match for regex: <begin> {{ajp-head|propn|m|tr=il-maḡreb}} <end>
 Page 59 المغرب: Skipped, no changes
-Page 60 الهدرة ما تشري خضرة: Found match for regex: <begin> {{head|ary|proverb|head=[[هدرة|الهدرة]] [[ما]] [[شرى|تشري]] [[خضرة]]|tr=el-hadra ma tašri ḵuḍra}} <end>
+Page 60 الهدرة ما تشري خضرة: Found match for regex: <begin> {{ary-head|proverb|head=[[هدرة|الهدرة]] [[ما]] [[شرى|تشري]] [[خضرة]]<tr:el-hadra ma tašri ḵuḍra>}} <end>
 Page 60 الهدرة ما تشري خضرة: Skipped, no changes
 Page 61 الهيه: Found match for regex: <begin> {{ary-head|adv|tr=el-hīh}} <end>
 Page 61 الهيه: Skipped, no changes
@@ -17198,7 +17198,7 @@ Page 89 بحال والو: Found match for regex: <begin> {{ary-head|prepphr|tr=
 Page 89 بحال والو: Skipped, no changes
 Page 90 بحرا: Found match for regex: <begin> {{ary-head|adv|tr=baḥra}} <end>
 Page 90 بحرا: Skipped, no changes
-Page 91 بخير: Found match for regex: <begin> {{ary-head|prepositional phrase|tr=bi-ḵayr,b-ḵayr,bi-ḵīr,b-ḵīr}} <end>
+Page 91 بخير: Found match for regex: <begin> {{ary-head|prepphr|tr=bi-ḵayr,b-ḵayr,bi-ḵīr,b-ḵīr}} <end>
 Page 91 بخير: Skipped, no changes
 Page 92 بدا: Found match for regex: <begin> {{ary-root|ب د ي}} <end>
 Page 92 بدا: Found match for regex: <begin> {{ary-head|verb|I|tr=bdā|np=يبدا<tr:yibda>}} <end>
@@ -17822,7 +17822,7 @@ Page 275 حاجب: Found match for regex: <begin> {{ary-head|noun|m|tr=ḥājib|
 Page 275 حاجب: Found match for regex: <begin> {{apc-head|noun|m|tr=ḥājib|pl=حواجب<tr:ḥwājib>}} <end>
 Page 275 حاجب: Found match for regex: <begin> {{ajp-head|noun|m|tr=ḥājeb|pl=حواجب<tr:ḥawājeb>}} <end>
 Page 275 حاجب: Skipped, no changes
-Page 276 حاجيتك ما جيتك: Found match for regex: <begin> {{head|ary|phrase|head=[[حاجى|حاجيت]][[ك]] [[ما]] [[جا|جيت]][[ك]]|tr=ḥājītak mā jītak}} <end>
+Page 276 حاجيتك ما جيتك: Found match for regex: <begin> {{ary-head|phr|head=[[حاجى|حاجيت]][[ك]] [[ما]] [[جا|جيت]][[ك]]<tr:ḥājītak mā jītak>}} <end>
 Page 276 حاجيتك ما جيتك: Skipped, no changes
 Page 277 حادش: Found match for regex: <begin> {{ary-head|adj|tr=ḥādiš|f=حادشة<tr:ḥādša>|mpl=حادشين<tr:ḥādšīn>|fpl=حادشات<tr:ḥādšāt>}} <end>
 Page 277 حادش: Skipped, no changes
@@ -18033,7 +18033,7 @@ Page 325 حوات: Found match for regex: <begin> {{ary-head|noun|m|tr=ḥawwāt
 Page 325 حوات: Skipped, no changes
 Page 326 حوتة الرجل: Found match for regex: <begin> {{ary-head|noun|f|head=[[حوت|حوتة]] [[رجل|الرجل]]<tr:ḥūtat er-rjal>|pl=حوتات الرجل<tr:ḥūtāt er-rjal>}} <end>
 Page 326 حوتة الرجل: Skipped, no changes
-Page 327 حوتة واحدة كتخنز الشواري: Found match for regex: <begin> {{head|ary|proverb|head=[[حوتة]] [[واحدة]] [[خنز|كتخنز]] [[شواري|الشواري]]|tr=ḥūta waḥda katḵannaz eš-šwāri}} <end>
+Page 327 حوتة واحدة كتخنز الشواري: Found match for regex: <begin> {{ary-head|proverb|head=[[حوتة]] [[واحدة]] [[خنز|كتخنز]] [[شواري|الشواري]]<tr:ḥūta waḥda katḵannaz eš-šwāri>}} <end>
 Page 327 حوتة واحدة كتخنز الشواري: Skipped, no changes
 Page 328 حولي: Found match for regex: <begin> {{ary-head|noun|m|tr=ḥawli|pl=حوالة<tr:ḥwāla>|f=حولية<tr:ḥawliyya>}} <end>
 Page 328 حولي: Skipped, no changes
@@ -18913,9 +18913,9 @@ Page 606 شاوش: Found match for regex: <begin> {{ary-head|noun|m|tr=šāwiš|
 Page 606 شاوش: Skipped, no changes
 Page 607 شحال: Found match for regex: <begin> {{ary-head|adv|tr=šḥāl}} <end>
 Page 607 شحال: Skipped, no changes
-Page 608 شحال الساعة: Found match for regex: <begin> {{head|ary|phrase|head=[[شحال]] [[ال]][[ساعة]]؟|tr=šḥāl es-sāʕa}} <end>
+Page 608 شحال الساعة: Found match for regex: <begin> {{ary-head|phr|head=[[شحال]] [[ال]][[ساعة]]؟<tr:šḥāl es-sāʕa>}} <end>
 Page 608 شحال الساعة: Skipped, no changes
-Page 609 شحال فالساعة: Found match for regex: <begin> {{head|ary|phrase|head=[[شحال]] [[ف]][[ال]][[ساعة]]؟|tr=šḥāl f-es-sāʕa}} <end>
+Page 609 شحال فالساعة: Found match for regex: <begin> {{ary-head|phr|head=[[شحال]] [[ف]][[ال]][[ساعة]]؟<tr:šḥāl f-es-sāʕa>}} <end>
 Page 609 شحال فالساعة: Skipped, no changes
 Page 610 شخير: Found match for regex: <begin> {{ary-head|noun|m|tr=šḵīr}} <end>
 Page 610 شخير: Skipped, no changes
@@ -20140,7 +20140,7 @@ Page 983 كيد: Found match for regex: <begin> {{ary-head|noun|m|tr=kīd|pl=ك�
 Page 983 كيد: Skipped, no changes
 Page 984 كيف ما: Found match for regex: <begin> {{ary-head|conj|tr=kīf mā}} <end>
 Page 984 كيف ما: Skipped, no changes
-Page 985 لا باس: Found match for regex: <begin> {{ary-head|phrase|tr=lā bās,la bās}} <end>
+Page 985 لا باس: Found match for regex: <begin> {{ary-head|phr|tr=lā bās,la bās}} <end>
 Page 985 لا باس: Skipped, no changes
 Page 986 لاح: Found match for regex: <begin> {{ary-root|ل و ح}} <end>
 Page 986 لاح: Found match for regex: <begin> {{ary-head|verb|I|tr=lāḥ|np=يلوح<tr:ylūḥ>|vn=لوحان<tr:lūḥān>|ap=لايح<tr:lāyiḥ>|pp=مليوح<tr:malyūḥ>}} <end>
@@ -20997,7 +20997,7 @@ Page 10 سماط: Found match for regex: <begin> {{ars-head|noun|tr=smaːtˤ}} <
 Page 10 سماط: Skipped, no changes
 Page 11 سنتكه: Found match for regex: <begin> {{ars-head|adj|tr=san.ta.ka}} <end>
 Page 11 سنتكه: Skipped, no changes
-Page 12 شقل: Found match for regex: <begin> {{head|ars|verb}} <end>
+Page 12 شقل: Found match for regex: <begin> {{ars-head|verb}} <end>
 Page 12 شقل: Found match for regex: <begin> {{apc-head|verb|I|tr=šaʔal|np=يشقل<tr:yišʔil,yišʔul>}} {{tlb|apc|transitive}} <end>
 Page 12 شقل: Skipped, no changes
 Page 13 صنادح: Found match for regex: <begin> {{ars-head|noun|m}} <end>
@@ -21010,7 +21010,7 @@ Page 15 طمن: Found match for regex: <begin> {{ajp-root|ط م ن}} <end>
 Page 15 طمن: Found match for regex: <begin> {{ajp-head|verb|II|head=طمّن<tr:ṭamman>|pres=بطمّن<tr:biṭammen>}} <end>
 Page 15 طمن: Found match for regex: <begin> {{ajp-conj/2A|ط|م|ن|ṭ|m|n}} <end>
 Page 15 طمن: Skipped, no changes
-Page 16 طيط: Found match for regex: <begin> {{head|ars|noun|tr=ṭīṭ|g=m}} <end>
+Page 16 طيط: Found match for regex: <begin> {{ars-head|noun|m|tr=ṭīṭ}} <end>
 Page 16 طيط: Skipped, no changes
 Page 17 فهاق: Found match for regex: <begin> {{ars-root|ف ه ق}} <end>
 Page 17 فهاق: Found match for regex: <begin> {{ars-head|noun|m|head=فهاق<tr:fuhāg>}} <end>
@@ -21049,10 +21049,10 @@ Page 2 آمن: Found match for regex: <begin> {{ajp-root|ء م ن}} <end>
 Page 2 آمن: Found match for regex: <begin> {{ajp-head|verb|III|tr=ʔāman|pres=بآمن<tr:biʔāmen>}} <end>
 Page 2 آمن: Found match for regex: <begin> {{ajp-conj/3A-hamze|م|ن|m|n}} <end>
 Page 2 آمن: Skipped, no changes
-Page 3 أبونا: Found match for regex: <begin> {{head|apc|propn|tr=ʔabūna|g=m}} <end>
-Page 3 أبونا: Found match for regex: <begin> {{head|apc|propn|tr=ʔabūna|g=m}} <end>
-Page 3 أبونا: Found match for regex: <begin> {{head|ajp|propn|tr=ʔabūnā|g=m}} <end>
-Page 3 أبونا: Found match for regex: <begin> {{head|ajp|noun|tr=ʔabūnā|g=m}} <end>
+Page 3 أبونا: Found match for regex: <begin> {{apc-head|propn|m|tr=ʔabūna}} <end>
+Page 3 أبونا: Found match for regex: <begin> {{apc-head|propn|m|tr=ʔabūna}} <end>
+Page 3 أبونا: Found match for regex: <begin> {{ajp-head|propn|m|tr=ʔabūnā}} <end>
+Page 3 أبونا: Found match for regex: <begin> {{ajp-head|noun|m|tr=ʔabūnā}} <end>
 Page 3 أبونا: Skipped, no changes
 Page 4 أجدب: Found match for regex: <begin> {{apc-root|ج د ب}} <end>
 Page 4 أجدب: Found match for regex: <begin> {{apc-head|adj|tr=ʔajdab|f=جدبا<tr:jadba>,جدبة<tr:jadbe>}} <end>
@@ -21074,7 +21074,7 @@ Page 10 أنتريك: Found match for regex: <begin> {{apc-head|noun|m|head=أَ
 Page 10 أنتريك: Skipped, no changes
 Page 11 أنغر: Found match for regex: <begin> {{apc-head|verb|Iq|tr=ʔangar|np=يأنغر<tr:yʔangir>|ap=مأنغَر<tr:mʔangar>,مأنغِر<tr:mʔangir>}} {{tlb|apc|Lebanon}} <end>
 Page 11 أنغر: Skipped, no changes
-Page 12 أهلا وسهلا: Found match for regex: <begin> {{head|apc|intj|head=[[أهلا]] [[و]][[سهلا]]|tr=ʔahla w-sahla}} <end>
+Page 12 أهلا وسهلا: Found match for regex: <begin> {{apc-head|intj|head=[[أهلا]] [[و]][[سهلا]]<tr:ʔahla w-sahla>}} <end>
 Page 12 أهلا وسهلا: Found match for regex: <begin> {{ajp-head|intj|head=[[أهلا]] [[و]][[سهلا]]<tr:ʔahla w-sahla>}} <end>
 Page 12 أهلا وسهلا: Skipped, no changes
 Page 13 أهلين: Found match for regex: <begin> {{apc-head|intj|head=أَهْلِين<tr:ʔahlēn, ʔahlain>}} <end>
@@ -21096,13 +21096,13 @@ Page 18 إدعش: Skipped, no changes
 Page 19 إسا: Found match for regex: <begin> {{apc-head|adv|tr=ʔissa}} <end>
 Page 19 إسا: Found match for regex: <begin> {{ajp-head|adv|tr=ʔissa}} <end>
 Page 19 إسا: Skipped, no changes
-Page 20 إسباني: Found match for regex: <begin> {{head|apc|propn|tr=ʔisṗāni|g=m}} <end>
+Page 20 إسباني: Found match for regex: <begin> {{apc-head|propn|m|tr=ʔisṗāni}} <end>
 Page 20 إسباني: Found match for regex: <begin> {{apc-head|noun|m|tr=ʔisṗāni|f=إسبانية<tr:ʔisṗāniyye>|pl=إسبان<tr:ʔisṗān>,إسبانيّين<tr:ʔisṗāniyyīn>,إسبانية<tr:ʔisṗāniyye>}} <end>
 Page 20 إسباني: Found match for regex: <begin> {{apc-head|adj|tr=ʔisṗāni|f=إسبانية<tr:ʔisṗāniyye>|cpl=إسبانيّين<tr:ʔisṗāniyyīn>,إسبانية<tr:ʔisṗāniyye>}} <end>
 Page 20 إسباني: Skipped, no changes
 Page 21 إشب: Found match for regex: <begin> {{apc-head|prep|head=إشبـ<tr:ʔišb->}} <end>
 Page 21 إشب: Skipped, no changes
-Page 22 إلماني: Found match for regex: <begin> {{head|apc|propn|tr=ʔilṃāni|g=m}} <end>
+Page 22 إلماني: Found match for regex: <begin> {{apc-head|propn|m|tr=ʔilṃāni}} <end>
 Page 22 إلماني: Found match for regex: <begin> {{apc-head|noun|m|tr=ʔilṃāni|f=إلمانية<tr:ʔilṃāniyye>|pl=إلمان<tr:ʔilṃān>,إلمانيّين<tr:ʔilṃāniyyīn>,إلمانية<tr:ʔilṃāniyye>}} <end>
 Page 22 إلماني: Found match for regex: <begin> {{apc-head|adj|tr=ʔilṃāni|f=إلمانية<tr:ʔilṃāniyye>|cpl=إلمانيّين<tr:ʔilṃāniyyīn>,إلمانية<tr:ʔilṃāniyye>}} <end>
 Page 22 إلماني: Skipped, no changes
@@ -21155,7 +21155,7 @@ Page 43 باجوق: Found match for regex: <begin> {{apc-head|noun|m|tr=bājūʔ
 Page 43 باجوق: Skipped, no changes
 Page 44 بارافان: Found match for regex: <begin> {{apc-head|noun|m|tr=paravān|pl=بارافانات<tr:paravānāt>}} <end>
 Page 44 بارافان: Skipped, no changes
-Page 45 بالشقلوب: Found match for regex: <begin> {{apc-head|phrase|head=بِالشَّقْلُوب<tr:biš-šaʔlūb>}} <end>
+Page 45 بالشقلوب: Found match for regex: <begin> {{apc-head|phr|head=بِالشَّقْلُوب<tr:biš-šaʔlūb>}} <end>
 Page 45 بالشقلوب: Skipped, no changes
 Page 46 باي باي: Found match for regex: <begin> {{apc-head|intj|tr=bay bay}} <end>
 Page 46 باي باي: Skipped, no changes
@@ -21410,7 +21410,7 @@ Page 138 حد: Skipped, no changes
 Page 139 حزيران: Found match for regex: <begin> {{apc-head|propn|head=حْزَيْرَان<tr:ḥzayrān>}} <end>
 Page 139 حزيران: Found match for regex: <begin> {{ajp-head|noun|m|tr=ḥazīrān}} <end>
 Page 139 حزيران: Skipped, no changes
-Page 140 حكرة بكرة: Found match for regex: <begin> {{apc-head|phrase|tr=ḥagara bagara, ḥakara bakara}} <end>
+Page 140 حكرة بكرة: Found match for regex: <begin> {{apc-head|phr|tr=ḥagara bagara, ḥakara bakara}} <end>
 Page 140 حكرة بكرة: Skipped, no changes
 Page 141 حكي: Found match for regex: <begin> {{apc-root|ح ك ي}} <end>
 Page 141 حكي: Found match for regex: <begin> {{apc-head|verb|I|tr=ḥiki|np=يحكي<tr:yiḥki>}} <end>
@@ -21635,7 +21635,7 @@ Page 222 شو: Found match for regex: <begin> {{apc-head|intj|tr=šu, šū}} <en
 Page 222 شو: Found match for regex: <begin> {{ajp-head|pron|tr=šu}} <end>
 Page 222 شو: Found match for regex: <begin> {{aeb-head|verb|tr=šo}} <end>
 Page 222 شو: Skipped, no changes
-Page 223 شو قصة: Found match for regex: <begin> {{apc-head|phrase|tr=šu ʔuṣṣit,šu ʔiṣṣit}} <end>
+Page 223 شو قصة: Found match for regex: <begin> {{apc-head|phr|tr=šu ʔuṣṣit,šu ʔiṣṣit}} <end>
 Page 223 شو قصة: Skipped, no changes
 Page 224 شوإسمو: Found match for regex: <begin> {{apc-head|noun|m|head=شُوإِسْمُو<tr:šuʔismo>,شُوإِسْمُو<tr:šuʔismu>|f=شُوإِسْمها<tr:šuʔisma>|pl=شُوإِسْمهُن<tr:šuʔismun>}} <end>
 Page 224 شوإسمو: Skipped, no changes
@@ -21717,7 +21717,7 @@ Page 247 طحبش: Found match for regex: <begin> {{apc-conj/Iq-sound|ط|ح|ب|�
 Page 247 طحبش: Skipped, no changes
 Page 248 طرفاني: Found match for regex: <begin> {{apc-head|adj|head=طَرْفَانِي<tr:ṭarfāni>,طِرْفَانِي<tr:ṭirfāni>}} <end>
 Page 248 طرفاني: Skipped, no changes
-Page 249 طلياني: Found match for regex: <begin> {{head|apc|propn|head=طِلْيَانِي|tr=ṭilyāni|g=m}} <end>
+Page 249 طلياني: Found match for regex: <begin> {{apc-head|propn|m|head=طِلْيَانِي<tr:ṭilyāni>}} <end>
 Page 249 طلياني: Found match for regex: <begin> {{apc-head|noun|m|head=طِلْيَانِي<tr:ṭilyāni>|f=طِلْيَانِيِّة<tr:ṭilyāniyye>|pl=طِلْيَان<tr:ṭilyān>,طِلْيَانِيِّين<tr:ṭilyāniyyīn>,طِلْيَانِيِّة<tr:ṭilyāniyye>}} <end>
 Page 249 طلياني: Found match for regex: <begin> {{apc-head|adj|head=طِلْيَانِي<tr:ṭilyāni>|f=طِلْيَانِيِّة<tr:ṭilyāniyye>|cpl=طِلْيَانِيِّين<tr:ṭilyāniyyīn>,طِلْيَانِيِّة<tr:ṭilyāniyye>}} <end>
 Page 249 طلياني: Skipped, no changes
@@ -21732,7 +21732,7 @@ Page 252 عالم: Found match for regex: <begin> {{ajp-head|noun|m|tr=ʕālam}}
 Page 252 عالم: Found match for regex: <begin> {{ajp-head|adj|tr=ʕālem|f=عالمة<tr:ʕālme>|el=أعلم<tr:ʔaʕlam>}} <end>
 Page 252 عالم: Found match for regex: <begin> {{ajp-head|noun|m|tr=ʕālem|f=عالمة<tr:ʕālme>|pl=علماء<tr:ʕulamāʔ>}} <end>
 Page 252 عالم: Skipped, no changes
-Page 253 عايش بالخسة: Found match for regex: <begin> {{head|apc|phrase|head=[[عايش]] [[ب]][[ال]][[خسة]]|tr=ʕāyeš bil-ḵasse}} <end>
+Page 253 عايش بالخسة: Found match for regex: <begin> {{apc-head|phr|head=[[عايش]] [[ب]][[ال]][[خسة]]<tr:ʕāyeš bil-ḵasse>}} <end>
 Page 253 عايش بالخسة: Skipped, no changes
 Page 254 عبكرة: Found match for regex: <begin> {{apc-head|adv|tr=ʕabukra}} <end>
 Page 254 عبكرة: Skipped, no changes
@@ -21890,7 +21890,7 @@ Page 303 ككاه: Skipped, no changes
 Page 304 كلسة: Found match for regex: <begin> {{apc-head|noun|f|tr=kalse|pl=كَلْسَات<tr:kalsāt>}} <end>
 Page 304 كلسة: Found match for regex: <begin> {{ajp-head|noun|f|tr=kalse|pl=كلسات<tr:kalsāt>}} <end>
 Page 304 كلسة: Skipped, no changes
-Page 305 كلك ذوق: Found match for regex: <begin> {{head|apc|phrase|tr=kill-ak zōʔ,kill-ek zо̄ʔ|head=كلك ذوق}} <end>
+Page 305 كلك ذوق: Found match for regex: <begin> {{apc-head|phr|head=كلك ذوق<tr:kill-ak zōʔ,kill-ek zо̄ʔ>}} <end>
 Page 305 كلك ذوق: Skipped, no changes
 Page 306 كنايس: Found match for regex: <begin> {{acw-head|nounf|p|head=كَنَايس<tr:kanāyis>}} <end>
 Page 306 كنايس: Found match for regex: <begin> {{apc-head|noun|p|head=كنايس<tr:knāyis>}} <end>
@@ -21945,13 +21945,13 @@ Page 323 لكن: Found match for regex: <begin> {{ajp-head|conj|tr=lāken}} <end
 Page 323 لكن: Skipped, no changes
 Page 324 لموناضة: Found match for regex: <begin> {{apc-head|noun|f|tr=lamūnāḍa}} <end>
 Page 324 لموناضة: Skipped, no changes
-Page 325 لو بدها تشتي، كانت غيمت: Found match for regex: <begin> {{head|apc|phrase|head=[[لو]] [[بد]][[ها]] ت[[شتي]]، [[كانت]] [[غيم|غيمت]]|tr=law badda tšatti, kānet ḡayyamit}} <end>
+Page 325 لو بدها تشتي، كانت غيمت: Found match for regex: <begin> {{apc-head|phr|head=[[لو]] [[بد]][[ها]] ت[[شتي]]، [[كانت]] [[غيم|غيمت]]<tr:law badda tšatti, kānet ḡayyamit>}} <end>
 Page 325 لو بدها تشتي، كانت غيمت: Skipped, no changes
 Page 326 لوتو: Found match for regex: <begin> {{apc-head|noun|m|tr=lōtō}} <end>
 Page 326 لوتو: Skipped, no changes
 Page 327 لية: Found match for regex: <begin> {{apc-head|noun|f|head=لِيِّة<tr:liyye>}} {{tlb|apc|uncountable}} <end>
 Page 327 لية: Found match for regex: <begin> {{ajp-head|noun|f|head=لِيِّة<tr:liyya>}} {{tlb|ajp|uncountable}} <end>
-Page 327 لية: Found match for regex: <begin> {{head|aeb|noun|head=لِيَّة|g=f|tr=leyyə}} <end>
+Page 327 لية: Found match for regex: <begin> {{aeb-head|noun|f|head=لِيَّة<tr:leyyə>}} <end>
 Page 327 لية: Skipped, no changes
 Page 328 ليك: Found match for regex: <begin> {{apc-head|verb|head=ليك<tr:lēk>}} <end>
 Page 328 ليك: Found match for regex: <begin> {{apc-head|intj|tr=lēk}} <end>
@@ -22165,9 +22165,9 @@ Page 392 هين: Found match for regex: <begin> {{ajp-head|adj|head=هيّن<tr:
 Page 392 هين: Skipped, no changes
 Page 393 وأت: Found match for regex: <begin> {{apc-head|noun|m|tr=waʔt}} <end>
 Page 393 وأت: Skipped, no changes
-Page 394 وادي بعنقودين: Found match for regex: <begin> {{head|apc|propn|head=وادي بعنقودين|g=f|tr=wādi bʕanqūdīn}} <end>
+Page 394 وادي بعنقودين: Found match for regex: <begin> {{apc-head|propn|f|head=وادي بعنقودين<tr:wādi bʕanqūdīn>}} <end>
 Page 394 وادي بعنقودين: Skipped, no changes
-Page 395 والكل: Found match for regex: <begin> {{apc-head|phrase|head=والكِلّ<tr:wil-kill>}} <end>
+Page 395 والكل: Found match for regex: <begin> {{apc-head|phr|head=والكِلّ<tr:wil-kill>}} <end>
 Page 395 والكل: Skipped, no changes
 Page 396 واوا: Found match for regex: <begin> {{apc-head|noun|m|tr=ẉāẉa}} <end>
 Page 396 واوا: Skipped, no changes
@@ -22196,7 +22196,7 @@ Page 404 ونص: Found match for regex: <begin> {{apc-head|adv|tr=w-nuṣṣ}} <
 Page 404 ونص: Skipped, no changes
 Page 405 يا دلي: Found match for regex: <begin> {{apc-head|intj|tr=ya dilli}} <end>
 Page 405 يا دلي: Skipped, no changes
-Page 406 يا محلا: Found match for regex: <begin> {{apc-head|phrase|head=يَا مَحْلَا<tr:yā maḥla>}} <end>
+Page 406 يا محلا: Found match for regex: <begin> {{apc-head|phr|head=يَا مَحْلَا<tr:yā maḥla>}} <end>
 Page 406 يا محلا: Skipped, no changes
 Page 407 ياباني: Found match for regex: <begin> {{apc-head|propn|m|head=يَابَانِي<tr:yāḅāni>,يَابَانِي<tr:yaḅāni>}} <end>
 Page 407 ياباني: Found match for regex: <begin> {{apc-head|noun|m|head=يَابَانِي<tr:yāḅāni>,يَابَانِي<tr:yaḅāni>|f=يَابَانِيِّة<tr:yāḅāniyye,yaḅāniyye>|pl=يَبَانِيِّين<tr:yāḅāniyyīn,yaḅāniyyīn>,يَابَانِيِّة<tr:yāḅāniyye,yaḅāniyye>}} <end>
@@ -22273,7 +22273,7 @@ Page 4 بهوة: Found match for regex: <begin> {{acx-head|noun|f|tr=bahwa|pl=ب
 Page 4 بهوة: Skipped, no changes
 Page 5 بو: Found match for regex: <begin> {{acx-head|conj|tr=bū}} <end>
 Page 5 بو: Skipped, no changes
-Page 6 بون: Found match for regex: <begin> {{head|acx|noun|tr=būn|g=m}} <end>
+Page 6 بون: Found match for regex: <begin> {{acx-head|noun|m|tr=būn}} <end>
 Page 6 بون: Skipped, no changes
 Page 7 جخوار: Found match for regex: <begin> {{acx-head|noun|f|tr=gaḵwār|pl=جخاوير<tr:gaḵāwīr>}} <end>
 Page 7 جخوار: Skipped, no changes
@@ -22767,7 +22767,7 @@ Page 140 أنو: Found match for regex: <begin> {{ajp-head|pron|m|tr=ʔanū|f=أ
 Page 140 أنو: Skipped, no changes
 Page 141 أني: Found match for regex: <begin> {{ajp-head|det|f|tr=ʔanī}} <end>
 Page 141 أني: Found match for regex: <begin> {{ajp-head|pron|f|tr=ʔanī}} <end>
-Page 141 أني: Found match for regex: <begin> {{head|apd|pron|tr=ani|g=mf}} <end>
+Page 141 أني: Found match for regex: <begin> {{apd-head|pron|mf|tr=ani}} <end>
 Page 141 أني: Skipped, no changes
 Page 142 أهان: Found match for regex: <begin> {{ajp-root|ه و ن}} <end>
 Page 142 أهان: Found match for regex: <begin> {{ajp-head|verb|IV|tr=ʔahān|pres=بهين<tr:bihīn>}} <end>
@@ -22824,9 +22824,9 @@ Page 159 أيوى: Skipped, no changes
 Page 160 إبادة: Found match for regex: <begin> {{ajp-root|ب ي د}} <end>
 Page 160 إبادة: Found match for regex: <begin> {{ajp-head|noun|f|head=إبَادِة<tr:ibāde>|pl=إِبَادَات<tr:ibādāt>}} <end>
 Page 160 إبادة: Skipped, no changes
-Page 161 إجا عالوجع: Found match for regex: <begin> {{head|ajp|phrase|head=[[إجا]] [[ع]][[وجع|الوجع]]|tr=ʔija ʕal-wajaʕ}} <end>
+Page 161 إجا عالوجع: Found match for regex: <begin> {{ajp-head|phr|head=[[إجا]] [[ع]][[وجع|الوجع]]<tr:ʔija ʕal-wajaʕ>}} <end>
 Page 161 إجا عالوجع: Skipped, no changes
-Page 162 إجا يكحلها عماها: Found match for regex: <begin> {{head|ajp|phrase|head=[[إجا]] [[كحّل|يكحّلها]] [[عمى|عماها]]|tr=ʔija ykaḥḥelha ʕamāha}} <end>
+Page 162 إجا يكحلها عماها: Found match for regex: <begin> {{ajp-head|phr|head=[[إجا]] [[كحّل|يكحّلها]] [[عمى|عماها]]<tr:ʔija ykaḥḥelha ʕamāha>}} <end>
 Page 162 إجا يكحلها عماها: Skipped, no changes
 Page 163 إجازة: Found match for regex: <begin> {{ajp-root|ج و ز}} <end>
 Page 163 إجازة: Found match for regex: <begin> {{ajp-head|noun|f|tr=ʔijāze|pl=إجازات<tr:ʔijāzāt>}} <end>
@@ -22835,7 +22835,7 @@ Page 164 إجر: Found match for regex: <begin> {{ajp-head|noun|f|head=إجر<tr
 Page 164 إجر: Skipped, no changes
 Page 165 إجى: Found match for regex: <begin> {{ajp-head|verb|tr=ʔija}} <end>
 Page 165 إجى: Skipped, no changes
-Page 166 إذا كترو الطباخين بتنحرق الطبخة: Found match for regex: <begin> {{head|ajp|proverb|head=[[إذا]] [[كتر|كترو]] [[طباخ|الطبّاخين]] [[انحرق|بتنحرق]] [[طبخة|الطبخة]]|tr=ʔiza kitru ṭ-ṭabbāḵīn btinḥareʔ iṭ-ṭabḵa}} <end>
+Page 166 إذا كترو الطباخين بتنحرق الطبخة: Found match for regex: <begin> {{ajp-head|proverb|head=[[إذا]] [[كتر|كترو]] [[طباخ|الطبّاخين]] [[انحرق|بتنحرق]] [[طبخة|الطبخة]]<tr:ʔiza kitru ṭ-ṭabbāḵīn btinḥareʔ iṭ-ṭabḵa>}} <end>
 Page 166 إذا كترو الطباخين بتنحرق الطبخة: Skipped, no changes
 Page 167 إربد: Found match for regex: <begin> {{ajp-head|propn||tr=ʔirbid}} <end>
 Page 167 إربد: Skipped, no changes
@@ -22878,7 +22878,7 @@ Page 181 إيسلندا: Found match for regex: <begin> {{ajp-head|propn|f|tr=ʔ
 Page 181 إيسلندا: Skipped, no changes
 Page 182 إيطاليا: Found match for regex: <begin> {{ajp-head|propn|f|tr=ʔīṭālya}} <end>
 Page 182 إيطاليا: Skipped, no changes
-Page 183 ابن الحلال عند ذكره ببان: Found match for regex: <begin> {{head|ajp|phrase|head=[[ابن]] [[حلال|الحلال]] [[عند]] [[ذكر]][[ه]] [[بان|ببان]]|tr=ʔibn il-ḥalāl ʕind zikro bibān}} <end>
+Page 183 ابن الحلال عند ذكره ببان: Found match for regex: <begin> {{ajp-head|phr|head=[[ابن]] [[حلال|الحلال]] [[عند]] [[ذكر]][[ه]] [[بان|ببان]]<tr:ʔibn il-ḥalāl ʕind zikro bibān>}} <end>
 Page 183 ابن الحلال عند ذكره ببان: Skipped, no changes
 Page 184 اتاكل: Found match for regex: <begin> {{ajp-root|ء ك ل}} <end>
 Page 184 اتاكل: Found match for regex: <begin> {{ajp-head|verb|VI|head=اتّاكل<tr:ittākal>|pres=بتّاكل<tr:bittākal>}} <end>
@@ -23155,7 +23155,7 @@ Page 257 الجليل: Found match for regex: <begin> {{ajp-head|propn|m|tr=il-j
 Page 257 الجليل: Skipped, no changes
 Page 258 الجولان: Found match for regex: <begin> {{ajp-head|propn|f|tr=il-jūlān}} <end>
 Page 258 الجولان: Skipped, no changes
-Page 259 الحكي مش متل الشوف: Found match for regex: <begin> {{head|ajp|proverb|head=[[حكي|الحكي]] [[مش]] [[متل]] [[شوف|الشوف]]|tr=il-ḥaki miš mitl il-šōf}} <end>
+Page 259 الحكي مش متل الشوف: Found match for regex: <begin> {{ajp-head|proverb|head=[[حكي|الحكي]] [[مش]] [[متل]] [[شوف|الشوف]]<tr:il-ḥaki miš mitl il-šōf>}} <end>
 Page 259 الحكي مش متل الشوف: Skipped, no changes
 Page 260 الخليل: Found match for regex: <begin> {{ajp-head|propn|m|tr=il-ḵalīl}} <end>
 Page 260 الخليل: Skipped, no changes
@@ -23184,10 +23184,10 @@ Page 271 الفرات: Skipped, no changes
 Page 272 الكل: Found match for regex: <begin> {{ajp-head|pron|head=الكلّ<tr:il-kull>}} <end>
 Page 272 الكل: Skipped, no changes
 Page 273 الله فرجك: Found match for regex: <begin> {{ajp-IPA|ʔaḷḷa farajak <p:ˈʔɑlˤ.lˤɑ fa.ˈrɑ.ʒak>}} <end>
-Page 273 الله فرجك: Found match for regex: <begin> {{head|ajp|phrase|tr=ʔaḷḷa farajak|head=[[الله]] [[فرج]][[ك]]}} <end>
-Page 273 الله فرجك: Found match for regex: <begin> {{head|ajp|phrase|tr=ʔaḷḷa farajek|head=[[الله]] [[فرج]][[ك]]}} <end>
+Page 273 الله فرجك: Found match for regex: <begin> {{head|ajp|phr|tr=ʔaḷḷa farajak|head=[[الله]] [[فرج]][[ك]]}} <end>
+Page 273 الله فرجك: Found match for regex: <begin> {{head|ajp|phr|tr=ʔaḷḷa farajek|head=[[الله]] [[فرج]][[ك]]}} <end>
 Page 273 الله فرجك: Skipped, no changes
-Page 274 اللي بيته من قزاز، برميش الناس بالطوب: Found match for regex: <begin> {{head|ajp|proverb|head=[[اللي]] [[بيت]][[ه]] [[من]] [[قزاز]]، [[رمى|برمي]][[ش]] [[ناس|الناس]] [[ب]][[طوب|الطوب]]|tr=illi bēto min ʔazāz, birmī-š in-nās biṭ-ṭūb}} <end>
+Page 274 اللي بيته من قزاز، برميش الناس بالطوب: Found match for regex: <begin> {{ajp-head|proverb|head=[[اللي]] [[بيت]][[ه]] [[من]] [[قزاز]]، [[رمى|برمي]][[ش]] [[ناس|الناس]] [[ب]][[طوب|الطوب]]<tr:illi bēto min ʔazāz, birmī-š in-nās biṭ-ṭūb>}} <end>
 Page 274 اللي بيته من قزاز، برميش الناس بالطوب: Skipped, no changes
 Page 275 الليلة: Found match for regex: <begin> {{ajp-root|ل ي ل}} <end>
 Page 275 الليلة: Found match for regex: <begin> {{ajp-head|adv|tr=il-lēle}} <end>
@@ -23451,7 +23451,7 @@ Page 349 بالكتير: Found match for regex: <begin> {{ajp-head|adv|tr=bil-kt
 Page 349 بالكتير: Skipped, no changes
 Page 350 بالمرة: Found match for regex: <begin> {{ajp-head|adv|tr=bil-marra}} <end>
 Page 350 بالمرة: Skipped, no changes
-Page 351 بالمية: Found match for regex: <begin> {{ajp-head|phrase|tr=bil-miyye}} <end>
+Page 351 بالمية: Found match for regex: <begin> {{ajp-head|phr|tr=bil-miyye}} <end>
 Page 351 بالمية: Skipped, no changes
 Page 352 بالنسبة: Found match for regex: <begin> {{ajp-head|adv|tr=bin-nisbe}} <end>
 Page 352 بالنسبة: Skipped, no changes
@@ -23608,7 +23608,7 @@ Page 400 بل: Skipped, no changes
 Page 401 بلا: Found match for regex: <begin> {{ajp-head|prep|tr=bala}} <end>
 Page 401 بلا: Found match for regex: <begin> {{ajp-prep-inflection <end>
 Page 401 بلا: Skipped, no changes
-Page 402 بلا طول سيرة: Found match for regex: <begin> {{head|ajp|phrase|head=[[بلا]] [[طول]] [[سيرة]]|tr=bala ṭūl sīre}} <end>
+Page 402 بلا طول سيرة: Found match for regex: <begin> {{ajp-head|phr|head=[[بلا]] [[طول]] [[سيرة]]<tr:bala ṭūl sīre>}} <end>
 Page 402 بلا طول سيرة: Skipped, no changes
 Page 403 بلاد الشام: Found match for regex: <begin> {{ajp-head|propn|p|head=[[بلاد]] [[الشام]]<tr:blād iš-šām>}} <end>
 Page 403 بلاد الشام: Skipped, no changes
@@ -24064,7 +24064,7 @@ Page 531 تقدم: Found match for regex: <begin> {{ajp-root|ق د م}} <end>
 Page 531 تقدم: Found match for regex: <begin> {{ajp-head|verb|V|head=تقدّم<tr:tʔaddam>|pres=بتقدّم<tr:bitʔaddam>}} <end>
 Page 531 تقدم: Found match for regex: <begin> {{ajp-conj/5A|ق|د|م|ʔ|d|m}} <end>
 Page 531 تقدم: Skipped, no changes
-Page 532 تقيل الدم: Found match for regex: <begin> {{head|ajp|phrase|head=[[تقيل]] [[دم|الدمّ]]|tr=tʔīl id-damm}} <end>
+Page 532 تقيل الدم: Found match for regex: <begin> {{ajp-head|phr|head=[[تقيل]] [[دم|الدمّ]]<tr:tʔīl id-damm>}} <end>
 Page 532 تقيل الدم: Skipped, no changes
 Page 533 تكبر: Found match for regex: <begin> {{ajp-root|ك ب ر}} <end>
 Page 533 تكبر: Found match for regex: <begin> {{ajp-head|verb|V|head=تكبّر<tr:tkabbar>|pres=بتكبّر<tr:bitkabbar>}} <end>
@@ -24252,7 +24252,7 @@ Page 591 جاهد: Found match for regex: <begin> {{ajp-root|ج ه د}} <end>
 Page 591 جاهد: Found match for regex: <begin> {{ajp-head|verb|III|tr=jāhad|pres=بجاهد<tr:bijāhed>}} <end>
 Page 591 جاهد: Found match for regex: <begin> {{ajp-conj/3A|ج|ه|د|j|h|d}} <end>
 Page 591 جاهد: Skipped, no changes
-Page 592 جاي عباله: Found match for regex: <begin> {{head|ajp|phrase|head=[[إجا|جاي]] [[على|ع]][[بال|باله]]|tr=jāy ʕa-bālo}} <end>
+Page 592 جاي عباله: Found match for regex: <begin> {{ajp-head|phr|head=[[إجا|جاي]] [[على|ع]][[بال|باله]]<tr:jāy ʕa-bālo>}} <end>
 Page 592 جاي عباله: Skipped, no changes
 Page 593 جبين: Found match for regex: <begin> {{ajp-head|noun|m|tr=jbīn|pl=جبينات<tr:jbīnāt>}} <end>
 Page 593 جبين: Skipped, no changes
@@ -24332,7 +24332,7 @@ Page 615 جنسي: Found match for regex: <begin> {{ajp-head|adj|tr=jinsi|f=جن
 Page 615 جنسي: Skipped, no changes
 Page 616 جنسية: Found match for regex: <begin> {{ajp-root|ج ن س}} <end>
 Page 616 جنسية: Found match for regex: <begin> {{ajp-head|noun|f|tr=jinsiyye}} <end>
-Page 616 جنسية: Found match for regex: <begin> {{head|ajp|adjective feminine form|tr=jinsiyye|g=f}} <end>
+Page 616 جنسية: Found match for regex: <begin> {{ajp-head|adjf|f|tr=jinsiyye}} <end>
 Page 616 جنسية: Skipped, no changes
 Page 617 جنن: Found match for regex: <begin> {{ajp-root|ج ن ن}} <end>
 Page 617 جنن: Found match for regex: <begin> {{ajp-head|verb|I|tr=jannan|pres=بجنّن<tr:bijannen>}} <end>
@@ -24900,7 +24900,7 @@ Page 782 ذكر: Found match for regex: <begin> {{ajp-head|verb|II|head=ذكّر
 Page 782 ذكر: Found match for regex: <begin> {{ajp-conj/2A|ذ|ك|ر|z|k|r}} <end>
 Page 782 ذكر: Found match for regex: <begin> {{ajp-head|noun|m|tr=zakar|pl=ذكور<tr:zukūr>}} <end>
 Page 782 ذكر: Skipped, no changes
-Page 783 ذكرنا القط، أجا ينط: Found match for regex: <begin> {{head|ajp|phrase|head=[[ذكر|ذكرنا]] [[ال]][[قطّ]]، [[أجا]] [[نط|ينط]]|tr=zakarna l-qoṭṭ, ʔaja ynoṭṭ}} <end>
+Page 783 ذكرنا القط، أجا ينط: Found match for regex: <begin> {{ajp-head|phr|head=[[ذكر|ذكرنا]] [[ال]][[قطّ]]، [[أجا]] [[نط|ينط]]<tr:zakarna l-qoṭṭ, ʔaja ynoṭṭ>}} <end>
 Page 783 ذكرنا القط، أجا ينط: Skipped, no changes
 Page 784 رئة: Found match for regex: <begin> {{ajp-head|noun|f|tr=riʔa|pl=رئات<tr:riʔāt>}} <end>
 Page 784 رئة: Skipped, no changes
@@ -25069,7 +25069,7 @@ Page 832 زهري: Found match for regex: <begin> {{ajp-colors}} <end>
 Page 832 زهري: Skipped, no changes
 Page 833 زوبعة: Found match for regex: <begin> {{ajp-head|noun|f|tr=zōbaʕa|pl=زوابع<tr:zawābeʕ>}} <end>
 Page 833 زوبعة: Skipped, no changes
-Page 834 زوبعة في فنجان: Found match for regex: <begin> {{head|ajp|phrase|head=[[زوبعة]] [[في]] [[فنجان]]|tr=zōbaʕa fi finjān}} <end>
+Page 834 زوبعة في فنجان: Found match for regex: <begin> {{ajp-head|phr|head=[[زوبعة]] [[في]] [[فنجان]]<tr:zōbaʕa fi finjān>}} <end>
 Page 834 زوبعة في فنجان: Skipped, no changes
 Page 835 زيبق: Found match for regex: <begin> {{ajp-head|noun|m|tr=zēbaʔ,zaybaʔ}} <end>
 Page 835 زيبق: Skipped, no changes
@@ -25153,7 +25153,7 @@ Page 858 سري: Found match for regex: <begin> {{ajp-head|adj|head=سرّي<tr:
 Page 858 سري: Skipped, no changes
 Page 859 سرية: Found match for regex: <begin> {{ajp-root|س ر ر}} <end>
 Page 859 سرية: Found match for regex: <begin> {{ajp-head|noun|f|head=سرّيّة<tr:sirriyye>}} <end>
-Page 859 سرية: Found match for regex: <begin> {{ajp-head|adjective feminine form|f|head=سرّيّة<tr:sirriyye>}} <end>
+Page 859 سرية: Found match for regex: <begin> {{ajp-head|adjf|f|head=سرّيّة<tr:sirriyye>}} <end>
 Page 859 سرية: Skipped, no changes
 Page 860 سعيد: Found match for regex: <begin> {{ajp-root|س ع د}} <end>
 Page 860 سعيد: Found match for regex: <begin> {{ajp-head|adj|tr=saʕīd|f=سعيدة<tr:saʕīde>|cpl=سعيدين<tr:saʕīdīn>|el=أسعد<tr:ʔasʕad>}} <end>
@@ -25239,7 +25239,7 @@ Page 887 سيرة: Found match for regex: <begin> {{ajp-head|noun|f|tr=sīre}} <
 Page 887 سيرة: Skipped, no changes
 Page 888 شابة: Found match for regex: <begin> {{ajp-root|ش ب ب}} <end>
 Page 888 شابة: Found match for regex: <begin> {{ajp-head|noun|f|head=شابّة<tr:šābbe>|m=شابّ<tr:šabb,šābb>|pl=شابّات<tr:šābbāt>}} <end>
-Page 888 شابة: Found match for regex: <begin> {{ajp-head|adjective feminine form|f|head=شابّة<tr:šābbe>}} <end>
+Page 888 شابة: Found match for regex: <begin> {{ajp-head|adjf|f|head=شابّة<tr:šābbe>}} <end>
 Page 888 شابة: Skipped, no changes
 Page 889 شارع: Found match for regex: <begin> {{ajp-root|ش ر ع}} <end>
 Page 889 شارع: Found match for regex: <begin> {{ajp-head|noun|m|tr=šāreʕ|pl=شوارع<tr:šawāreʕ>}} <end>
@@ -25621,7 +25621,7 @@ Page 1005 طلب: Skipped, no changes
 Page 1006 طن: Found match for regex: <begin> {{ajp-head|noun|m|head=طنّ<tr:ṭonn>|pl=طنان<tr:ṭnān>,أطنان<tr:ʔaṭnān>}} <end>
 Page 1006 طن: Found match for regex: <begin> {{aeb-head|noun|m|head=طُنّ<tr:ṭonn>}} <end>
 Page 1006 طن: Skipped, no changes
-Page 1007 طنجرة ولقت غطاها: Found match for regex: <begin> {{head|ajp|proverb|head=[[طنجرة]] [[و]][[لقى|لقت]] [[غطا]][[ها]] |tr=ṭanjara w-laʔat ḡaṭāha}} <end>
+Page 1007 طنجرة ولقت غطاها: Found match for regex: <begin> {{ajp-head|proverb|head=[[طنجرة]] [[و]][[لقى|لقت]] [[غطا]][[ها]] <tr:ṭanjara w-laʔat ḡaṭāha>}} <end>
 Page 1007 طنجرة ولقت غطاها: Skipped, no changes
 Page 1008 طوالي: Found match for regex: <begin> {{ajp-root|ط و ل}} <end>
 Page 1008 طوالي: Found match for regex: <begin> {{ajp-head|adv|head=طوّالي<tr:ṭawwāli>}} <end>
@@ -25636,9 +25636,9 @@ Page 1011 طول باله: Found match for regex: <begin> {{ajp-head|verb|head=[
 Page 1011 طول باله: Skipped, no changes
 Page 1012 طولكرم: Found match for regex: <begin> {{ajp-head|propn|m|tr=ṭūlkarm}} <end>
 Page 1012 طولكرم: Skipped, no changes
-Page 1013 طويل البال: Found match for regex: <begin> {{head|ajp|phrase|head=[[طويل]] [[بال|البال]]|tr=ṭawīl il-bāl}} <end>
+Page 1013 طويل البال: Found match for regex: <begin> {{ajp-head|phr|head=[[طويل]] [[بال|البال]]<tr:ṭawīl il-bāl>}} <end>
 Page 1013 طويل البال: Skipped, no changes
-Page 1014 طويل الروح: Found match for regex: <begin> {{head|ajp|phrase|head=[[طويل]] [[روح|الروح]]|tr=ṭawīl ir-rūḥ}} <end>
+Page 1014 طويل الروح: Found match for regex: <begin> {{ajp-head|phr|head=[[طويل]] [[روح|الروح]]<tr:ṭawīl ir-rūḥ>}} <end>
 Page 1014 طويل الروح: Skipped, no changes
 Page 1015 عادة: Found match for regex: <begin> {{ajp-root|ع و د}} <end>
 Page 1015 عادة: Found match for regex: <begin> {{ajp-head|noun|f|tr=ʕāde|pl=عادات<tr:ʕādāt>,عوايد<tr:ʕawāyed>}} <end>
@@ -25894,7 +25894,7 @@ Page 1089 عيد ميلاد: Skipped, no changes
 Page 1090 عيشة: Found match for regex: <begin> {{ajp-root|ع ي ش}} <end>
 Page 1090 عيشة: Found match for regex: <begin> {{ajp-head|noun|f|tr=ʕīše}} <end>
 Page 1090 عيشة: Skipped, no changes
-Page 1091 غاب القط، إلعب يا فار: Found match for regex: <begin> {{head|ajp|proverb|head=[[غاب]] [[ال]][[قطّ]]، [[لعب|إلعب]] [[يا]]‎ [[فار]]|tr=ḡāb il-qoṭṭ, ʔilʕab ya fār}} <end>
+Page 1091 غاب القط، إلعب يا فار: Found match for regex: <begin> {{ajp-head|proverb|head=[[غاب]] [[ال]][[قطّ]]، [[لعب|إلعب]] [[يا]]‎ [[فار]]<tr:ḡāb il-qoṭṭ, ʔilʕab ya fār>}} <end>
 Page 1091 غاب القط، إلعب يا فار: Skipped, no changes
 Page 1092 غاد: Found match for regex: <begin> {{ajp-head|adv|tr=ḡād}} <end>
 Page 1092 غاد: Skipped, no changes
@@ -26004,7 +26004,7 @@ Page 1122 فاصل: Found match for regex: <begin> {{ajp-conj/3A|ف|ص|ل|f|ṣ|
 Page 1122 فاصل: Skipped, no changes
 Page 1123 فاصوليا: Found match for regex: <begin> {{ajp-head|noun|f|tr=faṣūlya}} <end>
 Page 1123 فاصوليا: Skipped, no changes
-Page 1124 فتحناله، دخل بحماره: Found match for regex: <begin> {{head|ajp|phrase|head=[[فتح|فتحنا]][[ل|له]]، [[دخل]] [[ب]][[حمار]][[ه]]|tr=fataḥnā-lo, daḵal bi-ḥmāro}} <end>
+Page 1124 فتحناله، دخل بحماره: Found match for regex: <begin> {{ajp-head|phr|head=[[فتح|فتحنا]][[ل|له]]، [[دخل]] [[ب]][[حمار]][[ه]]<tr:fataḥnā-lo, daḵal bi-ḥmāro>}} <end>
 Page 1124 فتحناله، دخل بحماره: Skipped, no changes
 Page 1125 فترة: Found match for regex: <begin> {{ajp-head|noun|f|tr=fatra|pl=فترات<tr:fatrāt>}} <end>
 Page 1125 فترة: Skipped, no changes
@@ -26195,7 +26195,7 @@ Page 1182 قزم: Found match for regex: <begin> {{ajp-head|noun|m|tr=qazam|pl=�
 Page 1182 قزم: Skipped, no changes
 Page 1183 قطاع غزة: Found match for regex: <begin> {{ajp-head|propn|f|head=[[قطاع]] [[غزّة]]<tr:qiṭāʕ ḡazze>}} <end>
 Page 1183 قطاع غزة: Skipped, no changes
-Page 1184 قطع الإشارة: Found match for regex: <begin> {{head|ajp|verb|head=[[قطع]] [[إشارة|الإشارة]]|tr=ʔaṭaʕ il-išāra}} <end>
+Page 1184 قطع الإشارة: Found match for regex: <begin> {{ajp-head|verb|head=[[قطع]] [[إشارة|الإشارة]]<tr:ʔaṭaʕ il-išāra>}} <end>
 Page 1184 قطع الإشارة: Skipped, no changes
 Page 1185 قليل ما: Found match for regex: <begin> {{ajp-head|adv|tr=ʔalīl-ma}} <end>
 Page 1185 قليل ما: Skipped, no changes
@@ -26400,8 +26400,8 @@ Page 1255 كون: Found match for regex: <begin> {{ajp-conj/2A|ك|و|ن|k|w|n}} 
 Page 1255 كون: Skipped, no changes
 Page 1256 كوير: Found match for regex: <begin> {{ajp-head|adj|tr=kwīr}} <end>
 Page 1256 كوير: Skipped, no changes
-Page 1257 كيف حالك: Found match for regex: <begin> {{head|ajp|phrase|head=[[كيف]] [[حال]][[ك]]؟|g=m|tr=kīf ḥālak?}} <end>
-Page 1257 كيف حالك: Found match for regex: <begin> {{head|ajp|phrase|head=[[كيف]] [[حال]][[ك]]؟|g=f|tr=kīf ḥālek?}} <end>
+Page 1257 كيف حالك: Found match for regex: <begin> {{head|ajp|phr|head=[[كيف]] [[حال]][[ك]]؟|g=m|tr=kīf ḥālak?}} <end>
+Page 1257 كيف حالك: Found match for regex: <begin> {{head|ajp|phr|head=[[كيف]] [[حال]][[ك]]؟|g=f|tr=kīf ḥālek?}} <end>
 Page 1257 كيف حالك: Skipped, no changes
 Page 1258 كيلومتر: Found match for regex: <begin> {{ajp-head|noun|m|tr=kīlomitr}} <end>
 Page 1258 كيلومتر: Skipped, no changes
@@ -26894,7 +26894,7 @@ Page 1417 ممل: Skipped, no changes
 Page 1418 ممنوع: Found match for regex: <begin> {{ajp-root|م ن ع}} <end>
 Page 1418 ممنوع: Found match for regex: <begin> {{ajp-head|adj|tr=mamnūʕ|f=ممنوعة<tr:mamnūʕa>}} <end>
 Page 1418 ممنوع: Skipped, no changes
-Page 1419 من المية للمية: Found match for regex: <begin> {{head|ajp|phrase|head=[[من]] [[مية|المَيَّة]] [[مية|للمَيَّة]]|tr=min il-ṃayye la-l-ṃayye}} <end>
+Page 1419 من المية للمية: Found match for regex: <begin> {{ajp-head|phr|head=[[من]] [[مية|المَيَّة]] [[مية|للمَيَّة]]<tr:min il-ṃayye la-l-ṃayye>}} <end>
 Page 1419 من المية للمية: Skipped, no changes
 Page 1420 من دون: Found match for regex: <begin> {{ajp-head|prep|tr=min dūn}} <end>
 Page 1420 من دون: Skipped, no changes
@@ -27382,21 +27382,21 @@ Page 26 Category:Sudanese Arabic nouns: Skipped, no changes
 Page 27 Category:Sudanese Arabic pronouns: Skipped, no changes
 Page 28 Category:Sudanese Arabic verbs: Skipped, no changes
 Page 1 afash: Found match for regex: <begin> {{pga-IPA}} <end>
-Page 1 afash: Found match for regex: <begin> {{head|pga|noun|plural|afashaat}} <end>
+Page 1 afash: Found match for regex: <begin> {{pga-head|noun|pl=afashaat}} <end>
 Page 1 afash: Skipped, no changes
 Page 2 afin: Found match for regex: <begin> {{pga-IPA}} <end>
-Page 2 afin: Found match for regex: <begin> {{head|pga|adjective}} <end>
+Page 2 afin: Found match for regex: <begin> {{pga-head|adj}} <end>
 Page 2 afin: Skipped, no changes
 Page 3 agrab: Found match for regex: <begin> {{pga-IPA}} <end>
 Page 3 agrab: Found match for regex: <begin> {{pga-head|noun}} <end>
 Page 3 agrab: Skipped, no changes
 Page 4 ainu: Found match for regex: <begin> {{pga-IPA}} <end>
-Page 4 ainu: Found match for regex: <begin> {{head|pga|verb}} <end>
+Page 4 ainu: Found match for regex: <begin> {{pga-head|verb}} <end>
 Page 4 ainu: Skipped, no changes
 Page 5 ajaaj: Found match for regex: <begin> {{pga-IPA}} <end>
 Page 5 ajaaj: Found match for regex: <begin> {{pga-head|noun}} <end>
 Page 5 ajaaj: Skipped, no changes
-Page 6 aleela: Found match for regex: <begin> {{head|pga|adverb}} <end>
+Page 6 aleela: Found match for regex: <begin> {{pga-head|adv}} <end>
 Page 6 aleela: Skipped, no changes
 Page 7 anaafa: Found match for regex: <begin> {{pga-IPA}} <end>
 Page 7 anaafa: Found match for regex: <begin> {{pga-head|noun}} <end>
@@ -27411,26 +27411,26 @@ Page 10 arnab: Found match for regex: <begin> {{pga-IPA}} <end>
 Page 10 arnab: Found match for regex: <begin> {{pga-head|noun}} <end>
 Page 10 arnab: Skipped, no changes
 Page 11 asalu: Found match for regex: <begin> {{pga-IPA}} <end>
-Page 11 asalu: Found match for regex: <begin> {{head|pga|verb}} <end>
+Page 11 asalu: Found match for regex: <begin> {{pga-head|verb}} <end>
 Page 11 asalu: Skipped, no changes
 Page 12 asba: Found match for regex: <begin> {{pga-IPA}} <end>
-Page 12 asba: Found match for regex: <begin> {{head|pga|noun|plural|asaabe}} <end>
+Page 12 asba: Found match for regex: <begin> {{pga-head|noun|pl=asaabe}} <end>
 Page 12 asba: Skipped, no changes
 Page 13 ashan: Found match for regex: <begin> {{pga-IPA}} <end>
-Page 13 ashan: Found match for regex: <begin> {{head|pga|preposition}} <end>
+Page 13 ashan: Found match for regex: <begin> {{pga-head|prep}} <end>
 Page 13 ashan: Skipped, no changes
 Page 14 aswad: Found match for regex: <begin> {{pga-IPA}} <end>
-Page 14 aswad: Found match for regex: <begin> {{head|pga|adjective}} <end>
+Page 14 aswad: Found match for regex: <begin> {{pga-head|adj}} <end>
 Page 14 aswad: Found match for regex: <begin> {{pga-head|noun}} <end>
 Page 14 aswad: Skipped, no changes
 Page 15 bab: Found match for regex: <begin> {{pga-IPA}} <end>
-Page 15 bab: Found match for regex: <begin> {{head|pga|noun|plural|babaat}} <end>
+Page 15 bab: Found match for regex: <begin> {{pga-head|noun|pl=babaat}} <end>
 Page 15 bab: Skipped, no changes
 Page 16 bafra: Found match for regex: <begin> {{pga-IPA}} <end>
 Page 16 bafra: Found match for regex: <begin> {{pga-head|noun}} <end>
 Page 16 bafra: Skipped, no changes
 Page 17 bagara: Found match for regex: <begin> {{pga-IPA}} <end>
-Page 17 bagara: Found match for regex: <begin> {{head|pga|noun|plural|abugaar}} <end>
+Page 17 bagara: Found match for regex: <begin> {{pga-head|noun|pl=abugaar}} <end>
 Page 17 bagara: Found match for regex: <begin> {{kcn-head|noun|head=bágara}} <end>
 Page 17 bagara: Skipped, no changes
 Page 18 bamba: Found match for regex: <begin> {{pga-IPA}} <end>
@@ -27443,7 +27443,7 @@ Page 20 barashot: Found match for regex: <begin> {{pga-IPA}} <end>
 Page 20 barashot: Found match for regex: <begin> {{pga-head|noun}} <end>
 Page 20 barashot: Skipped, no changes
 Page 21 barid: Found match for regex: <begin> {{pga-IPA}} <end>
-Page 21 barid: Found match for regex: <begin> {{head|pga|adjective}} <end>
+Page 21 barid: Found match for regex: <begin> {{pga-head|adj}} <end>
 Page 21 barid: Skipped, no changes
 Page 22 basbort: Found match for regex: <begin> {{pga-IPA}} <end>
 Page 22 basbort: Found match for regex: <begin> {{pga-head|noun}} <end>
@@ -27452,7 +27452,7 @@ Page 23 basham: Found match for regex: <begin> {{pga-IPA}} <end>
 Page 23 basham: Found match for regex: <begin> {{pga-head|noun}} <end>
 Page 23 basham: Skipped, no changes
 Page 24 bataal: Found match for regex: <begin> {{pga-IPA}} <end>
-Page 24 bataal: Found match for regex: <begin> {{head|pga|adjective}} <end>
+Page 24 bataal: Found match for regex: <begin> {{pga-head|adj}} <end>
 Page 24 bataal: Skipped, no changes
 Page 25 bebi: Found match for regex: <begin> {{pga-IPA}} <end>
 Page 25 bebi: Found match for regex: <begin> {{pga-head|noun}} <end>
@@ -27460,9 +27460,9 @@ Page 25 bebi: Skipped, no changes
 Page 26 bedal: Found match for regex: <begin> {{pga-head|noun}} <end>
 Page 26 bedal: Skipped, no changes
 Page 27 bit: Found match for regex: <begin> {{pga-IPA}} <end>
-Page 27 bit: Found match for regex: <begin> {{head|pga|noun|plural|banaat}} <end>
+Page 27 bit: Found match for regex: <begin> {{pga-head|noun|pl=banaat}} <end>
 Page 27 bit: Skipped, no changes
-Page 28 bukra: Found match for regex: <begin> {{head|pga|adverb}} <end>
+Page 28 bukra: Found match for regex: <begin> {{pga-head|adv}} <end>
 Page 28 bukra: Skipped, no changes
 Page 29 bura: Found match for regex: <begin> {{pga-IPA}} <end>
 Page 29 bura: Found match for regex: <begin> {{pga-head|noun}} <end>
@@ -27471,16 +27471,16 @@ Page 30 danga: Found match for regex: <begin> {{pga-IPA}} <end>
 Page 30 danga: Found match for regex: <begin> {{pga-head|noun}} <end>
 Page 30 danga: Skipped, no changes
 Page 31 dardeg: Found match for regex: <begin> {{pga-IPA}} <end>
-Page 31 dardeg: Found match for regex: <begin> {{head|pga|verb}} <end>
+Page 31 dardeg: Found match for regex: <begin> {{pga-head|verb}} <end>
 Page 31 dardeg: Skipped, no changes
 Page 32 digrii: Found match for regex: <begin> {{pga-IPA}} <end>
 Page 32 digrii: Found match for regex: <begin> {{pga-head|noun}} <end>
 Page 32 digrii: Skipped, no changes
 Page 33 fetish: Found match for regex: <begin> {{pga-IPA}} <end>
-Page 33 fetish: Found match for regex: <begin> {{head|pga|verb}} <end>
+Page 33 fetish: Found match for regex: <begin> {{pga-head|verb}} <end>
 Page 33 fetish: Skipped, no changes
 Page 34 gadiim: Found match for regex: <begin> {{pga-IPA}} <end>
-Page 34 gadiim: Found match for regex: <begin> {{head|pga|adjective}} <end>
+Page 34 gadiim: Found match for regex: <begin> {{pga-head|adj}} <end>
 Page 34 gadiim: Skipped, no changes
 Page 35 gahwa: Found match for regex: <begin> {{pga-IPA}} <end>
 Page 35 gahwa: Found match for regex: <begin> {{pga-head|noun}} <end>
@@ -27494,14 +27494,14 @@ Page 37 gelba: Skipped, no changes
 Page 38 geliba: Found match for regex: <begin> {{pga-head|noun}} <end>
 Page 38 geliba: Skipped, no changes
 Page 39 geriib: Found match for regex: <begin> {{pga-IPA}} <end>
-Page 39 geriib: Found match for regex: <begin> {{head|pga|adjective}} <end>
-Page 39 geriib: Found match for regex: <begin> {{head|pga|adverb}} <end>
+Page 39 geriib: Found match for regex: <begin> {{pga-head|adj}} <end>
+Page 39 geriib: Found match for regex: <begin> {{pga-head|adv}} <end>
 Page 39 geriib: Skipped, no changes
 Page 40 gesh: Found match for regex: <begin> {{pga-IPA}} <end>
 Page 40 gesh: Found match for regex: <begin> {{pga-head|noun}} <end>
 Page 40 gesh: Skipped, no changes
 Page 41 girid: Found match for regex: <begin> {{pga-IPA}} <end>
-Page 41 girid: Found match for regex: <begin> {{head|pga|noun|plural|guruud}} <end>
+Page 41 girid: Found match for regex: <begin> {{pga-head|noun|pl=guruud}} <end>
 Page 41 girid: Skipped, no changes
 Page 42 gugu: Found match for regex: <begin> {{pga-IPA}} <end>
 Page 42 gugu: Found match for regex: <begin> {{pga-head|noun}} <end>
@@ -27510,19 +27510,19 @@ Page 43 guruush: Found match for regex: <begin> {{pga-IPA}} <end>
 Page 43 guruush: Found match for regex: <begin> {{pga-head|noun}} <end>
 Page 43 guruush: Skipped, no changes
 Page 44 guseer: Found match for regex: <begin> {{pga-IPA}} <end>
-Page 44 guseer: Found match for regex: <begin> {{head|pga|adj|plural|guseriin}} <end>
+Page 44 guseer: Found match for regex: <begin> {{pga-head|adj|pl=guseriin}} <end>
 Page 44 guseer: Skipped, no changes
 Page 45 habuuba: Found match for regex: <begin> {{pga-IPA}} <end>
 Page 45 habuuba: Found match for regex: <begin> {{pga-head|noun}} <end>
 Page 45 habuuba: Skipped, no changes
 Page 46 hibu: Found match for regex: <begin> {{pga-IPA}} <end>
-Page 46 hibu: Found match for regex: <begin> {{head|pga|verb}} <end>
+Page 46 hibu: Found match for regex: <begin> {{pga-head|verb}} <end>
 Page 46 hibu: Skipped, no changes
 Page 47 isim: Found match for regex: <begin> {{pga-IPA}} <end>
-Page 47 isim: Found match for regex: <begin> {{head|pga|noun|plural|asaami}} <end>
+Page 47 isim: Found match for regex: <begin> {{pga-head|noun|pl=asaami}} <end>
 Page 47 isim: Skipped, no changes
 Page 48 ita: Found match for regex: <begin> {{pga-IPA}} <end>
-Page 48 ita: Found match for regex: <begin> {{head|pga|pronoun}} <end>
+Page 48 ita: Found match for regex: <begin> {{pga-head|pron}} <end>
 Page 48 ita: Skipped, no changes
 Page 49 jama: Found match for regex: <begin> {{pga-IPA}} <end>
 Page 49 jama: Found match for regex: <begin> {{pga-head|noun}} <end>
@@ -27534,22 +27534,22 @@ Page 51 Januub Sudaan: Found match for regex: <begin> {{pga-IPA}} <end>
 Page 51 Januub Sudaan: Found match for regex: <begin> {{head|pga|propn|head=[[januub|Januub]] [[Sudaan]]}} <end>
 Page 51 Januub Sudaan: Skipped, no changes
 Page 52 jebel: Found match for regex: <begin> {{pga-IPA}} <end>
-Page 52 jebel: Found match for regex: <begin> {{head|pga|noun|plural|jubaal}} <end>
+Page 52 jebel: Found match for regex: <begin> {{pga-head|noun|pl=jubaal}} <end>
 Page 52 jebel: Skipped, no changes
 Page 53 jediid: Found match for regex: <begin> {{pga-IPA}} <end>
-Page 53 jediid: Found match for regex: <begin> {{head|pga|adjective}} <end>
+Page 53 jediid: Found match for regex: <begin> {{pga-head|adj}} <end>
 Page 53 jediid: Skipped, no changes
 Page 54 jena: Found match for regex: <begin> {{pga-IPA}} <end>
-Page 54 jena: Found match for regex: <begin> {{head|pga|noun|plural|yal}} <end>
+Page 54 jena: Found match for regex: <begin> {{pga-head|noun|pl=yal}} <end>
 Page 54 jena: Skipped, no changes
 Page 55 jere: Found match for regex: <begin> {{pga-IPA}} <end>
-Page 55 jere: Found match for regex: <begin> {{head|pga|verb}} <end>
+Page 55 jere: Found match for regex: <begin> {{pga-head|verb}} <end>
 Page 55 jere: Skipped, no changes
 Page 56 jidaada: Found match for regex: <begin> {{pga-IPA}} <end>
 Page 56 jidaada: Found match for regex: <begin> {{pga-head|noun}} <end>
 Page 56 jidaada: Skipped, no changes
 Page 57 kaab: Found match for regex: <begin> {{pga-IPA|kaˈab}} <end>
-Page 57 kaab: Found match for regex: <begin> {{head|pga|adjective}} <end>
+Page 57 kaab: Found match for regex: <begin> {{pga-head|adj}} <end>
 Page 57 kaab: Skipped, no changes
 Page 58 kadiis: Found match for regex: <begin> {{pga-IPA}} <end>
 Page 58 kadiis: Found match for regex: <begin> {{pga-head|noun}} <end>
@@ -27562,58 +27562,58 @@ Page 60 kasma: Found match for regex: <begin> {{pga-head|noun}} <end>
 Page 60 kasma: Found match for regex: <begin> {{kcn-head|noun|head=kásma}} <end>
 Page 60 kasma: Skipped, no changes
 Page 61 katalu: Found match for regex: <begin> {{pga-IPA}} <end>
-Page 61 katalu: Found match for regex: <begin> {{head|pga|verb}} <end>
+Page 61 katalu: Found match for regex: <begin> {{pga-head|verb}} <end>
 Page 61 katalu: Skipped, no changes
 Page 62 katibu: Found match for regex: <begin> {{pga-IPA}} <end>
-Page 62 katibu: Found match for regex: <begin> {{head|pga|verb}} <end>
+Page 62 katibu: Found match for regex: <begin> {{pga-head|verb}} <end>
 Page 62 katibu: Skipped, no changes
 Page 63 kawaayid: Found match for regex: <begin> {{pga-IPA}} <end>
 Page 63 kawaayid: Found match for regex: <begin> {{pga-head|noun}} <end>
 Page 63 kawaayid: Skipped, no changes
 Page 64 kebiir: Found match for regex: <begin> {{pga-IPA}} <end>
-Page 64 kebiir: Found match for regex: <begin> {{head|pga|adj|plural|kubaar}} <end>
+Page 64 kebiir: Found match for regex: <begin> {{pga-head|adj|pl=kubaar}} <end>
 Page 64 kebiir: Found match for regex: <begin> {{pga-head|noun}} <end>
 Page 64 kebiir: Skipped, no changes
 Page 65 kelib: Found match for regex: <begin> {{pga-IPA}} <end>
-Page 65 kelib: Found match for regex: <begin> {{head|pga|noun|plural|klab}} <end>
+Page 65 kelib: Found match for regex: <begin> {{pga-head|noun|pl=klab}} <end>
 Page 65 kelib: Skipped, no changes
 Page 66 kibda: Found match for regex: <begin> {{pga-IPA}} <end>
-Page 66 kibda: Found match for regex: <begin> {{head|pga|noun|plural|kibdaat}} <end>
+Page 66 kibda: Found match for regex: <begin> {{pga-head|noun|pl=kibdaat}} <end>
 Page 66 kibda: Skipped, no changes
 Page 67 kibra: Found match for regex: <begin> {{pga-IPA}} <end>
 Page 67 kibra: Found match for regex: <begin> {{pga-head|noun}} <end>
 Page 67 kibra: Found match for regex: <begin> {{pga-head|noun}} <end>
 Page 67 kibra: Skipped, no changes
 Page 68 kitaab: Found match for regex: <begin> {{pga-IPA}} <end>
-Page 68 kitaab: Found match for regex: <begin> {{head|pga|noun|plural|kutub}} <end>
+Page 68 kitaab: Found match for regex: <begin> {{pga-head|noun|pl=kutub}} <end>
 Page 68 kitaab: Skipped, no changes
 Page 69 kuraa: Found match for regex: <begin> {{pga-IPA}} <end>
 Page 69 kuraa: Found match for regex: <begin> {{pga-head|noun}} <end>
 Page 69 kuraa: Skipped, no changes
 Page 70 kursi: Found match for regex: <begin> {{pga-IPA}} <end>
-Page 70 kursi: Found match for regex: <begin> {{head|pga|noun|plural|karaasi}} <end>
+Page 70 kursi: Found match for regex: <begin> {{pga-head|noun|pl=karaasi}} <end>
 Page 70 kursi: Skipped, no changes
 Page 71 kuruum: Found match for regex: <begin> {{pga-IPA}} <end>
 Page 71 kuruum: Found match for regex: <begin> {{pga-head|noun}} <end>
 Page 71 kuruum: Skipped, no changes
 Page 72 kweis: Found match for regex: <begin> {{pga-IPA}} <end>
-Page 72 kweis: Found match for regex: <begin> {{head|pga|adj|plural|kweisiin}} <end>
-Page 72 kweis: Found match for regex: <begin> {{head|pga|adverb}} <end>
+Page 72 kweis: Found match for regex: <begin> {{pga-head|adj|pl=kweisiin}} <end>
+Page 72 kweis: Found match for regex: <begin> {{pga-head|adv}} <end>
 Page 72 kweis: Found match for regex: <begin> {{kcn-head|adj|head=kweis}} <end>
 Page 72 kweis: Found match for regex: <begin> {{kcn-head|adv|head=kweis}} <end>
 Page 72 kweis: Skipped, no changes
 Page 73 kweys: Found match for regex: <begin> {{pga-IPA}} <end>
-Page 73 kweys: Found match for regex: <begin> {{head|pga|adj|plural|kweysiin}} <end>
-Page 73 kweys: Found match for regex: <begin> {{head|pga|adverb}} <end>
+Page 73 kweys: Found match for regex: <begin> {{pga-head|adj|pl=kweysiin}} <end>
+Page 73 kweys: Found match for regex: <begin> {{pga-head|adv}} <end>
 Page 73 kweys: Skipped, no changes
 Page 74 laboro: Found match for regex: <begin> {{pga-IPA}} <end>
 Page 74 laboro: Found match for regex: <begin> {{pga-head|noun}} <end>
 Page 74 laboro: Skipped, no changes
 Page 75 langga: Found match for regex: <begin> {{pga-IPA}} <end>
-Page 75 langga: Found match for regex: <begin> {{head|pga|verb}} <end>
+Page 75 langga: Found match for regex: <begin> {{pga-head|verb}} <end>
 Page 75 langga: Skipped, no changes
 Page 76 lori: Found match for regex: <begin> {{pga-IPA}} <end>
-Page 76 lori: Found match for regex: <begin> {{head|pga|noun|plural|lowaari}} <end>
+Page 76 lori: Found match for regex: <begin> {{pga-head|noun|pl=lowaari}} <end>
 Page 76 lori: Skipped, no changes
 Page 77 makaaku: Found match for regex: <begin> {{pga-IPA}} <end>
 Page 77 makaaku: Found match for regex: <begin> {{pga-head|noun}} <end>
@@ -27642,7 +27642,7 @@ Page 85 musada: Found match for regex: <begin> {{pga-IPA}} <end>
 Page 85 musada: Found match for regex: <begin> {{pga-head|noun}} <end>
 Page 85 musada: Skipped, no changes
 Page 86 mutu: Found match for regex: <begin> {{pga-IPA}} <end>
-Page 86 mutu: Found match for regex: <begin> {{head|pga|verb}} <end>
+Page 86 mutu: Found match for regex: <begin> {{pga-head|verb}} <end>
 Page 86 mutu: Skipped, no changes
 Page 87 nyirikuuk: Found match for regex: <begin> {{pga-IPA}} <end>
 Page 87 nyirikuuk: Found match for regex: <begin> {{pga-head|noun}} <end>
@@ -27651,7 +27651,7 @@ Page 88 pondu: Found match for regex: <begin> {{pga-IPA}} <end>
 Page 88 pondu: Found match for regex: <begin> {{pga-head|noun}} <end>
 Page 88 pondu: Skipped, no changes
 Page 89 rajil: Found match for regex: <begin> {{pga-IPA}} <end>
-Page 89 rajil: Found match for regex: <begin> {{head|pga|noun|plural|rujaal}} <end>
+Page 89 rajil: Found match for regex: <begin> {{pga-head|noun|pl=rujaal}} <end>
 Page 89 rajil: Skipped, no changes
 Page 90 ras: Found match for regex: <begin> {{pga-IPA}} <end>
 Page 90 ras: Found match for regex: <begin> {{pga-head|noun}} <end>
@@ -27663,15 +27663,15 @@ Page 92 sahaat: Found match for regex: <begin> {{pga-IPA}} <end>
 Page 92 sahaat: Found match for regex: <begin> {{pga-head|noun}} <end>
 Page 92 sahaat: Skipped, no changes
 Page 93 semiin: Found match for regex: <begin> {{pga-IPA}} <end>
-Page 93 semiin: Found match for regex: <begin> {{head|pga|adjective}} <end>
+Page 93 semiin: Found match for regex: <begin> {{pga-head|adj}} <end>
 Page 93 semiin: Skipped, no changes
 Page 94 shubaak: Found match for regex: <begin> {{pga-IPA}} <end>
-Page 94 shubaak: Found match for regex: <begin> {{head|pga|noun|plural|shubabiik}} <end>
+Page 94 shubaak: Found match for regex: <begin> {{pga-head|noun|pl=shubabiik}} <end>
 Page 94 shubaak: Skipped, no changes
 Page 95 shukran: Found match for regex: <begin> {{pga-IPA}} <end>
-Page 95 shukran: Found match for regex: <begin> {{head|pga|interjection}} <end>
+Page 95 shukran: Found match for regex: <begin> {{pga-head|intj}} <end>
 Page 95 shukran: Skipped, no changes
-Page 96 suk: Found match for regex: <begin> {{head|pga|noun|plural|sukaat}} <end>
+Page 96 suk: Found match for regex: <begin> {{pga-head|noun|pl=sukaat}} <end>
 Page 96 suk: Skipped, no changes
 Page 97 sukar: Found match for regex: <begin> {{pga-IPA}} <end>
 Page 97 sukar: Found match for regex: <begin> {{pga-head|noun}} <end>
@@ -27680,10 +27680,10 @@ Page 98 tadmiin: Found match for regex: <begin> {{pga-IPA}} <end>
 Page 98 tadmiin: Found match for regex: <begin> {{pga-head|noun}} <end>
 Page 98 tadmiin: Skipped, no changes
 Page 99 tajir: Found match for regex: <begin> {{pga-IPA}} <end>
-Page 99 tajir: Found match for regex: <begin> {{head|pga|noun|plural|tojaar}} <end>
+Page 99 tajir: Found match for regex: <begin> {{pga-head|noun|pl=tojaar}} <end>
 Page 99 tajir: Skipped, no changes
 Page 100 tarabeeza: Found match for regex: <begin> {{pga-IPA}} <end>
-Page 100 tarabeeza: Found match for regex: <begin> {{head|pga|noun|plural|tarabezaat}} <end>
+Page 100 tarabeeza: Found match for regex: <begin> {{pga-head|noun|pl=tarabezaat}} <end>
 Page 100 tarabeeza: Skipped, no changes
 Page 101 terezi: Found match for regex: <begin> {{pga-IPA}} <end>
 Page 101 terezi: Found match for regex: <begin> {{pga-head|noun}} <end>
@@ -27692,7 +27692,7 @@ Page 102 timsaa: Found match for regex: <begin> {{pga-IPA}} <end>
 Page 102 timsaa: Found match for regex: <begin> {{pga-head|noun}} <end>
 Page 102 timsaa: Skipped, no changes
 Page 103 tongga: Found match for regex: <begin> {{pga-IPA}} <end>
-Page 103 tongga: Found match for regex: <begin> {{head|pga|verb}} <end>
+Page 103 tongga: Found match for regex: <begin> {{pga-head|verb}} <end>
 Page 103 tongga: Skipped, no changes
 Page 104 tub: Found match for regex: <begin> {{pga-IPA}} <end>
 Page 104 tub: Found match for regex: <begin> {{pga-head|noun}} <end>
@@ -27704,10 +27704,10 @@ Page 106 wokit: Found match for regex: <begin> {{pga-IPA}} <end>
 Page 106 wokit: Found match for regex: <begin> {{pga-head|noun}} <end>
 Page 106 wokit: Skipped, no changes
 Page 107 yatu: Found match for regex: <begin> {{pga-IPA}} <end>
-Page 107 yatu: Found match for regex: <begin> {{head|pga|pronoun}} <end>
+Page 107 yatu: Found match for regex: <begin> {{pga-head|pron}} <end>
 Page 107 yatu: Skipped, no changes
 Page 108 ze: Found match for regex: <begin> {{pga-IPA}} <end>
-Page 108 ze: Found match for regex: <begin> {{head|pga|preposition}} <end>
+Page 108 ze: Found match for regex: <begin> {{pga-head|prep}} <end>
 Page 108 ze: Skipped, no changes
 Page 109 Category:Juba Arabic adjectives: Skipped, no changes
 Page 110 Category:Juba Arabic adverbs: Skipped, no changes
@@ -27796,7 +27796,7 @@ Page 6 آما: Found match for regex: <begin> {{aeb-head|conj|tr=ēmə}} <end>
 Page 6 آما: Skipped, no changes
 Page 7 آمس: Found match for regex: <begin> {{aeb-head|adv|tr=āmis}} <end>
 Page 7 آمس: Skipped, no changes
-Page 8 أحنا: Found match for regex: <begin> {{head|aeb|pronoun}} <end>
+Page 8 أحنا: Found match for regex: <begin> {{aeb-head|pron}} <end>
 Page 8 أحنا: Skipped, no changes
 Page 9 أفريل: Found match for regex: <begin> {{aeb-head|noun|m|tr=avrīl}} <end>
 Page 9 أفريل: Skipped, no changes
@@ -27962,7 +27962,7 @@ Page 67 جلا: Skipped, no changes
 Page 68 جنڨل: Found match for regex: <begin> {{aeb-head|verb|tr=jangel}} <end>
 Page 68 جنڨل: Found match for regex: <begin> {{aeb-conj|jangel|px=1}} <end>
 Page 68 جنڨل: Skipped, no changes
-Page 69 جوح: Found match for regex: <begin> {{head|aeb|verb|tr=jawwaḥ|head=جَوَّح}} <end>
+Page 69 جوح: Found match for regex: <begin> {{aeb-head|verb|head=جَوَّح<tr:jawwaḥ>}} <end>
 Page 69 جوح: Found match for regex: <begin> {{aeb-verb/conj|jawwaḥ}} <end>
 Page 69 جوح: Skipped, no changes
 Page 70 جويلية: Found match for regex: <begin> {{aeb-head|noun|m|tr=jwīlya}} <end>
@@ -28125,7 +28125,7 @@ Page 133 شيح: Skipped, no changes
 Page 134 صال: Found match for regex: <begin> {{aeb-head|verb|head=صَال<tr:ṣāl>}} <end>
 Page 134 صال: Found match for regex: <begin> {{aeb-verb/conj|ṣaal|ou}} <end>
 Page 134 صال: Skipped, no changes
-Page 135 صال وجال: Found match for regex: <begin> {{head|aeb|phrase|tr=ṣāl w-jēl|head=[[صَال]] [[و]][[جِال]]}} <end>
+Page 135 صال وجال: Found match for regex: <begin> {{head|aeb|phr|tr=ṣāl w-jēl|head=[[صَال]] [[و]][[جِال]]}} <end>
 Page 135 صال وجال: Skipped, no changes
 Page 136 صطاد: Found match for regex: <begin> {{aeb-head|verb|tr=ṣṭaad}} <end>
 Page 136 صطاد: Found match for regex: <begin> {{aeb-verb/conj|صطaad}} <end>
@@ -28217,7 +28217,7 @@ Page 171 كازي: Found match for regex: <begin> {{aeb-head|noun|m,f|tr=kāzzi|
 Page 171 كازي: Skipped, no changes
 Page 172 كاغت: Found match for regex: <begin> {{aeb-head|noun|m|tr=kēḡet|pl=كواغت<tr:kwēḡet>}} <end>
 Page 172 كاغت: Skipped, no changes
-Page 173 كانش: Found match for regex: <begin> {{head|aeb|conjunction}} <end>
+Page 173 كانش: Found match for regex: <begin> {{aeb-head|conj}} <end>
 Page 173 كانش: Skipped, no changes
 Page 174 كاين: Found match for regex: <begin> {{ary-rootbox|ك و ن}} <end>
 Page 174 كاين: Found match for regex: <begin> {{ary-head|actpart|tr=kāyin|f=كاينة<tr:kāyna>|cpl=كاينين<tr:kāynīn>}} <end>
@@ -28362,7 +28362,7 @@ Page 228 هكاكا: Found match for regex: <begin> {{aeb-head|adv}} <end>
 Page 228 هكاكا: Skipped, no changes
 Page 229 هكة والا هكة: Found match for regex: <begin> {{aeb-head|adv|head=[[هَكَّة]] [[وِالا]] [[هَكَّة]]<tr:hakkə wēlə hakkə>}} <end>
 Page 229 هكة والا هكة: Skipped, no changes
-Page 230 هما: Found match for regex: <begin> {{head|aeb|pron|tr=hommə|g=p}} <end>
+Page 230 هما: Found match for regex: <begin> {{aeb-head|pron|p|tr=hommə}} <end>
 Page 230 هما: Skipped, no changes
 Page 231 ودة البارح: Found match for regex: <begin> {{aeb-head|adv|tr=wedt l-bēraḥ}} <end>
 Page 231 ودة البارح: Skipped, no changes
@@ -28378,7 +28378,7 @@ Page 235 وقتلي: Found match for regex: <begin> {{aeb-head|conj|tr=waqtelli}
 Page 235 وقتلي: Skipped, no changes
 Page 236 وكل: Found match for regex: <begin> {{aeb-head|verb|head=وَكِّل<tr:wakkel>}} <end>
 Page 236 وكل: Found match for regex: <begin> {{aeb-verb/conj|wakkel|px=1}} <end>
-Page 236 وكل: Found match for regex: <begin> {{head|aeb|conj|tr=wkoll|head=وكُلّ}} <end>
+Page 236 وكل: Found match for regex: <begin> {{aeb-head|conj|head=وكُلّ<tr:wkoll>}} <end>
 Page 236 وكل: Skipped, no changes
 Page 237 ياخي: Found match for regex: <begin> {{aeb-head|adv|tr=yēḵi}} <end>
 Page 237 ياخي: Found match for regex: <begin> {{aeb-head|conj|tr=yēḵi}} <end>
@@ -28397,7 +28397,7 @@ Page 242 ڥرفا: Skipped, no changes
 Page 243 ڥرفى: Found match for regex: <begin> {{aeb-head|verb|tr=varfe}} <end>
 Page 243 ڥرفى: Found match for regex: <begin> {{aeb-verb/conj|varfe|px=1|am=1}} <end>
 Page 243 ڥرفى: Skipped, no changes
-Page 244 ڨابس: Found match for regex: <begin> {{head|aeb|propn|tr=gābis|g=f}} <end>
+Page 244 ڨابس: Found match for regex: <begin> {{aeb-head|propn|f|tr=gābis}} <end>
 Page 244 ڨابس: Skipped, no changes
 Page 245 ڨال: Found match for regex: <begin> {{aeb-head|verb|tr=gēl}} <end>
 Page 245 ڨال: Found match for regex: <begin> {{aeb-verb/conj|geel|ou|px=1}} <end>
@@ -28415,7 +28415,7 @@ Page 249 ڨرس: Skipped, no changes
 Page 250 ڨرڥ: Found match for regex: <begin> {{aeb-head|verb|tr=garrev}} <end>
 Page 250 ڨرڥ: Found match for regex: <begin> {{aeb-verb/conj|garrev}} <end>
 Page 250 ڨرڥ: Skipped, no changes
-Page 251 ڨفصة: Found match for regex: <begin> {{head|aeb|propn|tr=gafsa|g=f}} <end>
+Page 251 ڨفصة: Found match for regex: <begin> {{aeb-head|propn|f|tr=gafsa}} <end>
 Page 251 ڨفصة: Skipped, no changes
 Page 252 ڨواندوات: Found match for regex: <begin> {{aeb-head|noun|f|tr=gwanduwāt}} <end>
 Page 252 ڨواندوات: Skipped, no changes
@@ -28493,7 +28493,7 @@ Page 6 إوض: Found match for regex: <begin> {{arz-head|nounf|tr=ʔiwaḍ}} <en
 Page 6 إوض: Skipped, no changes
 Page 7 براديق: Found match for regex: <begin> {{arz-head|nounf|tr=barādīq}} <end>
 Page 7 براديق: Skipped, no changes
-Page 8 بطاريات: Found match for regex: <begin> {{head|arz|nounf|tr=baṭṭāriyyāt|g=f-p}} <end>
+Page 8 بطاريات: Found match for regex: <begin> {{arz-head|nounf|f-p|tr=baṭṭāriyyāt}} <end>
 Page 8 بطاريات: Skipped, no changes
 Page 9 بنس: Found match for regex: <begin> {{arz-head|nounf|tr=binas}} <end>
 Page 9 بنس: Skipped, no changes
@@ -28502,7 +28502,7 @@ Page 10 بيبان: Found match for regex: <begin> {{ary-head|nounf|tr=bībān}}
 Page 10 بيبان: Skipped, no changes
 Page 11 بيعات: Found match for regex: <begin> {{arz-head|nounf|tr=bēʕāt}} <end>
 Page 11 بيعات: Skipped, no changes
-Page 12 جلود: Found match for regex: <begin> {{head|arz|nounf|head=جِلُود|tr=gilūd|g=p}} <end>
+Page 12 جلود: Found match for regex: <begin> {{arz-head|nounf|p|head=جِلُود<tr:gilūd>}} <end>
 Page 12 جلود: Skipped, no changes
 Page 13 جناين: Found match for regex: <begin> {{arz-head|nounf|tr=ganāyin}} <end>
 Page 13 جناين: Skipped, no changes
@@ -28534,8 +28534,8 @@ Page 23 قرايات: Found match for regex: <begin> {{afb-head|nounf|tr=gráyat
 Page 23 قرايات: Skipped, no changes
 Page 24 مطابخ: Found match for regex: <begin> {{arz-head|nounf|p|tr=maṭābiḵ}} <end>
 Page 24 مطابخ: Skipped, no changes
-Page 25 مكتبات: Found match for regex: <begin> {{head|arz|nounf|tr=maktabāt|g=f-p}} <end>
-Page 25 مكتبات: Found match for regex: <begin> {{head|ajp|nounf|tr=maktabāt|g=f-p}} <end>
+Page 25 مكتبات: Found match for regex: <begin> {{arz-head|nounf|f-p|tr=maktabāt}} <end>
+Page 25 مكتبات: Found match for regex: <begin> {{ajp-head|nounf|f-p|tr=maktabāt}} <end>
 Page 25 مكتبات: Skipped, no changes
 Page 26 نجف: Found match for regex: <begin> {{arz-head|nounf|tr=nagaf}} <end>
 Page 26 نجف: Skipped, no changes
@@ -28606,7 +28606,7 @@ Page 20 ثياب: Found match for regex: <begin> {{acw-head|nounf|m-p|head=ثِ�
 Page 20 ثياب: Skipped, no changes
 Page 21 ثيران: Found match for regex: <begin> {{acw-head|nounf|p|head=ثيران<tr:tīrān>,ثيران<tr:ṯīrān>}} <end>
 Page 21 ثيران: Skipped, no changes
-Page 22 جاية: Found match for regex: <begin> {{acw-head|adjective feminine form|tr=jayya}} <end>
+Page 22 جاية: Found match for regex: <begin> {{acw-head|adjf|f|tr=jayya}} <end>
 Page 22 جاية: Skipped, no changes
 Page 23 جراثيم: Found match for regex: <begin> {{acw-head|nounf|p|head=جَرَاثيم<tr:jarāṯīm>}} <end>
 Page 23 جراثيم: Skipped, no changes
@@ -28630,7 +28630,7 @@ Page 32 حقايق: Found match for regex: <begin> {{acw-head|nounf|p|head=حَ�
 Page 32 حقايق: Skipped, no changes
 Page 33 حيقول: Found match for regex: <begin> {{acw-head|verbf|head=حَيْقول<tr:ḥaygūl>}} <end>
 Page 33 حيقول: Skipped, no changes
-Page 34 خراشيف: Found match for regex: <begin> {{head|acw|nounf|head=خراشيف|tr=ḵarāšīf|g=m-p}} <end>
+Page 34 خراشيف: Found match for regex: <begin> {{acw-head|nounf|m-p|head=خراشيف<tr:ḵarāšīf>}} <end>
 Page 34 خراشيف: Skipped, no changes
 Page 35 خفافيش: Found match for regex: <begin> {{acw-head|nounf|p|head=خَفَافِيش<tr:ḵafāfīš>}} <end>
 Page 35 خفافيش: Skipped, no changes
@@ -28788,25 +28788,25 @@ Page 1 afsaca: Found match for regex: <begin> {{acy-root|v-s-c}} <end>
 Page 1 afsaca: Found match for regex: <begin> {{acy-head|elative adjective|head=áfsaca}} <end>
 Page 1 afsaca: Skipped, no changes
 Page 2 axsen: Found match for regex: <begin> {{acy-root|x-s-n}} <end>
-Page 2 axsen: Found match for regex: <begin> {{head|acy|elative adjective}} <end>
+Page 2 axsen: Found match for regex: <begin> {{acy-head|elative adjective}} <end>
 Page 2 axsen: Skipped, no changes
 Page 3 aθkal: Found match for regex: <begin> {{acy-root|θ-k-l}} <end>
-Page 3 aθkal: Found match for regex: <begin> {{head|acy|elative adjective}} <end>
+Page 3 aθkal: Found match for regex: <begin> {{acy-head|elative adjective}} <end>
 Page 3 aθkal: Skipped, no changes
-Page 4 mprat: Found match for regex: <begin> {{head|acy|noun construct form}} <end>
+Page 4 mprat: Found match for regex: <begin> {{acy-head|noun construct form}} <end>
 Page 4 mprat: Skipped, no changes
 Page 5 Category:Cypriot Arabic adjective forms: Skipped, no changes
 Page 6 Category:Cypriot Arabic noun forms: Skipped, no changes
 Page 1 حكاك: Found match for regex: <begin> {{ayl-head|nounf|tr=ḥkāk}} <end>
 Page 1 حكاك: Found match for regex: <begin> {{ary-head|nounf|tr=ḥkāk}} <end>
 Page 1 حكاك: Skipped, no changes
-Page 2 خنانات: Found match for regex: <begin> {{head|ayl|noun form}} <end>
+Page 2 خنانات: Found match for regex: <begin> {{ayl-head|nounf}} <end>
 Page 2 خنانات: Skipped, no changes
 Page 3 رواشن: Found match for regex: <begin> {{ayl-head|nounf|tr=rwāšin}} <end>
 Page 3 رواشن: Skipped, no changes
 Page 4 زبوب: Found match for regex: <begin> {{ayl-head|nounf|tr=zbūb}} <end>
 Page 4 زبوب: Skipped, no changes
-Page 5 سباسي: Found match for regex: <begin> {{head|ayl|noun form}} <end>
+Page 5 سباسي: Found match for regex: <begin> {{ayl-head|nounf}} <end>
 Page 5 سباسي: Skipped, no changes
 Page 6 شخاشير: Found match for regex: <begin> {{ayl-head|nounf|head=شْخاشِير}} <end>
 Page 6 شخاشير: Skipped, no changes
@@ -28819,20 +28819,20 @@ Page 9 كراهب: Found match for regex: <begin> {{aeb-head|nounf|tr=krāheb}} 
 Page 9 كراهب: Skipped, no changes
 Page 10 كواغط: Found match for regex: <begin> {{ayl-head|nounf|tr=kwāǧəţ}} <end>
 Page 10 كواغط: Skipped, no changes
-Page 11 مالقيات: Found match for regex: <begin> {{head|ayl|noun form}} <end>
+Page 11 مالقيات: Found match for regex: <begin> {{ayl-head|nounf}} <end>
 Page 11 مالقيات: Skipped, no changes
-Page 12 مغارف: Found match for regex: <begin> {{head|ayl|noun form}} <end>
+Page 12 مغارف: Found match for regex: <begin> {{ayl-head|nounf}} <end>
 Page 12 مغارف: Skipped, no changes
 Page 13 Category:Libyan Arabic noun forms: Skipped, no changes
 Page 1 بشكليط: Found match for regex: <begin> {{ary-head|nounf|tr=bšaklīṭ}} <end>
 Page 1 بشكليط: Skipped, no changes
 Page 2 بلايص: Found match for regex: <begin> {{ary-head|nounf|tr=blāyiṣ}} <end>
 Page 2 بلايص: Skipped, no changes
-Page 3 بنينات: Found match for regex: <begin> {{head|ary|adjf|tr=bnīnāt|g=f-p}} <end>
+Page 3 بنينات: Found match for regex: <begin> {{ary-head|adjf|f-p|tr=bnīnāt}} <end>
 Page 3 بنينات: Skipped, no changes
 Page 4 بنينة: Found match for regex: <begin> {{ary-head|adjf|f|tr=bnīna}} <end>
 Page 4 بنينة: Skipped, no changes
-Page 5 بنينين: Found match for regex: <begin> {{head|ary|adjf|tr=bnīnīn|g=m-p}} <end>
+Page 5 بنينين: Found match for regex: <begin> {{ary-head|adjf|m-p|tr=bnīnīn}} <end>
 Page 5 بنينين: Skipped, no changes
 Page 6 تدوق: Found match for regex: <begin> {{ary-head|verbf|tr=tdūq}} <end>
 Page 6 تدوق: Skipped, no changes
@@ -28854,7 +28854,7 @@ Page 14 تسوقوا: Found match for regex: <begin> {{ary-head|verbf|tr=tsūqu}
 Page 14 تسوقوا: Skipped, no changes
 Page 15 تسوقي: Found match for regex: <begin> {{ary-head|verbf|tr=tsūqi}} <end>
 Page 15 تسوقي: Skipped, no changes
-Page 16 تفاحات: Found match for regex: <begin> {{head|ary|nounf|head=تفاحات|g=p|tr=tuffāḥāt,teffāḥāt}} <end>
+Page 16 تفاحات: Found match for regex: <begin> {{ary-head|nounf|p|head=تفاحات<tr:tuffāḥāt,teffāḥāt>}} <end>
 Page 16 تفاحات: Skipped, no changes
 Page 17 تفواه: Found match for regex: <begin> {{ary-root|ف و ه}} <end>
 Page 17 تفواه: Found match for regex: <begin> {{ary-head|verbal noun|m|tr=tafwāh|inst=تفوية<tr:tafwīha>}} <end>
@@ -28893,9 +28893,9 @@ Page 31 حامضين: Found match for regex: <begin> {{ary-head|adjf|tr=ḥām�
 Page 31 حامضين: Skipped, no changes
 Page 32 حمرا: Found match for regex: <begin> {{ary-head|adjf|f|tr=ḥamra}} <end>
 Page 32 حمرا: Skipped, no changes
-Page 33 حمرات: Found match for regex: <begin> {{head|ary|adjf|tr=ḥamrāt|g=f-p}} <end>
+Page 33 حمرات: Found match for regex: <begin> {{ary-head|adjf|f-p|tr=ḥamrāt}} <end>
 Page 33 حمرات: Skipped, no changes
-Page 34 حمرين: Found match for regex: <begin> {{head|ary|adjf|tr=ḥamrīn|g=m-p}} <end>
+Page 34 حمرين: Found match for regex: <begin> {{ary-head|adjf|m-p|tr=ḥamrīn}} <end>
 Page 34 حمرين: Skipped, no changes
 Page 35 حمير: Found match for regex: <begin> {{ary-head|nounf|p|tr=ḥmīr}} <end>
 Page 35 حمير: Skipped, no changes
@@ -29008,9 +29008,9 @@ Page 87 صحيحة: Found match for regex: <begin> {{ary-head|adjf|f|tr=ṣḥī
 Page 87 صحيحة: Skipped, no changes
 Page 88 ضواو: Found match for regex: <begin> {{ary-head|nounf|p|tr=ḍwāw}} <end>
 Page 88 ضواو: Skipped, no changes
-Page 89 ضيقات: Found match for regex: <begin> {{head|ary|nounf|tr=ḍiyyqāt|g=f-p}} <end>
+Page 89 ضيقات: Found match for regex: <begin> {{ary-head|nounf|f-p|tr=ḍiyyqāt}} <end>
 Page 89 ضيقات: Skipped, no changes
-Page 90 ضيقين: Found match for regex: <begin> {{head|ary|nounf|tr=ḍiyyqīn|g=m-p}} <end>
+Page 90 ضيقين: Found match for regex: <begin> {{ary-head|nounf|m-p|tr=ḍiyyqīn}} <end>
 Page 90 ضيقين: Skipped, no changes
 Page 91 طمابل: Found match for regex: <begin> {{ary-head|nounf|tr=ṭmābil}} <end>
 Page 91 طمابل: Skipped, no changes
@@ -29041,7 +29041,7 @@ Page 103 كحلات: Found match for regex: <begin> {{ary-head|adjf|tr=kaḥlāt
 Page 103 كحلات: Skipped, no changes
 Page 104 كحلة: Found match for regex: <begin> {{ary-head|adjf|f|tr=kaḥla}} <end>
 Page 104 كحلة: Skipped, no changes
-Page 105 كحلين: Found match for regex: <begin> {{head|ary|adjf|tr=kaḥlīn|g=m-p}} <end>
+Page 105 كحلين: Found match for regex: <begin> {{ary-head|adjf|m-p|tr=kaḥlīn}} <end>
 Page 105 كحلين: Skipped, no changes
 Page 106 كلاوي: Found match for regex: <begin> {{ary-head|nounf|p|tr=klāwi}} <end>
 Page 106 كلاوي: Skipped, no changes
@@ -29049,13 +29049,13 @@ Page 107 كنيات: Found match for regex: <begin> {{ary-head|nounf|tr=kniyyāt
 Page 107 كنيات: Skipped, no changes
 Page 108 كوزينات: Found match for regex: <begin> {{ary-head|nounf|p|tr=kūzīnāt}} <end>
 Page 108 كوزينات: Skipped, no changes
-Page 109 لداد: Found match for regex: <begin> {{head|ary|adjf|tr=ldād|g=p}} <end>
+Page 109 لداد: Found match for regex: <begin> {{ary-head|adjf|p|tr=ldād}} <end>
 Page 109 لداد: Skipped, no changes
-Page 110 لديدات: Found match for regex: <begin> {{head|ary|adjf|tr=ldīdāt|g=f-p}} <end>
+Page 110 لديدات: Found match for regex: <begin> {{ary-head|adjf|f-p|tr=ldīdāt}} <end>
 Page 110 لديدات: Skipped, no changes
 Page 111 لديدة: Found match for regex: <begin> {{ary-head|adjf|f|tr=ldīda}} <end>
 Page 111 لديدة: Skipped, no changes
-Page 112 لديدين: Found match for regex: <begin> {{head|ary|adjf|tr=ldīdīn|g=m-p}} <end>
+Page 112 لديدين: Found match for regex: <begin> {{ary-head|adjf|m-p|tr=ldīdīn}} <end>
 Page 112 لديدين: Skipped, no changes
 Page 113 مداوي: Found match for regex: <begin> {{ary-root|د و ي}} <end>
 Page 113 مداوي: Found match for regex: <begin> {{ary-head|actpart|tr=mdāwi|f=مداوية<tr:mdāwya>|mpl=مداويين<tr:mdāwyīn>,مداوين<tr:mdāwīn>|fpl=مداويات<tr:mdāwyāt>}} <end>
@@ -29369,12 +29369,12 @@ Page 1 جرابات: Skipped, no changes
 Page 2 سئلان: Found match for regex: <begin> {{apc-root|س ء ل}} <end>
 Page 2 سئلان: Found match for regex: <begin> {{apc-head|participle|tr=siʔlān}} <end>
 Page 2 سئلان: Skipped, no changes
-Page 3 كلسات: Found match for regex: <begin> {{head|apc|nounf|head=كَلْسَات|tr=kalsāt|g=f-p}} <end>
-Page 3 كلسات: Found match for regex: <begin> {{head|ajp|nounf|head=كَلْسَات|tr=kalsāt|g=f-p}} <end>
+Page 3 كلسات: Found match for regex: <begin> {{apc-head|nounf|f-p|head=كَلْسَات<tr:kalsāt>}} <end>
+Page 3 كلسات: Found match for regex: <begin> {{ajp-head|nounf|f-p|head=كَلْسَات<tr:kalsāt>}} <end>
 Page 3 كلسات: Skipped, no changes
-Page 4 مطارنة: Found match for regex: <begin> {{head|apc|noun form}} <end>
+Page 4 مطارنة: Found match for regex: <begin> {{apc-head|nounf}} <end>
 Page 4 مطارنة: Skipped, no changes
-Page 5 مطرانيات: Found match for regex: <begin> {{head|apc|noun form}} <end>
+Page 5 مطرانيات: Found match for regex: <begin> {{apc-head|nounf}} <end>
 Page 5 مطرانيات: Skipped, no changes
 Page 6 Category:North Levantine Arabic noun forms: Skipped, no changes
 Page 7 Category:North Levantine Arabic verb forms: Skipped, no changes
@@ -29383,7 +29383,7 @@ Page 1 آلاف: Skipped, no changes
 Page 2 أتراك: Found match for regex: <begin> {{ajp-head|nounf|p|tr=ʔatrāk}} <end>
 Page 2 أتراك: Found match for regex: <begin> {{ajp-head|adjf|tr=ʔatrāk}} <end>
 Page 2 أتراك: Skipped, no changes
-Page 3 أجسام: Found match for regex: <begin> {{head|ajp|nounf|tr=ʔajsām|g=m}} <end>
+Page 3 أجسام: Found match for regex: <begin> {{ajp-head|nounf|m|tr=ʔajsām}} <end>
 Page 3 أجسام: Skipped, no changes
 Page 4 أراضي: Found match for regex: <begin> {{ajp-head|nounf|tr=ʔarāḍi}} <end>
 Page 4 أراضي: Skipped, no changes
@@ -29398,7 +29398,7 @@ Page 8 أصحاب: Found match for regex: <begin> {{ajp-head|nounf|p|tr=ʔaṣ�
 Page 8 أصحاب: Skipped, no changes
 Page 9 أصدقاء: Found match for regex: <begin> {{ajp-head|nounf|p|tr=ʔaṣdiqāʔ}} <end>
 Page 9 أصدقاء: Skipped, no changes
-Page 10 أيام: Found match for regex: <begin> {{head|ajp|nounf|head=أيّام|g=p|tr=ʔayyām}} <end>
+Page 10 أيام: Found match for regex: <begin> {{ajp-head|nounf|p|head=أيّام<tr:ʔayyām>}} <end>
 Page 10 أيام: Skipped, no changes
 Page 11 بأتر: Found match for regex: <begin> {{ajp-head|verbf|head=بأتّر<tr:baʔatter>}} <end>
 Page 11 بأتر: Found match for regex: <begin> {{ajp-head|verbf|head=بأتّر<tr:biʔatter>}} <end>
@@ -29514,7 +29514,7 @@ Page 63 تعال: Found match for regex: <begin> {{ajp-head|verbf|tr=taʕāl}} <
 Page 63 تعال: Skipped, no changes
 Page 64 تفوت: Found match for regex: <begin> {{ajp-head|verbf|tr=tfūt}} <end>
 Page 64 تفوت: Skipped, no changes
-Page 65 جرابين: Found match for regex: <begin> {{head|ajp|nounf|head=جرابين|tr=jarābīn|g=m-p}} <end>
+Page 65 جرابين: Found match for regex: <begin> {{ajp-head|nounf|m-p|head=جرابين<tr:jarābīn>}} <end>
 Page 65 جرابين: Skipped, no changes
 Page 66 حاطط: Found match for regex: <begin> {{ajp-root|ح ط ط}} <end>
 Page 66 حاطط: Found match for regex: <begin> {{ajp-head|actpart|tr=ḥāṭeṭ|f=حاطّة<tr:ḥāṭṭe>|cpl=حاطّين<tr:ḥāṭṭīn>}} <end>
@@ -29541,7 +29541,7 @@ Page 73 صبايا: Skipped, no changes
 Page 74 عايش: Found match for regex: <begin> {{ajp-root|ع ي ش}} <end>
 Page 74 عايش: Found match for regex: <begin> {{ajp-head|actpart|tr=ʕāyeš|f=عايشة<tr:ʕāyše>|cpl=عايشين<tr:ʕāyšīn>}} <end>
 Page 74 عايش: Skipped, no changes
-Page 75 عيون: Found match for regex: <begin> {{head|ajp|nounf|head=عيُون|g=f-p|tr=ʕyūn}} <end>
+Page 75 عيون: Found match for regex: <begin> {{ajp-head|nounf|f-p|head=عيُون<tr:ʕyūn>}} <end>
 Page 75 عيون: Skipped, no changes
 Page 76 فاهم: Found match for regex: <begin> {{ajp-root|ف ه م}} <end>
 Page 76 فاهم: Found match for regex: <begin> {{ajp-head|actpart|tr=fāhem|f=فاهمة<tr:fāhme>|cpl=فاهمين<tr:fāhmīn>}} <end>
@@ -29593,7 +29593,7 @@ Page 3 waze: Skipped, no changes
 Page 4 Category:Nubi noun forms: Skipped, no changes
 Page 1 أشهرة: Found match for regex: <begin> {{aeb-head|nounf|tr=ʔušhra}} <end>
 Page 1 أشهرة: Skipped, no changes
-Page 2 كلاسط: Found match for regex: <begin> {{head|aeb|nounf|tr=klāseṭ|g=f}} <end>
+Page 2 كلاسط: Found match for regex: <begin> {{aeb-head|nounf|f|tr=klāseṭ}} <end>
 Page 2 كلاسط: Skipped, no changes
 Page 3 Category:Tunisian Arabic noun forms: Skipped, no changes
 Page 4 Category:Tunisian Arabic verb forms: Skipped, no changes
