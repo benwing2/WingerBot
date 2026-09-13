@@ -42,6 +42,11 @@ Loaders for functions in other modules, which overwrite themselves with the targ
 		return debug_track(...)
 	end
 
+	local function contains(...)
+		contains = require(table_module).contains
+		return contains(...)
+	end
+
 	local function encode_entities(...)
 		encode_entities = require(string_utilities_module).encode_entities
 		return encode_entities(...)
@@ -295,7 +300,15 @@ do
 		return (ugsub(s, notWordPunc, "\2%1\1"))
 	end
 
-	--[==[Add links to a multiword head.]==]
+	--[==[
+	Add appropriate links to `head`, correctly handling multiword terms. This is intended for multiword terms but can
+	be used for any term if you want links added to single-word terms as well. If you want to only add
+	links to multiword terms, first check that the term is multiword using `head_is_multiword`.
+
+	If `default` is specified, this will escape colons so that they don't get interpreted as interwiki links. This
+	should generally only be used when `head` is an actual pagename or is taken from a {{para|pagename}} parameter, not
+	when taken from a {{para|head}} parameter.
+	]==]
 	function export.add_multiword_links(head, default)
 		head = "\1" .. ugsub(head, spacingPunctuation, workaround_to_exclude_chars) .. "\2"
 		if default then
@@ -458,14 +471,14 @@ local function format_headword(data)
 end
 
 
-local function format_headword_genders(data)
+local function format_headword_genders(data, is_varform_only)
 	local retval = ""
 	if data.genders and data.genders[1] then
 		if data.gloss then
 			retval = ","
 		end
 		local pos_for_cat
-		if not data.nogendercat then
+		if not data.nogendercat and not is_varform_only then
 			local no_gender_cat = (m_data or get_data()).no_gender_cat
 			if not (no_gender_cat[data.lang:getCode()] or no_gender_cat[data.lang:getFullCode()]) then
 				pos_for_cat = (m_data or get_data()).pos_for_gender_number_cat[data.pos_category:gsub("^reconstructed ", "")]
@@ -630,7 +643,7 @@ local function check_red_link_inflection_parts(data, parts, plpos)
 			end
 		end
 	end
-	
+
 	return false
 end
 
@@ -648,7 +661,7 @@ function check_red_link_inflections(data, inflections, plpos)
 			end
 		end
 	end
-	
+
 	return false
 end
 
@@ -772,7 +785,7 @@ end
 -- whole page. These are placed in the headword somewhat arbitrarily, but
 -- mainly because headword templates are mandatory for entries (meaning that
 -- in theory it provides full coverage).
--- 
+--
 -- This is provided as an external entry point so that modules which transclude
 -- information from other entries (such as {{tl|ja-see}}) can take advantage
 -- of this feature as well, because they are used in place of a conventional
@@ -814,7 +827,8 @@ do
 		extend(page_cats, page.cats)
 		lang = lang:getFull() -- since we are just generating categories
 		local canonical = lang:getCanonicalName()
-		local tbl, sortkey = page.wikitext_topic_cat[lang:getCode()]
+		local tbl = page.wikitext_topic_cat[lang:getCode()]
+		local sortkey = nil
 		if tbl then
 			sortkey = handle_raw_sortkeys(tbl, sortkey, page, lang, lang_cats)
 			insert(lang_cats, canonical .. " entries with topic categories using raw markup")
@@ -841,7 +855,7 @@ See [[#Further explanations for full_headword()]]
 ]==]
 function export.full_headword(data)
 	-- Prevent data from being destructively modified.
-	local data = shallow_copy(data)
+	data = shallow_copy(data)
 
 	------------ 1. Basic checks for old-style (multi-arg) calling convention. ------------
 
@@ -885,6 +899,13 @@ function export.full_headword(data)
 
 	local namespace = page.namespace
 
+	if data.altform then
+		-- Temporary tracking for use of old altform=
+		track("altform", data.lang)
+	end
+	local is_varform_only = data.var and data.var ~= "both"
+	local is_varform_both = data.var == "both"
+
 	------------ 3. Initialize `data.heads` table; if old-style, convert to new-style. ------------
 
 	if type(data.heads) == "table" and type(data.heads[1]) == "table" then
@@ -914,11 +935,6 @@ function export.full_headword(data)
 	end
 
 	------------ 4. Initialize and validate `data.categories` and `data.whole_page_categories`, and determine `pos_category` if not given, and add basic categories. ------------
-
-	-- EXPERIMENTAL: see [[Wiktionary:Beer parlour/2024/June#Decluttering the altform mess]]
-	if data.altform then
-		data.noposcat = true
-	end
 
 	init_and_find_maximum_index(data, "categories")
 	init_and_find_maximum_index(data, "whole_page_categories")
@@ -953,7 +969,7 @@ function export.full_headword(data)
 	end
 
 	-- Insert a category at the beginning for the part of speech unless it's already present or `data.noposcat` given.
-	if not pos_category_already_present and not data.noposcat then
+	if not pos_category_already_present and not data.noposcat and not is_varform_only then
 		local pos_category = full_langname .. " " .. data.pos_category
 		-- FIXME: [[User:Theknightwho]] Why is this special case here? Please add an explanatory comment.
 		if pos_category ~= "Translingual Han characters" then
@@ -972,13 +988,15 @@ function export.full_headword(data)
 		-- [[Special:WhatLinksHere/Wiktionary:Tracking/headword/unrecognized pos/POS]]
 		-- [[Special:WhatLinksHere/Wiktionary:Tracking/headword/unrecognized pos/POS/LANGCODE]]
 		track("unrecognized pos/pos/" .. data.pos_category, data.lang)
-	elseif not data.noposcat then
+	elseif not data.noposcat and not is_varform_only then
 		insert(data.categories, 1, full_langname .. " " .. postype .. "s")
 	end
 
-	-- EXPERIMENTAL: see [[Wiktionary:Beer parlour/2024/June#Decluttering the altform mess]]
-	if data.altform then
-		insert(data.categories, 1, full_langname .. " alternative forms")
+	-- Categorize variant forms into 'variant lemmas' or 'variant non-lemma forms'. Originally proposed in
+	-- [[Wiktionary:Beer parlour/2024/June#Decluttering the altform mess]] as 'alternative forms'; renamed in
+	-- [[Wiktionary:Beer parlour/2026/July#Renaming the "alternative forms" categories]].
+	if (is_varform_only or is_varform_both) and postype then
+		insert(data.categories, 1, full_langname .. " variant " .. postype .. "s")
 	end
 
 	------------ 5. Create a default headword, and add links to multiword page names. ------------
@@ -1199,14 +1217,12 @@ function export.full_headword(data)
 		end
 	end
 	-- FIXME: Generalize this.
-	-- If the current language uses ur-Arab (for Urdu, etc.), ku-Arab (Central Kurdish) or pa-Arab
-	-- (Shahmukhi, for Punjabi) and there's more than one language on the page, don't set the display title
-	-- because these three scripts display in Nastaliq and we don't want this for terms that also exist in other
-	-- languages that don't display in Nastaliq (e.g. Arabic or Persian) to display in Nastaliq. Because the word
-	-- "Urdu" occurs near the end of the alphabet, Urdu fonts tend to override the fonts of other languages.
-	-- FIXME: This is checking for more than one language on the page but instead needs to check if there are any
-	-- languages using scripts other than the ones just mentioned.
-	if (dt_script_code == "ur-Arab" or dt_script_code == "ku-Arab" or dt_script_code == "pa-Arab") and page.L2_list.n > 1 then
+	-- If the current language uses Aran (Nastaliq), e.g. Urdu, and there's more than one language on the page, don't
+	-- set the display title because we don't want Nastaliq for terms that also exist in other languages that don't
+	-- display in Nastaliq (e.g. Arabic or Persian). Because the word "Urdu" occurs near the end of the alphabet, Urdu
+	-- fonts tend to override the fonts of other languages. FIXME: This is checking for more than one language on the
+	-- page but instead needs to check if there are any languages using scripts other than Aran.
+	if dt_script_code == "Aran" and page.L2_list.n > 1 then
 		display_title = nil
 	end
 
@@ -1233,7 +1249,7 @@ function export.full_headword(data)
 	end
 
 	-- If the first head is multiword (after removing links), maybe insert into "LANG multiword terms".
-	if not data.nomultiwordcat and any_script_has_spaces and postype == "lemma" then
+	if not data.nomultiwordcat and not is_varform_only and any_script_has_spaces and postype == "lemma" then
 		local no_multiword_cat = m_headword_data.no_multiword_cat
 		if not (no_multiword_cat[langcode] or no_multiword_cat[full_langcode]) then
 			-- Check for spaces or hyphens, but exclude prefixes and suffixes.
@@ -1256,16 +1272,44 @@ function export.full_headword(data)
 		end
 	end
 
+	-- Determine whether to insert a category 'LANGNAME POS in SCRIPT'. If there are multiple heads, we may need to check
+	-- each head, as the heads may (theoretically) have different scripts.
 	local default_sccat = m_headword_data.default_sccat
-	if data.sccat or data.sccat == nil and (default_sccat[langcode] or default_sccat[full_langcode]) then
+	if data.sccat or not is_varform_only and (default_sccat[langcode] or langcode ~= full_langcode and default_sccat[full_langcode]) then
+		local function needs_sccat(sccat_entry, sc)
+			if sccat_entry == true or not sccat_entry then
+				return sccat_entry
+			end
+			if type(sccat_entry) == "table" then
+				local in_list = contains(sccat_entry, sc:getCode())
+				if sccat_entry[1] == "not" then
+					in_list = not in_list
+				end
+				return in_list
+			end
+			return nil
+		end
+
 		for _, head in ipairs(data.heads) do
-			insert(data.categories, full_langname .. " " .. data.pos_category .. " in " ..
-				head.sc:getDisplayForm())
+			-- First check the `sccat` specified at the {{head}} level.
+			local this_needs_sccat = needs_sccat(data.sccat, head.sc)
+			-- If that wasn't given, check the default sccat at the language level for the lang code.
+			if this_needs_sccat == nil and not is_varform_only then
+				this_needs_sccat = needs_sccat(default_sccat[langcode], head.sc)
+			end
+			-- If that wasn't found and the lang code is an etym code, check the default sccat at the parent language level.
+			if this_needs_sccat == nil and not is_varform_only and langcode ~= full_langcode then
+				this_needs_sccat = needs_sccat(default_sccat[full_langcode], head.sc)
+			end
+			if this_needs_sccat then
+				insert(data.categories, full_langname .. " " .. data.pos_category .. " in " ..
+					head.sc:getDisplayForm(data.lang))
+			end
 		end
 	end
 
 	-- Reconstructed terms often use weird combinations of scripts and realistically aren't spelled so much as notated.
-	if namespace ~= "Reconstruction" then
+	if namespace ~= "Reconstruction" and not is_varform_only then
 		-- Map from languages to a string containing the characters to ignore when considering whether a term has
 		-- multiple written scripts in it. Typically these are Greek or Cyrillic letters used for their phonetic
 		-- values.
@@ -1382,7 +1426,7 @@ function export.full_headword(data)
 
 	-- Categorise for unusual characters. Takes into account combining characters, so that we can categorise for characters with diacritics that aren't encoded as atomic characters (e.g. U̠). These can be in two formats: single combining characters (i.e. character + diacritic(s)) or double combining characters (i.e. character + diacritic(s) + character). Each can have any number of diacritics.
 	local standard = data.lang:getStandardCharacters()
-	if standard and not non_categorizable(page.full_raw_pagename) then
+	if not is_varform_only and standard and not non_categorizable(page.full_raw_pagename) then
 		local function char_category(char)
 			local specials = {
 				["#"] = "number sign",
@@ -1423,9 +1467,9 @@ function export.full_headword(data)
 							explode_standard[char] = true
 							return ""
 						end
-						local sc_standard = ugsub(sc_standard, page.comb_chars.combined_double, explode)
-						sc_standard = ugsub(sc_standard,page.comb_chars.combined_single, explode)
-							:gsub(".[\128-\191]*", explode)
+						local sc_standard_exploded = ugsub(sc_standard, page.comb_chars.combined_double, explode)
+						-- The following is correct; it relies on side-effecing the explode_standard[] table.
+						ugsub(sc_standard_exploded, page.comb_chars.combined_single, explode):gsub(".[\128-\191]*", explode)
 						local num_cat_inserted
 						for char in pairs(page.explode_pagename) do
 							if not explode_standard[char] then
@@ -1472,7 +1516,7 @@ function export.full_headword(data)
 		end
 	end
 
-	if data.heads[1].sc:isSystem("alphabet") then
+	if not is_varform_only and data.heads[1].sc:isSystem("alphabet") then
 		local pagename, i = page.pagename:ulower(), 2
 		while umatch(pagename, "(%a)" .. ("%1"):rep(i)) do
 			i = i + 1
@@ -1481,7 +1525,7 @@ function export.full_headword(data)
 	end
 
 	-- Categorise for palindromes
-	if not data.nopalindromecat and namespace ~= "Reconstruction" and ulen(page.pagename) > 2
+	if not is_varform_only and not data.nopalindromecat and namespace ~= "Reconstruction" and ulen(page.pagename) > 2
 		-- FIXME: Use of first script here seems hacky. What is the clean way of doing this in the presence of
 		-- multiple scripts?
 		and is_palindrome(page.pagename, data.lang, data.heads[1].sc) then
@@ -1514,7 +1558,7 @@ function export.full_headword(data)
 	-- so make sure we do it before evaluating `data.categories`.
 	local text = '<span class="headword-line">' ..
 		format_headword(data) ..
-		format_headword_genders(data) ..
+		format_headword_genders(data, is_varform_only) ..
 		format_top_level_inflections(data) .. '</span>'
 
 	-- Language-specific categories.
