@@ -168,7 +168,18 @@ function export.format_one_term(data)
 			raw = "",
 		}
 	end
-	local link = full_link(termobj, link_face, nil, not no_show_qualifiers and "show qualifiers" or nil)
+	-- If (a) there are decorators, and (b) the setting in `termobj.show_qualifiers` disagrees with the desired setting
+	-- as specified by `no_show_qualifiers`, then we need to shallow-copy `termobj` and change the value of
+	-- `show_qualifiers`. Here we try to shallow-copy only when necessary.
+	local has_decorators = termobj.q or termobj.qq or termobj.a or termobj.aa or termobj.l or termobj.ll or termobj.refs
+	if has_decorators then
+		local new_show_qualifiers = not data.no_show_qualifiers
+		if (not not termobj.show_qualifiers) ~= new_show_qualifiers then
+			termobj = shallow_copy(termobj)
+			termobj.show_qualifiers = new_show_qualifiers
+		end
+    end
+	local link = full_link(termobj, link_face)
 	return {
 		output = export.wrap_in_span(link, object_classes),
 		raw = termobj.alt or termobj.term,
