@@ -193,7 +193,7 @@ local function field_non_empty(list, field)
 end
 
 --[=[
-Add any "decorations" (left or right regular or accent qualifiers, labels or references) to an item. `text` is the
+Add any decorations (left or right regular or accent qualifiers, labels or references) to an item. `text` is the
 item's text (to which to add the decorations) and `itemobj` is the object specifying the item's decorations, which
 should optionally contain:
 * left regular qualifiers in `q` (an array of strings or a single string); an empty array will be ignored;
@@ -1314,8 +1314,8 @@ give a link similar to the one produced by the template {{tl|m}}.
 The function will:
 * Try to determine the script, based on the characters found in the `term` or `alt` argument, if the script was not
   given. If a script is given and `track_sc` is {true}, it will check whether the input script is the same as the one
-  which would have been automatically generated and add the category ```lang`` terms with redundant script codes` if
-  yes, or ```lang`` terms with non-redundant manual script codes` if no. This should be used when the input script
+  which would have been automatically generated and add the category ` ``lang`` terms with redundant script codes` if
+  yes, or ` ``lang`` terms with non-redundant manual script codes` if no. This should be used when the input script
   object is directly determined by a template's `sc` parameter.
 * Call `simple_link()` on the `term` or `alt` forms, to remove diacritics in the page name, process any embedded
   wikilinks and create links to Reconstruction or Appendix pages when necessary. (`simple_link()` is almost exactly the
@@ -1332,7 +1332,7 @@ The function will:
   reconstructed. This should only be used by modules which really need to allow links to reconstructions that don't
   display asterisks (e.g. number boxes).
 * If `suppress_redundant_wikilink_cat` is specified, it should be a function that indicates whether to suppress the
-  generation of the ```lang`` links with redundant wikilinks` tracking category. It is passed two arguments, the `term`
+  generation of the ` ``lang`` links with redundant wikilinks` tracking category. It is passed two arguments, the `term`
   and `alt` parameters. Normally, this tracking category is added whenever the `term` argument consists entirely of a
   one-part or two-part embedded link, which is considered "redundant" in that the link can be rewritten into separate
   `term` and `alt` arguments without any embedded links. For certain wrapping templates, however, otherwise "redundant"
@@ -1342,8 +1342,8 @@ The function will:
   [[1,6-Cleves acid]], but will incorrectly trigger the addition of the tracking category unless the appropriate
   `suppress_redundant_wikilink_cat` function is given.
 * If `pretext` or `posttext` is specified, this is text to (respectively) prepend or append to the output, directly
-  before processing qualifiers, labels and references. This can be used to add arbitrary extra text inside of the
-  qualifiers, labels and references.
+  before processing decorations (qualifiers, labels and references). This can be used to add arbitrary extra text inside
+  of the decorations.
 * If `show_decorations` is specified, then decorations specified in `data` (i.e. left and right qualifiers, accent
   qualifiers, labels and references) will be displayed, otherwise they will be ignored. (This is because a fair amount
   of code stores decorations in these fields and displays them itself, rather than expecting {full_link()} to display
@@ -1358,9 +1358,8 @@ function export.full_link(data, face, allow_self_link, show_qualifiers)
 		track("escaped", "full_link")
 	end
 	if show_qualifiers then
-		-- FIXME: Convert to error once we've removed all uses, then eventually remove the error code
-		track("full_link show_qualifiers param")
-		track("full_link show_qualifiers")
+		-- FIXME: Eventually remove the error code. Added 2026-09-17, remove after 2026-10-17 or so.
+		error("Can't pass fourth parameter `show_qualifiers` any more. Set `show_decorations = true` on data.")
 	end
 	if data.show_qualifiers then
 		-- FIXME: Convert to error once we've removed all uses, then eventually remove the error code
