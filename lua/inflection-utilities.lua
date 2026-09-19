@@ -677,6 +677,9 @@ concatenated into a single flattened list. On input, `data` is an object with th
   all user-specified metadata is boolean).
 * `no_combine_metadata`: See `fn` above. If given, metadata from objects mapped over will not be combined into the
   returned objects.
+
+NOTE: There is no `map_formobjs` function provided because `flatmap_formobjs` will correctly handle functions that
+return single form objects.
 ]==]
 function export.flatmap_formobjs(data)
 	local formobjs, fn, metadata, no_combine_metadata =
@@ -1033,7 +1036,7 @@ unchanged if already in full list form.
 ]==]
 function export.convert_to_full_list_form(abforms)
 	if type(abforms) == "string" then
-		return {form = abforms}
+		return {{form = abforms}}
 	elseif abforms.form then
 		return {abforms}
 	else
