@@ -379,7 +379,7 @@ function export.looks_like_boolean(object)
 end
 
 
-function export.default_fallback_deduplicate_handler(_prop, existing, new)
+function export.default_fallback_deduplicate_handler(_prop, existing, _new)
 	return existing, true
 end
 
@@ -2410,7 +2410,7 @@ function export.show_forms(formtable, props)
 					-- Check if form still has links; if so, don't add accelerators because the resulting entries will
 					-- be wrong.
 					if props_lemmas[1] and not form.no_accel and accel_tag_set ~= "-" and
-						not rfind(formval_for_link, "%[%[") then
+						not formval_for_link:find("%[%[") then
 						-- If there is more than one form or more than one lemma, things get tricky. Often, there are
 						-- the same number of forms as lemmas, e.g. for Ukrainian [[зимовий]] "wintry; winter (rel.)",
 						-- which can be stressed зимо́вий or зимови́й with corresponding masculine/neuter genitive
