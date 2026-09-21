@@ -3,7 +3,7 @@ local pos_functions = {}
 
 local force_cat = false -- for testing; if true, categories appear in non-mainspace pages
 
-local require_when_needed = require("Module:utilities/require when needed")
+local require_when_needed = require("Module:require when needed")
 local m_table = require("Module:table")
 local lang = require("Module:languages").getByCode("nl")
 local langname = lang:getCanonicalName()
@@ -37,7 +37,8 @@ function export.show(frame)
 		["head"] = list_param,
 		["id"] = true,
 		-- ["splithyph"] = boolean_param,
-		["nolinkhead"] = boolean_param,
+		["nolink"] = boolean_param,
+		["nolinkhead"] = {alias_of = "nolink"},
 		["json"] = boolean_param,
 		["pagename"] = true, -- for testing
 	}
@@ -55,7 +56,7 @@ function export.show(frame)
 
 	local user_specified_heads = args.head
 	local heads = user_specified_heads
-	if args.nolinkhead then
+	if args.nolink then
 		if not heads[1] then
 			heads = {pagename}
 		end
@@ -79,7 +80,7 @@ function export.show(frame)
 
 	local data = {
 		lang = lang,
-		pos_category = poscat,
+		pos_category = pos_functions[poscat] and pos_functions[poscat].pos_category or poscat,
 		categories = {},
 		heads = heads,
 		user_specified_heads = user_specified_heads,
@@ -89,19 +90,20 @@ function export.show(frame)
 		pagename = pagename,
 		id = args.id,
 		force_cat_output = force_cat,
+		checkredlinks = pos_functions[poscat] and pos_functions[poscat].redlink_pos or true,
 	}
 
-	local is_suffix = false
 	if pagename:find("^%-") and poscat ~= "suffix forms" then
-		is_suffix = true
+		data.is_suffix = true
 		data.pos_category = "suffixes"
+		data.checkredlinks = true
 		local singular_poscat = require(en_utilities_module).singularize(poscat)
 		insert(data.categories, langname .. " " .. singular_poscat .. "-forming suffixes")
 		insert(data.inflections, {label = singular_poscat .. "-forming suffix"})
 	end
 
 	if pos_functions[poscat] then
-		pos_functions[poscat].func(args, data, is_suffix)
+		pos_functions[poscat].func(args, data)
 	end
 
 	if args.json then
@@ -141,9 +143,8 @@ end
 
 -- Parse and insert an inflection not requiring additional processing into `data.inflections`. The raw arguments come
 -- from `args[field]`, which is parsed for inline modifiers. `label` is the label that the inflections are given;
--- `plpos` is the plural part of speech, used in [[Category:LANGNAME PLPOS with red links in their headword lines]].
 -- `accel` is the accelerator form, or nil.
-local function parse_and_insert_inflection(data, args, field, label, accel, check_missing, plppos)
+local function parse_and_insert_inflection(data, args, field, label, accel)
 	m_headword_utilities.parse_and_insert_inflection {
 		headdata = data,
 		forms = args[field],
@@ -155,23 +156,17 @@ local function parse_and_insert_inflection(data, args, field, label, accel, chec
 		end,
 		label = label,
 		accel = accel and {form = accel} or nil,
-		check_missing = check_missing,
-		lang = lang,
-		plpos = plpos,
 	}
 end
 
 -- Insert the parsed inflections in `infls` (as parsed by `parse_inflection`) into `data.inflections`, with label
 -- `label` and optional accelerator spec `accel`.
-local function insert_inflection(data, terms, label, accel, check_missing, plpos)
+local function insert_inflection(data, terms, label, accel)
 	m_headword_utilities.insert_inflection {
 		headdata = data,
 		terms = terms,
 		label = label,
 		accel = accel and {form = accel} or nil,
-		check_missing = check_missing,
-		lang = lang,
-		plpos = plpos,
 	}
 end
 
@@ -224,7 +219,7 @@ pos_functions["adjectives"] = {
 					if
 						pagename:find("[iï]de$") or pagename:find("[^eio]e$") or
 						pagename:find("s$") or pagename:find("sch$") or pagename:find("x$") or
-						pagename:find("sd$") or pagename:find("st$") or pagename:find("sk$") then
+						pagename:find("sd$") or pagename:find("st$") or pagename:find("scht$") or pagename:find("sk$") then
 						superlatives = {{term = "peri"}}
 					end
 
@@ -274,7 +269,7 @@ pos_functions["adverbs"] = {
 
 ----------------------------------------------- Nouns --------------------------------------------
 
-local allowed_genders = m_table.listToSet { "c", "p", "m", "f", "n", "?" }
+local allowed_genders = m_table.listToSet { "c", "p", "m", "f", "n", "?", "mf", "mfequiv", "mfbysense" }
 
 -- Display information for a noun's gender
 -- This is separate so that it can also be used for proper nouns
@@ -324,6 +319,7 @@ local function generate_plurals(pagename)
 
 	generated["-s"] = pagename .. "s"
 	generated["-'s"] = pagename .. "'s"
+	generated["-'en"] = pagename .. "'en"
 
 	local stem_FF = m_common.add_e(pagename, false, false)
 	local stem_TF = m_common.add_e(pagename, true, false)
@@ -517,7 +513,7 @@ local function process_plurals(data, plurals, plural_only)
 						insert(data.categories, "Dutch nouns with Latin plurals")
 					elseif
 						p == pagename:gsub("os$", "oi") or
-						p == pagename:gsub("on$", "a") or
+						p == mw.ustring.gsub(pagename, "[oö]n$", "a") or
 						p == pagename:gsub("a$", "ata") then
 						insert(data.categories, "Dutch nouns with Greek plurals")
 					else
@@ -535,9 +531,6 @@ local function process_plurals(data, plurals, plural_only)
 			terms = plurals,
 			label = "plural",
 			accel = {form = "p"},
-			check_missing = true,
-			lang = lang,
-			plpos = "nouns",
 			request = true,
 		}
 	end
@@ -604,8 +597,8 @@ pos_functions["diminutive nouns"] = {
 	func = function(args, data)
 		local plurals = parse_term_list_with_modifiers(data, {"1", "pl"}, args[1])
 		if plurals[1] and plurals[1].term == "p" then
-			if m_headword_utilities.termobj_has_qualifiers_or_labels(plurals[1]) then
-				error("Can't specify qualifiers or labels with 'p' for plural-only diminutive noun")
+			if m_headword_utilities.termobj_has_decorations(plurals[1]) then
+				error("Can't specify decorations with 'p' for plural-only diminutive noun")
 			elseif plurals[2] then
 				error("Can't specify plurals of plurale tantum noun")
 			end
@@ -618,7 +611,8 @@ pos_functions["diminutive nouns"] = {
 			end
 			process_plurals(data, plurals)
 		end
-	end
+	end,
+	redlink_pos = "nouns",
 }
 
 -- Display additional inflection information for diminutiva tantum nouns ({{nl-noun-dim-tant}}).
@@ -629,7 +623,6 @@ pos_functions["diminutiva tantum nouns"] = {
 		["m"] = {list = true},
 	},
 	func = function(args, data)
-		data.pos_category = "nouns"
 		insert(data.categories, "Dutch diminutiva tantum")
 		data.genders = {"n"}
 		local plurals = parse_term_list_with_modifiers(data, {"1", "pl"}, args[1])
@@ -638,7 +631,8 @@ pos_functions["diminutiva tantum nouns"] = {
 		end
 		process_plurals(data, plurals)
 		do_noun_ancillary_inflections(data, args)
-	end
+	end,
+	pos_category = "nouns",
 }
 
 pos_functions["past participles"] = {
@@ -650,7 +644,8 @@ pos_functions["past participles"] = {
 			insert(data.inflections, {label = "not used adjectivally"})
 			insert(data.categories, "Dutch non-adjectival past participles")
 		end
-	end
+	end,
+	redlink_pos = "participles",
 }
 
 
