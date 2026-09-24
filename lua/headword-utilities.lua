@@ -3,6 +3,7 @@ local export = {}
 local require_when_needed = require("Module:utilities/require when needed")
 local affix_module = "Module:affix"
 local debug_track_module = "Module:debug/track"
+local decorations_module = "Module:decorations"
 local en_utilities_module = "Module:en-utilities"
 local fun_is_callable_module = "Module:fun/isCallable"
 local headword_module = "Module:headword"
@@ -12,7 +13,6 @@ local links_module = "Module:links"
 local parameters_module = "Module:parameters"
 local parse_interface_module = "Module:parse interface"
 local parse_utilities_module = "Module:parse utilities"
-local pron_qualifier_module = "Module:pron qualifier"
 local string_pattern_escape_module = "Module:string/patternEscape"
 local string_replacement_escape_module = "Module:string/replacementEscape"
 local string_utilities_module = "Module:string utilities"
@@ -45,7 +45,7 @@ local term_contains_top_level_html = require_when_needed(parse_utilities_module,
 
 local get_lang_by_code = require_when_needed(languages_module, "getByCode")
 local is_callable = require_when_needed(fun_is_callable_module)
-local format_pron_qualifiers = require_when_needed(pron_qualifier_module, "format_qualifiers")
+local format_decorations = require_when_needed(decorations_module, "format_decorations")
 
 
 local function split_on_comma(val)
@@ -61,8 +61,7 @@ local function ine(val)
 end
 
 --[=[
-Add qualifiers, labels and references to a term. `termobj` is the object describing the term, which should optionally
-contain:
+Add decorations to a term. `termobj` is the object describing the term, which should optionally contain:
 * left qualifiers in `q`, an array of strings;
 * right qualifiers in `qq`, an array of strings;
 * left labels in `l`, an array of strings;
@@ -71,7 +70,7 @@ contain:
   (formatted reference text) and optionally `name` and/or `group`;
 `text` is the text of the term itself, and `lang` is the language object.
 ]=]
-local function add_qualifiers_and_refs(text, termobj, lang)
+local function add_decorations(text, termobj, lang)
 	local function field_non_empty(field)
 		local list = termobj[field]
 		if not list then
@@ -86,7 +85,7 @@ local function add_qualifiers_and_refs(text, termobj, lang)
 
 	if field_non_empty("q") or field_non_empty("qq") or field_non_empty("l") or field_non_empty("ll") or
 		field_non_empty("refs") then
-		text = format_pron_qualifiers {
+		text = format_decorations {
 			lang = lang,
 			text = text,
 			q = termobj.q,
@@ -343,8 +342,8 @@ Insert a fixed inflection (a label not associated with any inflection values) in
    structure as a whole.
 * `label`: The label that the inflections are given; any parts of the label surrounded in `<<...>>` are linked to the
    glossary. (If the contents of `<<...>>` contain a `|` in them, they are a two-part link.) Required.
-* `origiating_term`: The term object from which this label is derived. If specified, qualifiers, labels and references
-   will be taken from this object.
+* `originating_term`: The term object from which this label is derived. If specified, decorations will be taken from
+   this object.
 ]==]
 function export.insert_fixed_inflection(data)
 	local headdata, origterm, label = data.headdata, data.originating_term, data.label
@@ -360,7 +359,7 @@ function export.insert_fixed_inflection(data)
 				):format(origterm.id, label, origterm.term))
 		end
 		origterm = shallow_copy(origterm)
-		-- Preserve qualifiers, labels, references
+		-- Preserve decorations
 		origterm.term = nil
 		origterm.label = export.replace_glossary_links_in_label(label)
 		insert(inflobj.inflections, origterm)
@@ -594,44 +593,47 @@ function export.canonicalize_termobj_list(abterms, field, origin_val)
 end
 
 --[==[
-Combine two sets of qualifiers or labels. If either is {nil}, just return the other, and if both are {nil}, return
-{nil}.
+Combine two sets of decorations. If either is {nil}, just return the other, and if both are {nil}, return {nil}.
 ]==]
-function export.combine_qualifiers_or_labels(quals1, quals2)
-	if not quals1 and not quals2 then
+function export.combine_decorations(decs1, decs2)
+	if not decs1 and not decs2 then
 		return nil
 	end
-	if not quals1 then
-		return quals2
+	if not decs1 then
+		return decs2
 	end
-	if not quals2 then
-		return quals1
+	if not decs2 then
+		return decs1
 	end
-	local combined = shallow_copy(quals1)
-	for _, note in ipairs(quals2) do
-		insert_if_not(combined, note)
+	local combined = shallow_copy(decs1)
+	for _, dec in ipairs(decs2) do
+		insert_if_not(combined, dec)
 	end
 	return combined
 end
 
+function export.combine_qualifiers_or_labels(...)
+	-- FIXME: Added 2026-09-17. Remove after a month.
+	error("Use combine_decorations instead")
+end
 
 --[==[
-Combine the qualifiers, labels, references and ID's of two term objects. `destobj` is the "destination term object" into
-which the combined properties are written, and `srcobj` is the "source object" into which the properties are merged.
-`destobj` is side-effected (but the lists inside of `destobj` are not); if this is undesirable, make sure to
-shallow-copy `destobj` first. If both objects have values for a given qualifier, label or reference, the values of
-`destobj` come first. If both objects have a value for `id`, the values must match or an error is thrown; otherwise,
-the resulting value of `id` comes from whichever one is defined.
+Combine the decorations (qualifiers, labels, references) and ID's of two term objects. `destobj` is the "destination
+term object" into which the combined properties are written, and `srcobj` is the "source object" into which the
+properties are merged. `destobj` is side-effected (but the lists inside of `destobj` are not); if this is undesirable,
+make sure to shallow-copy `destobj` first. If both objects have values for a given decoration, the values of `destobj`
+come first. If both objects have a value for `id`, the values must match or an error is thrown; otherwise, the resulting
+value of `id` comes from whichever one is defined.
 
 '''NOTE:''' This may not be the correct behavior when deduplicating a list of term objects. See
 `insert_termobj_combining_duplicates` for a different approach.
 ]==]
-function export.combine_termobj_qualifiers_labels(destobj, srcobj)
-	destobj.q = export.combine_qualifiers_or_labels(destobj.q, srcobj.q)
-	destobj.qq = export.combine_qualifiers_or_labels(destobj.qq, srcobj.qq)
-	destobj.l = export.combine_qualifiers_or_labels(destobj.l, srcobj.l)
-	destobj.ll = export.combine_qualifiers_or_labels(destobj.ll, srcobj.ll)
-	destobj.refs = export.combine_qualifiers_or_labels(destobj.refs, srcobj.refs)
+function export.combine_termobj_decorations(destobj, srcobj)
+	destobj.q = export.combine_decorations(destobj.q, srcobj.q)
+	destobj.qq = export.combine_decorations(destobj.qq, srcobj.qq)
+	destobj.l = export.combine_decorations(destobj.l, srcobj.l)
+	destobj.ll = export.combine_decorations(destobj.ll, srcobj.ll)
+	destobj.refs = export.combine_decorations(destobj.refs, srcobj.refs)
 	if destobj.id and srcobj.id and destobj.id ~= srcobj.id then
 		-- FIXME: We probably want to pass in an error function
 		error(("Can't specify two different ID's %s and %s when combining objects"):format(srcobj.id, destobj.id))
@@ -640,14 +642,24 @@ function export.combine_termobj_qualifiers_labels(destobj, srcobj)
 	return destobj
 end
 
+function export.combine_termobj_qualifiers_labels(...)
+	-- FIXME: Added 2026-09-17. Remove after a month.
+	error("Use combine_termobj_decorations instead")
+end
 
-function export.termobj_has_qualifiers_or_labels(obj)
+
+function export.termobj_has_decorations(obj)
 	return obj.q and obj.q[1] or obj.qq and obj.qq[1] or obj.l and obj.l[1] or obj.ll and obj.ll[1] or
 		obj.refs and obj.refs[1]
 end
 
+function export.termobj_has_qualifiers_or_labels(...)
+	-- FIXME: Added 2026-09-17. Remove after a month.
+	error("Use termobj_has_decorations instead")
+end
 
-local function one_ancillary_property_equal(prop1, prop2)
+
+local function one_decoration_equal(prop1, prop2)
 	local prop1_is_nil = not prop1 or not prop1[1]
 	local prop2_is_nil = not prop2 or not prop2[1]
 	if prop1_is_nil and prop2_is_nil then
@@ -659,13 +671,18 @@ local function one_ancillary_property_equal(prop1, prop2)
 	return deep_equals(prop1, prop2)
 end
 
-function export.termobj_ancillary_properties_equal(obj1, obj2)
-	return one_ancillary_property_equal(obj1.q, obj2.q) and
-		one_ancillary_property_equal(obj1.qq, obj2.qq) and
-		one_ancillary_property_equal(obj1.l, obj2.l) and
-		one_ancillary_property_equal(obj1.ll, obj2.ll) and
-		one_ancillary_property_equal(obj1.refs, obj2.refs) and
+function export.termobj_decorations_equal(obj1, obj2)
+	return one_decoration_equal(obj1.q, obj2.q) and
+		one_decoration_equal(obj1.qq, obj2.qq) and
+		one_decoration_equal(obj1.l, obj2.l) and
+		one_decoration_equal(obj1.ll, obj2.ll) and
+		one_decoration_equal(obj1.refs, obj2.refs) and
 		obj1.id == obj2.id
+end
+
+function export.termobj_ancillary_properties_equal(...)
+	-- FIXME: Added 2026-09-17. Remove after a month.
+	error("Use termobj_decorations_equal instead")
 end
 
 
@@ -1680,9 +1697,9 @@ defaulted heads and determining the script of each one, since the formation of t
 itself is not `+` will be returned unchanged, while those where the term is `+` will be handled by generating the
 appropriate inflections from the headwords using `make_inflection` (which is passed three arguments, `head`, `tr` and
 `sccode`, i.e. the script code of `head`) and should return two values, term and translit, either of which can be
-nil. A nil head will be ignored, and otherwise the qualifiers/labels/etc. specified on the `+` term will be combined
-with the qualifiers/labels/etc. specified on the head. The return value is a list of inflections where no requests
-for the default inflection remain.
+nil. A nil head will be ignored, and otherwise the decorations specified on the `+` term will be combined with the
+decorations specified on the head. The return value is a list of inflections where no requests for the default
+inflection remain.
 ]==]
 function Headdata:resolve_special(terms, handle_special, props)
 	props = props or {}
@@ -1712,10 +1729,10 @@ function Headdata:resolve_special(terms, handle_special, props)
 					newterms = export.canonicalize_termobj_list(newterms, "term", "resolve_special")
 					for _, newterm in ipairs(newterms) do
 						if not props.no_combine_handle_special_retval_with_origin then
-							export.combine_termobj_qualifiers_labels(newterm, termobj)
+							export.combine_termobj_decorations(newterm, termobj)
 						end
 						if not props.no_combine_handle_special_retval_with_head then
-							export.combine_termobj_qualifiers_labels(newterm, headobj)
+							export.combine_termobj_decorations(newterm, headobj)
 						end
 						insert(infls, newterm)
 					end
@@ -2465,7 +2482,7 @@ function export.process_headword(data)
 								end
 								local formatted_labels = {}
 								for _, valobj in ipairs(vals) do
-									insert(formatted_labels, add_qualifiers_and_refs(valobj.term, valobj, lang))
+									insert(formatted_labels, add_decorations(valobj.term, valobj, lang))
 								end
 								label = label:gsub("{vals}", replacement_escape(serial_comma_join(formatted_labels)))
 							end
