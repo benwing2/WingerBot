@@ -3,11 +3,13 @@ local pos_functions = {}
 
 local m_links = require("Module:links")
 local m_table = require("Module:table")
+local en_utilities_module = "Module:en-utilities"
 
 local lang = require("Module:languages").getByCode("cy")
 local langname = lang:getCanonicalName()
 
-local PAGENAME = mw.title.getCurrentTitle().text
+local m_headword_data = mw.loadData("Module:headword/data")
+local PAGENAME = m_headword_data.pagename
 
 local suffix_categories = {
 	["adjectives"] = true,
@@ -114,12 +116,18 @@ function export.show(frame)
 		end
 	end
 
-	for _, inflection_set in ipairs(data.inflections) do
-		for _, inflection in ipairs(inflection_set) do
-			if not inflection:find("%[%[") then
-				local title = mw.title.new(inflection)
-				if title and not title.exists then
-					table.insert(tracking_categories, langname .. " " .. poscat .. " with red links in their headword lines")
+	-- don't track red links on large pages
+	if not m_headword_data.large_pages[PAGENAME] then
+		for _, inflection_set in ipairs(data.inflections) do
+			for _, inflection in ipairs(inflection_set) do
+				if type(inflection) == "table" then
+					inflection = inflection.term
+				end
+				if not inflection:find("%[%[") then
+					local title = mw.title.new(inflection)
+					if title and not title.exists then
+						table.insert(tracking_categories, langname .. " " .. poscat .. " with red links in their headword lines")
+					end
 				end
 			end
 		end
@@ -265,7 +273,7 @@ pos_functions["adjectives"] = {
 				comps = copy_heads_with_suffix(args.comp, "ach")
 				sups = copy_heads_with_suffix(args.sup, "af")
 			else
-				table.insert(data.inflections, {label = '<span style="color: #ff0000;">unknown comparative</span>'})
+				table.insert(data.inflections, {label = '<span style="color: var(--wikt-palette-red,#ff0000);">unknown comparative</span>'})
 				table.insert(data.categories, "Requests for inflections in " .. langname .. " adjective entries")
 			end
 		end
@@ -322,7 +330,7 @@ local function do_nouns(pos, args, data, tracking_categories)
 		table.insert(genders, g)
 	end
 
-	local plpos = require("Module:string utilities").pluralize(pos)
+	local plpos = require(en_utilities_module).pluralize(pos)
 
 	-- Check for special plural signals
 	local mode = nil
@@ -393,11 +401,15 @@ local function do_nouns(pos, args, data, tracking_categories)
 
 			do_inflection(data, plurals, "plural", {form = "p"})
 		end
-	else -- plurale tantum or collective
-		local function has_singulative(sgargs)
+	else
+		-- plurale tantum or "plural-basic" lemma (cases where the plural is the basic lemma and the
+		-- singular is derived from it)
+		local function has_singular(sgargs)
 			return #sgargs > 0 and sgargs[1] ~= "-"
 		end
-		if has_singulative(args.sg) or has_singulative(args.msg) or has_singulative(args.fsg) then
+		if has_singular(args.sg) or has_singular(args.msg) or has_singular(args.fsg) then
+			table.insert(data.inflections, {label = glossary_link("plural")})
+			table.insert(data.categories, langname .. " plural-basic " .. plpos)
 			local new_g = {}
 			for _, g in ipairs(genders) do
 				if g ~= "p" then
@@ -405,22 +417,25 @@ local function do_nouns(pos, args, data, tracking_categories)
 					table.insert(new_g, g)
 				end
 			end
-			genders = new_g
-			table.insert(data.inflections, {label = glossary_link("collective")})
-			table.insert(data.categories, langname .. " collective " .. plpos)
-		end
-		local function do_singulative(sgargs, label, accel)
-			if sgargs then
-				if sgargs[1] == "-" then
-					table.insert(data.inflections, {label = "no " .. label})
-				else
-					do_inflection(data, sgargs, label, accel)
+			genders = nil
+			local function do_singular(sgargs, label, accel, genders)
+				if sgargs then
+					if sgargs[1] == "-" then
+						table.insert(data.inflections, {label = "no " .. label})
+					else
+						if genders then
+							for i, sgarg in ipairs(sgargs) do
+								sgargs[i] = {term = sgarg, genders = genders}
+							end
+						end
+						do_inflection(data, sgargs, label, accel)
+					end
 				end
 			end
+			do_singular(args.sg, glossary_link("singular"), {form = "singular"}, new_g)
+			do_singular(args.msg, "masculine " .. glossary_link("singular"), nil, {"m"})
+			do_singular(args.fsg, "feminine " .. glossary_link("singular"), nil, {"f"})
 		end
-		do_singulative(args.sg, glossary_link("singulative"), {form = "singulative"})
-		do_singulative(args.msg, "masculine " .. glossary_link("singulative"))
-		do_singulative(args.fsg, "feminine " .. glossary_link("singulative"))
 	end
 	do_inflection(data, args.f, "feminine")
 	do_inflection(data, args.m, "masculine")
