@@ -181,6 +181,11 @@ local function sorted_pairs(...)
 	return sorted_pairs(...)
 end
 
+local function split(...)
+	split = require(string_utilities_module).split
+	return split(...)
+end
+
 local function split_labels_on_comma(...)
 	split_labels_on_comma = require(labels_module).split_labels_on_comma
 	return split_labels_on_comma(...)
@@ -374,6 +379,11 @@ Possible parameter tags are listed below:
 :: The value is interpreted as one or more comma-separated gender/number specs, in the format prescribed by
    [[Module:gender and number]]. Inline modifiers (`<q:...>`, `<qq:...>`, `<l:...>`, `<ll:...>` or `<ref:...>`) may be
    attached to a gender/number spec.
+:; {type = "form of tags"}
+:: The value is interpreted as an ampersand-separated list of grammar tags and converted into the correct format
+   for passing as `tags` into `tagged_inflections()` in [[Module:form of]] (which is currently a list of strings).
+   Splitting is always done by ampersands. This type should be used by for inflection qualifiers that act as
+   grammar tags (typically specified using {{para|infl}}).
 :; {type = function(val) ... end}
 :: `type` may be set to a function (or callable table), which must take the argument value as its sole argument, and must
    output one of the other recognized types. This is particularly useful for lists (see below), where certain values need
@@ -536,6 +546,11 @@ local function msg_with_processed(msg, rawval, processed)
 	return format("%s (processed value %s)",
 		msg, (processed_type == "string" or processed_type == "number") and processed or dump(processed)
 	)
+end
+
+-- Separate form of tags with ampersand (&).
+local function split_tags_on_ampersand(tags)
+	return split(tags, "&")
 end
 
 -------------------------------------- Error handling -----------------------------
@@ -858,6 +873,10 @@ local type_handlers = setmetatable({
 	["labels"] = function(val, name, param)
 		-- FIXME: Should be able to pass in a parse_err function.
 		return split_labels_on_comma(val)
+	end,
+
+	["form of tags"] = function(val, name, param)
+		return split_tags_on_ampersand(val)
 	end,
 
 	["language"] = function(val, name, param)
@@ -1250,7 +1269,7 @@ local function maybe_flatten(params, val, name)
 			process_error("For parameter %s, can't set both `allow_holes` and `flatten`", name)
 		end
 		if not param.sublist and param.type ~= "genders" and param.type ~= "labels" and
-			param.type ~= "references" and param.type ~= "qualifier" then
+			param.type ~= "references" and param.type ~= "qualifier" and param.type ~= "form of tags" then
 			process_error("For parameter %s, can only set `flatten` along with `sublist` or a list-generating type", name)
 		end
 		-- Do the flattening ourselves rather than calling flatten() in [[Module:table]], which will attempt to
