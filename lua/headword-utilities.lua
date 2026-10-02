@@ -1,5 +1,25 @@
 local export = {}
 
+--[==[
+FIXME:
+1. Implement ? = unknown or uncertain. There should be no label by default but it should be configurable.
+   The default category should be "{plpos} with unknown or uncertain plurals" for nouns/proper nouns. It should
+   be an error to specify values along with this.
+2. Implement ! = unattested. The default label should be "{label} not attested". The default category should be
+   "{plpos} with unattested plurals" for nouns/proper nouns. It should be an error to specify values along with
+   this.
+3. Implement +- = sometimes has a value, e.g. "countable and uncountable" for plurals.
+4. Implement ~ standing for the pagename in heads and inflections. [DONE]
+5. Implement abbr= for abbreviations. [DONE]
+6. Extract from insert_inflection the logic to handle the special mode signals, determine the actual label and
+   category and the actual values without inserting them.
+7. Support no_label for booleans.
+8. Document the various types of parts of speech and implement pos_category per part of speech definition. [DONE]
+9. Implement apply_link_modifiers() for head=~...
+10. Correctly handle var=both. [DONE]
+11. Implement checkredlinks and port simplify_pos to [[Module:headword]].
+12. Fix longstanding accelerator bug: if embeddded links in inflection, don't make it green.
+]==]
 local require_when_needed = require("Module:utilities/require when needed")
 local affix_module = "Module:affix"
 local debug_track_module = "Module:debug/track"
@@ -59,6 +79,68 @@ end
 local function ine(val)
 	if val == "" then return nil else return val end
 end
+
+--[==[ intro:
+This module contains utilities for constructing language-specific headword modules.
+[fill in]
+
+===About parts of speech===
+There are several versions of the part of speech (POS) of a given term:
+* The ''primary categorizing POS'' is the basic part of speech to which a term belongs. The primary POS determines
+  whether the term is a lemma or non-lemma form, and in its plural form, it is used to categorize the terms (unless it
+  is a variant term), along with caetegorizing into a ''lemmas'' or ''non-lemma forms'' category. (Variant terms,
+  typically marked by {{para|var|1}}, are categorized into ''variant lemmas'' or ''variant non-lemma forms'' and are not
+  categorized into a primary POS category.)
+* The ''raw {{tl|head}} POS'' is parameter {{para|2}} to {{tl|head}}. This is used to determine the primary categorizing
+  POS by a process of canonicalization, because this parameter may contain abbreviations (e.g. ''a'' or ''adj'' for an
+  adjective) and may be (and usually is) given in its singular form.
+* The ''template-indicated POS'' is the part of speech indicated by a headword template such as {{tl|nl-noun}} or
+  {{tl|mn-head}}. It is either inherent to the template (in a case like {{tl|nl-noun}}), in which case it is specified
+  by the template code and should always be in canonical, plural form; or it is specified by the user in the template
+  call (in a case like {{tl|mn-head}} or other generic POS template, usually ending in `-head`), in which case it may
+  be given in raw form, like for the raw {{tl|head}} POS, and is canonicalized using the same code that canonicalizes
+  raw {{tl|head}} parts of speech. The template-indicate POS may not be a valid primary categorizing POS. For example,
+  Dutch has a template-indicated POS ''diminutiva tantum nouns'', specified through the template {{tl|nl-dim-tant}}, but
+  there is no such primary categorizing POS (that POS would be `nouns`). Similarly, Arabic has a template-indicated POS
+  ''collective nouns'', whose primary categorizing POS is also `nouns`. As a result, the template-indicated POS may need
+  to be converted to a primary categorizing POS through a ''normalization'' process (which uses a `pos_category` field
+  attached to the `pos_functions` structure for the template-indicated POS). Note that the template-indicated POS comes
+  in several variants:
+*# It may be ''head-raw'', meaning that it uses the literal string `head` in place of the user-specified POS in a
+   generic POS template like {{tl|mn-head}}; it may be ''non-head'', meaning that it uses the actual user-specified
+   POS in such a case; or it may be ''head-augmented'', meaning that in the case of a generic POS template it is of the
+   form e.g. `head.noun`, contanining both the literal `head` and the user-specified POS.
+*# It may be ''suffix-raw'', meaning that it uses the primary categorizing POS `suffixes` in place of the
+   template-indicated POS when the term is a suffix, or it may be ''non-suffix'', meaning that it uses the
+   template-indicated POS in such a case. The headword for a suffix uses the template corresponding to whatever POS the
+   suffix forms, e.g. {{nl-noun}} for Dutch noun-forming suffixes.
+*# The ''indexing POS'' is the variant of the template-indicated POS that is used to index into the `pos_functions`
+   table. Normally it is head-raw and non-suffix, but it will be head-augmented if the corresponding head-augmented
+   entry exists in `pos_functions`.
+*# The ''unnormalized categorizing POS'' is the variant of the template-indicated POS that is potentially usable as the
+   primary categorizing POS (see above). It is non-head and suffix-raw, i.e. it uses the actual template-specified or
+   user-specified form of the template-indicated POS except when the term is a suffix, in which case it has the value
+   `suffixes`. In most circumstances this can be used directly as the primary categorizing POS, but in some cases this
+   POS is not a valid primary categorizing POS and needs to be normalized to get the actual primary categorizing POS, as
+   mentioned above under the description for the template-indicated POS.
+* Finally, there is a ''simplified categorizing POS''. This collapses variations of primary categorizing parts of speech
+  together for use in red-link and similar categories. For example, the POS `proper nouns` is collapsed into `nouns`,
+  and all types of participles are collapsed into `participles`. There are two variants of the simplification process,
+  ''lemma-status-preserving'' and ''non-lemma-status-preserving''. The latter is the default and is simpler, in that
+  e.g. it means any part of speech ending in `nouns` to `nouns`, even if this causes non-lemma forms to become lemmas,
+  as with `diminutive nouns` and `verbal nouns` (which are non-lemma forms) and likewise with `comparative adjectives`
+  and `superlative adjectives` (which are again non-lemma forms). The former, ''lemma-status-preserving'', keeps lemmas
+  as lemmas and (more important) non-lemmas as non-lemmas by converting e.g. `diminutive nouns` and `verbal nouns` to
+  `noun forms` rather than `nouns`. The reason two variants exist in that they have different use cases. The default,
+  non-lemma-status-preserving, type is used for tracking categories such as red-link and request categories, where
+  completeness is more important than clutter. The lemma-status-preserving variant is used for informative categories
+  such as ` ``lang`` masculine nouns`, which should only have lemmas in them to avoid clutter. (For the same reason,
+  variant terms specified using {{para|var|1}} aren't normally categorized into informative categories but are placed
+  in tracking categories.)
+
+===About properties and data objects===
+[fill in]
+]==]
 
 --[=[
 Add decorations to a term. `termobj` is the object describing the term, which should optionally contain:
@@ -333,6 +415,55 @@ function export.replace_glossary_links_in_label(label)
 end
 
 
+-- If a part of speech ends with one of these, either pluralized or followed by ' forms', chop off whatever precedes.
+-- Also, if a part of speech is of the form `BASIC_POS FOO forms` e.g. `noun construct forms`, remove the `FOO`
+-- portion. Note that "phrase" is *NOT* listed here because 'prepositional phrase' and 'postpositional phrase' are not
+-- types of 'phrase' per the definition of these parts of speech in Wiktionary. 
+local basic_poses = {
+	"adjective",
+	"adverb",
+	"contraction",
+	"noun",
+	"participle",
+	"pronoun",
+	"symbol",
+	"verb",
+}
+
+--[==[
+Canonicalize and then simplify a part of speech by removing adjectival qualifiers. This converts e.g.
+`proper noun(s)` -> `nouns`, `comparative adjective(s)` -> `adjectives`, `past participle form(s)` -> `participle forms`
+and `pronoun possessive form(s)` -> `pronoun forms`. (The one exception is with phrases. In Wiktionary, ''phrase''
+really means a clause or similar constituent or occasionally non-constituent, so `prepositional phrases` are not types
+of `phrases`.) Its purpose is for use in categorization, since generally the simplified part of speech is used in
+categories other than the one for the part of speech itself. (For example, proper nouns are normally categorized under
+` ``lang`` nouns with ...` rather than ` ``lang`` proper nouns with ...`.) The returned part of speech is in plural
+form.
+]==]
+function export.simplify_pos(pos)
+	-- This allows for both singular and plural parts of speech in 'pos'.
+	local plpos = require(headword_module).canonicalize_pos(pos)
+	for _, basic_pos in ipairs(basic_poses) do
+		if basic_pos:find("-", nil, true) then
+			basic_pos = pattern_escape(basic_pos)
+		end
+		local first, last = plpos:match(("^(%s) .*.( forms)$"):format(basic_pos))
+		if first then
+			return first .. last
+		end
+		local simplified = plpos:match(("^.* (%s forms)$"):format(basic_pos))
+		if simplified then
+			return simplified
+		end
+		basic_pos = require(headword_module).pluralize(basic_pos)
+		simplified = plpos:match(("^.* (%s)$"):format(basic_pos))
+		if simplified then
+			return simplified
+		end
+	end
+	return plpos
+end
+
 --[==[
 Insert a fixed inflection (a label not associated with any inflection values) into an `inflections` field. The
 `inflections` field will be initialized if needed. `data` is an object with the following fields:
@@ -377,16 +508,24 @@ Insert previously-parsed terms into an `inflections` field. The `inflections` fi
 * `terms`: The list of parsed terms. If {nil} or omitted, nothing happens unless `request` is set.
 * `label`: The label that the inflections are given; any parts of the label surrounded in `<<...>>` are linked to the
    glossary. (If the contents of `<<...>>` contain a `|` in them, they are a two-part link.) Required.
-* `no_label`: If the term is {"-"} and there are no other terms, insert a fixed label with this value. Defaults to
-   {"no "} plus the label.
+* `fixed_adj_label`: If specified, an adjective used to construct the defaults for the fixed labels specified by
+   `no_label`, `usually_no_label` and `sometimes_label`. Examples are "comparable" for a comparative and "countable"
+   for a plural.
+* `no_label`: If the term is {"-"} and there are no other terms, insert a fixed label with this value. If
+   `fixed_adj_label` is given, defaults to {"not "} plus the adjective, else {"no "} plus the label.
 * `usually_no_label`: If the term is {"-"} and there are other terms, insert a fixed label with this value. Defaults to
-   {"usually no "} plus the label.
+   {"usually "} plus the value of `no_label`.
+* `sometimes_label`: If the term is {"+-"}, insert a fixed label with this value. If `fixed_adj_label` is given,
+   defaults to {"sometimes "} plus the adjective, else {"sometimes with a(n) "} plus the label.
 * `cats`: List of categories to insert when terms are given that are not {"-"}. Each category is a string naming a full
    category to insert (including the appropriate language name prefixed).
 * `no_cats`: List of categories to insert when a term is given as {"-"}.
 * `usually_no_cats`: List of categories to insert when a term is given as {"-"} and additional terms are specified as
    well (representing, e.g. for the inflection {"plural"}, a term which usually has no plural but does under some
    circumstances). If omitted, both the categories in `cats` and `no_cats` are inserted.
+* `sometimes_cats`: List of categories to insert when a term is given as {"+-"} (indicating that the inflection
+   sometimes exists and sometimes does not, normally depending on the precise sense involved). If omitted, both the
+   categories in `cats` and `no_cats` are inserted (same default as for `usually_no_cats`).
 * `accel`: If specified, a full accelerator object to add to the inflections.
 * `request`: If specified and no terms are given, insert a label with a request for inflections to be given.
 * `enable_auto_translit`: If specified and terms are given, display automatic transliteration of the terms.
@@ -397,6 +536,7 @@ following fields:
   the first value was given as {"-"} but additional terms were supplied; otherwise {nil}, indicating that the status
   is unspecified.
 * `numterms`: Number of terms in the inflection. Will be 0 unless `exists` has the value {"yes"} or {"usually no"}.
+* `terms`: The terms that were inserted. If there are no terms, this is an empty list.
 * `request`: True if no terms were specified but a term request was inserted into the inflection (because
   `data.request` was specified). Otherwise {nil}.
 ]==]
@@ -468,6 +608,7 @@ function export.insert_inflection(data)
 					label = data.no_label or "no " .. label,
 				}
 				retval.numterms = 0
+				retval.terms = {}
 				retval.exists = "no"
 				if data.no_cats then
 					insert_cats(data.no_cats)
@@ -491,6 +632,7 @@ function export.insert_inflection(data)
 		terms.enable_auto_translit = data.enable_auto_translit
 		inflobj.inflections = inflobj.inflections or {}
 		insert(inflobj.inflections, terms)
+		retval.terms = terms
 	elseif data.request then
 		inflobj.inflections = inflobj.inflections or {}
 		insert(inflobj.inflections, {
@@ -498,10 +640,12 @@ function export.insert_inflection(data)
 			request = true,
 		})
 		retval.numterms = 0
+		retval.terms = {}
 		-- retval.exists = nil
 		retval.request = true
 	else
 		retval.numterms = 0
+		retval.terms = {}
 		-- retval.exists = nil
 	end
 	return retval
@@ -539,21 +683,25 @@ end
 Canonicalize a single term or term-like object or a list of either into a list of term-like objects. `abterms` is the
 term or list to canonicalize, and `field` is the name of the field holding the term (defaulting to {"term"}). This
 does the minimal work necessary, meaning that the return value may partly or completely share memory with the value
-passed in. As a special case, if `abterms` is {nil}, {nil} is returned. If `origin_val` is specified, add a field
-`origin` containing the value of `origin_val` to each resulting term-like object (in this case, the object will be
-copied a necessary to avoid side-effecting the passed-in objects).
+passed in. As a special case, if `abterms` is {nil}, {nil} is returned. If `origin` or `originating_term` are specified,
+add fields `origin` and/or `originating_term` containing the specified value(s) to each resulting term-like object (in
+this case, the object will be copied a necessary to avoid side-effecting the passed-in objects). `origin` is intended to
+be a string indicating where the term originated from (e.g. {"default"} if a default value, {"resolve_special"} if
+originating from a shortcut value such as {"+"}) and `originating_term` is the shortcut term itself, if any. (There is
+generally no such term for default values.)
 ]==]
-function export.canonicalize_termobj_list(abterms, field, origin_val)
+function export.canonicalize_termobj_list(abterms, field, origin, originating_term)
 	if abterms == nil then
 		return nil
 	end
 	field = field or "term"
 	if type(abterms) == "string" then
-		return {{[field] = abterms, origin = origin_val}}
+		return {{[field] = abterms, origin = origin, originating_term = originating_term}}
 	elseif not abterms[1] then
-		if origin_val ~= nil then
+		if origin ~= nil or originating_term ~= nil then
 			abterms = shallow_copy(abterms)
-			abterms.origin = origin_val
+			abterms.origin = origin
+			abterms.originating_term = originating_term
 		end
 		return {abterms}
 	else
@@ -567,11 +715,12 @@ function export.canonicalize_termobj_list(abterms, field, origin_val)
 			end
 		end
 		if not must_convert then
-			if origin_val ~= nil then
+			if origin ~= nil or originating_term ~= nil then
 				abterms = shallow_copy(abterms)
 				for i, abterm in ipairs(abterms) do
 					abterms[i] = shallow_copy(abterm)
-					abterms[i].origin = origin_val
+					abterms[i].origin = origin
+					abterms[i].originating_term = originating_term
 				end
 			end
 			return abterms
@@ -580,11 +729,12 @@ function export.canonicalize_termobj_list(abterms, field, origin_val)
 	local retval = {}
 	for _, term in ipairs(abterms) do
 		if type(term) == "string" then
-			insert(retval, {[field] = term, origin = origin_val})
+			insert(retval, {[field] = term, origin = origin, originating_term = originating_term})
 		else
-			if origin_val ~= nil then
+			if origin ~= nil or originating_term ~= nil then
 				term = shallow_copy(term)
-				term.origin = origin_val
+				term.origin = origin
+				term.originating_term = originating_term
 			end
 			insert(retval, term)
 		end
@@ -1416,7 +1566,7 @@ function export.apply_link_modifiers(linked_term, modifier_spec, lang)
 end
 
 
-local inflection_to_cats = {
+local inflection_to_cats_and_label = {
 	plural = {
 		filter_plpos = function(plpos)
 			-- plurals also occur with determiners, adjectives etc. and we don't want to generate categories like
@@ -1426,10 +1576,13 @@ local inflection_to_cats = {
 		end,
 		cats = {"countable {plpos}"},
 		no_cats = {"uncountable {plpos}"},
+		no_label = "<<uncountable>>",
+		sometimes_label = "<<countable>> and <<uncountable>>",
 	},
 	comparative = {
 		cats = {"comparable {plpos}"},
 		no_cats = {"uncomparable {plpos}"},
+		fixed_adj_label = "<<comparable>>",
 	},
 	["female equivalent"] = {
 		cats = {"{plpos} with other-gender equivalents"},
@@ -1475,10 +1628,28 @@ local function validate_items(data)
 	end
 end
 
+function export.has_plural_gender(genders)
+	local saw_p, saw_non_p
+	for _, val in ipairs(genders) do
+		local g = val.spec
+		if g:find("p$") then
+			saw_p = true
+		elseif g ~= "?" then
+			saw_non_p = true
+		end
+	end
+	return saw_p, saw_non_p
+end
+
+function export.is_plurale_tantum(genders)
+	local saw_p, saw_non_p = export.has_plural_gender(genders)
+	return saw_p and not saw_non_p
+end
+
 local Headdata = {}
 
-function Headdata:get_canonicalized_plpos()
-	return (self.pos_category:gsub("proper noun", "noun"))
+function Headdata:get_simplified_plpos()
+	return export.simplify_plpos(self.pos_category)
 end
 
 --[==[
@@ -1490,7 +1661,7 @@ full category and not have the language name prepended to it, precede it with {"
 ]==]
 function Headdata:canonicalize_category(category)
 	if category:find("{plpos}") then
-		local plpos = self:get_canonicalized_plpos()
+		local plpos = self:get_simplified_plpos()
 		category = category:gsub("{plpos}", plpos)
 	end
 	if category:find("^Category:") then
@@ -1594,16 +1765,16 @@ function Headdata:parse_inflection(field, props)
 	end
 	props = props and shallow_copy(props) or {}
 	local include_mods = props.include_mods
-	local data = self.process_props.data
-	if not props.no_augment_include_mods and (data.include_tr or data.include_ts or data.include_sc) then
+	local calldata = self.process_props.calldata
+	if not props.no_augment_include_mods and (calldata.include_tr or calldata.include_ts or calldata.include_sc) then
 		include_mods = include_mods and shallow_copy(include_mods) or {}
-		if data.include_tr then
+		if calldata.include_tr then
 			insert_if_not(include_mods, "tr")
 		end
-		if data.include_ts then
+		if calldata.include_ts then
 			insert_if_not(include_mods, "ts")
 		end
-		if data.include_sc then
+		if calldata.include_sc then
 			insert_if_not(include_mods, "sc")
 		end
 	end
@@ -1611,6 +1782,18 @@ function Headdata:parse_inflection(field, props)
 	props.paramname = field
 	props.splitchar = props.splitchar or ","
 	props.include_mods = include_mods
+	local orig_frob = props.frob
+	local function convert_tilde_to_pagename(term)
+		if orig_frob then
+			term = orig_frob(term)
+		end
+		if not term:find("~", nil, true) then
+			return term
+		end
+		term = term:gsub("\\~", "\1"):gsub("~", replacement_escape(data.pagename)):gsub("\1", "~")
+		return term
+	end
+	props.frob = convert_tilde_to_pagename
 	return export.parse_term_with_modifiers(props) or {}
 end
 
@@ -1623,7 +1806,7 @@ in `<<...>>` are linked to the glossary. (If the contents of `<<...>>` contain a
 the top-level `insert_inflection()` function.
 
 Unless `no_auto_cats` is given in `props`, certain labels automatically trigger the insertion of additional
-categories in specific circumstances. This is controlled by the `inflection_to_cats` structure in
+categories in specific circumstances. This is controlled by the `inflection_to_cats_and_label` structure in
 [[Module:headword utilities]]. For example, if the part of speech is {"nouns"} or {"proper nouns"} and the label (after
 removing any links and `<<...>>` glossary specs) is {"plural"}, an additional category
 <code><var>lang</var> countable nouns</code> will be added if a plural value is given (i.e. the value is not {"-"}). If
@@ -1637,16 +1820,19 @@ Similar categories are inserted when a comparative is given (with a label {"comp
 function Headdata:insert_inflection(terms, label, props)
 	props = props and shallow_copy(props) or {}
 	if not props.no_auto_cats then
-		local bare_label = label
-		if bare_label:find("[[", nil, true) then
-			bare_label = require(links_module).remove_links(bare_label)
+		local bare_label = props.label_for_cats_and_modes
+		if not bare_label then
+			bare_label = label
+			if bare_label:find("[[", nil, true) then
+				bare_label = require(links_module).remove_links(bare_label)
+			end
+			if bare_label:find("<<", nil, true) then
+				bare_label = bare_label:gsub("<<.-|(.-)>>", "%1"):gsub("<<(.-)>>", "%1")
+			end
 		end
-		if bare_label:find("<<", nil, true) then
-			bare_label = bare_label:gsub("<<.-|(.-)>>", "%1"):gsub("<<(.-)>>", "%1")
-		end
-		local cats = inflection_to_cats[bare_label]
+		local cats = inflection_to_cats_and_label[bare_label]
 		if cats then
-			if not cats.filter_plpos or cats.filter_plpos(self:get_canonicalized_plpos()) then
+			if not cats.filter_plpos or cats.filter_plpos(self:get_simplified_plpos()) then
 				if props.cats == nil then
 					props.cats = self:canonicalize_categories(cats.cats)
 				end
@@ -1720,13 +1906,15 @@ function Headdata:resolve_special(terms, handle_special, props)
 					head_no_links = head
 				end
 				local newterms = handle_special {
+					headdata = self,
 					head = head,
+					head_no_links = head_no_links,
 					tr = headobj.tr,
 					infl = termobj,
 					sc = self.lang:findBestScript(head_no_links),
 				}
 				if newterms then
-					newterms = export.canonicalize_termobj_list(newterms, "term", "resolve_special")
+					newterms = export.canonicalize_termobj_list(newterms, "term", "resolve_special", termobj)
 					for _, newterm in ipairs(newterms) do
 						if not props.no_combine_handle_special_retval_with_origin then
 							export.combine_termobj_decorations(newterm, termobj)
@@ -1821,12 +2009,12 @@ and provides a general implementation of such modules. On input, `data` is an ob
 The `headdata` headword data structure has an extra field in it called `process_props` that is specific to the
 `process_headword()` function, containing various extra properies. As the operation of `process_headword()` proceeds,
 this object gets filled out with more fields. For example, once parameter parsing happens, the resulting values are
-available in the `args` field of `process_props`. The following fields are found in `process_props` (note that `poscat`,
-the canonicalized plural part of speech of the headword being processed, is *not* present here; it's directly on
-`headdata`):
+available in the `args` field of `process_props`. The following fields are found in `process_props` (note that
+`pos_category`, the canonicalized plural part of speech of the headword being processed, is *not* present here; it's
+directly on `headdata`):
 * `namespace`: The name of the current namespace; an empty string for the mainspace. This references the namespace of
   the actual page and isn't affected by the {{para|pagename}} parameter.
-* `indexing_poscat`: The canonicalized part of speech of the headword used to index into `pos_functions`. This is the
+* `indexing_pos`: The canonicalized part of speech of the headword used to index into `pos_functions`. This is the
   same as `poscat` for specific part-of-speech templates such as {{tl|uz-noun}}, but has the value {"head"} for generic
   part-of-speech templates such as {{tl|uz-head}}. (Note that `poscat` is directly available on `headdata`.)
 * `generic_pos_template`: True if a generic POS templates like {{tl|uz-head}} or {{tl|mn-head}} was used. (This is
@@ -1934,10 +2122,10 @@ The methods available on the headword `data` structure are as follows. Each one 
 ]==]
 function export.process_headword(data)
 	local lang, frame, pos_functions, validate_lang, numbered_head, include_tr, include_ts, include_sc, force_cat,
-		enable_auto_translit, infls, augment_params, augment_headdata =
+		enable_auto_translit, checkredlinks, infls, augment_params, augment_headdata =
 		data.lang, data.frame, data.pos_functions, data.validate_lang, data.numbered_head, data.include_tr,
-		data.include_ts, data.include_sc, data.force_cat, data.enable_auto_translit, data.infls, data.augment_params,
-		data.augment_headdata
+		data.include_ts, data.include_sc, data.force_cat, data.enable_auto_translit, data.checkredlinks, data.infls,
+		data.augment_params, data.augment_headdata
 	local iparams = {
 		[1] = true,
 		def = true,
@@ -1970,19 +2158,27 @@ function export.process_headword(data)
 		end
 	end
 
-	local poscat = iargs[1]
-	local generic_pos_template = not poscat
+	local template_indicated_pos = iargs[1]
+	local generic_pos_template = not template_indicated_pos
 	local pos_param
 	if generic_pos_template then
 		pos_param = lang_in_1 and 2 or 1
-		poscat = ine(parargs[pos_param]) or
+		template_indicated_pos = ine(parargs[pos_param]) or
 			mw.title.getCurrentTitle().fullText == ("Template:%s-head"):format(langcode) and "interjection" or
 			error(("Part of speech must be specified in %s="):format(pos_param))
-		poscat = require(headword_module).canonicalize_pos(poscat)
+		template_indicated_pos = require(headword_module).canonicalize_pos(template_indicated_pos)
 	end
 	local head_param = numbered_head and (generic_pos_template and lang_in_1 and 3 or
 		(generic_pos_template or lang_in_1) and 2 or 1) or "head"
-	local indexing_poscat = generic_pos_template and "head" or poscat
+	local indexing_pos
+	if generic_pos_template then
+		indexing_pos = "head." .. template_indicated_pos
+		if not pos_functions[indexing_pos] then
+			indexing_pos = "head"
+		end
+	else
+		indexing_pos = template_indicated_pos
+	end
 
 	local namespace = mw.loadData(headword_data_module).page.namespace
 
@@ -1996,8 +2192,10 @@ function export.process_headword(data)
 		langfullname = lang:getFullName(),
 		process_props = {
 			namespace = namespace,
-			data = data,
-			indexing_poscat = indexing_poscat,
+			calldata = data,
+			-- preserve template-indicated POS in case we normalize it or change it to "suffix"
+			template_indicated_pos = template_indicated_pos,
+			indexing_pos = indexing_pos,
 			generic_pos_template = generic_pos_template,
 			lang_in_1 = lang_in_1,
 			pos_param = pos_param,
@@ -2005,8 +2203,8 @@ function export.process_headword(data)
 			is_suffix = false,
 			insert_specs = {},
 		},
-		pos_category = poscat,
-		orig_poscat = poscat, -- preserve user-specified poscat in case pos_category is changed to 'suffixes'
+		-- We may change this below to "suffix" or normalize it.
+		pos_category = template_indicated_pos,
 		categories = {},
 		inflections = {enable_auto_translit = enable_auto_translit},
 		force_cat_output = force_cat,
@@ -2014,6 +2212,13 @@ function export.process_headword(data)
 	}
 
 	setmetatable(headdata, {__index = Headdata})
+
+	local function resolve_prop(prop, ...)
+		if type(prop) == "function" then
+			prop = prop(headdata, ...)
+		end
+		return prop
+	end
 
 	local params = {
 		[head_param] = {template_default = iargs.def},
@@ -2027,7 +2232,8 @@ function export.process_headword(data)
 		nosuffix = boolean_param,
 		clitic = true,
 		addlpos = true,
-		var = {type = "boolean", allow = {"both"}},
+		var = {type = "boolean or string", set = {"both"}},
+		abbr = true,
 		json = boolean_param,
 		pagename = true, -- for testing
 	}
@@ -2048,13 +2254,6 @@ function export.process_headword(data)
 	end
 	if generic_pos_template then
 		params[pos_param] = {required = true} -- required but ignored as already processed above
-	end
-
-	local function resolve_prop(prop, ...)
-		if type(prop) == "function" then
-			prop = prop(headdata, ...)
-		end
-		return prop
 	end
 
 	local function augment_params_from_infls(infls)
@@ -2079,7 +2278,12 @@ function export.process_headword(data)
 
 				params[param] = {type = typ, required = resolve_prop(infl.required), template_default = resolve_prop(infl.template_default)}
 				if typ ~= "boolean" and type(param) == "string" then
-					params[param .. "2"] = {replaced_by = false, instead = ("use comma-separated |%s="):format(param)}
+					local allow_and_ignore_list_params = resolve_prop(infl.allow_and_ignore_list_params)
+					local old_list_param = allow_and_ignore_list_params and true or
+						{replaced_by = false, instead = ("use comma-separated |%s="):format(param)}
+					params[param .. "2"] = old_list_param
+					params[param .. "3"] = old_list_param
+					params[param .. "4"] = old_list_param
 				end
 			end
 		end
@@ -2093,12 +2297,12 @@ function export.process_headword(data)
 		augment_params(headdata, params)
 	end
 
-	if pos_functions[indexing_poscat] then
-		local pos_infls = pos_functions[indexing_poscat].infls
+	if pos_functions[indexing_pos] then
+		local pos_infls = pos_functions[indexing_pos].infls
 		if pos_infls then
 			augment_params_from_infls(pos_infls)
 		end
-		local pos_params = pos_functions[indexing_poscat].params
+		local pos_params = pos_functions[indexing_pos].params
 		if pos_params then
 			for key, val in pairs(pos_params) do
 				params[key] = val
@@ -2201,6 +2405,15 @@ function export.process_headword(data)
 	end
 	headdata.heads = heads
 
+	local pos_category = headdata.pos_category
+	-- Do this as late as possible in case the caller wants to conditionalize the primary categorizing POS on
+	-- arguments or even the presence or absence of explicit heads.
+	if pos_functions[indexing_pos] then
+		pos_category = resolve_prop(pos_functions[indexing_pos].pos_category) or pos_category
+	end
+	headdata.process_props.normalized_template_indicated_pos = pos_category
+	headdata.pos_category = pos_category
+
 	local function pagename_is_suffix()
 		if sc:getCode() == "Latn" then
 			-- shortcut Latin terms to avoid unnecessarily loading [[Module:affix]]
@@ -2222,12 +2435,12 @@ function export.process_headword(data)
 		headdata:insert_category("clitics")
 		headdata:insert_fixed_inflection(clitic_label)
 	elseif args.suffix or (
-		not args.nosuffix and pagename_is_suffix() and poscat ~= "suffixes" and poscat ~= "suffix forms"
+		not args.nosuffix and pagename_is_suffix() and pos_category ~= "suffixes" and pos_category ~= "suffix forms"
 	) then
 		headdata.process_props.is_suffix = true
 		local function handle_suffix_pos(pos, is_first)
 			local form_type = pos:match("^(.*) forms$")
-			local actual_poscat
+			local this_pos_category
 			if form_type then
 				headdata:insert_category(("%s suffix forms"):format(form_type))
 				headdata:insert_fixed_inflection(form_type .. " suffix form")
@@ -2242,15 +2455,20 @@ function export.process_headword(data)
 					pos
 				))
 			end
-			actual_poscat = postype == "lemma" and "suffixes" or "suffix forms"
+			this_pos_category = postype == "lemma" and "suffixes" or "suffix forms"
 			if is_first then
-				headdata.pos_category = actual_poscat
-			elseif headdata.pos_category ~= actual_poscat then
-				error(("Cannot mix suffixes and suffix forms using addlpos=; '%s' is a %s while overall POS '%s' is a %s; use separate POS headers for the two"):
-					format(pos, actual_poscat, poscat, headdata.pos_category))
+				headdata.pos_category = this_pos_category
+			elseif headdata.pos_category ~= this_pos_category then
+				local singular_normalized_this_pos_category =
+					require(en_utilities_module).singularize(this_pos_category)
+				local singular_normalized_overall_pos_category =
+					require(en_utilities_module).singularize(headdata.pos_category)
+				error(("Cannot mix suffixes and suffix forms using addlpos=; '%s' is of a %s while overall POS " ..
+					"'%s' is a %s; use separate POS headers for the two"):format(pos,
+					singular_normalized_this_pos_category, pos_category, singular_normalized_overall_pos_category))
 			end
 		end
-		handle_suffix_pos(poscat, true)
+		handle_suffix_pos(pos_category, true)
 		if args.addlpos then
 			for _, addlpos in ipairs(split(args.addlpos, "%s*,%s*")) do
 				addlpos = require(headword_module).canonicalize_pos(addlpos)
@@ -2500,15 +2718,22 @@ function export.process_headword(data)
 						local label = resolve_prop(infl.label, vals)
 						if label ~= nil then
 							local insert_inflection_props = resolve_prop(infl.insert_inflection_props, vals)
-							local no_auto_cats = resolve_prop(infl.no_auto_cats, vals)
-							if no_auto_cats ~= nil then
-								if insert_inflection_props == nil then
-									insert_inflection_props = {}
-								else
-									insert_inflection_props = shallow_copy(insert_inflection_props)
+							local function copy_to_insert_inflection_props(field)
+								local fieldval = resolve_prop(infl[field], vals)
+								if fieldval ~= nil then
+									if insert_inflection_props == nil then
+										insert_inflection_props = {}
+									else
+										insert_inflection_props = shallow_copy(insert_inflection_props)
+									end
+									insert_inflection_props[field] = fieldval
 								end
-								insert_inflection_props.no_auto_cats = infl.no_auto_cats
 							end
+							copy_to_insert_inflection_props("label_for_cats_and_modes")
+							copy_to_insert_inflection_props("no_auto_cats")
+							copy_to_insert_inflection_props("request")
+							copy_to_insert_inflection_props("accel")
+							copy_to_insert_inflection_props("accel_form")
 							local insert_spec = headdata:insert_inflection(vals, label, insert_inflection_props)
 							headdata.process_props.insert_specs[param] = insert_spec
 							inserted_vals = true
@@ -2597,23 +2822,26 @@ function export.process_headword(data)
 		augment_headdata(headdata, args)
 	end
 
-	if pos_functions[indexing_poscat] then
-		local pos_infls = pos_functions[indexing_poscat].infls
+	if pos_functions[indexing_pos] then
+		local pos_infls = pos_functions[indexing_pos].infls
 		if pos_infls then
 			augment_headdata_from_infls(pos_infls)
 		end
-		local func = pos_functions[indexing_poscat].func
+		local func = pos_functions[indexing_pos].func
 		if func then
 			func(headdata, args)
 		end
 	end
 
+	headdata:parse_and_insert_inflection("abbr", "abbreviation")
+
 	setmetatable(headdata, nil)
+	headdata.process_props = nil
+
 	if args.json then
 		return require("Module:JSON").toJSON(headdata)
 	end
 
-	headdata.process_props = nil
 	return require(headword_module).full_headword(headdata)
 end
 
