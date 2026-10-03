@@ -19010,7 +19010,7 @@ Page 7837 fyren: <begin> {{ang-adecl|fȳren}} <end>
 Page 7837 fyren: Replaced {{ang-noun|f}} with {{ang-noun||f}}
 Page 7837 fyren: <begin> {{ang-noun||f}} <end>
 Page 7837 fyren: <begin> {{ang-decl-noun-o-f|fyren}} <end>
-Page 7838 fyrest: <begin> {{ang-adj-sup|positive=-}} <end>
+Page 7838 fyrest: <begin> {{ang-adj-sup|tantum=1}} <end>
 Page 7838 fyrest: <begin> {{ang-adecl|fyrest}} <end>
 Page 7839 fyrgen: Replaced {{ang-noun|n}} with {{ang-noun||n}}
 Page 7839 fyrgen: <begin> {{ang-noun||n}} <end>
@@ -19075,7 +19075,7 @@ Page 7859 fyrsn: <begin> {{ang-noun|fyrsn|f}} <end>
 Page 7860 fyrst: Replaced {{ang-noun|m}} with {{ang-noun||m}}
 Page 7860 fyrst: <begin> {{ang-noun||m}} <end>
 Page 7860 fyrst: <begin> {{ang-decl-noun-a-m|fyrst}} <end>
-Page 7860 fyrst: <begin> {{ang-adj-sup|positive=-}} <end>
+Page 7860 fyrst: <begin> {{ang-adj-sup|tantum=1}} <end>
 Page 7860 fyrst: <begin> {{ang-adecl|fyrst}} <end>
 Page 7861 fyrstan: Replaced {{ang-noun|head=fȳrstān|m}} with {{ang-noun|fȳrstān|m}}
 Page 7861 fyrstan: <begin> {{ang-noun|fȳrstān|m}} <end>
@@ -29789,7 +29789,7 @@ Page 12160 innelfe: <begin> {{ang-noun||n-p}} <end>
 Page 12160 innelfe: <begin> {{ang-decl-noun-ja-n|innelf}} <end>
 Page 12161 innemest: <begin> {{ang-adj}} <end>
 Page 12161 innemest: <begin> {{ang-adecl|innemest}} <end>
-Page 12162 innera: <begin> {{ang-adj-comp|innera|positive=-|sup=innemest}} <end>
+Page 12162 innera: <begin> {{ang-adj-comp|innera|tantum=1|sup=innemest}} <end>
 Page 12162 innera: <begin> {{ang-adecl|innera}} <end>
 Page 12163 inneþ: Replaced {{ang-noun|m}} with {{ang-noun||m}}
 Page 12163 inneþ: <begin> {{ang-noun||m}} <end>
@@ -35199,7 +35199,7 @@ Page 14326 niþdraca: Replaced {{ang-noun|m|head=nīþdraca}} with {{ang-noun|n�
 Page 14326 niþdraca: <begin> {{ang-noun|nīþdraca|m}} <end>
 Page 14327 niþer: <begin> {{ang-adv}} <end>
 Page 14328 niþer-: <begin> {{h|ang|pref|head=niþer-}} <end>
-Page 14329 niþera: <begin> {{ang-adj-comp|niþera|positive=-|sup=niþemest}} <end>
+Page 14329 niþera: <begin> {{ang-adj-comp|niþera|tantum=1|sup=niþemest}} <end>
 Page 14329 niþera: <begin> {{ang-adecl|niþera}} <end>
 Page 14330 niþerian: <begin> {{ang-verb}} <end>
 Page 14330 niþerian: <begin> {{ang-conj|niþerian<w2>}} <end>
@@ -38776,7 +38776,7 @@ Page 15820 Sæmann: Replaced {{ang-proper noun|m|head=Sǣmann}} with {{ang-prope
 Page 15820 Sæmann: <begin> {{ang-proper noun|Sǣmann|m}} <end>
 Page 15821 sæmeþe: <begin> {{ang-adj|sǣmēþe}} <end>
 Page 15821 sæmeþe: <begin> {{ang-adecl|sǣmēþe}} <end>
-Page 15822 sæmra: <begin> {{ang-adj-comp|sǣmra|positive=-|sup=sǣmest}} <end>
+Page 15822 sæmra: <begin> {{ang-adj-comp|sǣmra|tantum=1|sup=sǣmest}} <end>
 Page 15822 sæmra: <begin> {{ang-adecl|sǣmra}} <end>
 Page 15823 Sæmund: Replaced {{ang-proper noun|m|head=Sǣmund}} with {{ang-proper noun|Sǣmund|m}}
 Page 15823 Sæmund: <begin> {{ang-proper noun|Sǣmund|m}} <end>
@@ -47967,20 +47967,20 @@ Page 19643 uf: <begin> {{ang-noun|ūf|m}} <end>
 Page 19644 ufan: <begin> {{ang-adv}} <end>
 Page 19645 ufanweard: <begin> {{ang-adj}} <end>
 Page 19645 ufanweard: <begin> {{ang-adecl|ufanweard}} <end>
-Page 19646 ufemest: <begin> {{ang-adj-sup|ufemest|positive=-|comp=uferra}} <end>
+Page 19646 ufemest: <begin> {{ang-adj-sup|ufemest|tantum=1|comp=uferra}} <end>
 Page 19646 ufemest: <begin> {{ang-adecl|ufemest}} <end>
 Page 19647 ufera: <begin> {{ang-adj}} <end>
 Page 19648 uferian: <begin> {{ang-verb}} <end>
 Page 19648 uferian: <begin> {{ang-conj|uferian<w2>}} <end>
 Page 19649 uferor: <begin> {{ang-adv}} <end>
-Page 19650 uferra: <begin> {{ang-adj-comp|uferra|positive=-|sup=ufemest}} <end>
+Page 19650 uferra: <begin> {{ang-adj-comp|uferra|tantum=1|sup=ufemest}} <end>
 Page 19650 uferra: <begin> {{ang-adecl|uferra}} <end>
 Page 19651 ufeweard: <begin> {{ang-adj}} <end>
 Page 19651 ufeweard: <begin> {{ang-adecl|ufeweard}} <end>
 Page 19652 Uffa: Replaced {{ang-proper noun|m}} with {{ang-proper noun||m}}
 Page 19652 Uffa: <begin> {{ang-proper noun||m}} <end>
 Page 19652 Uffa: <begin> {{ang-decl-noun-n-m|Uff|num=sg}} <end>
-Page 19653 ufor: <begin> {{ang-adv-comp|ufor|positive=-|sup=ufemest}} <end>
+Page 19653 ufor: <begin> {{ang-adv-comp|ufor|tantum=1|sup=ufemest}} <end>
 Page 19654 ufweard: <begin> {{ang-adj}} <end>
 Page 19655 uht: Replaced {{ang-noun|m|head=ūht}} with {{ang-noun|ūht|m}}
 Page 19655 uht: <begin> {{ang-noun|ūht|m}} <end>
@@ -49019,12 +49019,12 @@ Page 20105 utdragan: <begin> {{ang-verb|ūtdragan}} <end>
 Page 20105 utdragan: <begin> {{ang-conj|ūtdragan<s6>}} <end>
 Page 20106 ute: <begin> {{ang-adv|ūte|ūtor|ȳtemest}} <end>
 Page 20107 utera: Replaced {{ang-adj-comp|ūtera|positive=-|sup1=ūtemest|sup2=ūtmest}} with {{ang-adj-comp|ūtera|positive=-|sup=ūtemest,ūtmest}}
-Page 20107 utera: <begin> {{ang-adj-comp|ūtera|positive=-|sup=ūtemest,ūtmest}} <end>
+Page 20107 utera: <begin> {{ang-adj-comp|ūtera|tantum=1|sup=ūtemest,ūtmest}} <end>
 Page 20107 utera: <begin> {{ang-adecl|ūtera}} <end>
 Page 20108 utermere: Replaced {{ang-noun|head=ūtermere|m}} with {{ang-noun|ūtermere|m}}
 Page 20108 utermere: <begin> {{ang-noun|ūtermere|m}} <end>
 Page 20108 utermere: <begin> {{ang-decl-noun-i-m|ūtermer|short=1}} <end>
-Page 20109 uterra: <begin> {{ang-adj-comp|ūterra|positive=-|sup=ūtemest}} <end>
+Page 20109 uterra: <begin> {{ang-adj-comp|ūterra|tantum=1|sup=ūtemest}} <end>
 Page 20109 uterra: <begin> {{ang-adecl|ūterra}} <end>
 Page 20110 utfæreld: Replaced {{ang-noun|n|head=ūtfæreld|ūtfæreld}} with {{ang-noun|ūtfæreld|n|ūtfæreld}}
 Page 20110 utfæreld: <begin> {{ang-noun|ūtfæreld|n|ūtfæreld}} <end>
@@ -53222,9 +53222,9 @@ Page 21761 yfelwillende: <begin> {{ang-adecl|yfelwillende}} <end>
 Page 21762 yfelwillendnes: Replaced {{ang-noun|f}} with {{ang-noun||f}}
 Page 21762 yfelwillendnes: <begin> {{ang-noun||f}} <end>
 Page 21762 yfelwillendnes: <begin> {{ang-decl-noun-o-f|ufelwillendnesse|nomsg=ufelwillendnes|num=sg}} <end>
-Page 21763 yfemest: <begin> {{ang-adj-sup|yfemest|positive=-|comp=yferra}} <end>
+Page 21763 yfemest: <begin> {{ang-adj-sup|yfemest|tantum=1|comp=yferra}} <end>
 Page 21763 yfemest: <begin> {{ang-adecl|yfemest}} <end>
-Page 21764 yferra: <begin> {{ang-adj-comp|yferra|positive=-|sup=yfemest}} <end>
+Page 21764 yferra: <begin> {{ang-adj-comp|yferra|tantum=1|sup=yfemest}} <end>
 Page 21764 yferra: <begin> {{ang-adecl|yferra}} <end>
 Page 21765 yfes: Replaced {{ang-noun|f}} with {{ang-noun||f}}
 Page 21765 yfes: <begin> {{ang-noun||f}} <end>
@@ -53528,7 +53528,7 @@ Page 21895 ytan: <begin> {{ang-conj|ȳtan<w1>}} <end>
 Page 21896 ytend: Replaced {{ang-noun|m|head=ȳtend}} with {{ang-noun|ȳtend|m}}
 Page 21896 ytend: <begin> {{ang-noun|ȳtend|m}} <end>
 Page 21896 ytend: <begin> {{ang-decl-noun-a-m|ȳtend}} <end>
-Page 21897 ytera: <begin> {{ang-adj-comp|ȳtera|positive=-|sup=ȳtemest}} <end>
+Page 21897 ytera: <begin> {{ang-adj-comp|ȳtera|tantum=1|sup=ȳtemest}} <end>
 Page 21897 ytera: <begin> {{ang-adecl|ȳtera}} <end>
 Page 21898 yterra: Replaced {{ang-adj|head=ȳterra}} with {{ang-adj|ȳterra}}
 Page 21898 yterra: <begin> {{ang-adj|ȳterra}} <end>
