@@ -65,7 +65,7 @@ function export.show(frame)
 		end
 	end
 
-	data.pos_category = (NAMESPACE == "Reconstruction" and "reconstructed " or "") .. poscat
+	data.pos_category = poscat
 	
 	return require("Module:headword").full_headword(data)
 end
