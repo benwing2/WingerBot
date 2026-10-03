@@ -37,7 +37,7 @@ Page 16 abal: <begin> {{ang-noun||m}} <end>
 Page 17 abannan: <begin> {{ang-verb|ābannan}} <end>
 Page 17 abannan: <begin> {{ang-conj|ābannan<s7>}} <end>
 Page 18 abarian: <begin> {{ang-verb|ābarian}} <end>
-Page 18 abarian: <begin> {{ang-conj|abarian<w2>}} <end>
+Page 18 abarian: <begin> {{ang-conj|ābarian<w2>}} <end>
 Page 19 aƀƀ: Replaced {{ang-noun|f}} with {{ang-noun||f}}
 Page 19 aƀƀ: <begin> {{ang-noun||f}} <end>
 Page 19 aƀƀ: Replaced {{ang-noun|m}} with {{ang-noun||m}}
@@ -118,8 +118,8 @@ Page 50 abernan: <begin> {{ang-conj-anglian|ābernan<w1>}} <end>
 Page 51 aberstan: <begin> {{ang-verb|āberstan}} <end>
 Page 51 aberstan: <begin> {{ang-conj|āberstan<s3>}} <end>
 Page 52 abetweonum: <begin> {{h|ang|prep|head=ābetwēonum}} {{+obj|ang|dat|catpos=prep}} <end>
-Page 53 abeþecian: <begin> {{ang-verb}} <end>
-Page 53 abeþecian: <begin> {{ang-conj|abeþecian<w2>}} <end>
+Page 53 abeþecian: <begin> {{ang-verb|ābeþecian}} <end>
+Page 53 abeþecian: <begin> {{ang-conj|ābeþecian<w2>}} <end>
 Page 54 abidan: <begin> {{ang-verb|ābīdan}} <end>
 Page 54 abidan: <begin> {{ang-conj|ābīdan<s1>}} <end>
 Page 55 abiddan: <begin> {{ang-verb|ābiddan}} <end>
@@ -385,8 +385,8 @@ Page 161 acleaf: <begin> {{ang-noun|āclēaf|n}} <end>
 Page 161 acleaf: <begin> {{ang-decl-noun-a-n|āclēaf}} <end>
 Page 162 acleofan: <begin> {{ang-verb|āclēofan}} <end>
 Page 162 acleofan: <begin> {{ang-conj|āclēofan<s2>}} <end>
-Page 163 aclian: <begin> {{ang-verb}} <end>
-Page 163 aclian: <begin> {{ang-conj|aclian<w2>}} <end>
+Page 163 aclian: <begin> {{ang-verb|āclian}} <end>
+Page 163 aclian: <begin> {{ang-conj|āclian<w2>}} <end>
 Page 164 aclingan: <begin> {{ang-verb|āclingan}} <end>
 Page 164 aclingan: <begin> {{ang-conj|āclingan<s3>}} <end>
 Page 165 aclipian: <begin> {{ang-verb|āclipian}} <end>
@@ -484,12 +484,12 @@ Page 205 acwacian: <begin> {{ang-verb|ācwacian}} <end>
 Page 205 acwacian: <begin> {{ang-conj|ācwacian<w2>}} <end>
 Page 206 acweccan: <begin> {{ang-verb|ācweċċan}} <end>
 Page 206 acweccan: <begin> {{ang-conj|ācweċċan<w1/papp:ācweaht>}} <end>
-Page 207 acweðan: <begin> {{ang-verb}} {{tlb|ang|West Saxon}} <end>
+Page 207 acweðan: <begin> {{ang-verb|ācweðan}} {{tlb|ang|West Saxon}} <end>
 Page 207 acweðan: <begin> {{ang-conj|ācweðan<s5v>}} <end>
 Page 208 acwelan: <begin> {{ang-verb|ācwelan}} <end>
 Page 208 acwelan: <begin> {{ang-conj|ācwelan<s4>}} <end>
 Page 208 acwelan: <begin> {{ang-verb|ācwelan}} <end>
-Page 208 acwelan: <begin> {{ang-conj|ācwellan<w1/papp:ācweald>}} <end>
+Page 208 acwelan: <begin> {{ang-conj|ācwelanlan<w1/papp:ācweald>}} <end>
 Page 209 acwellan: Replaced {{ang-verb|head=ācwellan}} with {{ang-verb|ācwellan}}
 Page 209 acwellan: <begin> {{ang-verb|ācwellan}} <end>
 Page 209 acwellan: <begin> {{ang-conj|ācwellan<w1/papp:ācweald>}} <end>
@@ -635,7 +635,7 @@ Page 268 adrædan: Replaced {{ang-verb|head=ādrǣdan}} with {{ang-verb|ādrǣda
 Page 268 adrædan: <begin> {{ang-verb|ādrǣdan}} <end>
 Page 269 adræfan: Replaced {{ang-verb|head=ādrǣfan}} with {{ang-verb|ādrǣfan}}
 Page 269 adræfan: <begin> {{ang-verb|ādrǣfan}} <end>
-Page 269 adræfan: <begin> {{ang-conj|ādræfan<w1>}} <end>
+Page 269 adræfan: <begin> {{ang-conj|ādrǣfanæfan<w1>}} <end>
 Page 270 adragan: <begin> {{ang-verb|ādragan}} <end>
 Page 270 adragan: <begin> {{ang-conj|ādragan<s6/pp:ādragen>}} <end>
 Page 271 adrefan: <begin> {{ang-verb|ādrēfan}} <end>
@@ -2176,8 +2176,8 @@ Page 922 agenslaga: <begin> {{ang-decl-noun-n-m|āgenslag}} <end>
 Page 923 agenspræc: Replaced {{ang-noun|f|head=āgensprǣċ}} with {{ang-noun|āgensprǣċ|f}}
 Page 923 agenspræc: <begin> {{ang-noun|āgensprǣċ|f}} <end>
 Page 923 agenspræc: <begin> {{ang-decl-noun-o-f|āgensprǣċ}} <end>
-Page 924 agenstandan: <begin> {{ang-verb}} <end>
-Page 924 agenstandan: <begin> {{ang-conj|āgenstandan<s6>}} <end>
+Page 924 agenstandan: <begin> {{ang-verb|āġēnstandan}} <end>
+Page 924 agenstandan: <begin> {{ang-conj|āġēnstandan<s6>}} <end>
 Page 925 agenung: Replaced {{ang-noun|f|head=āgenung}} with {{ang-noun|āgenung|f}}
 Page 925 agenung: <begin> {{ang-noun|āgenung|f}} <end>
 Page 925 agenung: <begin> {{ang-decl-noun-o-f|āgenung}} <end>
@@ -2347,7 +2347,7 @@ Page 995 aheardung: Replaced {{ang-noun|f|head=āheardung|āheardunga}} with {{a
 Page 995 aheardung: <begin> {{ang-noun|āheardung|f|āheardunga}} <end>
 Page 995 aheardung: <begin> {{ang-decl-noun-o-f|āheardung}} <end>
 Page 996 aheawan: <begin> {{ang-verb|āhēawan}} <end>
-Page 996 aheawan: <begin> {{ang-conj|ahēawan<s7/ge:0>}} <end>
+Page 996 aheawan: <begin> {{ang-conj|āhēawan<s7/ge:0>}} <end>
 Page 997 ahebban: <begin> {{ang-verb|āhebban}} <end>
 Page 997 ahebban: <begin> {{ang-conj|āhebban<s6/2sg_pres_indc:āhefst/3sg_pres_indc:āhefþ/1sg_past_indc:āhōf,āhefde/2sg_past_indc:āhōfe,āhefdest/3sg_past_indc:āhōf,āhefde/pl_past_indc:āhōfon,āhefdon/sg_past_subj:āhōfe,āhefde/pl_past_subj:āhōfen,āhefden/pp:āhæfen,āhafen,āhefen,āhefed>}} <end>
 Page 997 ahebban: <begin> {{ang-conj-anglian|āhebban<s6>}} <end>
@@ -2409,7 +2409,7 @@ Page 1023 ahnigan: <begin> {{ang-verb|āhnīgan}} <end>
 Page 1023 ahnigan: <begin> {{ang-conj|āhnīgan<s1>}} <end>
 Page 1024 ahnung: Replaced {{ang-noun|f|head=āhnung}} with {{ang-noun|āhnung|f}}
 Page 1024 ahnung: <begin> {{ang-noun|āhnung|f}} <end>
-Page 1025 aholian: <begin> {{ang-verb}} <end>
+Page 1025 aholian: <begin> {{ang-verb|āholian}} <end>
 Page 1025 aholian: <begin> {{ang-conj|āholian<w2>}} <end>
 Page 1026 ahon: <begin> {{ang-verb|āhōn}} <end>
 Page 1026 ahon: <begin> {{ang-conj|āhōn<s7>}} <end>
@@ -3886,8 +3886,8 @@ Page 1645 asecgan: <begin> {{ang-verb|āseċġan}} <end>
 Page 1645 asecgan: <begin> {{ang-conj|āseċġan<w3>}} <end>
 Page 1646 asellan: <begin> {{ang-verb|āsellan}} <end>
 Page 1646 asellan: <begin> {{ang-conj|āsellan<w1/pres23:āsyle,āsell/papp:āseald>}} <end>
-Page 1647 asendan: <begin> {{ang-verb}} <end>
-Page 1647 asendan: <begin> {{ang-conj|asendan<w1/ge:0>}} <end>
+Page 1647 asendan: <begin> {{ang-verb|āsendan}} <end>
+Page 1647 asendan: <begin> {{ang-conj|āsendan<w1/ge:0>}} <end>
 Page 1648 aseolcan: Replaced {{ang-verb|head=āseolcan}} with {{ang-verb|āseolcan}}
 Page 1648 aseolcan: <begin> {{ang-verb|āseolcan}} <end>
 Page 1648 aseolcan: <begin> {{ang-conj|āseolcan<s3>}} <end>
@@ -4118,7 +4118,7 @@ Page 1738 aþencan: <begin> {{ang-verb|āþenċan}} <end>
 Page 1738 aþencan: <begin> {{ang-conj|āþenċan<w1/papp:āþōht>}} <end>
 Page 1739 aþenian: Replaced {{ang-verb|head=āþenian}} with {{ang-verb|āþenian}}
 Page 1739 aþenian: <begin> {{ang-verb|āþenian}} <end>
-Page 1739 aþenian: <begin> {{ang-conj|āþennan<w1/infinitive:āþenian>}} <end>
+Page 1739 aþenian: <begin> {{ang-conj|āþeniannan<w1/infinitive:āþenian>}} <end>
 Page 1740 aþeodan: <begin> {{ang-verb|āþēodan}} <end>
 Page 1740 aþeodan: <begin> {{ang-conj|āþēodan<w1>}} <end>
 Page 1741 aþeostrian: Replaced {{ang-verb|head=āþēostrian}} with {{ang-verb|āþēostrian}}
@@ -4167,10 +4167,10 @@ Page 1760 awacan: <begin> {{ang-conj|āwacan<s6/pp:āwacen>}} <end>
 Page 1761 awacian: Replaced {{ang-verb|head=awācian}} with {{ang-verb|awācian}}
 Page 1761 awacian: <begin> {{ang-verb|awācian}} <end>
 Page 1761 awacian: <begin> {{ang-conj|awācian<w2>}} <end>
-Page 1762 awæcnan: <begin> {{ang-verb}} <end>
-Page 1762 awæcnan: <begin> {{ang-conj|awæcnan<w1>}} <end>
-Page 1763 awæcnian: <begin> {{ang-verb}} <end>
-Page 1763 awæcnian: <begin> {{ang-conj|awæcnian<w2>}} <end>
+Page 1762 awæcnan: <begin> {{ang-verb|āwæcnan}} <end>
+Page 1762 awæcnan: <begin> {{ang-conj|āwæcnan<w1>}} <end>
+Page 1763 awæcnian: <begin> {{ang-verb|āwæcnian}} <end>
+Page 1763 awæcnian: <begin> {{ang-conj|āwæcnian<w2>}} <end>
 Page 1764 aweaxan: <begin> {{ang-verb|āweaxan}} <end>
 Page 1764 aweaxan: <begin> {{ang-conj|āweaxan<s7/3sg_pres_indc:āweaxeþ>}} <end>
 Page 1765 aweb: Replaced {{ang-noun|n|head=āweb}} with {{ang-noun|āweb|n}}
@@ -4931,7 +4931,7 @@ Page 2066 beclæmman: <begin> {{ang-verb|beclæmman}} <end>
 Page 2066 beclæmman: <begin> {{ang-conj|beclæmman<w1>}} <end>
 Page 2067 beclemman: Replaced {{ang-verb|head=beclæmman}} with {{ang-verb|beclæmman}}
 Page 2067 beclemman: <begin> {{ang-verb|beclæmman}} <end>
-Page 2067 beclemman: <begin> {{ang-conj|beclemman<w1>}} <end>
+Page 2067 beclemman: <begin> {{ang-conj|beclæmmanemman<w1>}} <end>
 Page 2068 becleopian: <begin> {{ang-verb}} <end>
 Page 2069 beclipian: <begin> {{ang-verb}} <end>
 Page 2069 beclipian: <begin> {{ang-conj|beclipian<w2>}} <end>
@@ -5796,7 +5796,7 @@ Page 2443 besawan: <begin> {{ang-verb|besāwan}} <end>
 Page 2443 besawan: <begin> {{ang-conj|besāwan<s7>}} <end>
 Page 2444 besceadan: Replaced {{ang-verb|besċeādan|head2=besċēadan}} with {{ang-verb|besċeādan,besċēadan}}
 Page 2444 besceadan: <begin> {{ang-verb|besċeādan,besċēadan}} <end>
-Page 2444 besceadan: <begin> {{ang-conj|besċeādan<s7>}} <end>
+Page 2444 besceadan: <begin> {{ang-conj|besċeādan,besċēadan<s7>}} <end>
 Page 2445 besceaduwian: <begin> {{ang-verb|besċeaduwian}} <end>
 Page 2445 besceaduwian: <begin> {{ang-conj|besċeaduwian<w2>}} <end>
 Page 2446 besceawian: Replaced {{ang-verb|head=besċēawian}} with {{ang-verb|besċēawian}}
@@ -5814,7 +5814,7 @@ Page 2450 bescinan: <begin> {{ang-conj|besċīnan<s1>}} <end>
 Page 2451 besciran: Replaced {{ang-verb|head=besċiran}} with {{ang-verb|besċiran}}
 Page 2451 besciran: <begin> {{ang-verb|besċiran}} <end>
 Page 2452 bescitan: <begin> {{ang-verb|besċītan}} <end>
-Page 2452 bescitan: <begin> {{ang-conj|bescītan<s1>}} <end>
+Page 2452 bescitan: <begin> {{ang-conj|besċītancītan<s1>}} <end>
 Page 2453 bescufan: <begin> {{ang-verb|besċūfan}} <end>
 Page 2453 bescufan: <begin> {{ang-conj|besċūfan<s2>}} <end>
 Page 2454 bescyldian: <begin> {{ang-verb|besċyldian}} <end>
@@ -9379,7 +9379,7 @@ Page 3875 clauster: <begin> {{ang-noun||n}} <end>
 Page 3876 clawan: <begin> {{ang-verb|clawan}} <end>
 Page 3876 clawan: <begin> {{ang-conj|clawan<s6>}} <end>
 Page 3877 clawian: <begin> {{ang-verb|clāwan}} <end>
-Page 3877 clawian: <begin> {{ang-conj|clawian<w2>}} <end>
+Page 3877 clawian: <begin> {{ang-conj|clāwanawian<w2>}} <end>
 Page 3878 clawu: Replaced {{ang-noun|f|head=clawu}} with {{ang-noun|clawu|f}}
 Page 3878 clawu: <begin> {{ang-noun|clawu|f}} <end>
 Page 3878 clawu: <begin> {{ang-decl-noun-o-f|claw|short=1}} <end>
@@ -12346,8 +12346,6 @@ Page 5067 drync: <begin> {{ang-noun|drynċ|m}} <end>
 Page 5067 drync: <begin> {{ang-decl-noun-i-m|drynċ}} <end>
 Page 5068 dryncfæt: Replaced {{ang-noun|n}} with {{ang-noun||n}}
 Page 5068 dryncfæt: <begin> {{ang-noun||n}} <end>
-Page 5069 drypan: <begin> {{ang-verb}} <end>
-Page 5069 drypan: <begin> {{ang-conj|drypan<w1>}} <end>
 Page 5070 drysmian: <begin> {{ang-verb}} <end>
 Page 5070 drysmian: <begin> {{ang-conj|drysmian<w2>}} <end>
 Page 5071 drysnan: <begin> {{ang-verb|drysnan}} {{tlb|ang|Northumbrian}} <end>
@@ -14180,7 +14178,7 @@ Page 5842 eftacennednis: Replaced {{ang-noun|f|head=eftācennednis}} with {{ang-
 Page 5842 eftacennednis: <begin> {{ang-noun|eftācennednis|f}} <end>
 Page 5843 eftagiefan: Replaced {{ang-verb|head=eftāġiefan}} with {{ang-verb|eftāġiefan}}
 Page 5843 eftagiefan: <begin> {{ang-verb|eftāġiefan}} <end>
-Page 5843 eftagiefan: <begin> {{ang-conj|eftġiefan<s5>}} <end>
+Page 5843 eftagiefan: <begin> {{ang-conj|eftāġiefanġiefan<s5>}} <end>
 Page 5844 eftbetæcan: <begin> {{ang-verb|eftbetǣċan}} <end>
 Page 5844 eftbetæcan: <begin> {{ang-conj|eftbetǣċan<w1/papp:eftbetǣht,eftbetāht>}} <end>
 Page 5845 eftbetung: Replaced {{ang-noun|f|head=eftbētung}} with {{ang-noun|eftbētung|f}}
@@ -17708,7 +17706,7 @@ Page 7288 forscamian: <begin> {{ang-verb|forsċamian}} <end>
 Page 7288 forscamian: <begin> {{ang-conj|forsċamian<w2>}} <end>
 Page 7289 forsceadan: Replaced {{ang-verb|forsċeādan|head2=forsċēadan}} with {{ang-verb|forsċeādan,forsċēadan}}
 Page 7289 forsceadan: <begin> {{ang-verb|forsċeādan,forsċēadan}} <end>
-Page 7289 forsceadan: <begin> {{ang-conj|forsċeādan<s7>}} <end>
+Page 7289 forsceadan: <begin> {{ang-conj|forsċeādan,forsċēadan<s7>}} <end>
 Page 7289 forsceadan: <begin> {{ang-conj|forsċēadan<s7>}} <end>
 Page 7290 forsceppan: <begin> {{ang-verb}} <end>
 Page 7291 forscieppan: <begin> {{ang-verb|forsċieppan}} {{tlb|ang|West Saxon}} <end>
@@ -19811,7 +19809,7 @@ Page 8155 gebasnian: Replaced {{ang-verb|head=ġebāsnian}} with {{ang-verb|ġeb
 Page 8155 gebasnian: <begin> {{ang-verb|ġebāsnian}} <end>
 Page 8155 gebasnian: <begin> {{ang-conj|ġebāsnian<w2>}} <end>
 Page 8156 gebaswian: <begin> {{ang-verb}} <end>
-Page 8157 gebaþian: <begin> {{ang-verb}} <end>
+Page 8157 gebaþian: <begin> {{ang-verb|ġebaþian}} <end>
 Page 8157 gebaþian: <begin> {{ang-conj|ġebaþian<w2>}} <end>
 Page 8158 gebeacnian: <begin> {{ang-verb|ġebēacnian}} <end>
 Page 8158 gebeacnian: <begin> {{ang-conj|ġebēacnian<w2>}} <end>
@@ -20071,7 +20069,7 @@ Page 8258 gecierrednes: <begin> {{ang-decl-noun-o-f|ġeċierredness|nomsg=ġeċi
 Page 8259 gecierring: Replaced {{ang-noun|f|head=ġeċierring}} with {{ang-noun|ġeċierring|f}}
 Page 8259 gecierring: <begin> {{ang-noun|ġeċierring|f}} <end>
 Page 8260 gecigan: <begin> {{ang-verb|ġeċīġan}} {{tlb|ang|Late West Saxon}} <end>
-Page 8260 gecigan: <begin> {{ang-conj|ġeċīeġan<w1>}} <end>
+Page 8260 gecigan: <begin> {{ang-conj|ġeċīġaneġan<w1>}} <end>
 Page 8261 gecigendlic: <begin> {{ang-adj|ġeċīġendlīċ}} <end>
 Page 8261 gecigendlic: <begin> {{ang-adecl|ġeċīġendlīċ}} <end>
 Page 8262 gecirran: Replaced {{ang-verb|head=ġeċirran}} with {{ang-verb|ġeċirran}}
@@ -20084,7 +20082,7 @@ Page 8264 geclænsian: <begin> {{ang-verb|ġeclǣnsian}} <end>
 Page 8264 geclænsian: <begin> {{ang-conj|ġeclǣnsian<w2>}} <end>
 Page 8265 geclifian: <begin> {{ang-verb|ġeclifian}} <end>
 Page 8265 geclifian: <begin> {{ang-conj|ġeclifian<w2>}} <end>
-Page 8266 geclipian: <begin> {{ang-verb}} <end>
+Page 8266 geclipian: <begin> {{ang-verb|ġeclipian}} <end>
 Page 8266 geclipian: <begin> {{ang-conj|ġeclipian<w2>}} <end>
 Page 8267 geclofa: Replaced {{ang-noun|m}} with {{ang-noun||m}}
 Page 8267 geclofa: <begin> {{ang-noun||m}} <end>
@@ -20147,8 +20145,8 @@ Page 8290 gecræftgian: <begin> {{ang-verb|ġecræftgian}} <end>
 Page 8290 gecræftgian: <begin> {{ang-conj|ġecræftgian<w2>}} <end>
 Page 8291 gecringan: <begin> {{ang-verb|ġecringan}} <end>
 Page 8291 gecringan: <begin> {{ang-conj|ġecringan<s3>}} <end>
-Page 8292 gecrymman: <begin> {{ang-verb}} <end>
-Page 8292 gecrymman: <begin> {{ang-conj|gecrymman<w1>}} <end>
+Page 8292 gecrymman: <begin> {{ang-verb|ġecrymman}} <end>
+Page 8292 gecrymman: <begin> {{ang-conj|ġecrymman<w1>}} <end>
 Page 8293 gecrympan: Replaced {{ang-verb|head=ġecrympan}} with {{ang-verb|ġecrympan}}
 Page 8293 gecrympan: <begin> {{ang-verb|ġecrympan}} <end>
 Page 8293 gecrympan: <begin> {{ang-conj|ġecrympan<w1/pp:ġecrympt>}} <end>
@@ -20235,7 +20233,7 @@ Page 8327 gedælan: <begin> {{ang-conj|ġedǣlan<w1>}} <end>
 Page 8328 gedafen: Replaced {{ang-adj|head=ġedafen}} with {{ang-adj|ġedafen}}
 Page 8328 gedafen: <begin> {{ang-adj|ġedafen}} <end>
 Page 8328 gedafen: <begin> {{ang-adecl|ġedafen}} <end>
-Page 8329 gedafenian: <begin> {{ang-verb}} <end>
+Page 8329 gedafenian: <begin> {{ang-verb|ġedafenian}} <end>
 Page 8329 gedafenian: <begin> {{ang-conj|ġedafenian<w2>}} <end>
 Page 8330 gedal: Replaced {{ang-noun|n|head=ġedāl}} with {{ang-noun|ġedāl|n}}
 Page 8330 gedal: <begin> {{ang-noun|ġedāl|n}} <end>
@@ -20416,7 +20414,7 @@ Page 8398 geerian: <begin> {{ang-verb|ġeerian}} <end>
 Page 8398 geerian: <begin> {{ang-conj|ġeerian<w1>}} <end>
 Page 8399 geetan: <begin> {{ang-verb|ġeetan}} <end>
 Page 8399 geetan: <begin> {{ang-conj|ġeetan<s5/pres23:geet>}} <end>
-Page 8400 gefadian: <begin> {{ang-verb}} <end>
+Page 8400 gefadian: <begin> {{ang-verb|ġefadian}} <end>
 Page 8400 gefadian: <begin> {{ang-conj|ġefadian<w2>}} <end>
 Page 8401 gefæd: <begin> {{ang-adj|ġefæd}} <end>
 Page 8401 gefæd: <begin> {{ang-adecl|ġefæd|short=1}} <end>
@@ -20758,7 +20756,7 @@ Page 8524 gegrundweallian: <begin> {{ang-verb|ġegrundweallian}} <end>
 Page 8524 gegrundweallian: <begin> {{ang-conj|ġegrundweallian<w2>}} <end>
 Page 8525 gegyfan: <begin> {{ang-verb|ġeġyfan}} <end>
 Page 8525 gegyfan: <begin> {{ang-conj|ġeġyfan<s5/pp:ġeġyfen>}} <end>
-Page 8526 gegyrdan: <begin> {{ang-verb}} <end>
+Page 8526 gegyrdan: <begin> {{ang-verb|ġegyrdan}} <end>
 Page 8526 gegyrdan: <begin> {{ang-conj|ġegyrdan<w1>}} <end>
 Page 8527 gegyrwan: <begin> {{ang-verb|ġeġyrwan}} <end>
 Page 8527 gegyrwan: <begin> {{ang-conj|ġeġyrwan<w1>}} <end>
@@ -20841,7 +20839,7 @@ Page 8556 gehefigian: <begin> {{ang-verb|ġehefiġian}} <end>
 Page 8556 gehefigian: <begin> {{ang-conj|ġehefiġian<w2>}} <end>
 Page 8557 gehegan: Replaced {{ang-verb|head=ġehēġan}} with {{ang-verb|ġehēġan}}
 Page 8557 gehegan: <begin> {{ang-verb|ġehēġan}} <end>
-Page 8558 gehelmian: <begin> {{ang-verb}} <end>
+Page 8558 gehelmian: <begin> {{ang-verb|ġehelmian}} <end>
 Page 8558 gehelmian: <begin> {{ang-conj|ġehelmian<w2>}} <end>
 Page 8559 gehende: <begin> {{ang-adj|ġehende}} <end>
 Page 8559 gehende: <begin> {{ang-adecl|ġehende}} <end>
@@ -21132,7 +21130,7 @@ Page 8676 gelafian: <begin> {{ang-verb|ġelafian}} <end>
 Page 8676 gelafian: <begin> {{ang-conj|ġelafian<w2>}} <end>
 Page 8677 gelagian: Replaced {{ang-verb|head=ġelaġian}} with {{ang-verb|ġelaġian}}
 Page 8677 gelagian: <begin> {{ang-verb|ġelaġian}} <end>
-Page 8677 gelagian: <begin> {{ang-conj|ġelagian<w2>}} <end>
+Page 8677 gelagian: <begin> {{ang-conj|ġelaġiangian<w2>}} <end>
 Page 8678 gelagu: Replaced {{ang-noun|m|head=ġelagu}} with {{ang-noun|ġelagu|m}}
 Page 8678 gelagu: <begin> {{ang-noun|ġelagu|m}} <end>
 Page 8678 gelagu: <begin> {{ang-decl-noun-u-m|ġelag|short=1}} <end>
@@ -21182,7 +21180,7 @@ Page 8694 geleafsum: <begin> {{ang-adj|ġelēafsum}} <end>
 Page 8694 geleafsum: <begin> {{ang-adecl|ġelēafsum}} <end>
 Page 8695 geleaful: <begin> {{ang-adj|ġelēaful}} {{tlb|ang|Late West Saxon}} <end>
 Page 8695 geleaful: <begin> {{ang-adecl|ġelēaful|stem=ġelēafull}} <end>
-Page 8696 geleahtrian: <begin> {{ang-verb}} <end>
+Page 8696 geleahtrian: <begin> {{ang-verb|ġeleahtrian}} <end>
 Page 8696 geleahtrian: <begin> {{ang-conj|ġeleahtrian<w2>}} <end>
 Page 8697 geleas: Replaced {{ang-adj|head=ġelēas}} with {{ang-adj|ġelēas}}
 Page 8697 geleas: <begin> {{ang-adj|ġelēas}} <end>
@@ -21407,7 +21405,7 @@ Page 8784 gemanigfealdian: <begin> {{ang-conj|ġemaniġfealdian<w2>}} <end>
 Page 8785 gemanigfieldan: <begin> {{ang-verb|ġemaniġfieldan}} {{tlb|ang|West Saxon}} <end>
 Page 8785 gemanigfieldan: <begin> {{ang-conj|ġemaniġfieldan<w1>}} <end>
 Page 8786 gemanigfyldan: <begin> {{ang-verb|ġemaniġfyldan}} <end>
-Page 8786 gemanigfyldan: <begin> {{ang-conj|gemanigfyldan<w1>}} <end>
+Page 8786 gemanigfyldan: <begin> {{ang-conj|gemaniġfyldan<w1>}} <end>
 Page 8787 gemannian: Replaced {{ang-verb|head=ġemannian}} with {{ang-verb|ġemannian}}
 Page 8787 gemannian: <begin> {{ang-verb|ġemannian}} <end>
 Page 8787 gemannian: <begin> {{ang-conj|ġemannian<w2>}} <end>
@@ -21704,7 +21702,7 @@ Page 8904 geodagas: Replaced {{ang-noun|m-p|head=ġeōdagas}} with {{ang-noun|ġ
 Page 8904 geodagas: <begin> {{ang-noun|ġeōdagas|m-p}} <end>
 Page 8904 geodagas: <begin> {{ang-decl-noun-a-m|ġeōdæġ|ġeōdag|num=pl}} <end>
 Page 8905 geofan: <begin> {{ang-verb|ġeofan}} {{tlb|ang|Anglian}} <end>
-Page 8905 geofan: <begin> <!--{{ang-conj|ġiefan<s5/infinitive2: ġefenne, ġeofenne/pres23:ġeofe/impsg:ġef, ġeof/presa:ġeofa/prese:ġeofe/1sg_pres_indc:ġeofu,ġeofo,ġeofe, ġeofa/2sg_pres_indc: ġifest, ġifes, ġeofest, ġeofes/3sg_pres_indc: ġifeþ, ġeofeþ/1sg_past_indc:ġæf, ġeaf/2sg_past_indc:ġēfe/3sg_past_indc:ġæf, ġeaf/pl_past_indc: ġēfon, ġēfun/sg_pres_subj:ġefe, ġeofe/pl_pres_subj:ġefen, ġeofen/sg_past_subj:ġēfe/pl_past_subj:ġēfen/pres_ptc: ġefende, ġeofende/past_ptc: (ġe)ġefen, (ġe)ġeofen>}}--> <end>
+Page 8905 geofan: <begin> <!--{{ang-conj|ġeofaniefan<s5/infinitive2: ġefenne, ġeofenne/pres23:ġeofe/impsg:ġef, ġeof/presa:ġeofa/prese:ġeofe/1sg_pres_indc:ġeofu,ġeofo,ġeofe, ġeofa/2sg_pres_indc: ġifest, ġifes, ġeofest, ġeofes/3sg_pres_indc: ġifeþ, ġeofeþ/1sg_past_indc:ġæf, ġeaf/2sg_past_indc:ġēfe/3sg_past_indc:ġæf, ġeaf/pl_past_indc: ġēfon, ġēfun/sg_pres_subj:ġefe, ġeofe/pl_pres_subj:ġefen, ġeofen/sg_past_subj:ġēfe/pl_past_subj:ġēfen/pres_ptc: ġefende, ġeofende/past_ptc: (ġe)ġefen, (ġe)ġeofen>}}--> <end>
 Page 8905 geofan: <begin> {{ang-conj-anglian|ġeofan<s5>}} <end>
 Page 8905 geofan: <begin> {{ang-verb|ġeofan}} {{tlb|ang|Kentish}} <end>
 Page 8906 geofen: Replaced {{ang-noun|n|head=ġeofen}} with {{ang-noun|ġeofen|n}}
@@ -22292,7 +22290,7 @@ Page 9135 gescrincan: <begin> {{ang-verb|ġesċrincan}} <end>
 Page 9135 gescrincan: <begin> {{ang-conj|ġesċrincan<s3>}} <end>
 Page 9136 gescrydan: Replaced {{ang-verb|head=ġesċrȳdan}} with {{ang-verb|ġesċrȳdan}}
 Page 9136 gescrydan: <begin> {{ang-verb|ġesċrȳdan}} <end>
-Page 9136 gescrydan: <begin> {{ang-conj|ġesċrydan<w1/pp:ġesċrȳd,ġesċrȳded>}} <end>
+Page 9136 gescrydan: <begin> {{ang-conj|ġesċrȳdanydan<w1/pp:ġesċrȳd,ġesċrȳded>}} <end>
 Page 9137 gescufan: <begin> {{ang-verb|ġesċūfan}} <end>
 Page 9137 gescufan: <begin> {{ang-conj|ġesċūfan<s2>}} <end>
 Page 9138 gescyldan: Replaced {{ang-verb|head=ġesċyldan}} with {{ang-verb|ġesċyldan}}
@@ -22406,7 +22404,7 @@ Page 9181 gesiht: <begin> {{ang-decl-noun-o-f|ġesiht}} <end>
 Page 9182 gesihþ: Replaced {{ang-noun|f|head=ġesihþ}} with {{ang-noun|ġesihþ|f}}
 Page 9182 gesihþ: <begin> {{ang-noun|ġesihþ|f}} <end>
 Page 9182 gesihþ: <begin> {{ang-decl-noun-o-f|ġesihþ}} <end>
-Page 9183 gesiltan: <begin> {{ang-verb}} {{tlb|ang|West Saxon}} <end>
+Page 9183 gesiltan: <begin> {{ang-verb|ġesiltan}} {{tlb|ang|West Saxon}} <end>
 Page 9183 gesiltan: <begin> {{ang-conj|ġesiltan<w1>}} <end>
 Page 9184 gesincan: <begin> {{ang-verb|ġesincan}} <end>
 Page 9184 gesincan: <begin> {{ang-conj|ġesincan<s3>}} <end>
@@ -22459,7 +22457,7 @@ Page 9203 gesoþian: <begin> {{ang-verb|ġesōþian}} <end>
 Page 9203 gesoþian: <begin> {{ang-conj|ġesōþian<w2>}} <end>
 Page 9204 gespan: Replaced {{ang-noun|n|head=ġespan}} with {{ang-noun|ġespan|n}}
 Page 9204 gespan: <begin> {{ang-noun|ġespan|n}} <end>
-Page 9205 gespanan: <begin> {{ang-verb}} <end>
+Page 9205 gespanan: <begin> {{ang-verb|ġespanan}} <end>
 Page 9205 gespanan: <begin> {{ang-conj|ġespanan<s6>}} <end>
 Page 9206 gespannan: <begin> {{ang-verb|ġespannan}} <end>
 Page 9206 gespannan: <begin> {{ang-conj|ġespannan<s7>}} <end>
@@ -22674,7 +22672,7 @@ Page 9293 gesydian: Replaced {{ang-verb|head=ġesydian}} with {{ang-verb|ġesydi
 Page 9293 gesydian: <begin> {{ang-verb|ġesydian}} <end>
 Page 9294 gesyhðe: <begin> {{ang-noun}} <end>
 Page 9295 gesyhþe: <begin> {{ang-noun}} <end>
-Page 9296 gesyltan: <begin> {{ang-verb}} {{tlb|ang|West Saxon}} <end>
+Page 9296 gesyltan: <begin> {{ang-verb|ġesyltan}} {{tlb|ang|West Saxon}} <end>
 Page 9296 gesyltan: <begin> {{ang-conj|ġesyltan<w1>}} <end>
 Page 9297 gesyndrian: <begin> {{ang-verb|ġesyndrian}} <end>
 Page 9297 gesyndrian: <begin> {{ang-conj|ġesyndrian<w2>}} <end>
@@ -22709,7 +22707,7 @@ Page 9308 getæsu: <begin> {{ang-noun|ġetǣsu|f}} <end>
 Page 9308 getæsu: <begin> {{ang-decl-noun|ġetǣsu|ġetǣsu,ġetǣsa|ġetǣsu,ġetǣse|ġetǣsu,ġetǣsa|ġetǣsu,ġetǣse|ġetǣsu,ġetǣsa|ġetǣsu,ġetǣse|ġetǣsu,ġetǣsum}} <end>
 Page 9309 getal: Replaced {{ang-noun|n|head=ġetel}} with {{ang-noun|ġetel|n}}
 Page 9309 getal: <begin> {{ang-noun|ġetel|n}} <end>
-Page 9310 getalian: <begin> {{ang-verb}} <end>
+Page 9310 getalian: <begin> {{ang-verb|ġetalian}} <end>
 Page 9310 getalian: <begin> {{ang-conj|ġetalian<w2>}} <end>
 Page 9311 getan: Replaced {{ang-verb|head=ġētan}} with {{ang-verb|ġētan}}
 Page 9311 getan: <begin> {{ang-verb|ġētan}} <end>
@@ -22846,7 +22844,7 @@ Page 9359 getruwung: <begin> {{ang-noun|ġetrūwung|f}} <end>
 Page 9359 getruwung: <begin> {{ang-decl-noun-o-f|ġetrūwung}} <end>
 Page 9360 getryccan: Replaced {{ang-verb|head=ġetryccan|head2=ġetryċċan}} with {{ang-verb|ġetryccan,ġetryċċan}}
 Page 9360 getryccan: <begin> {{ang-verb|ġetryccan,ġetryċċan}} <end>
-Page 9360 getryccan: <begin> {{ang-conj|ġetryccan<w1b/past:ġetryct/impsg:ġetrycce/ge:0/pp:ġetryct>}} <end>
+Page 9360 getryccan: <begin> {{ang-conj|ġetryccan,ġetryċċan<w1b/past:ġetryct/impsg:ġetrycce/ge:0/pp:ġetryct>}} <end>
 Page 9360 getryccan: <begin> {{ang-conj|ġetryċċan<w1b/past:ġetryht/impsg:ġetryċċe/ge:0/pp:ġetryht>}} <end>
 Page 9361 getrycce: Replaced {{ang-adj|head=ġetrycce|head2=ġetryċċe}} with {{ang-adj|ġetrycce,ġetryċċe}}
 Page 9361 getrycce: <begin> {{ang-adj|ġetrycce,ġetryċċe}} <end>
@@ -22932,7 +22930,7 @@ Page 9389 geþeot: <begin> {{ang-decl-noun-a-n|ġeþēot}} <end>
 Page 9390 geþicfieldan: <begin> {{ang-verb|ġeþicfieldan}} {{tlb|ang|West Saxon}} <end>
 Page 9390 geþicfieldan: <begin> {{ang-conj|ġeþicfieldan<w1>}} <end>
 Page 9391 geþicgan: <begin> {{ang-verb|ġeþicgan}} <end>
-Page 9391 geþicgan: <begin> {{ang-conj|ġeþiċġan<s5>}}<!-- FIXME: noimp? --> <end>
+Page 9391 geþicgan: <begin> {{ang-conj|ġeþicganċġan<s5>}}<!-- FIXME: noimp? --> <end>
 Page 9392 geþiedan: <begin> {{ang-verb|ġeþīedan}} {{tlb|ang|Early West Saxon}} <end>
 Page 9392 geþiedan: <begin> {{ang-conj|ġeþīedan<w1>}} <end>
 Page 9393 geþincþu: Replaced {{ang-noun|f|head=ġeþincþu}} with {{ang-noun|ġeþincþu|f}}
@@ -23188,7 +23186,7 @@ Page 9489 gewind: <begin> {{ang-noun|ġewind|n|ġewind}} <end>
 Page 9489 gewind: <begin> {{ang-decl-noun-a-n|ġewind}} <end>
 Page 9490 gewindan: <begin> {{ang-verb|ġewindan}} <end>
 Page 9490 gewindan: <begin> {{ang-conj|ġewindan<s3>}} <end>
-Page 9491 gewindwian: <begin> {{ang-verb}} <end>
+Page 9491 gewindwian: <begin> {{ang-verb|ġewindwian}} <end>
 Page 9491 gewindwian: <begin> {{ang-conj|ġewindwian<w2>}} <end>
 Page 9492 gewinn: Replaced {{ang-noun|n|head=ġewinn}} with {{ang-noun|ġewinn|n}}
 Page 9492 gewinn: <begin> {{ang-noun|ġewinn|n}} <end>
@@ -23246,7 +23244,7 @@ Page 9509 gewlencan: <begin> {{ang-verb|ġewlenċan}} <end>
 Page 9509 gewlencan: <begin> {{ang-conj|ġewlenċan<w1>}} <end>
 Page 9510 gewœpan: <begin> {{ang-verb|ġewœ̄pan}} {{tlb|ang|Anglian|early <<Kentish>>}} <end>
 Page 9510 gewœpan: <begin> {{ang-conj-anglian|ġewœ̄pan<s7>}} <end>
-Page 9511 gewraþian: <begin> {{ang-verb}} <end>
+Page 9511 gewraþian: <begin> {{ang-verb|ġewrāþian}} <end>
 Page 9511 gewraþian: <begin> {{ang-conj|ġewrāþian<w2>}} <end>
 Page 9512 gewrecan: <begin> {{ang-verb|ġewrecan}} <end>
 Page 9512 gewrecan: <begin> {{ang-conj|ġewrecan<s5>}} <end>
@@ -23309,9 +23307,9 @@ Page 9537 gewyrht: <begin> {{ang-decl-noun-a-n|ġewyrht|short=1}} <end>
 Page 9538 gewyrhta: Replaced {{ang-noun|m|head=ġewyrhta}} with {{ang-noun|ġewyrhta|m}}
 Page 9538 gewyrhta: <begin> {{ang-noun|ġewyrhta|m}} <end>
 Page 9538 gewyrhta: <begin> {{ang-decl-noun-n-m|ġewyrht}} <end>
-Page 9539 gewyrpan: <begin> {{ang-verb}} {{tlb|ang|Late West Saxon}} <end>
+Page 9539 gewyrpan: <begin> {{ang-verb|ġewyrpan}} {{tlb|ang|Late West Saxon}} <end>
 Page 9539 gewyrpan: <begin> {{ang-conj|ġewyrpan<w1>}} <end>
-Page 9539 gewyrpan: <begin> {{ang-verb}} <end>
+Page 9539 gewyrpan: <begin> {{ang-verb|ġewyrpan}} <end>
 Page 9540 gewyrtbox: Replaced {{ang-noun|head=ġewyrtbox|f|ġewyrtboxa}} with {{ang-noun|ġewyrtbox|f|ġewyrtboxa}}
 Page 9540 gewyrtbox: <begin> {{ang-noun|ġewyrtbox|f|ġewyrtboxa}} <end>
 Page 9540 gewyrtbox: <begin> {{ang-decl-noun-o-f|ġewyrtbox}} <end>
@@ -23508,7 +23506,7 @@ Page 9621 gif: <begin> {{head|ang|conjunction|head=ġif}} <end>
 Page 9622 gifa: Replaced {{ang-noun|m|head=ġifa}} with {{ang-noun|ġifa|m}}
 Page 9622 gifa: <begin> {{ang-noun|ġifa|m}} <end>
 Page 9623 gifan: <begin> {{ang-verb|ġifan}} {{tlb|ang|Early West Saxon}} <end>
-Page 9623 gifan: <begin> {{ang-conj|ġiefan<s5/pres23:ġif/impsg:ġif/presa:ġifa/prese:ġife/pp:ġifen>}} <end>
+Page 9623 gifan: <begin> {{ang-conj|ġifanefan<s5/pres23:ġif/impsg:ġif/presa:ġifa/prese:ġife/pp:ġifen>}} <end>
 Page 9624 gifeþe: Replaced {{ang-noun|n|head=ġifeþe}} with {{ang-noun|ġifeþe|n}}
 Page 9624 gifeþe: <begin> {{ang-noun|ġifeþe|n}} <end>
 Page 9624 gifeþe: <begin> {{ang-decl-noun-ja-n|ġifeþ}} <end>
@@ -24039,10 +24037,10 @@ Page 9840 godspellere: <begin> {{ang-noun||m}} <end>
 Page 9840 godspellere: <begin> {{ang-decl-noun-ja-m|godspeller}} <end>
 Page 9841 godspellian: <begin> {{ang-verb}} <end>
 Page 9841 godspellian: <begin> {{ang-conj|godspellian<w2>}} <end>
-Page 9842 godspellic: <begin> {{ang-adj|gōdspellīċ}} <end>
-Page 9842 godspellic: <begin> {{ang-adecl|gōdspellīċ}} <end>
-Page 9843 godspellisc: <begin> {{ang-adj|gōdspellisċ}} <end>
-Page 9843 godspellisc: <begin> {{ang-adecl|gōdspellisċ|contractable=no}} <end>
+Page 9842 godspellic: <begin> {{ang-adj|godspellīċ}} <end>
+Page 9842 godspellic: <begin> {{ang-adecl|godspellīċ}} <end>
+Page 9843 godspellisc: <begin> {{ang-adj|godspellisċ}} <end>
+Page 9843 godspellisc: <begin> {{ang-adecl|godspellisċ|contractable=no}} <end>
 Page 9844 godspelltraht: Replaced {{ang-noun|m|head=godspelltraht}} with {{ang-noun|godspelltraht|m}}
 Page 9844 godspelltraht: <begin> {{ang-noun|godspelltraht|m}} <end>
 Page 9844 godspelltraht: <begin> {{ang-decl-noun-a-m|godspelltraht}} <end>
@@ -24744,7 +24742,7 @@ Page 10128 gyf: <begin> {{head|ang|conjunction}} <end>
 Page 10129 gyfa: Replaced {{ang-noun|m|head=ġyfa}} with {{ang-noun|ġyfa|m}}
 Page 10129 gyfa: <begin> {{ang-noun|ġyfa|m}} <end>
 Page 10130 gyfan: <begin> {{ang-verb|ġyfan}} {{tlb|ang|Late West Saxon}} <end>
-Page 10130 gyfan: <begin> {{ang-conj|ġiefan<s5/pres23:ġyf/impsg:ġyf/presa:ġyfa/prese:ġyfe/pp:ġyfen>}} <end>
+Page 10130 gyfan: <begin> {{ang-conj|ġyfaniefan<s5/pres23:ġyf/impsg:ġyf/presa:ġyfa/prese:ġyfe/pp:ġyfen>}} <end>
 Page 10131 gyft: Replaced {{ang-noun|f|head=ġyft}} with {{ang-noun|ġyft|f}}
 Page 10131 gyft: <begin> {{ang-noun|ġyft|f}} <end>
 Page 10132 gyfu: Replaced {{ang-noun|f|head=ġyfu}} with {{ang-noun|ġyfu|f}}
@@ -27329,7 +27327,7 @@ Page 11149 hliep: <begin> {{ang-noun|hlīep|m}} <end>
 Page 11149 hliep: <begin> {{ang-decl-noun-i-m|hlīep}} <end>
 Page 11150 -hliepe: <begin> {{ang-adj|-hlīepe}} <end>
 Page 11150 -hliepe: <begin> {{ang-adecl|-hlīepe}} <end>
-Page 11151 hlifian: <begin> {{ang-verb}} <end>
+Page 11151 hlifian: <begin> {{ang-verb|hlīfian}} <end>
 Page 11151 hlifian: <begin> {{ang-conj|hlīfian<w2>}} <end>
 Page 11152 hlihhan: <begin> {{ang-verb}} <end>
 Page 11152 hlihhan: <begin> {{ang-conj|hlihhan<s6/pp:*hlæġen/ge:0>}} <end>
@@ -34915,8 +34913,8 @@ Page 14191 nibacen: <begin> {{ang-adecl|nībacen}} <end>
 Page 14192 nic: <begin> {{head|ang|pronoun|cat2=personal pronouns|head=nic, niċ}} <end>
 Page 14193 nicc: <begin> {{head|ang|pronoun|cat2=personal pronouns|head=niċċ}} <end>
 Page 14194 niccan: Replaced {{ang-verb|head=niccan, niċċan}} with {{ang-verb|niccan, niċċan}}
-Page 14194 niccan: <begin> {{ang-verb|niccan, niċċan}} <end>
-Page 14194 niccan: <begin> {{ang-conj|niccan<w1>}} <end>
+Page 14194 niccan: <begin> {{ang-verb|niccan,niċċan}} <end>
+Page 14194 niccan: <begin> {{ang-conj|niccan,niċċan<w1>}} <end>
 Page 14194 niccan: <begin> {{ang-conj|niċċan<w1>}} <end>
 Page 14195 nicend: <begin> {{ang-adj|nīcend}} <end>
 Page 14196 nicenned: Replaced {{ang-adj|head=nīcenned}} with {{ang-adj|nīcenned}}
@@ -35699,7 +35697,7 @@ Page 14548 oferflowan: <begin> {{ang-verb|oferflōwan}} <end>
 Page 14548 oferflowan: <begin> {{ang-conj|oferflōwan<s7>}} <end>
 Page 14549 oferfroren: <begin> {{ang-adj}} <end>
 Page 14550 oferfylgan: <begin> {{ang-verb|oferfylġan}} <end>
-Page 14550 oferfylgan: <begin> {{ang-conj|oferfylgan<w1>}} <end>
+Page 14550 oferfylgan: <begin> {{ang-conj|oferfylġangan<w1>}} <end>
 Page 14551 oferfyllan: <begin> {{ang-verb|oferfyllan}} <end>
 Page 14551 oferfyllan: <begin> {{ang-conj|oferfyllan<w1b>}} <end>
 Page 14552 ofergægan: <begin> {{head|ang|verb|head=ofergǣġan}} <end>
@@ -35790,7 +35788,7 @@ Page 14590 ofersawan: <begin> {{ang-verb|ofersāwan}} <end>
 Page 14590 ofersawan: <begin> {{ang-conj|ofersāwan<s7>}} <end>
 Page 14591 ofersceadan: Replaced {{ang-verb|ofersċeādan|head2=ofersċēadan}} with {{ang-verb|ofersċeādan,ofersċēadan}}
 Page 14591 ofersceadan: <begin> {{ang-verb|ofersċeādan,ofersċēadan}} <end>
-Page 14591 ofersceadan: <begin> {{ang-conj|ofersċeādan<s7>}} <end>
+Page 14591 ofersceadan: <begin> {{ang-conj|ofersċeādan,ofersċēadan<s7>}} <end>
 Page 14591 ofersceadan: <begin> {{ang-conj|ofersċēadan<s7>}} <end>
 Page 14592 ofersceadwian: <begin> {{ang-verb|ofersċeadwian}} <end>
 Page 14592 ofersceadwian: <begin> {{ang-conj|ofersċeadwian<w2>}} <end>
@@ -35934,7 +35932,7 @@ Page 14655 ofsacan: <begin> {{ang-verb}}<ref name="ang:BT">{{R:ang:BT|of-sacan|r
 Page 14655 ofsacan: <begin> {{ang-conj|ofsacan<s6>}} <end>
 Page 14656 ofsceadan: Replaced {{ang-verb|ofsċeādan|head2=ofsċēadan}} with {{ang-verb|ofsċeādan,ofsċēadan}}
 Page 14656 ofsceadan: <begin> {{ang-verb|ofsċeādan,ofsċēadan}} <end>
-Page 14656 ofsceadan: <begin> {{ang-conj|ofsċeādan<s7>}} <end>
+Page 14656 ofsceadan: <begin> {{ang-conj|ofsċeādan,ofsċēadan<s7>}} <end>
 Page 14656 ofsceadan: <begin> {{ang-conj|ofsċēadan<s7>}} <end>
 Page 14657 ofseon: <begin> {{ang-verb|ofsēon}} <end>
 Page 14657 ofseon: <begin> {{ang-conj|ofsēon<s5>}} <end>
@@ -36257,7 +36255,7 @@ Page 14808 onhreran: <begin> {{ang-verb|onhrēran}} <end>
 Page 14808 onhreran: <begin> {{ang-conj|onhrēran<w1>}} <end>
 Page 14809 onhweorfan: <begin> {{ang-verb}} <end>
 Page 14809 onhweorfan: <begin> {{ang-conj|onhweorfan<s3/2sg_pres_indc:onhweorfest/3sg_pres_indc:onhweorfeþ>}} <end>
-Page 14810 onhycgan: <begin> {{ang-verb}} <end>
+Page 14810 onhycgan: <begin> {{ang-verb|onhyċġan}} <end>
 Page 14810 onhycgan: <begin> {{ang-conj|onhyċġan<w3>}} <end>
 Page 14811 onhyrdan: <begin> {{ang-verb}} {{tlb|ang|Late West Saxon}} <end>
 Page 14811 onhyrdan: <begin> {{ang-conj|onhyrdan<w1>}} <end>
@@ -37110,7 +37108,7 @@ Page 15175 picgbread: <begin> {{ang-noun|picgbrēad|n}} <end>
 Page 15175 picgbread: <begin> {{ang-decl-noun|picgbrēad|picgbrēad,picgbrēadru|picgbrēad|picgbrēad,picgbrēadru|picgbrēades|picgbrēada|picgbrēade|picgbrēadum}} <end>
 Page 15176 pician: Replaced {{ang-verb|head=piċian|head2=pician}} with {{ang-verb|piċian,pician}}
 Page 15176 pician: <begin> {{ang-verb|piċian,pician}} <end>
-Page 15176 pician: <begin> {{ang-conj|piċian<w2>}} <end>
+Page 15176 pician: <begin> {{ang-conj|piċian,pician<w2>}} <end>
 Page 15176 pician: <begin> {{ang-conj|pician<w2>}} <end>
 Page 15177 pie: Replaced {{ang-noun|f|head=pīe}} with {{ang-noun|pīe|f}}
 Page 15177 pie: <begin> {{ang-noun|pīe|f}} <end>
@@ -37205,7 +37203,7 @@ Page 15210 pipere: <begin> {{ang-decl-noun-ja-m|pīper}} <end>
 Page 15211 pipfan: Replaced {{ang-verb|head=pīpfan}} with {{ang-verb|pīpfan}}
 Page 15211 pipfan: <begin> {{ang-verb|pīpfan}} <end>
 Page 15211 pipfan: <begin> {{ang-conj|pīpfan<w1>}} <end>
-Page 15212 pipian: <begin> {{ang-verb}} <end>
+Page 15212 pipian: <begin> {{ang-verb|pīpian}} <end>
 Page 15212 pipian: <begin> {{ang-conj|pīpian<w2>}} <end>
 Page 15213 piplian: Replaced {{ang-verb|head=piplian}} with {{ang-verb|piplian}}
 Page 15213 piplian: <begin> {{ang-verb|piplian}} <end>
@@ -38320,7 +38318,7 @@ Page 15645 ripere: Replaced {{ang-noun|m|head=rīpere}} with {{ang-noun|rīpere|
 Page 15645 ripere: <begin> {{ang-noun|rīpere|m}} <end>
 Page 15645 ripere: <begin> {{ang-decl-noun-ja-m|rīper}} <end>
 Page 15646 ripian: <begin> {{ang-verb|rīpian}} <end>
-Page 15646 ripian: <begin> {{ang-conj|ripian<w2>}} <end>
+Page 15646 ripian: <begin> {{ang-conj|rīpianipian<w2>}} <end>
 Page 15647 ripisern: Replaced {{ang-noun|n|head=rīpīsern}} with {{ang-noun|rīpīsern|n}}
 Page 15647 ripisern: <begin> {{ang-noun|rīpīsern|n}} <end>
 Page 15647 ripisern: <begin> {{ang-decl-noun-a-n|rīpīsern}} <end>
@@ -39315,7 +39313,7 @@ Page 16034 sceada: <begin> {{ang-noun|sċēada|m}} <end>
 Page 16034 sceada: <begin> {{ang-decl-noun-n-m|sċēad}} <end>
 Page 16035 sceadan: Replaced {{ang-verb|sċeādan|head2=sċēadan}} with {{ang-verb|sċeādan,sċēadan}}
 Page 16035 sceadan: <begin> {{ang-verb|sċeādan,sċēadan}} <end>
-Page 16035 sceadan: <begin> {{ang-conj|sċeādan<s7>}} <end>
+Page 16035 sceadan: <begin> {{ang-conj|sċeādan,sċēadan<s7>}} <end>
 Page 16036 sceadd: Replaced {{ang-noun|m|head=sċeadd}} with {{ang-noun|sċeadd|m}}
 Page 16036 sceadd: <begin> {{ang-noun|sċeadd|m}} <end>
 Page 16037 sceadian: <begin> {{ang-verb|sċeadian}} <end>
@@ -40199,7 +40197,7 @@ Page 16359 screawa: <begin> {{ang-noun|sċrēawa|m|sċrēawan}} <end>
 Page 16359 screawa: <begin> {{ang-decl-noun-n-m|sċrēaw}} <end>
 Page 16360 scredan: <begin> {{ang-verb|sċrēdan}} {{tlb|ang|late <<Kentish>>}} <end>
 Page 16361 screncan: <begin> {{ang-verb|sċrenċan}} <end>
-Page 16361 screncan: <begin> {{ang-conj|sċrencan<w1>}} <end>
+Page 16361 screncan: <begin> {{ang-conj|sċrenċancan<w1>}} <end>
 Page 16362 screon: <begin> {{ang-verb|sċrēon}} <end>
 Page 16362 screon: <begin> {{ang-conj|sċrēon<s1>}} <end>
 Page 16363 screpan: Replaced {{ang-verb|head=sċrepan}} with {{ang-verb|sċrepan}}
@@ -41575,8 +41573,8 @@ Page 16944 Siward: <begin> {{ang-proper noun|Sīward|m}} <end>
 Page 16945 Siweard: Replaced {{ang-proper noun|m|head=Sīweard}} with {{ang-proper noun|Sīweard|m}}
 Page 16945 Siweard: <begin> {{ang-proper noun|Sīweard|m}} <end>
 Page 16945 Siweard: <begin> {{ang-decl-noun-a-m|Sīweard|num=sg}} <end>
-Page 16946 siwian: <begin> {{ang-verb}} <end>
-Page 16946 siwian: <begin> {{ang-conj|siwian<w2>}} <end>
+Page 16946 siwian: <begin> {{ang-verb|sīwian}} <end>
+Page 16946 siwian: <begin> {{ang-conj|sīwian<w2>}} <end>
 Page 16947 Siwine: Replaced {{ang-proper noun|m|head=Sīwine}} with {{ang-proper noun|Sīwine|m}}
 Page 16947 Siwine: <begin> {{ang-proper noun|Sīwine|m}} <end>
 Page 16948 six: <begin> {{head|ang|numeral}} <end>
@@ -42427,7 +42425,7 @@ Page 17295 sparian: <begin> {{ang-conj|sparian<w2>}} <end>
 Page 17296 spatl: Replaced {{ang-noun|n|head=spātl}} with {{ang-noun|spātl|n}}
 Page 17296 spatl: <begin> {{ang-noun|spātl|n}} <end>
 Page 17296 spatl: <begin> {{ang-decl-noun-a-n|spātl|short=1}} <end>
-Page 17297 spatlian: <begin> {{ang-verb}} <end>
+Page 17297 spatlian: <begin> {{ang-verb|spātlian}} <end>
 Page 17297 spatlian: <begin> {{ang-conj|spātlian<w2>}} <end>
 Page 17298 spaþl: Replaced {{ang-noun|n|head=spāþl}} with {{ang-noun|spāþl|n}}
 Page 17298 spaþl: <begin> {{ang-noun|spāþl|n}} <end>
@@ -43540,7 +43538,7 @@ Page 17721 strudan: <begin> {{ang-conj|strūdan<s2>}} <end>
 Page 17722 struta: Replaced {{ang-noun|m|head=strūta}} with {{ang-noun|strūta|m}}
 Page 17722 struta: <begin> {{ang-noun|strūta|m}} <end>
 Page 17722 struta: <begin> {{ang-decl-noun-n-m|strūt}} <end>
-Page 17723 strutian: <begin> {{ang-verb}} <end>
+Page 17723 strutian: <begin> {{ang-verb|strūtian}} <end>
 Page 17723 strutian: <begin> {{ang-conj|strūtian<w2>}} <end>
 Page 17724 strynan: <begin> {{ang-verb|strȳnan}} <end>
 Page 17724 strynan: <begin> {{ang-conj|strȳnan<w1>}} <end>
@@ -45577,7 +45575,7 @@ Page 18595 to morgne: <begin> {{ang-adv|[[tō]] [[morgen|morgne]]}} <end>
 Page 18596 to niht: <begin> {{ang-adv|tō niht}} <end>
 Page 18597 to nones: <begin> {{ang-adv|tō nōnes}} <end>
 Page 18598 to setle gan: <begin> {{ang-verb|[[tō]] [[setl|setle]] [[gān]]}} <end>
-Page 18598 to setle gan: <begin> {{ang-conj|on setl gān<i>}} <end>
+Page 18598 to setle gan: <begin> {{ang-conj|tō setle gān<i>}} <end>
 Page 18599 to uhtes: <begin> {{ang-adv|tō ūhtes}} <end>
 Page 18600 to-: <begin> {{h|ang|pref|head=tō-}} <end>
 Page 18601 toætecan: <begin> {{ang-verb|tōætēċan}} <end>
@@ -45685,7 +45683,7 @@ Page 18649 togeotan: <begin> {{ang-verb|tōġēotan}} <end>
 Page 18649 togeotan: <begin> {{ang-conj|tōġēotan<s2>}} <end>
 Page 18650 togesceadan: Replaced {{ang-verb|tōġesċeādan|head2=tōġesċēadan}} with {{ang-verb|tōġesċeādan,tōġesċēadan}}
 Page 18650 togesceadan: <begin> {{ang-verb|tōġesċeādan,tōġesċēadan}} <end>
-Page 18650 togesceadan: <begin> {{ang-conj|tōġesċeādan<s7>}} <end>
+Page 18650 togesceadan: <begin> {{ang-conj|tōġesċeādan,tōġesċēadan<s7>}} <end>
 Page 18650 togesceadan: <begin> {{ang-conj|tōġesċēadan<s7>}} <end>
 Page 18651 togian: <begin> {{ang-verb}} <end>
 Page 18651 togian: <begin> {{ang-conj|togian<w2>}} <end>
@@ -45814,7 +45812,7 @@ Page 18700 tosca: <begin> {{ang-noun|tosċa|m}} <end>
 Page 18700 tosca: <begin> {{ang-decl-noun-n-m|tosċ}} <end>
 Page 18701 tosceadan: Replaced {{ang-verb|tōsċeādan|head2=tōsċēadan}} with {{ang-verb|tōsċeādan,tōsċēadan}}
 Page 18701 tosceadan: <begin> {{ang-verb|tōsċeādan,tōsċēadan}} <end>
-Page 18701 tosceadan: <begin> {{ang-conj|tōsċeādan<s7>}} <end>
+Page 18701 tosceadan: <begin> {{ang-conj|tōsċeādan,tōsċēadan<s7>}} <end>
 Page 18701 tosceadan: <begin> {{ang-conj|tōsċēadan<s7>}} <end>
 Page 18702 toscriþan: Replaced {{ang-verb|head=tōsċrīþan}} with {{ang-verb|tōsċrīþan}}
 Page 18702 toscriþan: <begin> {{ang-verb|tōsċrīþan}} <end>
@@ -46188,7 +46186,7 @@ Page 18846 truwian: <begin> {{ang-verb|trūwian}} <end>
 Page 18846 truwian: <begin> {{ang-conj|trūwian<w2>}} <end>
 Page 18847 Reconstruction:Old English/tryccan: Replaced {{ang-verb|head=*tryccan|head2=*tryċċan}} with {{ang-verb|*tryccan,*tryċċan}}
 Page 18847 Reconstruction:Old English/tryccan: <begin> {{ang-verb|*tryccan,*tryċċan}} <end>
-Page 18847 Reconstruction:Old English/tryccan: <begin> {{ang-conj|*tryccan<w1b/past:*tryct/impsg:*trycce/ge:0/pp:*(ġe)tryct>}} <end>
+Page 18847 Reconstruction:Old English/tryccan: <begin> {{ang-conj|*tryccan,*tryċċan<w1b/past:*tryct/impsg:*trycce/ge:0/pp:*(ġe)tryct>}} <end>
 Page 18847 Reconstruction:Old English/tryccan: <begin> {{ang-conj|*tryċċan<w1b/past:*tryht/impsg:*tryċċe/ge:0/pp:*(ġe)tryht>}} <end>
 Page 18848 trymman: <begin> {{ang-verb}} <end>
 Page 18848 trymman: <begin> {{ang-conj|trymman<w1>}} <end>
@@ -47137,7 +47135,7 @@ Page 19266 þin: <begin> {{head|ang|pronoun form|head=þīn}} <end>
 Page 19267 þinan: Replaced {{ang-verb|head=þīnan}} with {{ang-verb|þīnan}}
 Page 19267 þinan: <begin> {{ang-verb|þīnan}} <end>
 Page 19267 þinan: <begin> {{ang-conj|þīnan<s1>}} <end>
-Page 19268 þincan: <begin> {{ang-verb}} <end>
+Page 19268 þincan: <begin> {{ang-verb|þinċan}} <end>
 Page 19268 þincan: <begin> {{ang-conj|þinċan<w1/papp:þūht>}} <end>
 Page 19269 þincg: Replaced {{ang-noun|n|head1=þincg|head2=þinċġ}} with {{ang-noun|þincg,þinċġ|n}}
 Page 19269 þincg: <begin> {{ang-noun|þincg,þinċġ|n}} {{tlb|ang|Late West Saxon}} <end>
@@ -50826,7 +50824,7 @@ Page 20806 widherian: <begin> {{ang-verb|wīdherian}} <end>
 Page 20806 widherian: <begin> {{ang-conj|wīdherian<w1>}} <end>
 Page 20807 Widia: Replaced {{ang-proper noun|m}} with {{ang-proper noun||m}}
 Page 20807 Widia: <begin> {{ang-proper noun||m}} <end>
-Page 20808 widian: <begin> {{ang-verb}} <end>
+Page 20808 widian: <begin> {{ang-verb|wīdian}} <end>
 Page 20808 widian: <begin> {{ang-conj|wīdian<w2>}} <end>
 Page 20809 widland: Replaced {{ang-noun|n|head=wīdland}} with {{ang-noun|wīdland|n}}
 Page 20809 widland: <begin> {{ang-noun|wīdland|n}} <end>
@@ -65973,7 +65971,7 @@ Page 11785 -eres: <begin> {{head|ang|suffix form}} <end>
 Page 11786 eres: <begin> {{head|ang|noun form|head=ēres}} <end>
 Page 11787 erest: <begin> {{head|ang|verb form}} <end>
 Page 11788 ereþ: <begin> {{head|ang|verb form}} <end>
-Page 11789 ergan: <begin> {{head|ang|verb form|head=erġan}} <end>
+Page 11789 ergan: <begin> {{ang-verb|erġan}} <end>
 Page 11789 ergan: <begin> {{ang-conj|erġan<w1/1sg_pres_indc:erġe/pres23:ere/1sg_past_indc:erede/2sg_past_indc:eredest/3sg_past_indc:erede/pl_past_indc:eredon/sg_past_subj:erede/pl_past_subj:ereden/sg_impr:ere/pp:ered>}} <end>
 Page 11790 ergende: <begin> {{head|ang|present participle|head=erġende}} <end>
 Page 11791 ergenne: <begin> {{head|ang|verb form|head=erġenne}} <end>
@@ -65985,7 +65983,7 @@ Page 11796 -eriende: <begin> {{head|ang|suffix form}} <end>
 Page 11797 eriende: <begin> {{head|ang|present participle|head=eriende}} <end>
 Page 11798 -erienne: <begin> {{head|ang|suffix form}} <end>
 Page 11799 erienne: <begin> {{head|ang|verb form|head=erienne}} <end>
-Page 11800 erigan: <begin> {{head|ang|verb form|head=eriġan}} <end>
+Page 11800 erigan: <begin> {{ang-verb|eriġan}} <end>
 Page 11800 erigan: <begin> {{ang-conj|eriġan<w1/1sg_pres_indc:eriġe/pres23:ere/1sg_past_indc:erede/2sg_past_indc:eredest/3sg_past_indc:erede/pl_past_indc:eredon/sg_past_subj:erede/pl_past_subj:ereden/sg_impr:ere/pp:ered>}} <end>
 Page 11801 -erige: <begin> {{head|ang|suffix form|head=-eriġe}} <end>
 Page 11802 -erigen: <begin> {{head|ang|suffix form|head=-eriġen}} <end>
