@@ -13,6 +13,8 @@ local m_headword_utilities = require_when_needed(headword_utilities_module)
 local m_string_utilities = require_when_needed("Module:string utilities")
 local glossary_link = require_when_needed(headword_utilities_module, "glossary_link")
 
+local insert = table.insert
+
 local list_param = {list = true, disallow_holes = true}
 
 -- Table of all valid genders by language, mapping user-specified gender specs to canonicalized versions.
@@ -109,6 +111,18 @@ local function parse_inflection(data, paramname, forms)
 	}
 end
 
+-- Insert the parsed inflections in `terms` (as parsed by `parse_inflection`) into `data.inflections`, with label
+-- `label` and optional accelerator spec `accel`.
+local function insert_inflection(data, terms, label, accel, no_label)
+	m_headword_utilities.insert_inflection {
+		headdata = data,
+		terms = terms,
+		label = label,
+		no_label = no_label,
+		accel = accel and {form = accel} or nil,
+	} 
+end
+
 -- The main entry point.
 -- This is the only function that can be invoked from a template.
 function export.show(frame)
@@ -151,7 +165,7 @@ function export.show(frame)
 
     local args = require("Module:parameters").process(parargs, params)
 
-	local pagename = args.pagename or mw.title.getCurrentTitle().text
+	local pagename = args.pagename or mw.loadData("Module:headword/data").pagename
 
 	local data = {
 		lang = lang,
@@ -173,8 +187,8 @@ function export.show(frame)
 		data.is_suffix = true
 		data.pos_category = "suffixes"
 		local singular_poscat = require(en_utilities_module).singularize(poscat)
-		table.insert(data.categories, langname .. " " .. singular_poscat .. "-forming suffixes")
-		table.insert(data.inflections, {label = singular_poscat .. "-forming suffix"})
+		insert(data.categories, langname .. " " .. singular_poscat .. "-forming suffixes")
+		insert(data.inflections, {label = singular_poscat .. "-forming suffix"})
 	end
 
 	if pos_functions[poscat] then
@@ -185,7 +199,7 @@ function export.show(frame)
 	-- to an ASCII vowel and a diacritic, such as é, are counted as vowels and
 	-- do not need to be included in the pattern.
 	if not pagename:find("[ %-]") and not rfind(mw.ustring.lower(mw.ustring.toNFD(pagename)), "[aeiouyæœø]") then
-		table.insert(data.categories, langname .. " words spelled without vowels")
+		insert(data.categories, langname .. " words spelled without vowels")
 	end
 
     if args.json then
@@ -241,11 +255,11 @@ local function do_nouns(is_proper, args, data)
 		end
 		track("gender-" .. g)
 		gspec.spec = g
-		table.insert(data.genders, gspec)
+		insert(data.genders, gspec)
 	end
 	if args.indecl then
-		table.insert(data.inflections, {label = glossary_link("indeclinable")})
-		table.insert(data.categories, data.langname .. " indeclinable nouns")
+		insert(data.inflections, {label = glossary_link("indeclinable")})
+		insert(data.categories, data.langname .. " indeclinable nouns")
 	end
 	local decls
 	if data.lang:getCode() == "sk" then
@@ -272,7 +286,7 @@ local function do_nouns(is_proper, args, data)
 	handle_infl("genpl", "<<genitive>> <<plural>>")
 	if decls and decls[1] then
 		decls.label = "declension pattern of"
-		table.insert(data.inflections, decls)
+		insert(data.inflections, decls)
 	end
 	handle_infl("m", "male equivalent")
 	handle_infl("f", "female equivalent")
@@ -318,33 +332,30 @@ pos_functions["verbs"] = {
 
 local function do_comparative_superlative(args, data, plpos)
 	if args[1][1] then
-		local comp = parse_inflection(data, {1, "comp"}, args[1])
-		if comp[1] and comp[1].term == "-" then
-			if comp[2] then
+		local comps = parse_inflection(data, {1, "comp"}, args[1])
+		if comps[1] and comps[1].term == "-" then
+			if comps[2] then
 				error("Can't specify comparatives along with '-' indicating an uncomparable adjective or adverb")
 			end
 			m_headword_utilities.insert_fixed_inflection {
 				headdata = data,
 				label = "not <<comparable>>",
-				originating_term = comp[1],
+				originating_term = comps[1],
 			}
-			table.insert(data.categories, data.langname .. " uncomparable " .. plpos)
+			insert(data.categories, data.langname .. " uncomparable " .. plpos)
 		else
-			local sup = parse_inflection(data, {2, "sup"}, args[2])
-			if not sup[1] then
-				sup = m_table.deepCopy(comp)
-				for _, s in ipairs(sup) do
+			local sups = parse_inflection(data, {2, "sup"}, args[2])
+			if not sups[1] then
+				for _, comp in ipairs(comps) do
+					local sup = m_table.shallowCopy(comp)
 					-- Old Czech has naj-.
-					s.term = (data.lang:getCode() == "cs" and "nej" or "naj") .. s.term
+					sup.term = (data.lang:getCode() == "cs" and "nej" or "naj") .. sup.term
+					insert(sups, sup)
 				end
 			end
-			comp.label = "comparative"
-			comp.accel = {form = "comparative"}
-			sup.label = "superlative"
-			sup.accel = {form = "superlative"}
-			table.insert(data.inflections, comp)
-			table.insert(data.inflections, sup)
-			table.insert(data.categories, data.langname .. " comparable " .. plpos)
+			insert_inflection(data, comps, "<<comparative>>", "comparative")
+			insert_inflection(data, sups, "<<superlative>>", "superlative")
+			insert(data.categories, data.langname .. " comparable " .. plpos)
 		end
 	end
 end
@@ -366,13 +377,25 @@ pos_functions["adjectives"] = {
 	end,
 	func = function(args, data)
 		if args.indecl then
-			table.insert(data.inflections, {label = glossary_link("indeclinable")})
-			table.insert(data.categories, data.langname .. " indeclinable adjectives")
+			insert(data.inflections, {label = glossary_link("indeclinable")})
+			insert(data.categories, data.langname .. " indeclinable adjectives")
 		end
 		parse_and_insert_inflection(data, args, "short", "short form")
 		do_comparative_superlative(args, data, "adjectives")
-		parse_and_insert_inflection(data, args, "shortcomp", "short <<comparative>>")
-		parse_and_insert_inflection(data, args, "shortsup", "short <<superlative>>")
+		if data.lang:getCode() == "zlw-ocs" then
+			local shortcomps = parse_inflection(data, "shortcomp", args.shortcomp)
+			local shortsups = parse_inflection(data, "shortsup", args.shortsup)
+			if shortcomps[1] and not shortsups[1] then
+				for _, shortcomp in ipairs(shortcomps) do
+					local shortsup = m_table.shallowCopy(shortcomp)
+					-- Old Czech has naj-.
+					shortsup.term = "naj" .. shortsup.term
+					insert(shortsups, shortsup)
+				end
+			end
+			insert_inflection(data, shortcomps, "short <<comparative>>")
+			insert_inflection(data, shortsups, "short <<superlative>>")
+		end
 		parse_and_insert_inflection(data, args, "adv", "adverb")
 	end,
 }
