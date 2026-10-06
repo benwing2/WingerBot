@@ -11,7 +11,7 @@ Page 1 -a: -------- begin text --------
 From {{inh|ang|gmw-pro|*-ō}}, from {{inh|ang|gem-pro|*-ô}}. Cognate with {{cog|goh|-o}}.
 
 ====Suffix==== 
-{{ang-head|nounf|g=m}}
+{{ang-head|nounf|inflsuf=1|g=m}}
 
 # {{ng|marks the masculine nominative singular of n-stems}}
 #: {{uxi|ang|ācweorn'''a'''|squirrel}}
@@ -21,19 +21,19 @@ From {{inh|ang|gmw-pro|*-ō}}, from {{inh|ang|gem-pro|*-ô}}. Cognate with {{cog
 #: {{uxi|ang|heorr'''a'''|door hinge}}
 
 ====Suffix==== 
-{{ang-head|adjf|g=m}}
+{{ang-head|adjf|inflsuf=1|g=m}}
 
 # {{ng|marks the weak masculine nominative singular of adjectives, and the subsequent nominalised form}}
-#: {{suffixusex|ang|eald<t:old>|ealda<alt:(sē) ealda><t:(the/that) old; (the/that) old one/thing>}}
+#: {{afex|ang|eald<t:old>|ealda<alt:(sē) ealda><t:(the/that) old; (the/that) old one/thing>}}
 
 ====Suffix====
 {{ang-noun||m}}
 
 # {{senseid|ang|agent noun}} {{ng|forms masculine agent nouns, usually from verbs}}
 #: {{syn|ang|-end|-ere}}
-#: {{suffixusex|ang|ġiefan|t1=to give|ġiefa|t2=giver}}
-#: {{suffixusex|ang|dēman|t1=to judge|dēma|t2=a judge}}
-#: {{suffixusex|ang|cuman|t1=to come|cuma|t2=guest}}
+#: {{afex|ang|ġiefan<t:to give>|ġiefa<t:giver>}}
+#: {{afex|ang|dēman<t:to judge>|dēma<t:a judge>}}
+#: {{afex|ang|cuman<t:to come>|cuma<t:guest>}}
 
 =====Declension=====
 {{ang-decl-noun-n-m|-}}
@@ -67,21 +67,21 @@ From {{inh|ang|gmw-pro|*-ō}}, from {{inh|ang|gem-pro|*-ô}}.
 ===Etymology 3===
 
 ====Suffix====
-{{ang-head|nounf|g=mf}}
+{{ang-head|nounf|inflsuf=1|g=mf}}
 
 # {{ng|marks the {{lg|nominative}}, {{lg|accusative}}, and {{lg|genitive}} plural of ō-stem feminine nouns and u-stem masculine nouns}}
-#: {{suffixusex|ang|sunu|gloss1=son|suna|gloss2=sons, sons'}}
-#: {{suffixusex|ang|talu|gloss1=tale|tala|gloss2=tales, tales'}}
+#: {{afex|ang|sunu<t:son>|suna<t:sons, sons'>}}
+#: {{afex|ang|talu<t:tale>|tala<t:tales, tales'>}}
 
 ===Etymology 4===
 {{etymid|ang|genitive plural}}
 {{inh+|ang|gmw-pro|*-ō|id=genitive plural}}, from {{inh|ang|gem-pro|*-ǫ̂}}, from the {{der|ang|ine-pro|-}} genitive plural ending {{m|ine-pro|*-oHom}} as attached to thematic (''eh₂''-stem and ''o''-stem) nouns.
 
 ====Suffix====
-{{ang-head|nounf|g=m,n}}
+{{ang-head|nounf|inflsuf=1|g=m,n}}
 
 # {{ng|marks the {{lg|genitive}} plural of a-stem nouns}}
-#: {{suffixusex|ang|word|gloss1=word|worda|gloss2=words'}}
+#: {{afex|ang|word<t:word>|worda<t:words'>}}
 
 =====Descendants=====
 * {{desc|enm|-e|id=genitive plural}}
@@ -89,10 +89,10 @@ From {{inh|ang|gmw-pro|*-ō}}, from {{inh|ang|gem-pro|*-ô}}.
 ===Etymology 5===
 
 ====Suffix====
-{{ang-head|nounf|g=mf}}
+{{ang-head|nounf|inflsuf=1|g=mf}}
 
 # {{ng|marks the {{lg|genitive}} and {{lg|dative}} singular of u-stem nouns}}
-#: {{suffixusex|ang|sunu|gloss1=son|suna|gloss2=son's, son}}
+#: {{afex|ang|sunu<t:son>|suna<t:son's, son>}}
 
 -------- end text --------
 Page 1 -a: Skipped, no changes
@@ -113,9 +113,9 @@ Page 3 -ad: -------- begin text --------
 ==Old English==
 
 ===Suffix===
-{{ang-head|part}} {{tlb|ang|Anglian|Late West Saxon}}
+{{ang-head|part|inflsuf=1}} {{tlb|ang|Anglian|Late West Saxon}}
 
-# {{alt form|ang|-od}}: [[-ed]]; {{ng|forms the past participle of class II weak verbs}}
+# {{alt form|ang|-od}}: [[-ed]]; {{ng|marks the past participle of class II weak verbs}}
 
 ===Suffix===
 {{ang-adj}} {{tlb|ang|Anglian|Late West Saxon}}
@@ -143,9 +143,9 @@ Page 5 -ærn: -------- begin text --------
 ==Old English==
 
 ===Suffix===
-{{head|ang|suffix}}
+{{ang-noun||n}}
 
-# {{alternative form of|ang|-ern}}
+# {{alt form|ang|-ern}}; {{ng|forms nouns denoting a place}}
 -------- end text --------
 Page 5 -ærn: Skipped, no changes
 Page 6 -an: -------- begin text --------
@@ -159,20 +159,27 @@ Page 6 -an: -------- begin text --------
 From {{inh|ang|gem-pro|*-aną}} and {{inh|ang|gem-pro|*-janą|id=causative}}.
 
 ====Suffix====
-{{ang-verb|cat=inflectional suffixes}}
+{{ang-head|verbf|inflsuf=1}}
 
 # {{ng|marks the infinitive of most strong, class 1 weak, and preterite-present verbs (exceptions are verbs like {{m|ang|flēon|t=to flee}})}}
-#: {{uxi|ang|[[singan|sing'''an''']]|t=to sing}}
-#: {{uxi|ang|[[niman|nim'''an''']]|t=to take}}
+#: {{uxi|ang|[[sing'''an''']]|t=to sing}}
+#: {{uxi|ang|[[nim'''an''']]|t=to take}}
 
-=====Usage notes=====
-* Verbs formed with this suffix from nominal suffixes that included [[back vowel]]s underwent [[i-umlaut]]. Thus, {{m|ang|dōm}} + ''-an'' is not *''dōman'', but {{m|ang|dēman}}, and {{m|ang|fōda}} + ''-an'' is not *''fōdan'', but {{m|ang|fēdan}}.
+====Suffix====
+{{ang-head|verb}}
 
-=====Conjugation=====
+# {{ng|forms transitive, often causative, class 1 weak verbs from nouns and adjectives, with {{lg|i-mutation}}}}
+#: {{afex|ang|fōda<t:food>|fēdan<t:to feed>}}
+#: {{afex|ang|dōm<t:judgment>|dēman<t:to judge, to decide>}}
+#: {{afex|ang|fūl<t:dirty, foul>|fȳlan<t:to befoul, to defile, to pollute>}}
+#: {{afex|ang|full<t:full>|fyllan<t:to fill>}}
+#: {{afex|ang|frōfor<t:consolation, joy>|frēfran<t:to console, to cheer>}}
+
+====Conjugation====
 {{ang-conj|-an<w1/ge:0>}}
 {{ang-conj-anglian|-an<w1/ge:0>}}
 
-=====Descendants=====
+====Descendants====
 * {{desctree|enm|-en|id=infinitival}}
 
 ===Etymology 2===
@@ -180,14 +187,14 @@ From {{inh|ang|gem-pro|*-aną}} and {{inh|ang|gem-pro|*-janą|id=causative}}.
 From {{inh|ang|gmw-pro|*-anā}}, from {{inh|ang|gem-pro|*-anē}}.
 
 ====Alternative forms====
-* {{alter|ang|-ane}}
+* {{alt|ang|-ane}}
 
 ====Suffix====
 {{ang-adv}}
 
 # {{ng|forms adverbs with ablative direction}}
-#: {{uxi|ang|[[eastan|ēast'''an''']]|t=from the east}}
-#: {{uxi|ang|[[westan|west'''an''']]|t=from the west}}
+#: {{uxi|ang|[[ēast'''an''']]|t=from the east}}
+#: {{uxi|ang|[[west'''an''']]|t=from the west}}
 
 ===Etymology 3===
 {{etymon|ang|id=n-stem}}
@@ -196,9 +203,9 @@ From {{inh|ang|gmw-pro|*-anā}}, from {{inh|ang|gem-pro|*-anē}}.
 Supplanted {{m+|gmw-pro|*-ōn}} during the prehistory of Old English except for in relic forms such as {{m|ang|ēastron}} and {{m|ang|foldu}}.
 
 ====Suffix====
-{{ang-head|nounf|cat=inflectional suffixes}}
+{{ang-head|nounf|inflsuf=1}}
 
-# {{n-g|marks the accusative, genitive, and dative singular and nominative and accusative plural of ''n''-stem nouns}}
+# {{ng|marks the accusative, genitive, and dative singular and nominative and accusative plural of ''n''-stem nouns}}
 #: {{uxi|ang|[[bera|ber'''an''']]|t=bear, bear's, bears}}
 
 =====Declension=====
@@ -210,27 +217,27 @@ Supplanted {{m+|gmw-pro|*-ōn}} during the prehistory of Old English except for 
 ===Etymology 4===
 
 ====Suffix====
-{{ang-head|verbf|cat=inflectional suffixes}}
+{{ang-head|verbf|inflsuf=1}}
 
-# {{alternative form of|ang|-on|pos=strong plural past indicative suffix}}
+# {{alt form|ang|-on|pos=strong plural past indicative suffix}}
 
 ===Etymology 5===
 
 ====Suffix====
-{{ang-head|adjf|cat=inflectional suffixes}}
+{{ang-head|adjf|inflsuf=1}}
 
-# {{ng|forms the following inflections of weak adjectives:}}
-## Masculine and feminine accusative, genitive, dative, and instrumental singular
-## Neuter genitive, dative, and instrumental singular
-## Masculine, feminine, and neuter nominative and accusative plural
+# {{ng|marks the following inflections of weak adjectives:}}
+## masculine and feminine accusative, genitive, dative, and instrumental singular
+## neuter genitive, dative, and instrumental singular
+## masculine, feminine, and neuter nominative and accusative plural
 
 ===Etymology 6===
 {{etymid|ang|-um}}
 
 ====Suffix====
-{{ang-head|nounf|addlpos=adjf|cat=inflectional suffixes}}
+{{ang-head|nounf|addlpos=adjf|inflsuf=1}}
 
-# {{lb|ang|Late Old English}} {{alternative form of|ang|-um}}
+# {{lb|ang|Late Old English}} {{alt form|ang|-um}}
 
 =====Usage notes=====
 * This form appears in late texts either due to reduction of the original {{m|ang|-um}} ending, influence from the ''n''-stem oblique singular and nominative/accusative plural {{m|ang|-an|id=n-stem}}, or most likely, a combination of both.
@@ -243,8 +250,8 @@ Page 7 -ana: -------- begin text --------
 ===Suffix===
 {{h|ang|suf}}
 
-# {{lb|ang|Early Old English}} {{alternative form of|ang|-ena}}
-#: {{suffixusex|ang|palma|gloss1=palm|palmana|gloss2=palms'}}
+# {{lb|ang|Early Old English}} {{alt form|ang|-ena}}
+#: {{afex|ang|palma<t:palm>|palmana<t:palms'>}}
 
 -------- end text --------
 Page 7 -ana: Skipped, no changes
@@ -254,7 +261,7 @@ Page 8 -ande: -------- begin text --------
 ===Suffix===
 {{head|ang|suffix}}
 
-# {{alternative form of|ang|-ende}}
+# {{alt form|ang|-ende}}
 
 -------- end text --------
 Page 8 -ande: Skipped, no changes
@@ -264,7 +271,7 @@ Page 9 -ane: -------- begin text --------
 ===Suffix===
 {{head|ang|suffix}}
 
-# {{lb|ang|Late Old English}} {{alternative form of|ang|-enne}}
+# {{lb|ang|Late Old English}} {{alt form|ang|-enne}}
 
 -------- end text --------
 Page 9 -ane: Skipped, no changes
@@ -272,7 +279,7 @@ Page 10 -anne: -------- begin text --------
 ==Old English==
 
 ===Alternative forms===
-* {{alter|ang|-ende|-enne}}
+* {{alt|ang|-ende|-enne}}
 
 ===Etymology===
 From {{m|ang|-enne}}, with the first /e/ shifting due to influence from {{m|ang|-an}}.
@@ -283,8 +290,8 @@ From {{m|ang|-enne}}, with the first /e/ shifting due to influence from {{m|ang|
 ===Suffix===
 {{h|ang|suf}}
 
-# {{alternative form of|ang|-enne}}
-#: {{ux|ang|[[ondrēd]] [[to]] [[faranne|far'''anne''']]|(s)he was afraid to go'''{{l|mul|-∅}}'''|ref=&nbsp;<small>[Mt. Jun. and Th. 2, 22]</small>}}
+# {{alt form|ang|-enne}}
+#: {{ux|ang|[[ondrēd]] [[to]] [[far'''anne''']]|(s)he was afraid to go'''{{l|mul|-∅}}'''|ref=&nbsp;<small>[Mt. Jun. and Th. 2, 22]</small>}}
 
 ===Further reading===
 * {{cite-book|author={{w|Joseph Bosworth}}|editor={{w|Thomas Northcote Toller}}|title={{w|An Anglo-Saxon Dictionary}}|year=1898|location={{w|Oxford}}|publisher=[[w:Oxford University Press|Clarendon Press]]|section=<abbr title="sub verbo">''s.v.''</abbr> “-anne”|pages=44–45|pageurl=https://archive.org/details/anglosaxondictio00bosw/page/44/mode/2up}}
@@ -301,11 +308,11 @@ Perhaps from the Proto-Germanic accusative plural ending *''-anz'', with regular
 * {{ang-IPA|-as}}
 
 ====Suffix====
-{{h|ang|suf}}
+{{ang-head|nounf|inflsuf=1}}
 
-# {{non-gloss|Plural ending of nominative and accusative cases, originally of a-stem masculine nouns, later extended to other nouns.}}
-#: {{suffixusex|ang|hund|gloss1=dog|hundas|gloss2=dogs}}
-#: {{suffixusex|ang|wulf|gloss1=wolf|wulfas|gloss2=wolves}}
+# {{ng|marks the plural nominative and accusative of a-stem masculine nouns, later extended to other nouns}}
+#: {{afex|ang|hund<t:dog>|hundas<t:dogs>}}
+#: {{afex|ang|wulf<t:wolf>|wulfas<t:wolves>}}
 
 =====Descendants=====
 * {{desctree|enm|-es|id=plural}}
@@ -313,9 +320,9 @@ Perhaps from the Proto-Germanic accusative plural ending *''-anz'', with regular
 ===Etymology 2===
 
 ====Suffix====
-{{h|ang|suf}} {{tlb|ang|Anglian}}
+{{ang-head|verbf|inflsuf=1}} {{tlb|ang|Anglian}}
 
-# {{alternative form of|ang|-ast}}; {{n-g|marks the second person singular present indicative of class II weak verbs}}
+# {{alt form|ang|-ast}}; {{ng|marks the second person singular present indicative of class II weak verbs}}
 
 -------- end text --------
 Page 11 -as: Skipped, no changes
@@ -330,13 +337,13 @@ Page 12 -ast: -------- begin text --------
 From {{inh|ang|gmw-pro|*-ōs}} with paragogic ''-t'' added from when {{m|ang|þū}} follows (compare {{m+|ang-ang|-as}}), from {{inh|ang|gem-pro|*-ōsi}}, from {{inh|ang|ine-pro|*-eh₂yési}}.
 
 ====Alternative forms====
-* {{alter|ang|-as||Anglian}}
+* {{alt|ang|-as||Anglian}}
 
 ====Suffix====
-{{h|ang|suf}}
+{{ang-head|verbf|inflsuf=1}}
 
-# {{n-g|Used to form the second person singular present indicative of class II weak verbs}}
-#: {{suffixusex|ang|lufian|gloss1=to love|lufast|gloss2=you/thou love}}
+# {{ng|marks the second person singular present indicative of class II weak verbs}}
+#: {{afex|ang|lufian<t:to love>|lufast<t:you/thou love>}}
 
 =====Descendants=====
 * {{desctree|enm|-est|id=second-person singular}}
@@ -346,7 +353,7 @@ From {{inh|ang|gmw-pro|*-ōs}} with paragogic ''-t'' added from when {{m|ang|þ�
 ====Suffix====
 {{h|ang|suf}}
 
-# {{alternative form of|ang|-ost}}
+# {{alt form|ang|-ost}}
 
 -------- end text --------
 Page 12 -ast: Skipped, no changes
@@ -354,9 +361,9 @@ Page 13 -aþ: -------- begin text --------
 ==Old English==
 
 ===Alternative forms===
-* {{alter|ang|-að}}
-* {{alter|ang|-eþ}}
-* {{alter|ang|-ᚨᚦ}} {{q|runic}}
+* {{alt|ang|-að}}
+* {{alt|ang|-eþ}}
+* {{alt|ang|-ᚨᚦ}} {{q|runic}}
 
 ===Pronunciation===
 * {{ang-IPA|-aþ}}
@@ -366,10 +373,10 @@ Page 13 -aþ: -------- begin text --------
 {{inh+|ang|gmw-pro|*-ōþ}}, from {{inh|ang|gem-pro|*-ōþi}}.
 
 ====Alternative forms====
-* {{alter|ang|-as|-es||Northumbrian}}
+* {{alt|ang|-as|-es||Northumbrian}}
 
 ====Suffix====
-{{ang-head|verbf}}
+{{ang-head|verbf|inflsuf=1}}
 
 # {{ng|marks the third person singular present indicative of class 2 weak verbs}}
 #: {{uxi|ang|Hit mac'''aþ'''|it makes}}
@@ -382,14 +389,14 @@ Page 13 -aþ: -------- begin text --------
 {{inh+|ang|gmw-pro|*-anþ|t=third person plural indicative ending of weak verbs}}, from {{inh|ang|gem-pro|*-anþi|t=third person plural indicative ending of weak verbs}}. Cognate with {{cog|osx|-ad}}, {{cog|swg|-ad}}.
 
 ====Alternative forms====
-* {{alter|ang|-as|-es||Northumbrian}}
+* {{alt|ang|-as|-es||Northumbrian}}
 
 ====Suffix====
-{{ang-head|verbf}}
+{{ang-head|verbf|inflsuf=1}}
 
 # {{ng|marks the first, second and third person plural present indicative ending of strong verbs, class 1 weak verbs, and class 3 weak verbs}}
 #: {{uxi|ang|Hīe cum'''aþ'''|they come}}
-# {{lb|ang|used without postpositioned {{l|ang|ġē|"ġē"}}}} {{n-g|Second person plural imperative ending of strong verbs, class 1 weak verbs, and class 3 weak verbs.}}
+# {{lb|ang|used without postpositioned {{l|ang|ġē|"ġē"}}}} {{ng|marks the second person plural imperative ending of strong verbs, class 1 weak verbs, and class 3 weak verbs}}
 #: {{uxi|ang|Cum'''aþ'''!|Come!}} {{gl|see usage note below}}
 
 =====Usage notes=====
@@ -406,14 +413,14 @@ Page 13 -aþ: -------- begin text --------
 ====Suffix====
 {{ang-noun||m}}
 
-# {{alternative form of|ang|-oþ}}; {{ng|forms concrete nouns from verbs}}
+# {{alt form|ang|-oþ}}; {{ng|forms concrete nouns from verbs}}
 -------- end text --------
 Page 13 -aþ: Skipped, no changes
 Page 14 -bære: -------- begin text --------
 ==Old English==
 
 ===Alternative forms===
-* {{alter|ang|-bēre}}
+* {{alt|ang|-bēre}}
 
 ===Etymology===
 {{root|ang|ine-pro|*bʰer-}}
@@ -426,18 +433,18 @@ From {{inh|ang|gem-pro|*bēriz||bearing, carrying}}. Akin to {{cog|ofs|-ber}}, {
 {{ang-adj|-bǣre}}
 
 # {{ng|forms adjectives meaning “[[bearing]], [[having]]”}}
-#: {{suffixusex|ang|blostma<t:flower>|-bǣre|blostmbǣre<t:blooming>}}
-#: {{suffixusex|ang|feþer<t:feather>|-bǣre|feþerbǣre<t:feathered>}}
-#: {{suffixusex|ang|tungol<t:star>|-bǣre|tungolbǣre<t:starry>}}
-#: {{suffixusex|ang|wæstm<t:fruit>|-bǣre|wæstmbǣre<t:fruitful>}}
+#: {{afex|ang|blostma<t:flower>|-bǣre|blostmbǣre<t:blooming>}}
+#: {{afex|ang|feþer<t:feather>|-bǣre|feþerbǣre<t:feathered>}}
+#: {{afex|ang|tungol<t:star>|-bǣre|tungolbǣre<t:starry>}}
+#: {{afex|ang|wæstm<t:fruit>|-bǣre|wæstmbǣre<t:fruitful>}}
 # {{ng|forms adjectives meaning “having the qualities of, characterized by”}}
-#: {{suffixusex|ang|and-<t:turned>|hēla<t:heel>|-bǣre|andelbǣre<t:inverted>}}
-#: {{suffixusex|ang|ātor<t:poison>|-bǣre|ātorbǣre<t:poisonous>}}
+#: {{afex|ang|and-<t:turned>|hēla<t:heel>|-bǣre|andelbǣre<t:inverted>}}
+#: {{afex|ang|ātor<t:poison>|-bǣre|ātorbǣre<t:poisonous>}}
 # {{ng|forms adjectives denoting likeness or similarity to}}
-#: {{suffixusex|ang|ċisel<t:gravel>|-bǣre|ċiselbǣre<t:gravelly>}}
+#: {{afex|ang|ċisel<t:gravel>|-bǣre|ċiselbǣre<t:gravelly>}}
 # {{ng|forms adjectives meaning “producing”}}
-#: {{suffixusex|ang|cwealm<t:death>|-bǣre|cwealmbǣre<t:deadly>}}
-#: {{suffixusex|ang|slǣp<t:sleep>|-bǣre|slǣpbǣre<t:somniferous; putting to sleep>}}
+#: {{afex|ang|cwealm<t:death>|-bǣre|cwealmbǣre<t:deadly>}}
+#: {{afex|ang|slǣp<t:sleep>|-bǣre|slǣpbǣre<t:somniferous; putting to sleep>}}
 
 ====Declension====
 {{ang-adecl|-bǣre}}
@@ -450,9 +457,9 @@ Page 15 -bere: -------- begin text --------
 ==Old English==
 
 ===Suffix===
-{{h|ang|suf|head=-bēre}}
+{{ang-adj|-bēre}}
 
-# {{alternative form of|ang|-bǣre}}
+# {{alt form|ang|-bǣre}}; {{ng|forms adjectives meaning “[[bearing]], [[having]], characterized by, like“, etc.}}
 -------- end text --------
 Page 15 -bere: Skipped, no changes
 Page 16 -blede: -------- begin text --------
@@ -529,7 +536,7 @@ Page 19 -cen: -------- begin text --------
 ==Old English==
 
 ===Alternative forms===
-* {{alter|ang|-ċin}}
+* {{alt|ang|-ċin}}
 
 ===Etymology===
 From {{inh|ang|gmw-pro|*-ikīn}}, {{m|gmw-pro|*-ukīn}}, equivalent to {{m|ang|-oc}} + {{m|ang|-en}}. Cognate with {{cog|non|-ki}}. More at {{l|en|-kin}}.
@@ -540,9 +547,9 @@ From {{inh|ang|gmw-pro|*-ikīn}}, {{m|gmw-pro|*-ukīn}}, equivalent to {{m|ang|-
 ===Suffix===
 {{ang-noun|-ċen|n|cat=diminutive suffixes}}
 
-# {{n-g|suffix forming diminutives from nouns, often displaying i-mutation}}
-#: {{uxi|ang|[[tynċen|tyn'''ċen''']]|t=small barrel, cask}}
-#: {{uxi|ang|[[tiċċen|tiċ'''ċen''']]|t=young goat, goatling}}
+# {{ng|suffix forming diminutives from nouns, often displaying i-mutation}}
+#: {{uxi|ang|[[tyn'''ċen''']]|t=small barrel, cask}}
+#: {{uxi|ang|[[tiċ'''ċen''']]|t=young goat, goatling}}
 #: {{uxi|ang|[[þyrnċin|þyrn'''ċen''']]|t=thistle}}
 
 ====Declension====
@@ -566,9 +573,11 @@ From {{inh|ang|gmw-pro|*-ukōn}}, {{m|gmw-pro|*-ikōn}}, from {{inh|ang|gem-pro|
 * {{ang-IPA|cian}}
 
 ===Suffix===
-{{head|ang|suffix|head=-cian}}
+{{ang-verb}}
 
-# {{n-g|suffix applied to verbs and deverbal nouns to form other verbs with an intensive or frequentative force}}
+# {{ng|forms intensive or frequentative verbs from other verbs and from nouns and adjectives}}
+#: {{afex|ang|ġearu<t:ready>|ġearcian<t:to prepare>}}
+#: {{afex|ang|[[līþe|līþera]]<t:gentler><pos:comparative of {{m|ang|līþe}}>|līþercian<t:to soften; to charm>}}
 
 ====Usage notes====
 * Occasionally triggers i-mutation in the verb stem.
@@ -594,21 +603,21 @@ Identical to the noun {{m|ang|cræft|t=art, skill, strength}}.
 * {{ang-IPA|cræft}}
 
 ===Suffix===
-{{head|ang|suffix|g=m}}
+{{ang-noun||m}}
 
-# denoting an [[art]] or [[science]]: [[-ology]], [[-ics]], [[-craft]]
-#: {{suffixusex|ang|bōc|gloss1=book|bōccræft|gloss2=literature}}
-#: {{suffixusex|ang|flit|gloss1=argument|flitcræft|gloss2=logic}}
-#: {{suffixusex|ang|lǣċe|gloss1=doctor|lǣċecræft|gloss2=medicine}}
-#: {{suffixusex|ang|lēoþ|gloss1=poem|lēoþcræft|gloss2=poetry}}
-#: {{suffixusex|ang|rīm|gloss1=number|rīmcræft|gloss2=mathematics}}
-#: {{suffixusex|ang|stæf|gloss1=letter|stæfcræft|gloss2=grammar}}
-#: {{suffixusex|ang|tungol|gloss1=star|tungolcræft|gloss2=astronomy}}
-#: {{suffixusex|ang|weorc|gloss1=work|weorccræft|gloss2=mechanics}}
-#: {{suffixusex|ang|wiċċe|gloss1=witch|wiċċecræft|gloss2=witchcraft}}
-# denoting strength or skill
-#: {{suffixusex|ang|hand|gloss1=hand|handcræft|gloss2=dexterity}}
-#: {{suffixusex|ang|sċip|gloss1=ship|sċipcræft|gloss2=naval power}}
+# {{ng|forms nouns denoting an [[art]] or [[science]]}}; [[-ology]], [[-ics]], [[-craft]]
+#: {{afex|ang|bōc<t:book>|bōccræft<t:literature>}}
+#: {{afex|ang|flit<t:argument>|flitcræft<t:logic>}}
+#: {{afex|ang|lǣċe<t:doctor>|lǣċecræft<t:medicine>}}
+#: {{afex|ang|lēoþ<t:poem>|lēoþcræft<t:poetry>}}
+#: {{afex|ang|rīm<t:number>|rīmcræft<t:mathematics>}}
+#: {{afex|ang|stæf<t:letter>|stæfcræft<t:grammar>}}
+#: {{afex|ang|tungol<t:star>|tungolcræft<t:astronomy>}}
+#: {{afex|ang|weorc<t:work>|weorccræft<t:mechanics>}}
+#: {{afex|ang|wiċċe<t:witch>|wiċċecræft<t:witchcraft>}}
+# {{ng|forms nouns denoting strength or skill}}
+#: {{afex|ang|hand<t:hand>|handcræft<t:dexterity>}}
+#: {{afex|ang|sċip<t:ship>|sċipcræft<t:naval power>}}
 
 ====Declension====
 {{ang-decl-noun-a-m|-cræft}}
@@ -625,7 +634,7 @@ Page 22 -cund: -------- begin text --------
 ==Old English==
 
 ===Alternative forms===
-* {{alter|ang|-cynd|-cundes}}
+* {{alt|ang|-cynd|-cundes}}
 
 ===Etymology===
 {{root|ang|ine-pro|*ǵenh₁-}}
@@ -635,13 +644,13 @@ From {{inh|ang|gem-pro|*kundaz|t=born, natured}}, from {{inh|ang|ine-pro|*ǵn̥h
 * {{ang-IPA|cund}}
 
 ===Suffix===
-{{h|ang|suf}}
+{{ang-adj}}
 
-# suffix denoting origin, derivation, or likeness
-#: {{suffixusex|ang|æþele|gloss1=noble|æþelcund|gloss2=of noble birth}}
-#: {{suffixusex|ang|eorþ|gloss1=Earth|eorþcund|gloss2=earthly}}
-#: {{suffixusex|ang|feorran|gloss1=from far away|feorrancund|gloss2=come from afar}}
-#: {{suffixusex|ang|god|gloss1=god|godcund|gloss2=divine, god-like}}
+# {{ng|forms adjectives denoting origin, derivation, or likeness}}
+#: {{afex|ang|æþele<t:noble>|æþelcund<t:of noble birth>}}
+#: {{afex|ang|eorþ<t:Earth>|eorþcund<t:earthly>}}
+#: {{afex|ang|feorran<t:from far away>|feorrancund<t:come from afar>}}
+#: {{afex|ang|god<t:god>|godcund<t:divine, god-like>}}
 
 ====Declension====
 {{ang-adecl|-cund}}
@@ -664,7 +673,7 @@ Page 23 -cynd: -------- begin text --------
 ===Suffix===
 {{head|ang|suffix}}
 
-# {{alternative form of|ang|-cund}}
+# {{alt form|ang|-cund}}
 -------- end text --------
 Page 23 -cynd: Skipped, no changes
 Page 24 -de: -------- begin text --------
@@ -676,17 +685,15 @@ Page 24 -de: -------- begin text --------
 * {{hyph|ang|-de}}
 
 ===Suffix===
-{{h|ang|suf}}
+{{ang-head|verbf|inflsuf=1}}
 
-# {{ng|used to form the first and third person singular preterite indicative of some class I and class III weak verbs}}
+# {{ng|marks the first and third person singular preterite indicative of some class I and class III weak verbs}}
 #: {{afex|ang|ċierran<t:to turn>|ċierde<t:I/he/she/it turned>}}
 #: {{afex|ang|habban<t:to have>|hæfde<t:I/he/she/it had>}}
 
 ===See also===
 * {{l|ang|-ede}}
 * {{l|ang|-te}}
-
-{{cln|ang|inflectional suffixes}}
 
 -------- end text --------
 Page 24 -de: Skipped, no changes
@@ -701,13 +708,13 @@ From {{inh|ang|gmw-pro|*-dōm}}, from {{inh|ang|gem-pro|*-dōmaz}}.
 * {{ang-IPA|dōm}}
 
 ===Suffix===
-{{head|ang|suffix|head=-dōm|g=m}}
+{{ang-noun|-dōm|m}}
 
-# ''used to derive abstract nouns'': {{l|en|-dom}}
-#: {{suffixusex|ang|cristen|gloss1=Christian|cristendōm|gloss2=Christianity}}
-#: {{suffixusex|ang|ealdor|t1=elder|ealdordōm|t2=authority}}
-#: {{suffixusex|ang|frēo|gloss1=free|frēodōm|gloss2=freedom}}
-#: {{suffixusex|ang|hǣþen|gloss1=pagan|hǣþendōm|gloss2=paganism}}
+# {{l|en|-dom}}; {{ng|forms abstract nouns from adjectives and sometimes nouns}}
+#: {{afex|ang|cristen<t:Christian>|cristendōm<t:Christianity>}}
+#: {{afex|ang|ealdor<t:elder>|ealdordōm<t:authority>}}
+#: {{afex|ang|frēo<t:free>|frēodōm<t:freedom>}}
+#: {{afex|ang|hǣþen<t:pagan>|hǣþendōm<t:paganism>}}
 
 ====Declension====
 {{ang-decl-noun-a-m|-dōm}}
@@ -733,8 +740,8 @@ From West Germanic *''-ā'', from {{inh|ang|gem-pro|*-ê}}, which survives other
 ====Suffix====
 {{ang-adv}}
 
-# {{senseid|ang|adverbial}} {{n-g|forms adverbs from adjectives}}; [[-ly]]
-#: {{sufex|ang|beorht|t1=bright, clear|beorhte|t2=brightly, clearly}}
+# {{senseid|ang|adverbial}} {{ng|forms adverbs from adjectives}}; [[-ly]]
+#: {{afex|ang|beorht<t:bright, clear>|beorhte<t:brightly, clearly>}}
 
 =====Alternative forms=====
 * {{alt|ang|-a|-æ||Northumbrian}}
@@ -752,21 +759,21 @@ From {{inh|ang|gmw-pro|*-ī|id=adjective}}. Beyond that, generally from {{inh|an
 {{ang-adj}}
 
 # {{senseid|ang|adjectival}} {{ng|forms adjectives from nouns, often with the meaning "having"; typically causes i-umlaut}}
-#: {{sufex|ang|ān|t1=one|willa|t2=will|ānwille|t3=stubborn}}
-#: {{sufex|ang|fela|t1=many|word|t2=word|felawyrde|t3=long-winded}}
-#: {{sufex|ang|fīf|t1=five|flōr|t2=floor|fīfflēre|t3=five-story}}
-#: {{sufex|ang|fiþer-|t1=four|sċēat|t2=corner|fiþersċīte|t3=square}}
-#: {{sufex|ang|forþ|t1=forward|gang|t2=going|forþgenġe|t3=progressive}}
-#: {{sufex|ang|īdel|t1=empty|hand|t2=hand|īdelhende|t3=empty-handed}}
-#: {{sufex|ang|lang|t1=long|līf|t2=life|langlīfe|t3=long-lived}}
-#: {{sufex|ang|ofer-|t1=over-|ǣt|t2=eating|oferǣte|t3=gluttonous}}
-#: {{sufex|ang|or-|t1=out of|blōd|t2=blood|orblēde|t3=bled out}}
-#: {{sufex|ang|sċeolh|t1=crooked|ēage|t2=eye|sċeolhīeġe|t3=crosseyed}}
-#: {{sufex|ang|sīd|t1=hanging down|feax|t2=hair on the head|sīdfiexe|t3=long-haired}}
-#: {{sufex|ang|twelf|t1=twelve|winter|t2=year|twelfwintre|t3=twelve years old}}
-#: {{sufex|ang|twi-|t1=two|eċġ|t2=edge|twieċġe|t3=double-edged}}
-#: {{sufex|ang|twi-|t1=two|fōt|t2=foot|twifēte|t3=bipedal}}
-#: {{sufex|ang|un-|t1=un-|ċēap|t2=cost|unċīepe|t3=free}}
+#: {{afex|ang|ān<t:one>|willa<t:will>|ānwille<t:stubborn>}}
+#: {{afex|ang|fela<t:many>|word<t:word>|felawyrde<t:long-winded>}}
+#: {{afex|ang|fīf<t:five>|flōr<t:floor>|fīfflēre<t:five-story>}}
+#: {{afex|ang|fiþer-<t:four>|sċēat<t:corner>|fiþersċīte<t:square>}}
+#: {{afex|ang|forþ<t:forward>|gang<t:going>|forþgenġe<t:progressive>}}
+#: {{afex|ang|īdel<t:empty>|hand<t:hand>|īdelhende<t:empty-handed>}}
+#: {{afex|ang|lang<t:long>|līf<t:life>|langlīfe<t:long-lived>}}
+#: {{afex|ang|ofer-<t:over->|ǣt<t:eating>|oferǣte<t:gluttonous>}}
+#: {{afex|ang|or-<t:out of>|blōd<t:blood>|orblēde<t:bled out>}}
+#: {{afex|ang|sċeolh<t:crooked>|ēage<t:eye>|sċeolhīeġe<t:crosseyed>}}
+#: {{afex|ang|sīd<t:hanging down>|feax<t:hair on the head>|sīdfiexe<t:long-haired>}}
+#: {{afex|ang|twelf<t:twelve>|winter<t:year>|twelfwintre<t:twelve years old>}}
+#: {{afex|ang|twi-<t:two>|eċġ<t:edge>|twieċġe<t:double-edged>}}
+#: {{afex|ang|twi-<t:two>|fōt<t:foot>|twifēte<t:bipedal>}}
+#: {{afex|ang|un-<t:un->|ċēap<t:cost>|unċīepe<t:free>}}
 
 =====Declension=====
 {{ang-adecl|-e|short=1}}
@@ -781,11 +788,11 @@ From {{inh|ang|gmw-pro|*-ī|id=adjective}}. Beyond that, generally from {{inh|an
 Likely borrowed from the subjunctive singular {{der|ang|gmw-pro|*-ē}} after high vowel [[apocope]] resulted in the loss of inherited {{inh|ang|gmw-pro|*-u}} in heavy stem verbs, and then analogically extended to light stem verbs.
 
 ====Suffix====
-{{ang-head|verbf}}
+{{ang-head|verbf|inflsuf=1}}
 
 # {{ng|marks the {{lg|first person}} {{lg|singular}} {{lg|present}} {{lg|indicative}} of {{lg|strong verb}}s and class I {{lg|weak verb}}s}}
-#: {{sufex|ang|drīfan|t1=to drive|drīfe|t2=I drive}}
-#: {{sufex|ang|fremman|t1=to perform|fremme|t2=I perform}}
+#: {{afex|ang|drīfan<t:to drive>|drīfe<t:I drive>}}
+#: {{afex|ang|fremman<t:to perform>|fremme<t:I perform>}}
 
 =====Alternative forms=====
 * {{alt|ang|-u|-o||Anglian|Kentish}}
@@ -796,13 +803,13 @@ Likely borrowed from the subjunctive singular {{der|ang|gmw-pro|*-ē}} after hig
 |pos=''a''-stem}}, {{m|gem-pro|*-ōi|pos=''ō''-stem}}, from the {{der|ang|ine-pro|-}} dative singular ending {{m|ine-pro|*-ey}} or locative singular ending {{m|ine-pro|*-i}} as attached to ''eh₂''-stem and ''o''-stem nouns.
 
 ====Alternative forms====
-* {{alter|ang|-æ||early}}
+* {{alt|ang|-æ||early}}
 
 ====Suffix====
-{{ang-head|nounf|g=m,f,n}}
+{{ang-head|nounf|inflsuf=1|g=m,f,n}}
 
 # {{ng|marks the {{lg|dative}} {{lg|singular}} of ''a''-stem and ''ō''-stem nouns}}
-#: {{sufex|ang|sċip|t1=ship|[[tō]] [[þām]] [[scipe|sċip'''e''']]|t2=to the ship}}
+#: {{afex|ang|sċip<t:ship>|[[tō]] [[þām]] [[sċip'''e''']]<t:to the ship>}}
 
 =====Descendants=====
 * {{desc|enm|-e|id=dative}}
@@ -816,13 +823,13 @@ A combination of multiple sources:
 This suffix was extended to the nominative plural (replacing {{m|ang|-a}} < {{m+|gmw-pro|*-ō|id=ō-stem nominative plural}}) in Old English itself.
 
 ====Alternative forms====
-* {{alter|ang|-æ||early}}
+* {{alt|ang|-æ||early}}
 
 ====Suffix====
-{{ang-head|nounf|g=f}}
+{{ang-head|nounf|inflsuf=1|g=f}}
 
 # {{ng|marks the {{lg|accusative}} and {{lg|genitive}} and the {{lg|nominative}} and accusative {{lg|plural}} of ō-stem feminine nouns}}
-#: {{sufex|ang|talu|t1=tale|tale|t2=tale, tales}}
+#: {{afex|ang|talu<t:tale>|tale<t:tale, tales>}}
 
 =====Usage notes=====
 * The names for several peoples are formed this way, such as {{m|ang|Dene||Danes}} and {{m|ang|Ēste||Estonians}}.
@@ -831,7 +838,7 @@ This suffix was extended to the nominative plural (replacing {{m|ang|-a}} < {{m+
 {{etymid|ang|n-stem}}
 
 ====Suffix====
-{{ang-head|nounf|g=f}}
+{{ang-head|nounf|inflsuf=1|g=f}}
 
 # {{ng|marks the nominative singular of feminine n-stem nouns}}
 #: {{m|ang|docce|t=dock}}
@@ -841,10 +848,10 @@ This suffix was extended to the nominative plural (replacing {{m|ang|-a}} < {{m+
 {{ang-noun||f}}
 
 # {{senseid|ang|feminine}} {{ng|forms feminine agent nouns, often as a counterpart to masculine agent nouns in {{l|ang|-a}}}}
-#: {{usex|ang|[[hlǣfdīġe|hlǣfdīġ'''e''']]|t=bread-kneader, lady}}
-#: {{sufex|ang|ġebedda|t1=husband, male consort|ġebedde|t2=wife, female consort}}
+#: {{usex|ang|[[hlǣfdīġ'''e''']]|t=bread-kneader, lady}}
+#: {{afex|ang|ġebedda<t:husband, male consort>|ġebedde<t:wife, female consort>}}
 # {{senseid|ang|feminine}} {{ng|forms nouns referring to female people from nouns referring to male people}}
-#: {{sufex|ang|cyning|t1=king|cyninge|t2=queen}}
+#: {{afex|ang|cyning<t:king>|cyninge<t:queen>}}
 
 =====Declension=====
 {{ang-decl-noun-n-f|-}}
@@ -856,7 +863,7 @@ This suffix was extended to the nominative plural (replacing {{m|ang|-a}} < {{m+
 Likely derived from the weakening of the plural subjunctive ending {{m|ang|-en}}.
 
 ====Suffix====
-{{ang-head|verbf}}
+{{ang-head|verbf|inflsuf=1}}
 
 # {{senseid|ang|second person plural imperative}} {{lb|ang|used with postpositioned {{l|ang|ġē|"ġē"}}}} {{ng|marks the second person plural imperative of strong verbs, class 1 weak verbs, and class 3 weak verbs}}
 #: {{usex|ang|Ġebīd'''e''' ġē on beorge!|t=Tarry ye on the mountain!}}
@@ -872,7 +879,7 @@ Page 27 -eage: -------- begin text --------
 ===Suffix===
 {{h|ang|suf|head=-ēage}}
 
-# {{alternative form of|ang|-īeġe}}
+# {{alt form|ang|-īeġe}}
 -------- end text --------
 Page 27 -eage: Skipped, no changes
 Page 28 -ecge: -------- begin text --------
@@ -884,7 +891,7 @@ Page 28 -ecge: -------- begin text --------
 ===Suffix===
 {{head|ang|suffix|head=-eċġe}}
 
-# {{alternative form of|ang|-iċġe}}
+# {{alt form|ang|-iċġe}}
 -------- end text --------
 Page 28 -ecge: Skipped, no changes
 Page 29 -ed: -------- begin text --------
@@ -897,15 +904,15 @@ Page 29 -ed: -------- begin text --------
 {{etymon|ang|id=past-participle|:der|ine-pro:*-tós<id:verbal adjectives>}}
 
 ====Suffix====
-{{ang-head|part}}
+{{ang-head|part|inflsuf=1}}
 
 # [[-t]]; {{ng|forms the past participle of class I weak verbs}}
-#: {{afex|ang|fremman|gloss1=to perform|fremed|gloss2=performed}}
+#: {{afex|ang|fremman<t:to perform>|fremed<t:performed>}}
 
 ===Etymology 2===
 
 ====Suffix====
-{{ang-head|part}}
+{{ang-head|part|inflsuf=1}}
 
 # {{alt form|ang|-od}}: {{l|en|-ed}}; {{ng|forms the past participle of class II weak verbs}}
 
@@ -913,7 +920,7 @@ Page 29 -ed: -------- begin text --------
 {{ang-adj}}
 
 # {{alt form|ang|-od}}: {{l|en|-ed}}; {{ng|forms adjectives from nouns and class 2 weak past participles, indicating the possession of a thing or a quality}}
-#: {{afex|ang|æppel|gloss1=apple|æppled|gloss2=apple-shaped}}
+#: {{afex|ang|æppel<t:apple>|æppled<t:apple-shaped>}}
 
 ====Declension====
 {{ang-adecl|-ed}}
@@ -930,11 +937,11 @@ Page 30 -ede: -------- begin text --------
 Akin to the past participle ending {{m|ang|-ed}}.
 
 ====Suffix====
-{{h|ang|suf}}
+{{ang-adj}}
 
-# {{lb|ang|adjectival suffix}} suffix applied to nouns meaning "having", "possessing", "provided with" or "equipped with"
-#: {{uxi|ang|[[feaxede]]|long-haired}}
-#: {{uxi|ang|[[wæmbede]]|big-bellied}}
+# {{ng|forms nouns meaning “having”, “possessing”, “provided with” or “equipped with”}}
+#: {{uxi|ang|[[feax'''ede''']]|long-haired}}
+#: {{uxi|ang|[[wæmb'''ede''']]|big-bellied}}
 
 =====Descendants=====
 * {{desc|en|-ed}}
@@ -947,10 +954,10 @@ Akin to the past participle ending {{m|ang|-ed}}.
 # {{rfdef|ang}}
 
 ====Suffix====
-{{h|ang|suf}}
+{{ang-head|verbf|inflsuf=1}}
 
-# {{n-g|Used to form the first and third person singular preterite indicative of most class I weak verbs}}
-#: {{suffixusex|ang|fremman|gloss1=to perform, do|fremede|gloss2=I/he/she/it performed/did}}
+# {{ng|marks the first and third person singular preterite indicative of most class I weak verbs}}
+#: {{afex|ang|fremman<t:to perform, do>|fremede<t:I/he/she/it performed/did>}}
 
 =====See also=====
 * {{l|ang|-de}}
@@ -964,10 +971,10 @@ Page 31 -edest: -------- begin text --------
 * {{ang-IPA|-edest}}
 
 ===Suffix===
-{{h|ang|suf}}
+{{ang-head|verbf|inflsuf=1}}
 
-# {{n-g|Used to form the second person singular preterite indicative of class I weak verbs}}
-#: {{suffixusex|ang|fremman|gloss1=to perform|fremedest|gloss2=you performed}}
+# {{ng|marks the second person singular preterite indicative of class I weak verbs}}
+#: {{afex|ang|fremman<t:to perform>|fremedest<t:you performed>}}
 -------- end text --------
 Page 31 -edest: Skipped, no changes
 Page 32 -edon: -------- begin text --------
@@ -977,10 +984,10 @@ Page 32 -edon: -------- begin text --------
 * {{ang-IPA|-edon}}
 
 ===Suffix===
-{{h|ang|suf}}
+{{ang-head|verbf|inflsuf=1}}
 
-# {{n-g|Used to form the plural preterite indicative of class I weak verbs}}
-#: {{suffixusex|ang|fremman|gloss1=to perform|fremedon|gloss2=we/you/they performed}}
+# {{ng|marks the plural preterite indicative of class I weak verbs}}
+#: {{afex|ang|fremman<t:to perform>|fremedon<t:we/you/they performed>}}
 -------- end text --------
 Page 32 -edon: Skipped, no changes
 Page 33 -eg: -------- begin text --------
@@ -989,7 +996,7 @@ Page 33 -eg: -------- begin text --------
 ===Suffix===
 {{h|ang|suf|head=-eġ}}
 
-# {{alternative form of|ang|-iġ}}
+# {{alt form|ang|-iġ}}
 
 -------- end text --------
 Page 33 -eg: Skipped, no changes
@@ -999,7 +1006,7 @@ Page 34 -ege: -------- begin text --------
 ===Suffix===
 {{h|ang|suf|head=-ēge}}
 
-# {{alternative form of|ang|-īeġe}}
+# {{alt form|ang|-īeġe}}
 -------- end text --------
 Page 34 -ege: Skipped, no changes
 Page 35 -egian: -------- begin text --------
@@ -1008,7 +1015,7 @@ Page 35 -egian: -------- begin text --------
 ===Suffix===
 {{head|ang|suffix}}
 
-# {{alternative form of|ang|-gian}}
+# {{alt form|ang|-gian}}
 -------- end text --------
 Page 35 -egian: Skipped, no changes
 Page 36 -eht: -------- begin text --------
@@ -1036,23 +1043,23 @@ From {{inh|ang|gem-pro|*-a-l-}}.
 ====Suffix====
 {{ang-adj}}
 
-# {{alternative form of|ang|-ol}}; {{ng|forms adjectives meaning "liable to" or "able to"}}
+# {{alt form|ang|-ol}}; {{ng|forms adjectives meaning “liable to” or “able to”}}
 
 ===Etymology 2===
 From {{inh|ang|gem-pro|*-ilaz}}.
 
 ====Alternative forms====
-* {{alter|ang|-il}}
+* {{alt|ang|-il}}
 
 ====Suffix====
 {{ang-noun||m}}
 
 # {{ng|forms agent and instrumental nouns from verbs; causes {{lg|i-mutation}}}}
-#: {{suffixusex|ang|crēopan|t1=to creep|crypel|t2=cripple}}
-#: {{suffixusex|ang|bēodan|t1=to command|bydel|t2=herald, messenger}}
-#: {{suffixusex|ang|spittan|t1=to dig|spitel|t2=shovel}}
-#: {{suffixusex|ang|hladan|t1=to lade|hlædel|t2=ladle}}
-#: {{suffixusex|ang|þrēapian|t1=to reprove, reprehend|þrīpel|t2=instrument of punishment, cross}}
+#: {{afex|ang|crēopan<t:to creep>|crypel<t:cripple>}}
+#: {{afex|ang|bēodan<t:to command>|bydel<t:herald, messenger>}}
+#: {{afex|ang|spittan<t:to dig>|spitel<t:shovel>}}
+#: {{afex|ang|hladan<t:to lade>|hlædel<t:ladle>}}
+#: {{afex|ang|þrēapian<t:to reprove, reprehend>|þrīpel<t:instrument of punishment, cross>}}
 
 =====Declension=====
 {{ang-decl-noun|-el|-elas,-las|-el|-elas,-las|-eles,-les|-ela,-la|-ele,-le|-elum,-lum}}
@@ -1066,7 +1073,7 @@ Page 38 -eld: -------- begin text --------
 ==Old English==
 
 ===Alternative forms===
-* {{alter|ang|-old|-elt}}
+* {{alt|ang|-old|-elt}}
 
 ===Etymology===
 Possibly a metathetic variant of earlier {{der|ang|gem-pro|*-þlą}}.
@@ -1102,7 +1109,7 @@ Page 39 -elle: -------- begin text --------
 ===Suffix===
 {{h|ang|suf}}
 
-# {{alternative form of|ang|-else}}
+# {{alt form|ang|-else}}
 -------- end text --------
 Page 39 -elle: Skipped, no changes
 Page 40 -els: -------- begin text --------
@@ -1115,14 +1122,14 @@ A metathetic form of {{inh|ang|gmw-pro|*-islī}}.
 * {{ang-IPA|-els}}
 
 ===Suffix===
-{{head|ang|suffix|g=m|head=-els}}
+{{ang-noun||m}}
 
-# {{lb|ang|masculine suffix for inanimate objects}} {{n-g|suffix creating nouns from verbs}}
-#: {{uxi|ang|[[rǣdels]]|guess, advice, riddle}}
-#: {{uxi|ang|[[rēcels]]|incense, frankincense}}
-#: {{uxi|ang|[[miercels]]|mark, sign, aim, marked spot}}
-#: {{uxi|ang|[[wǣfels]]|covering, cloak, garment}}
-#: {{uxi|ang|[[byrgels]]|burial, sepulchre, tomb}}
+# {{ng|forms masculine nouns referring to inanimate objects from verbs, causing {{lg|i-mutation}}}}
+#: {{afex|ang|rǣdan<t:to advise>|rǣdels<t:guess, advice, riddle>}}
+#: {{afex|ang|rēocan<t:to emit smoke>|rēcels<t:incense, frankincense>}}
+#: {{afex|ang|mearcian<t:to mark>|miercels<t:mark, sign, aim, marked spot>}}
+#: {{afex|ang|wǣfan<t:to clothe>|wǣfels<t:covering, cloak, garment>}}
+#: {{afex|ang|byrġan<t:to bury>|byrġels<t:burial, sepulchre, tomb>}}
 
 ====Declension====
 {{ang-decl-noun-a-m|-els}}
@@ -1141,7 +1148,7 @@ Page 41 -else: -------- begin text --------
 ==Old English==
 
 ===Alternative forms===
-* {{alter|ang|-elle}}
+* {{alt|ang|-elle}}
 
 ===Etymology===
 A metathetic form of {{der|ang|gmw-pro|*-islī}}.
@@ -1150,11 +1157,13 @@ A metathetic form of {{der|ang|gmw-pro|*-islī}}.
 * {{ang-IPA|-else}}
 
 ===Suffix===
-{{head|ang|suffix|g=f|head=-else}}
+{{ang-noun||f}}
 
-# {{lb|ang|feminine suffix for inanimate objects}} {{n-g|suffix creating nouns from verbs}}
-#: {{uxi|ang|[[rǣdelse]]|counsel, advice, riddle, enigma}}
-#: {{uxi|ang|[[myrrelse]], [[mierrelse]]|an offense, scandal; stumblingblock}}
+===Suffix===
+
+# {{ng|forms feminine nouns referring to inanimate objects from verbs, causing {{lg|i-mutation}}}}
+#: {{afex|ang|rǣdan<t:to advise>|rǣdelse<t:counsel, advice, riddle, enigma>}}
+#: {{afex|ang|mierran<t:to disturb; to obstruct>|[[mierrelse]], [[myrrelse]]<an offense, scandal; stumbling block>}}
 
 ====Declension====
 {{ang-decl-noun-n-f|-els}}
@@ -1176,7 +1185,7 @@ Page 42 -elt: -------- begin text --------
 ===Suffix===
 {{head|ang|suffix}}
 
-# {{alternative form of|ang|-eld}}
+# {{alt form|ang|-eld}}
 -------- end text --------
 Page 42 -elt: Skipped, no changes
 Page 43 -ema: -------- begin text --------
@@ -1185,7 +1194,7 @@ Page 43 -ema: -------- begin text --------
 ===Suffix===
 {{head|ang|suffix}}
 
-# {{alternative form of|ang|-uma}}
+# {{alt form|ang|-uma}}
 
 -------- end text --------
 Page 43 -ema: Skipped, no changes
@@ -1199,12 +1208,12 @@ Page 44 -en: -------- begin text --------
 {{inh+|ang|gmw-pro|*-īn}}, from {{inh|ang|gem-pro|*-īną}}.
 
 ====Suffix====
-{{head|ang|suffix|head=-en|g=n}}
+{{ang-noun||n}}
 
-# {{lb|ang|causes i-mutation}} {{non-gloss|used to create diminutive neuter nouns}}
-#: {{suffixusex|ang|mæġeþ|t1=girl|mæġden}} (“girl,” originally “little girl”)
-#: {{suffixusex|ang|cocc|t1=rooster|[[ċycen]], [[ċicen]]|t2=chick}}
-#: {{suffixusex|ang|broþ|t1=broth, brewing|bryþen|t2=brewing, drink}}
+# {{ng|forms diminutive neuter nouns with {{lg|i-mutation}}}}
+#: {{afex|ang|mæġeþ<t:girl>|mæġden<t:girl><ng:originally “little girl”>}}
+#: {{afex|ang|cocc<t:rooster>|[[ċycen]], [[ċicen]]<t:chick>}}
+#: {{afex|ang|broþ<t:broth, brewing>|bryþen<t:brewing, drink>}}
 
 =====Declension=====
 ; Neuter
@@ -1215,14 +1224,14 @@ Page 44 -en: -------- begin text --------
 {{inh+|ang|gmw-pro|*-ini}}, from {{inh|ang|gem-pro|*-inī}}.
 
 ====Alternative forms====
-* {{alter|ang|-in}}
+* {{alt|ang|-in}}
 
 ====Suffix====
-{{head|ang|suffix|head=-en|g=f}}
+{{ang-noun||f}}
 
-# {{senseid|ang|female}} {{lb|ang|often causes i-mutation}} {{non-gloss|used to create feminine nouns from other nouns}}
-#: {{suffixusex|ang|god|t1=(male) god|gyden|t2=goddess}} {{qualifier|with i-mutation}}
-#: {{suffixusex|ang|þēow|t1=(male) servant|þēowen|t2=female servant}} {{qualifier|without i-mutation}}
+# {{senseid|ang|female}} {{ng|forms female equivalent nouns; often with {{lg|i-mutation}}}}
+#: {{afex|ang|god<t:(male) god>|gyden<t:goddess>|qq=with i-mutation}}
+#: {{afex|ang|þēow<t:(male) servant>|þēowen<t:female servant>|qq=without i-mutation}}
 
 =====Declension=====
 ; Feminine
@@ -1239,17 +1248,17 @@ Page 44 -en: -------- begin text --------
 {{inh+|ang|gmw-pro|*-īn}}, from {{inh|ang|gem-pro|*-īnaz}}.
 
 ====Suffix====
-{{h|ang|suf}}
+{{ang-adj}}
 
-# {{lb|ang|causes i-mutation}} {{non-gloss|adjectival suffix meaning "material made of, consisting of”, also sometimes “characteristic of”.}}
-#: {{suffixusex|ang|gold|t1=gold|gylden|t2=golden}}
-#: {{suffixusex|ang|ātor|t1=poison|ǣtren|t2=venomous, poisonous}}
-#: {{suffixusex|ang|stān|t1=stone|stǣnen|t2=stonen}}
-#: {{suffixusex|ang|āc|t1=oak|ǣcen|t2=oaken}}
-#: {{suffixusex|ang|trēow|t1=tree|triewen|t2=wooden}}
-#: {{suffixusex|ang|līn|t1=flax|līnen|t2=linen}}
-#: {{suffixusex|ang|sǣ|t1=sea|sǣn|t2=marine}}
-#: {{suffixusex|ang|fæder|t1=father|fæderen|t2=paternal}}
+# {{ng|forms adjectives meaning “material made of, consisting of”, also sometimes “characteristic of”; with {{lg|i-mutation}}}}
+#: {{afex|ang|gold<t:gold>|gylden<t:golden>}}
+#: {{afex|ang|ātor<t:poison>|ǣtren<t:venomous, poisonous>}}
+#: {{afex|ang|stān<t:stone>|stǣnen<t:stonen>}}
+#: {{afex|ang|āc<t:oak>|ǣcen<t:oaken>}}
+#: {{afex|ang|trēow<t:tree>|triewen<t:wooden>}}
+#: {{afex|ang|līn<t:flax>|līnen<t:linen>}}
+#: {{afex|ang|sǣ<t:sea>|sǣn<t:marine>}}
+#: {{afex|ang|fæder<t:father>|fæderen<t:paternal>}}
 
 =====Declension=====
 {{ang-adecl|-en|contractable=1}}
@@ -1261,34 +1270,33 @@ Page 44 -en: -------- begin text --------
 {{inh+|ang|gmw-pro|*-an}}, from {{inh|ang|gem-pro|*-anaz}}.
 
 ====Suffix====
-{{h|ang|suf}}
+{{ang-adj}}
 
-# {{lb|ang|verbal suffix}} {{non-gloss|past participle ending of strong verbs}}
+# {{ng|forms adjectives meaning “characteristic of”; without {{lg|i-mutation}}}}
+#: {{afex|ang|tungol<t:star>|tunglen<t:of the stars, sidereal, starry>}}
+#: {{afex|ang|hund<t:dog, hound>|hunden<t:canine>}}
+
+===Etymology 5===
+{{inh+|ang|gmw-pro|*-an}}, from {{inh|ang|gem-pro|*-anaz}}.
+
+====Suffix====
+{{ang-head|part|inflsuf=1}}
+
+# {{ng|forms the past participle of strong verbs}}
 #: {{uxi|ang|[[ġecumen]]|t=come}}
 #: {{uxi|ang|[[ġecorfen]]|t=carved}}
 #: {{uxi|ang|[[ġeswōgen]]|t=swooned}}
-
-===Etymology 5===
-{{inh|ang|gem-pro|*-an}}, from {{inh|ang|gem-pro|*-an-}}.
-
-====Suffix====
-{{h|ang|suf}}
-
-# {{lb|ang|adjective suffix}} {{non-gloss|meaning belonging to or characterised by}}
-#: {{suffixusex|ang|tungol|t1=star|tunglen|t2=of the stars, sidereal, starry}}
-#: {{suffixusex|ang|fæder|t1=father|fæderen|t2=paternal, of a father}}
-#: {{suffixusex|ang|hund|t1=dog, hound|hunden|t2=canine}}
 
 ===Etymology 6===
 {{inh+|ang|gem-pro|*-īni}}, from {{inh|ang|gem-pro|*-īniz}}. Sometimes with geminate -nn-, probably due to confusion with the feminine suffix from {{m|gem-pro|*-inī}}.
 
 ====Suffix====
-{{head|ang|suffix|head=-en|g=f}}
+{{ang-noun||f}}
 
-# {{lb|ang|causes i-mutation}} {{non-gloss|forms nouns from class 1 weak verbs}}
-#: {{suffixusex|ang|byrgan|t1=to bury|byrgen|t2=burying, grave}}
-#: {{suffixusex|ang|sellan|t1=to give, grant|selen|t2=giving, gift}}
-#: {{suffixusex|ang|þicgan|t1=to take, accept|þigen|t2=taking}} {{qualifier|inflected as strong and weak}}
+# {{ng|forms nouns from class 1 weak verbs, with {{lg|i-mutation}}}
+#: {{afex|ang|byrġan<t:to bury>|byrġen<t:burying, grave>}}
+#: {{afex|ang|sellan<t:to give, grant>|selen<t:giving, gift>}}
+#: {{afex|ang|þiċġan<t:to take, accept>|þiġen<t:taking>|qq=inflected as strong and weak}}
 
 =====Declension=====
 {{ang-decl-noun-o-f|-enn|nomsg=-en}}
@@ -1310,9 +1318,9 @@ From {{inh|ang|gmw-pro|*-andi}}, from {{inh|ang|gem-pro|*-andz}}, taken from the
 * {{hyph|ang|-end}}
 
 ===Suffix===
-{{h|ang|suf}}
+{{ang-noun||m}}
 
-# {{ng|suffix denoting the agent of an action}}; [[-er]]
+# {{ng|forms agent nouns from verbs}}; [[-er]]
 #: {{syn|ang|-a|-ere}}
 #: {{afex|ang|āgan<t:to own>|āgend<t:owner>}}
 #: {{afex|ang|hǣlan<t:to save>|hǣlend<t:savior>}}
@@ -1345,7 +1353,7 @@ Page 46 -ende: -------- begin text --------
 From {{inh|ang|gmw-pro|*-andī}}, from {{inh|ang|gem-pro|*-andz}}. Akin to {{cog|la|-āns}}, {{m|la|-ēns}}; {{cog|grc|-ων}}, {{cog|fa|ـنده|tr=-ande}}.
 
 ====Suffix====
-{{ang-head|part}}
+{{ang-head|part|inflsuf=1}}
 
 # {{ng|forms present participles}}; [[-ing]]
 #: {{coa|ang|feall'''ende''' snāw|falling snow}}
@@ -1382,9 +1390,9 @@ From {{inh|ang|gem-pro|*-andiją}}. Compare {{cog|non|-indi}}.
 See {{m|ang|-anne}}.
 
 ====Suffix====
-{{ang-head|verbf}}
+{{ang-head|verbf|inflsuf=1}}
 
-# {{alt form of|ang|-enne}}; {{ng|forms the inflected infinitive}}
+# {{alt form|ang|-enne}}; {{ng|forms the inflected infinitive}}
 
 ===Derived terms===
 {{suffixsee|ang}}
@@ -1405,11 +1413,11 @@ Combined form, created from {{affix|ang|-ende|pos1=present participle ending|-l�
 * {{rhymes|ang|end.liːt͡ʃ|s=2}}
 
 ===Suffix===
-{{h|ang|suf|head=-endlīċ}}
+{{ang-adj|-endlīċ}}
 
-# {{n-g|forming adjectives from verbs with the sense of "able to, capable of"}}; [[-able]]
-#: {{uxi|ang|[[ācumendlīc]]|possible|lit=able to arrive or come about}}
-#: {{uxi|ang|[[būgendlīc]]|capable of bending, bendable, flexible}}
+# {{ng|forms adjectives from verbs with the sense of “able to, capable of”}}; [[-able]]
+#: {{afex|ang|ācuman<t:to come forth>|ācumendlīċ<t:possible><lit:able to arrive or come about>}}
+#: {{afex|ang|būgan<t:to bend>|būgendlīċ<t:capable of bending, bendable, flexible>}}
 
 ====Descendants====
 * {{desc|enm|-endlic|-endlice|-andlic|-endliȝ|-andlike}}
@@ -1429,7 +1437,7 @@ See {{m|ang|-enne}}.
 ====Suffix====
 {{head|ang|suffix}}
 
-# {{lb|ang|Late Old English}} {{alternative form of|ang|-enne}}
+# {{lb|ang|Late Old English}} {{alt form|ang|-enne}}
 
 ===Etymology 2===
 {{nonlemma}}
@@ -1447,7 +1455,7 @@ Page 49 -enga: -------- begin text --------
 ===Suffix===
 {{head|ang|suffix}}
 
-# {{alternative form of|ang|-unga}}
+# {{alt form|ang|-unga}}
 
 -------- end text --------
 Page 49 -enga: Skipped, no changes
@@ -1455,9 +1463,9 @@ Page 50 -enne: -------- begin text --------
 ==Old English==
 
 ===Alternative forms===
-* {{alter|ang|-anne|-onne}}
-* {{alter|ang|-ienne|-ianne}} {{q|used with Class II weak verbs}}
-* {{alter|ang|-annae||early <<Mercian>>}}; {{alter|ang|-ene|-ane||late Old English}}
+* {{alt|ang|-anne|-onne}}
+* {{alt|ang|-ienne|-ianne}} {{q|used with Class II weak verbs}}
+* {{alt|ang|-annae||early <<Mercian>>}}; {{alt|ang|-ene|-ane||late Old English}}
 
 ===Etymology===
 {{inh+|ang|gmw-pro|*-annjē}}, dative inflection of the infinitive {{m|gmw-pro|-an}}; equivalent to {{m|ang|-an}} + {{af|ang|-e}}
@@ -1466,10 +1474,10 @@ Page 50 -enne: -------- begin text --------
 * {{ang-IPA|enne}}
 
 ===Suffix===
-{{h|ang|suf}}
+{{ang-head|verbf|inflsuf=1}}
 
-# {{n-g|Forms the inflected infinitive of verbs}}.
-#: {{ux|ang|[[to]] [[farenne|far'''enne''']]|to go'''{{l|mul|-∅}}'''|ref=&nbsp;<small>[Mt. Bos. 8, 21]</small>}}
+# {{ng|forms the inflected infinitive of verbs}}
+#: {{ux|ang|[[tō]] [[far'''enne''']]|to go|ref=&nbsp;<small>[Mt. Bos. 8, 21]</small>}}
 
 ====Usage notes====
 * The inflected infinitive is preceded by the preposition {{m|ang|tō}}.
@@ -1498,7 +1506,7 @@ Page 51 -er: -------- begin text --------
 ===Suffix===
 {{h|ang|suf}}
 
-# {{alternative form of|ang|-or}}
+# {{alt form|ang|-or}}
 
 -------- end text --------
 Page 51 -er: Skipped, no changes
@@ -1506,7 +1514,7 @@ Page 52 -ere: -------- begin text --------
 ==Old English==
 
 ===Alternative forms===
-* {{alter|ang|-re||Late West Saxon}}
+* {{alt|ang|-re||Late West Saxon}}
 
 ===Etymology===
 {{etymon|ang|:inh|id=agent suffix|gmw-pro:*-ārī<id:agent suffix>}}
@@ -1525,8 +1533,8 @@ Cognate with {{cog|ofs|-ere}}, {{cog|osx|-āri}}, {{cog|goh|-āri}}.
 
 # {{ng|forms masculine agent nouns, originally applied only to nouns}}
 #: {{syn|ang|-a|-end}}
-#: {{suffixusex|ang|dōm|t1=judgement|dōmere|t2=judge}}
-#: {{suffixusex|ang|fugol|t1=bird|fuglere|t2=fowler}}
+#: {{afex|ang|dōm<t:judgement>|dōmere<t:judge>}}
+#: {{afex|ang|fugol<t:bird>|fuglere<t:fowler>}}
 
 ====Declension====
 {{ang-decl-noun-ja-m|-er}}
@@ -1543,7 +1551,7 @@ Page 53 -erian: -------- begin text --------
 ==Old English==
 
 ===Alternative forms===
-* {{alter|ang|-orian}}
+* {{alt|ang|-orian}}
 
 ===Etymology===
 {{etymon|ang|:inh|gmw-pro:*-urōn<ety:inh<gem-pro:*-urōną>>}}
@@ -1553,11 +1561,11 @@ From {{inh|ang|gmw-pro|*-urōn|pos=frequentative suffix}}, from {{inh|ang|gem-pr
 * {{ang-IPA|-er[i]an}}
 
 ===Suffix===
-{{h|ang|suf}}
+{{ang-verb}}
 
-# {{non-gloss|A [[frequentative]] suffix used to form verbs}}
-#: {{sufex|ang|flotian|t1=to [[float]]|floterian|t2=to [[flutter]]}}
-#: {{sufex|ang|wōp|t1=[[cry]], [[lamentation]]|wōperian|t2=to [[weep]]}}
+# {{ng|forms frequentative verbs}}
+#: {{afex|ang|flotian<t:to float>|floterian<t:to flutter>}}
+#: {{afex|ang|wōp<t:cry, lamentation>|wōperian<t:to weep>}}
 #: {{uxi|ang|[[flicorian]]|to flicker}}
 
 ====Conjugation====
@@ -1565,8 +1573,6 @@ From {{inh|ang|gmw-pro|*-urōn|pos=frequentative suffix}}, from {{inh|ang|gem-pr
 
 ====Descendants====
 * {{desctree|enm|-eren}}
-
-{{cln|ang|class 2 weak verbs}}
 -------- end text --------
 Page 53 -erian: Skipped, no changes
 Page 54 -ern: -------- begin text --------
@@ -1582,10 +1588,12 @@ From the adjectival use of {{m|ang|-ærn||noun suffix denoting location}}, from 
 * {{alt|ang|-ærn}}
 
 ====Suffix====
-{{h|ang|suf}}
+{{ang-noun||n}}
 
-# {{non-gloss|Suffix meaning "a place".}}
-#: {{suffixusex|ang|hāliġ|t1=holy|hāliġern|t2=sanctuary, holy place}}
+# {{ng|forms nouns denoting a place}}
+#: {{afex|ang|hāliġ<t:holy>|hāliġern<t:sanctuary, holy place>}}
+#: {{afex|ang|hors<t:horse>|horsern<t:stable>}}
+#: {{afex|ang|ġemōt<t:meeting>|ġemōtern<t:meeting place, hall>}}
 
 =====Declension=====
 {{ang-decl-noun-a-n|-ern|short=1}}
@@ -1600,9 +1608,9 @@ From the adjectival use of {{m|ang|-ærn||noun suffix denoting location}}, from 
 Variant of {{m|ang|-erne}}.
 
 ====Suffix====
-{{h|ang|suf}}
+{{ang-adj}}
 
-# {{non-gloss|Suffix meaning "toward a place";}} {{alt form|ang|-erne}}
+# {{alt form|ang|-erne}}; {{ng|forms adjectives meaning “toward a cardinal direction” or “located in a specified cardinal direction”}}
 
 =====Descendants=====
 * {{desc|enm|-erne|-ern}}
@@ -1619,10 +1627,12 @@ Akin to {{cog|goh|-rōni}}; see {{m|en|-ern}} for more.
 * {{ang-IPA|-erne}}
 
 ===Suffix===
-{{h|ang|suf}}
+{{ang-adj}}
 
-# {{non-gloss|Adjective suffix occurring in names for directions}}
-#: {{uxi|ang|[[norþerne]]|northern}}, {{uxi|ang|[[sūþerne]]|southern}}, {{uxi|ang|[[ēasterne]]|eastern}}, {{uxi|ang|[[westerne]]|western}}
+# {{ng|forms adjectives meaning “toward a cardinal direction” or “located in a specified cardinal direction”}}
+#: {{afex|ang|norþ<t:north>|norþerne<t:northern>}}
+#: {{afex|ang|ēast<t:east>|ēasterne<t:eastern>}}
+#: {{afex|ang|sūþwest<t:southwest>|sūþwesterne<t:southwestern>}}
 
 ====Descendants====
 * {{desc|enm|-erne|-ern|-ren|-ron}}
@@ -1641,18 +1651,22 @@ Page 56 -es: -------- begin text --------
 The a-stem genitive singular ending is derived from {{inh|ang|gmw-pro|*-as}}, from {{der|ang|gem-pro|*-as}}. Based on the voiceless *s, Ringe 2006 argues that this ending was analogically taken from the genitive singular determiner {{m|gem-pro|*sa|*þas}}, from {{m|ine-pro|*só|*tósyo}}.<ref>{{R:gem:PIEPG|page=201}}</ref>
 
 ====Alternative forms====
-* {{alter|ang|-æs||early}}
+* {{alt|ang|-æs||early}}
 
 ====Suffix====
-{{h|ang|suf}}
+{{ang-head|nounf|addlpos=adjf|inflsuf=1}}
 
-# {{n-g|genitive case/possessive marker for a-stem nouns, indicating that an object belongs to the noun}}
-#: {{suffixusex|ang|hund|gloss1=dog|hundes|gloss2=dog's}}
-#: {{suffixusex|ang|sċip|gloss1=ship|sċipes|gloss2=ship's}}
-# {{n-g|forms the strong masculine/neuter genitive singular of adjectives}}
-# {{n-g|used in formation of adverbs, originally from the genitive of masculine and neuter nouns, but later added also to feminine nouns by analogy}}
-#: {{uxi|ang|[[dæġes|dæġ'''es''']]|by day|q=adverb}}
-#: {{uxi|ang|[[nihtes|niht'''es''']]|by night|q=adverb}}
+# {{ng|marks the genitive case of ''a''-stem nouns}}
+#: {{afex|ang|hund<t:dog>|hundes<t:dog's>}}
+#: {{afex|ang|sċip<t:ship>|sċipes<t:ship's>}}
+# {{ng|marks the strong masculine/neuter genitive singular of adjectives}}
+
+====Suffix====
+{{ang-adv}}
+
+# {{ng|forms adverbs, originally from the genitive of masculine and neuter nouns, but later added also to feminine nouns by analogy}}
+#: {{uxi|ang|[[dæġ'''es''']]|by day}}
+#: {{uxi|ang|[[niht'''es''']]|by night}}
 
 =====Derived terms=====
 {{suffixsee|ang}}
@@ -1668,10 +1682,10 @@ The a-stem genitive singular ending is derived from {{inh|ang|gmw-pro|*-as}}, fr
 {{etymid|ang|id=second person singular}}
 
 ====Suffix====
-{{head|ang|suffix}} {{tlb|ang|Anglian}}
+{{ang-head|verbf|inflsuf=1}} {{tlb|ang|Anglian}}
 
-# {{n-g|Alternative form of {{m|ang|-est}}; marks the second person singular of class I weak verbs}}
-#: {{suffixusex|ang|worða|gloss1=to become|worðes|gloss2=you become}}
+# {{alt form|ang|-est}}; {{ng|marks the second person singular of class I weak verbs}}
+#: {{afex|ang|worða<t:to become>|worðes<t:you become>}}
 
 -------- end text --------
 Page 56 -es: Skipped, no changes
@@ -1679,9 +1693,9 @@ Page 57 -esn: -------- begin text --------
 ==Old English==
 
 ===Suffix===
-{{head|ang|suffix}}
+{{ang-noun||f}}
 
-# {{alternative form of|ang|-sn}}
+# {{alt form|ang|-sn}}; {{ng|forms nouns denoting a tool or instrument}}
 -------- end text --------
 Page 57 -esn: Skipped, no changes
 Page 58 -est: -------- begin text --------
@@ -1695,16 +1709,16 @@ Page 58 -est: -------- begin text --------
 From {{inh|ang|gem-pro|*-ustaz}}, {{m|gem-pro|*-istaz}}.
 
 ====Alternative forms====
-* {{alter|ang|-ost|-ust}}
+* {{alt|ang|-ost|-ust}}
 
 ====Suffix====
 {{ang-noun||f}}
 
-# {{non-gloss|suffix forming feminine nouns, originally from verbs}}
-#: {{uxi|ang|[[eornost|eorn'''ost''']]|earnest}}
-#: {{uxi|ang|[[þenest|þēn'''est''']]|service}}
-#: {{uxi|ang|[[ofost|of'''ost''']]|haste}}
-#: {{uxi|ang|[[orrest|orr'''est''']]|battle, combat}}
+# {{ng|suffix forming feminine nouns, originally from verbs}}
+#: {{uxi|ang|[[eorn'''ost''']]|earnest}}
+#: {{uxi|ang|[[þēn'''est''']]|service}}
+#: {{uxi|ang|[[of'''ost''']]|haste}}
+#: {{uxi|ang|[[orr'''est''']]|battle, combat}}
 
 =====Declension=====
 {{ang-decl-noun-o-f|-est|num=sg}}
@@ -1716,12 +1730,12 @@ From {{inh|ang|gem-pro|*-ustaz}}, {{m|gem-pro|*-istaz}}.
 {{etymon|ang|id=most|:inh|gmw-pro:*-ist<id:most>|text=++}}
 
 ====Suffix====
-{{ang-adj-sup|addlpos=superlative adverbs}}
+{{ang-adj-sup|addlpos=superlative adverbs|inflsuf=1}}
 
-# {{alternative form of|ang|-ost}}; {{ng|forms superlative adjectives and adverbs}}
-#: {{suffixusex|ang|glēaw|gloss1=wise|glēawest|gloss2=wisest}}
-#: {{suffixusex|ang|late|gloss1=late|latest|gloss2=latest}}
-#: {{suffixusex|ang|smæl|gloss1=narrow; small|smælest|gloss2=narrowest; smallest}}
+# {{alt form|ang|-ost}}; {{ng|forms superlative adjectives and adverbs}}
+#: {{afex|ang|glēaw<t:wise>|glēawest<t:wisest>}}
+#: {{afex|ang|late<t:late>|latest<t:latest>}}
+#: {{afex|ang|smæl<t:narrow; small>|smælest<t:narrowest; smallest>}}
 
 =====Declension=====
 {{ang-adecl|-est|type=weak}}
@@ -1734,13 +1748,13 @@ From {{inh|ang|gem-pro|*-ustaz}}, {{m|gem-pro|*-istaz}}.
 {{inh+|ang|gmw-pro|*-ēs}} with paragogic ''-t'' added from when {{m|ang|þū}} follows (compare {{m+|ang-ang|-es}}), from {{inh|ang|gem-pro|*-ēz}}  (with ''-s'' by analogy with present forms), from {{inh|ang|ine-pro||*-eh₁si}} (in {{m|ine-pro||*dʰédʰeh₁si}}, form of {{m|ine-pro|*dʰédʰeh₁ti}}).
 
 ====Alternative forms====
-* {{alter|ang|-es||Anglian}}
+* {{alt|ang|-es||Anglian}}
 
 ====Suffix====
-{{ang-head|verbf}}
+{{ang-head|verbf|inflsuf=1}}
 
 # {{ng|marks the second-person singular of class I weak verbs}}
-#: {{suffixusex|ang|fremman|gloss1=to perform|fremest|gloss2=you perform}}
+#: {{afex|ang|fremman<t:to perform>|fremest<t:you perform>}}
 
 =====Descendants=====
 * {{desctree|enm|-est|id=second-person singular}}
@@ -1751,7 +1765,7 @@ Page 59 -estre: -------- begin text --------
 ==Old English==
 
 ===Alternative forms===
-* {{alter|ang|-istræ|-istre|-ystre}}
+* {{alt|ang|-istræ|-istre|-ystre}}
 
 ===Etymology===
 {{etymon|ang|:inh|gmw-pro:*-astrijā}}
@@ -1761,10 +1775,12 @@ From {{inh|ang|gmw-pro|*-astrijā}}, feminine agent suffix equivalent to {{m|gmw
 * {{ang-IPA|-estre}}
 
 ===Suffix===
-{{h|ang|suf}}
+{{ang-noun||f}}
 
-# {{non-gloss|female agent suffix, especially denoting one who is skilled in a particular occupation or craft}}
-#: ''{{m|ang|bæcestre||female baker}}; {{m|ang|sangestre||female singer}}; {{m|ang|webbestre||female weaver}}''
+# {{ng|forms female agent nouns denoting occupations or crafts}}
+#: {{afex|bacan<t:to bake>|bæcestre<t:female baker>|qq=-æ- likely by {{w|Germanic umlaut#double umlaut|double umlaut}}}}
+#: {{afex|sang<t:song>|sangestre<t:female singer, songstress>}}
+#: {{afex|webb<t:web>|webbestre<t:female weaver>}}
 
 ====Declension====
 {{ang-decl-noun-n-f|-estr}}
@@ -1774,8 +1790,6 @@ From {{inh|ang|gmw-pro|*-astrijā}}, feminine agent suffix equivalent to {{m|gmw
 
 ====Descendants====
 * {{desctree|enm|-estere}}
-
-{{cln|ang|terms suffixed with -e (feminine)}}
 -------- end text --------
 Page 59 -estre: Skipped, no changes
 Page 60 -et: -------- begin text --------
@@ -1819,9 +1833,9 @@ Page 61 -etan: -------- begin text --------
 ==Old English==
 
 ===Suffix===
-{{head|ang|suffix}}
+{{ang-verb}}
 
-# {{alternative form of|ang|-ettan}}
+# {{alt form|ang|-ettan}}
 -------- end text --------
 Page 61 -etan: Skipped, no changes
 Page 62 -ett: -------- begin text --------
@@ -1835,7 +1849,7 @@ Page 62 -ett: -------- begin text --------
 ====Suffix====
 {{ang-noun||n}}
 
-# {{alternative form of|ang|-et}}; {{ng|forms nouns from verbs and sometimes nouns and adjectives}}
+# {{alt form|ang|-et}}; {{ng|forms nouns from verbs and sometimes nouns and adjectives}}
 
 ===Etymology 2===
 
@@ -1861,12 +1875,12 @@ From {{inh|ang|gmw-pro|*-attjan}}, {{m|gmw-pro|*-ittjan}}, {{m|gmw-pro|*-uttjan}
 {{ang-verb}}
 
 # {{ng|forms verbs from nouns or adjectives (compare English {{m|en|-ate}}, {{m|en|-ize}}), frequently having a [[Appendix:Glossary#causative verb|causative]] force}}
-#: {{sufex|ang|bōt|t1=[[remedy]], [[cure]]|bōtettan|t2=to [[remedy]], [[cure]]}}
-#: {{sufex|ang|lēaslīċ|t1=[[false]]|lēaslīcettan|t2=to [[dissemble]], be [[false]]}}
-#: {{sufex|ang|lāþ|t1=[[hatred]], [[hostility]]; [[loathesome]]|lāþettan|t2=to [[loathe]]}}
-# {{n-g|verbal suffix denoting frequency or intensification}}
-#: {{sufex|ang|blīcan|t1=to [[shine]]|blīcettan|t2=to [[glitter]]}}
-#: {{sufex|ang|hlēapan|t1=to [[jump]], to [[leap]]|hlēapettan|t2=to [[jump]] up}}
+#: {{afex|ang|bōt<t:remedy, cure>|bōtettan<t:to remedy, cure>}}
+#: {{afex|ang|lēaslīċ<t:false>|lēaslīcettan<t:to dissemble, be false>}}
+#: {{afex|ang|lāþ<t:hatred, hostility; loathesome>|lāþettan<t:to loathe>}}
+# {{ng|verbal suffix denoting frequency or intensification}}
+#: {{afex|ang|blīcan<t:to shine>|blīcettan<t:to glitter>}}
+#: {{afex|ang|hlēapan<t:to jump, to leap>|hlēapettan<t:to jump up>}}
 
 ====Conjugation====
 {{ang-conj|-ettan<w1/ge:0>}}
@@ -1878,7 +1892,7 @@ From {{inh|ang|gmw-pro|*-attjan}}, {{m|gmw-pro|*-ittjan}}, {{m|gmw-pro|*-uttjan}
 * {{l|ang|-et}}
 
 ====Descendants====
-* {{desc|enm|thou'''ten'''|t=to address as 'thou'|ye'''ten'''|t2=to address as 'ye'|qq2=likely}}, {{l|enm|grun'''ten'''}} (from {{m+|ang|grunn'''ettan'''|w=1}}), {{l|enm|spou'''ten'''}}
+* {{desc|enm|thou'''ten'''<t:to address as 'thou'>|ye'''ten'''<t:to address as 'ye'>|qq2=likely}}, {{l|enm|grun'''ten'''}} (from {{m+|ang|grunn'''ettan'''|w=1}}), {{l|enm|spou'''ten'''}}
 ** {{desc|en|yee'''t'''|grun'''t'''|fidge'''t'''|qq3=possibly|spou'''t'''|bot'''ch'''|haun'''t'''}} (via French)
 ** {{desc|en|-et|unc=1|id=frequentative}}
 -------- end text --------
@@ -1890,9 +1904,9 @@ Page 64 -eþ: -------- begin text --------
 * {{ang-IPA|-eþ}}
 
 ===Suffix===
-{{h|ang|suf}}
+{{ang-head|verbf|inflsuf=1}}
 
-# {{n-g|Third person singular present indicative ending of class 1 weak verbs}}
+# {{ng|marks the third person singular present indicative of class 1 weak verbs}}
 
 ====Descendants====
 * {{desc|en|-eth}}
@@ -1908,11 +1922,13 @@ From {{cog|ang|fæst||secure, firm}}.
 * {{ang-IPA|-fæst}}
 
 ===Suffix===
-{{h|ang|suf}}
+{{ang-adj}}
 
-# [[firm]], [[secure]]
-#: {{suffixusex|ang|ǣ|gloss1=law|ǣfæst|gloss2=religious}}
-#: {{suffixusex|ang|siġe|gloss1=victory|siġefæst|gloss2=victorious}}
+# [[-ful]]; {{ng|forms adjectives meaning “full of” the specified quality}}
+#: {{afex|ang|wynn<t:joy>|wynfæst<t:joyful, joyous>}}
+#: {{afex|ang|hāl<t:sound, healthy>|hālfæst<t:healthful, salutary>}}
+#: {{afex|ang|ǣ<t:law; religion>|ǣfæst<t:upright; religious>}}
+#: {{afex|ang|siġe<t:victory>|siġefæst<t:victorious>}}
 
 ====Declension====
 {{ang-adecl|-fæst}}
@@ -1928,9 +1944,9 @@ Page 66 -fald: -------- begin text --------
 ==Old English==
 
 ===Suffix===
-{{head|ang|suffix}}
+{{ang-adj}}
 
-# {{alternative form of|ang|-feald}}
+# {{alt form|ang|-feald}}
 
 -------- end text --------
 Page 66 -fald: Skipped, no changes
@@ -1938,7 +1954,7 @@ Page 67 -feald: -------- begin text --------
 ==Old English==
 
 ===Alternative forms===
-* {{alter|ang|-fald|-feld}}
+* {{alt|ang|-fald|-feld}}
 
 ===Etymology===
 From {{inh|ang|gmw-pro|*-falþ}}, from {{inh|ang|gem-pro|*-falþaz|t=-fold}}, from {{der|ang|ine-pro|*pel-|*poltos|t=-fold}}. 
@@ -1949,10 +1965,13 @@ Cognate with {{cog|ofs|-fald}}, {{cog|osx|-fald}}, {{cog|de|-falt}}, {{cog|non|-
 * {{ang-IPA|feald}}
 
 ===Suffix===
-{{h|ang|suf}}
+{{ang-adj}}
 
-# suffix denoting multiplication, or consisting of so many parts; [[-fold]]
-#: {{uxi|ang|[[ānfeald]]|[[simple]], [[onefold]]}}
+# [[-fold]]; {{ng|forms multiplicative adjectives from numbers, denoting multiplication or consisting of so many parts}}
+#: {{afex|ang|ān<t:one>|ānfeald<t:simple, onefold>}}
+#: {{afex|ang|þrīe<t:one>|þrīfeald<t:threefold>}}
+#: {{afex|ang|twēntiġ<t:twenty>|twēntiġfeald<t:twentyfold>}}
+#: {{afex|ang|maniġ<t:many>|maniġfeald<t:manifold, various; varied; complicated>}}
 
 ====Declension====
 {{ang-adecl|-feald}}
@@ -1968,16 +1987,16 @@ Page 68 -feld: -------- begin text --------
 ==Old English==
 
 ===Suffix===
-{{head|ang|suffix}}
+{{ang-adj}}
 
-# {{alternative form of|ang|-feald}}
+# {{alt form|ang|-feald}}
 -------- end text --------
 Page 68 -feld: Skipped, no changes
 Page 69 -fete: -------- begin text --------
 ==Old English==
 
 ===Alternative forms===
-* {{alter|ang|-fōte}}
+* {{alt|ang|-fōte}}
 
 ===Etymology===
 From {{inh|ang|gmw-pro|*-fōtī}}, from {{inh|ang|gem-pro|*-fōtijaz}}. Cognate with {{cog|goh|-fuozi}}. Equivalent to {{suf|ang|fōt|e|id2=adjectival}}.
@@ -1986,9 +2005,11 @@ From {{inh|ang|gmw-pro|*-fōtī}}, from {{inh|ang|gem-pro|*-fōtijaz}}. Cognate 
 * {{ang-IPA|fēte}}
 
 ===Suffix===
-{{h|ang|suf|head=-fēte}}
+{{ang-adj|-fēte}}
 
-# [[foot|-foot]][[-ed|ed]]
+# [[foot|-foot]][[-ed|ed]]; {{ng|forms adjectives denoting containing the specified number or type of feet}}
+#: {{afex|fiþer-<t:four, quadri->|fiþerfēte<t:four-footed, quadrupedal>}}
+#: {{afex|clifer<t:claw>|cliferfēte<t:claw-footed>}}
 
 ====Declension====
 {{ang-adecl|-fēte}}
@@ -2001,15 +2022,15 @@ Page 70 -flere: -------- begin text --------
 ==Old English==
 
 ===Etymology===
-Possibly goes back to a {{inh|ang|gem-pro|*flōrijaz}}. Equivalent to {{suf|ang|flōr|e|id2=adjectival}}.
+Possibly goes back to a {{inh|ang|gem-pro|*flōrijaz}}. Equivalent to {{af|ang|flōr|-e|id2=adjectival}}.
 
 ===Pronunciation===
 * {{ang-IPA|flēre}}
 
 ===Suffix===
-{{h|ang|suf|head=-flēre}}
+{{ang-adj|-flēre}}
 
-# having a certain number of floors: -[[story]], -[[stories]]
+# -[[story]]; {{ng|forms adjectives denoting having the specified number of floors}}
 
 ====Declension====
 {{ang-adecl|-flēre}}
@@ -2019,12 +2040,12 @@ Page 71 -fote: -------- begin text --------
 ==Old English==
 
 ===Etymology===
-Equivalent to {{af|ang|fōt|t1=foot|-e|pos2=adjectival suffix}}, but without [[i-mutation]].
+Equivalent to {{af|ang|fōt<t:foot>|-e|pos2=adjectival suffix}}, but without [[i-mutation]].
 
 ===Suffix===
-{{head|ang|suffix}}
+{{ang-adj|-fōte}}
 
-# {{alternative form of|ang|-fēte}}
+# {{alt form|ang|-fēte}}
 -------- end text --------
 Page 71 -fote: Skipped, no changes
 Page 72 -ful: -------- begin text --------
@@ -2041,9 +2062,13 @@ Page 72 -ful: -------- begin text --------
 From {{inh|ang|gem-pro|*-fullaz||-ful}}, from {{der|ang|gem-pro|*fullaz|t=full}}.
 
 ====Suffix====
-{{h|ang|suf}}
+{{ang-adj}}
 
-# full of; {{l|en|-ful}}
+# {{ng|forms adjectives meaning “full of”}}; {{l|en|-ful}}
+#: {{afex|ang|caru<t:care; worry>|carful<t:anxious; careful>}}
+#: {{afex|ang|eġe<t:fear>|eġeful<t:fearful>}}
+#: {{afex|ang|ġeorn<t:eager>|ġeornful<t:eager; desirous>}}
+#: {{afex|ang|sprǣċ<t:speech>|sprǣcful<t:talkative, loquacious>}}
 
 =====Declension=====
 {{ang-adecl|-ful|stem=-full}}
@@ -2056,9 +2081,10 @@ From {{inh|ang|gem-pro|*-fullaz||-ful}}, from {{der|ang|gem-pro|*fullaz|t=full}}
 From {{inh|ang|gem-pro|*fullō}}, {{m|gem-pro|*fullijô|t=filling}}.
 
 ====Suffix====
-{{h|ang|suf}}
+{{ang-noun||f}}
 
-# enough to fill; {{l|en|-ful}}
+# {{ng|forms nouns meaning “a quantity enough to fill (the specified vessel)”}}; {{l|en|-ful}}
+#: {{afex|ang|būc<t:pitcher>|būcful<t:pitcherful>}}
 
 =====Descendants=====
 * {{desctree|enm|-ful|id=noun}}
@@ -2074,12 +2100,24 @@ Page 73 -full: -------- begin text --------
 ===Pronunciation===
 * {{ang-IPA|full}}
 
-===Suffix===
-{{head|ang|suffix}}
+===Etymology 1===
 
-# {{alt form of|ang|-ful}}
+====Suffix====
+{{ang-adj}}
 
-====Declension====
+# {{alt form|ang|-ful}}; {{ng|forms adjectives meaning “full of”}}
+
+=====Declension=====
+{{ang-adecl|-full}}
+
+===Etymology 2===
+
+====Suffix====
+{{ang-noun||f}}
+
+# {{alt form|ang|-ful}}; {{ng|forms nouns meaning “a quantity enough to fill (the specified vessel)”}}
+
+=====Declension=====
 {{ang-adecl|-full}}
 
 -------- end text --------
@@ -2090,7 +2128,7 @@ Page 74 -g: -------- begin text --------
 ===Suffix===
 {{head|ang|suffix}}
 
-# {{alternative form of|ang|-ig}}
+# {{alt form|ang|-ig}}
 
 -------- end text --------
 Page 74 -g: Skipped, no changes
@@ -2130,9 +2168,9 @@ Page 76 -gal: -------- begin text --------
 * {{ang-IPA|-gal}}
 
 ===Suffix===
-{{h|ang|suf}}
+{{ang-adj}}
 
-# {{lb|ang|adjectival suffix}} suffix meaning perpetual or continual
+# {{ng|forms adjectives meaning “perpetual” or “continual”}}
 #: {{uxi|ang|[[singal]]|continuous}}
 -------- end text --------
 Page 76 -gal: Skipped, no changes
@@ -2140,7 +2178,7 @@ Page 77 -ge: -------- begin text --------
 ==Old English==
 
 ===Alternative forms===
-* {{alter|ang|-gēa}}
+* {{alt|ang|-ġēa}}
 
 ===Etymology===
 From {{inh|ang|gmw-pro|*gawi}}, from {{inh|ang|gem-pro|*gawją}}, {{m|gem-pro|*gawjō}}, {{m|gem-pro|*gawô||country, region, environment}}.
@@ -2149,16 +2187,15 @@ From {{inh|ang|gmw-pro|*gawi}}, from {{inh|ang|gem-pro|*gawją}}, {{m|gem-pro|*g
 * {{ang-IPA|-ġē}}
 
 ===Suffix===
-{{h|ang|suf|head=-ġē|g=f}}
+{{ang-noun|-ġē|f|addlpos=proper noun}}
 
-# {{n-g|suffix used to denote a [[region]] or [[territory]]}}
+# {{ng|forms nouns denoting a region or territory}}
 #: {{uxi|ang|[[ǣlġē]]|eel-country}}
-# {{n-g|suffix used in placenames meaning [[region]] of, or [[district]] of}}
+# {{ng|forms placenames meaning “region of”, “district of”}}
 #: {{uxi|ang|[[Suþriġea|Sūþrīeġ, Sūþrīġe]]|Surrey|lit=Southerly District}}
 
 ====Descendants====
 * '''-y''', '''-ey''' found in some English placenames
-* '''yeo-''' found in English '''yeoman'''
 
 -------- end text --------
 Page 77 -ge: Skipped, no changes
@@ -2166,9 +2203,9 @@ Page 78 -gea: -------- begin text --------
 ==Old English==
 
 ===Suffix===
-{{h|ang|suf|head=-ġea}}
+{{ang-noun|-ġēa|f}}
 
-# {{alternative form of|ang|-ġe}}
+# {{alt form|ang|-ġē}}
 -------- end text --------
 Page 78 -gea: Skipped, no changes
 Page 79 -gian: -------- begin text --------
@@ -2184,9 +2221,9 @@ From the fusion of {{inh|ang|gmw-pro|*-igōn}}, {{m|gmw-pro|*-īgōn}}, {{m|gmw-
 * {{ang-IPA|-gian}}
 
 ===Suffix===
-{{head|ang|suffix}}
+{{ang-verb}}
 
-# {{non-gloss|Used to form verbs from nouns and adjectives, often with an intensive effect}}
+# {{ng|forms verbs from nouns and adjectives, often with an intensive effect}}
 
 ====Conjugation====
 {{ang-conj|-gian<w2/ge:0>}}
@@ -2209,11 +2246,11 @@ From {{der|ang|gmw-pro|*-haidu|*haidu}}, from {{der|ang|gem-pro|*haiduz|t=state,
 * {{ang-IPA|-hād}}
 
 ===Suffix===
-{{head|ang|suffix|head=-hād|g=m}}
+{{ang-noun|-hād|m}}
 
-# forming nouns of condition or quality, from nouns or adjectives
-#: {{suffixusex|ang|ċild|gloss1=child|ċildhād|gloss2=childhood}}
-#: {{suffixusex|ang|mæġeþ|gloss1=virgin|mæġeþhād|gloss2=virginity}}
+# {{ng|forms nouns of condition or quality from nouns or adjectives}}
+#: {{afex|ang|ċild<t:child>|ċildhād<t:childhood>}}
+#: {{afex|ang|mæġeþ<t:virgin>|mæġeþhād<t:virginity>}}
 
 ====Declension====
 {{ang-decl-noun-a-m|-hād}}
@@ -2231,7 +2268,7 @@ Page 81 Reconstruction:Old English/-hæd: -------- begin text --------
 ==Old English==
 
 ===Suffix===
-{{head|ang|suffix|head=*-hǣd|g=f}}
+{{ang-noun|*-hǣd|f}}
 
 # {{alt form|ang|-hād}}
 
@@ -2239,16 +2276,16 @@ Page 81 Reconstruction:Old English/-hæd: -------- begin text --------
 {{ang-decl-noun-i-f|*-hǣd}}
 
 ====Alternative reconstructions====
-* {{alter|ang|*-hǣdu||''īn''-stem}}
+* {{alt|ang|*-hǣdu||''īn''-stem}}
 -------- end text --------
 Page 81 Reconstruction:Old English/-hæd: Skipped, no changes
 Page 82 -hæme: -------- begin text --------
 ==Old English==
 
 ===Suffix===
-{{head|ang|suffix|head=-hǣme}}
+{{ang-noun|-hǣme|m-p}}
 
-# {{n-g|Forms demonyms from toponyms ending in -{{m|ang|hām}}}}
+# {{ng|forms noun demonyms from toponyms ending in -{{m|ang|hām}}}}
 
 ===References===
 * {{R:ang:BT|-hǽme|ref=51523}}
@@ -2264,14 +2301,14 @@ From {{inh|ang|gem-pro|*halþaz||inclined}}. Akin to {{cog|ofs|-hald}}, {{cog|go
 * {{ang-IPA|-heald}}
 
 ===Suffix===
-{{h|ang|suf}}
+{{ang-adj}}
 
-# [[bent]]; inclined toward, tending toward; sloping toward
-#: {{uxi|ang|[[niþerheald|niþer'''heald''']]|bent downwards}}
-#: {{uxi|ang|[[scyteheald|sċyte'''heald''']]|bent to shoot downwards, precipitous, oblique, steep}}
-#: {{uxi|ang|[[fæstheald|fæst'''heald''']]|firmly fixed, secure}}
-#: {{uxi|ang|[[freondheald|frēond'''heald''']]|friendly, amiable}}
-#: {{uxi|ang|[[suþheald|sūþ'''heald''']]|sloping toward the south}}
+# {{ng|forms adjectives meaning “inclined toward, tending toward; sloping toward”}}
+#: {{uxi|ang|[[niþer'''heald''']]|bent downwards}}
+#: {{uxi|ang|[[sċyte'''heald''']]|inclined, sloping, precipitous, oblique, steep}}
+#: {{uxi|ang|[[fæst'''heald''']]|firmly fixed, secure}}
+#: {{uxi|ang|[[frēond'''heald''']]|friendly, amiable}}
+#: {{uxi|ang|[[sūþ'''heald''']]|sloping toward the south}}
 -------- end text --------
 Page 83 -heald: Skipped, no changes
 Page 84 -hende: -------- begin text --------
@@ -2284,9 +2321,9 @@ From {{inh|ang|gmw-pro|*-handī}}, from {{inh|ang|gem-pro|*-handijaz}}. Equivale
 * {{ang-IPA|hende}}
 
 ===Suffix===
-{{h|ang|suf}}
+{{ang-adj}}
 
-# [[hand|-hand]][[-ed|ed]]
+# [[hand|-hand]][[-ed|ed]]; {{ng|forms adjectives denoting containing the specified number or type of hands}}
 
 ====Declension====
 {{ang-adecl|-hende}}
@@ -2308,16 +2345,16 @@ From {{inh|ang|gmw-pro|*-hert(ī)}}, from {{inh|ang|gem-pro|*-hertaz}}, derived 
 * {{ang-IPA|-heort}}
 
 ===Suffix===
-{{h|ang|suf}}
+{{ang-adj}}
 
-# [[heart|-hearted]]
-#: {{suffixusex|ang|ċeald|gloss1=cold|ċealdheort|gloss2=coldhearted}}
-#: {{suffixusex|ang|clǣne|gloss1=pure|clǣnheort|gloss2=pure-hearted}}
-#: {{suffixusex|ang|hāt|gloss1=hot|hātheort|gloss2=furious}}
-#: {{suffixusex|ang|heard|gloss1=hard|heardheort|gloss2=callous}}
-#: {{suffixusex|ang|milde|gloss1=kind|mildheort|gloss2=kindhearted}}
-#: {{suffixusex|ang|rūm|gloss1=spacious|rūmheort|gloss2=big-hearted}}
-#: {{suffixusex|ang|wulf|gloss1=wolf|wulfheort|gloss2=savage}}
+# [[heart|-hearted]]; {{ng|forms adjectives denoting an emotional quality}}
+#: {{afex|ang|ċeald<t:cold>|ċealdheort<t:coldhearted>}}
+#: {{afex|ang|clǣne<t:pure>|clǣnheort<t:pure-hearted>}}
+#: {{afex|ang|hāt<t:hot>|hātheort<t:furious>}}
+#: {{afex|ang|heard<t:hard>|heardheort<t:callous>}}
+#: {{afex|ang|milde<t:kind>|mildheort<t:kindhearted>}}
+#: {{afex|ang|rūm<t:spacious>|rūmheort<t:big-hearted>}}
+#: {{afex|ang|wulf<t:wolf>|wulfheort<t:savage>}}
 
 ====Declension====
 {{ang-adecl|-heort}}
@@ -2333,38 +2370,38 @@ Page 86 -hiwe: -------- begin text --------
 ==Old English==
 
 ===Suffix===
-{{head|ang|suffix|-hīwe}}
+{{ang-adj|-hīwe}}
 
-# {{synonym of|ang|-hīwede|t=-oid}}
+# {{alt form|ang|-hīwede|t=-oid; -formed}}
 -------- end text --------
 Page 86 -hiwe: Skipped, no changes
 Page 87 -hiwede: -------- begin text --------
 ==Old English==
 
 ===Etymology===
-From {{m|ang|hīewian||to form, shape}}
+From {{m|ang|hīewian||to form, shape}}.
 
 ===Suffix===
-{{h|ang|suf|head=-hīwede}}
+{{ang-adj|-hīwede}}
 
-# [[formed]]
+# [[-oid]]; -[[formed]]
 -------- end text --------
 Page 87 -hiwede: Skipped, no changes
 Page 88 -hlepe: -------- begin text --------
 ==Old English==
 
 ===Suffix===
-{{head|ang|suffix|head=-hlēpe}}
+{{ang-adj|-hlīepe}} {{tlb|ang|nonproductive}}
 
-# {{alternative form of|ang|-hlīepe}}
+# {{alt form|ang|-hlīepe}}
 -------- end text --------
 Page 88 -hlepe: Skipped, no changes
 Page 89 -hliepe: -------- begin text --------
 ==Old English==
 
 ===Alternative forms===
-* {{alter|ang|-hlīpe|-hlēpe}}
-* {{alter|ang|-līpe|-lēpe}}
+* {{alt|ang|-hlīpe|-hlēpe}}
+* {{alt|ang|-līpe|-lēpe}}
 
 ===Etymology===
 From {{inh|ang|gem-pro|*-hlaupijaz||running}}, used to form adjectives, derived from {{inh|ang|gem-pro|*hlaupaną}} from {{der|ang|ine-pro|*klewb-||to spring, stumble}}. Cognate with {{cog|osx|-lōpi}} and {{cog|non|-hleypr}}. More at {{l|ang|hlēapan}}.
@@ -2373,17 +2410,15 @@ From {{inh|ang|gem-pro|*-hlaupijaz||running}}, used to form adjectives, derived 
 * {{ang-IPA|-hlīepe}}
 
 ===Adjective===
-{{ang-adj|-hlīepe}}
+{{ang-adj|-hlīepe}} {{tlb|ang|nonproductive}}
 
-# Forms adjectives from certain nouns. Often drops the initial h-, taking the form -līepe.
+# {{ng|forms adjectives from certain nouns, adjectives and adverbs; often drops the initial ''h-'' after consonants}}
+#: {{afex|ang|ān<t:one; alone, only>|ānlīepe<t:lonely, solitary, alone>}}
+#: {{afex|ang|stæþ<t:shore, river bank>|stæþhlīepe<t:steep, precipitous>}}
+#: {{afex|ang|sundor<t:apart, asunder>|sundorlīepe<t:special, singular, separate>}}
 
 ====Declension====
 {{ang-adecl|-hlīepe}}
-
-====Derived terms====
-* {{l|ang|ānlīepe||lonely, solitary, alone}}
-* {{l|ang|stæþhlīepe||steep, precipitous}}
-* {{l|ang|sundorlīepe||special, singular, separate}}
 -------- end text --------
 Page 89 -hliepe: Skipped, no changes
 Page 90 -hugu: -------- begin text --------
@@ -2395,7 +2430,7 @@ Page 90 -hugu: -------- begin text --------
 ===Suffix===
 {{head|ang|suffix}}
 
-# {{alternative form of|ang|-hwugu}}
+# {{alt form|ang|-hwugu}}
 -------- end text --------
 Page 90 -hugu: Skipped, no changes
 Page 91 -hwega: -------- begin text --------
@@ -2407,7 +2442,7 @@ Page 91 -hwega: -------- begin text --------
 ===Suffix===
 {{head|ang|suffix}}
 
-# {{alternative form of|ang|-hwugu}}
+# {{alt form|ang|-hwugu}}
 -------- end text --------
 Page 91 -hwega: Skipped, no changes
 Page 92 -hwegu: -------- begin text --------
@@ -2419,7 +2454,7 @@ Page 92 -hwegu: -------- begin text --------
 ===Suffix===
 {{head|ang|suffix}}
 
-# {{alternative form of|ang|-hwugu}}
+# {{alt form|ang|-hwugu}}
 -------- end text --------
 Page 92 -hwegu: Skipped, no changes
 Page 93 -hwiga: -------- begin text --------
@@ -2431,7 +2466,7 @@ Page 93 -hwiga: -------- begin text --------
 ===Suffix===
 {{head|ang|suffix}}
 
-# {{alternative form of|ang|-hwugu}}
+# {{alt form|ang|-hwugu}}
 -------- end text --------
 Page 93 -hwiga: Skipped, no changes
 Page 94 -hwœga: -------- begin text --------
@@ -2444,30 +2479,31 @@ Page 94 -hwœga: -------- begin text --------
 ===Suffix===
 {{head|ang|suffix}}
 
-# {{alternative form of|ang|-hwugu}}
+# {{alt form|ang|-hwugu}}
 -------- end text --------
 Page 94 -hwœga: Skipped, no changes
 Page 95 -hwugu: -------- begin text --------
 ==Old English==
 
 ===Alternative forms===
-* {{alter|ang|-hugu|-hwegu|-hwega|-hwiga|-hwœga}}
+* {{alt|ang|-hugu|-hwegu|-hwega|-hwiga|-hwœga}}
 
 ===Etymology===
-{{unk|ang}}. There are no known cognates; {{w|Wilhelm Horn (Anglist)|Horn|lang=de}} posits derivation from {{der|ang|gem-pro||*hwō wegō}}, from {{af|gem-pro|*hwō|t1=how|*wegaz|alt2=*wegō|pos2=the instrumental of {{m|gem-pro|*wegaz}} "way"|lit=in what way, somehow|nocat=1}}.<ref>{{R:ang:AEW|-hwega, -u, -hwigu, -h(w)ugu||180}}</ref><ref>{{cite-book|year=1921|first=Wilhelm|last=Horn|authorlink=de:Wilhelm Horn (Anglist)|title=Sprachkörper und Sprachfunktion|series=Palaestra: Untersuchungen und Texte aus der Deutschen und Englischen Philologie|seriesvolume=135|publisher=Mayer & Müller|location=w:Berlin|oclc=12688244|page=82|pageurl=https://archive.org/details/HornSprachkorper/page/n97}}</ref>
+{{unk|ang}}. There are no known cognates; {{w|Wilhelm Horn (Anglist)|Horn|lang=de}} posits derivation from {{der|ang|gem-pro||*hwō wegō}}, from {{af|gem-pro|*hwō<t:how>|*wegaz|alt2=*wegō|pos2=the instrumental of {{m|gem-pro|*wegaz}} "way"|lit=in what way, somehow|nocat=1}}.<ref>{{R:ang:AEW|-hwega, -u, -hwigu, -h(w)ugu||180}}</ref><ref>{{cite-book|year=1921|first=Wilhelm|last=Horn|authorlink=de:Wilhelm Horn (Anglist)|title=Sprachkörper und Sprachfunktion|series=Palaestra: Untersuchungen und Texte aus der Deutschen und Englischen Philologie|seriesvolume=135|publisher=Mayer & Müller|location=w:Berlin|oclc=12688244|page=82|pageurl=https://archive.org/details/HornSprachkorper/page/n97}}</ref>
 
 ===Pronunciation===
 * {{ang-IPA|hwugu}}
 
 ===Suffix===
-{{h|ang|suf}} {{lb|ang|indeclinable}}
+{{ang-head|pron|addlpos=adverb}} {{lb|ang|indeclinable}}
 
-# [[some]]- ''(forms indefinite pronouns and adverbs from interrogatives)''
-#: {{suffixusex|ang|hwǣr|t1=where|hwǣrhwugu|t2=somewhere}}
-#: {{suffixusex|ang|hwæt|t1=what|hwæthwugu|t2=something}}
+# [[some]]-; {{ng|forms indefinite pronouns and adverbs from interrogatives}}
+#: {{afex|ang|hwǣr<t:where>|hwǣrhwugu<t:somewhere>}}
+#: {{afex|ang|hwæt<t:what>|hwæthwugu<t:something>}}
 
 ====Usage notes====
-* Pronouns appended to ''-hwugu'' are still inflected: ''Sprec wiþ mē be <u>hwām</u>hwugu þā hwīle þe iċ sēoðe'' (“Talk to me about something while I'm cooking”).
+* Pronouns prepended to ''-hwugu'' are still inflected:
+*: {{uxi|ang|Sprec wiþ mē be <u>hwām</u>hwugu þā hwīle þe iċ sēoðe|Talk to me about something while I'm cooking}}
 
 ====Coordinate terms====
 * {{l|ang|ā-||any-}}
@@ -2478,15 +2514,13 @@ Page 95 -hwugu: -------- begin text --------
 
 ===References===
 {{reflist}}
-
-{{cln|ang|terms with usage examples}}
 -------- end text --------
 Page 95 -hwugu: Skipped, no changes
 Page 96 -hynde: -------- begin text --------
 ==Old English==
 
 ===Etymology===
-From {{af|ang|hund|-e|id1=hundred|t1=hundred|id2=adjectival|pos2=adjectival suffix}}.
+From {{af|ang|hund|-e|id1=hundred<t:hundred>|id2=adjectival|pos2=adjectival suffix}}.
 
 ===Pronunciation===
 * {{ang-IPA|-hynde}}
@@ -2494,7 +2528,7 @@ From {{af|ang|hund|-e|id1=hundred|t1=hundred|id2=adjectival|pos2=adjectival suff
 ===Suffix===
 {{head|ang|suffix}}
 
-# {{n-g|Forms [[adjective]]s from [[numeral]]s denoting the amount (in hundreds of shillings) of [[wergeld]] a person is worth.}}
+# {{ng|forms [[adjective]]s from [[numeral]]s denoting the amount (in hundreds of shillings) of [[wergeld]] a person is worth.}}
 
 ====Derived terms====
 {{suffixsee|ang}}
@@ -2506,7 +2540,7 @@ Page 97 -i: -------- begin text --------
 ===Suffix===
 {{head|ang|suffix}}
 
-# {{alternative form of|ang|-iġ}}
+# {{alt form|ang|-iġ}}
 
 -------- end text --------
 Page 97 -i: Skipped, no changes
@@ -2548,7 +2582,7 @@ Page 99 -ianne: -------- begin text --------
 ===Suffix===
 {{h|ang|suf}}
 
-# {{alternative form of|ang|-ienne}}
+# {{alt form|ang|-ienne}}
 -------- end text --------
 Page 99 -ianne: Skipped, no changes
 Page 100 -ic: -------- begin text --------
@@ -2602,7 +2636,7 @@ Page 102 -ie: -------- begin text --------
 ===Suffix===
 {{h|ang|suf}}
 
-# {{alternative form of|ang|-iġe}}
+# {{alt form|ang|-iġe}}
 
 -------- end text --------
 Page 102 -ie: Skipped, no changes
@@ -2610,7 +2644,7 @@ Page 103 -iege: -------- begin text --------
 ==Old English==
 
 ===Alternative forms===
-* {{alter|ang|-īġe|-ēġe|-ēage}}
+* {{alt|ang|-īġe|-ēġe|-ēage}}
 
 ===Etymology===
 From {{inh|ang|gmw-pro|-}} compounds ending in {{m|gmw-pro||*-augī}} (i.e. {{m|gmw-pro|*augā|t=eye}} with the adjective-forming suffix {{m|gmw-pro|*-ī|id=adjective}}). {{surf|ang|ēage|-e|id2=adjectival}}. Cognate with {{cog|gmq-pro|ᚨᚢᚷᛁᛉ}}, {{cog|non|eygr}}.
@@ -2619,9 +2653,9 @@ From {{inh|ang|gmw-pro|-}} compounds ending in {{m|gmw-pro||*-augī}} (i.e. {{m|
 * {{ang-IPA|īeġe}}
 
 ===Suffix===
-{{h|ang|suf|head=-īeġe}}
+{{ang-adj|-īeġe}}
 
-# [[eye|-eyed]]
+# [[eye|-eyed]]; {{ng|forms adjectives denoting containing the specified number or type of eyes}}
 
 ====Declension====
 {{ang-adecl|-īeġe}}
@@ -2637,16 +2671,16 @@ Page 104 -iende: -------- begin text --------
 ==Old English==
 
 ===Alternative forms===
-* {{alter|ang|-iġende}}
+* {{alt|ang|-iġende}}
 
 ===Pronunciation===
 * {{ang-IPA|-[i]ende}}
 
 ===Suffix===
-{{h|ang|suf}}
+{{ang-head|part|inflsuf=1}}
 
-# {{n-g|Used to form the present participle of class II weak verbs}}
-#: {{suffixusex|ang|lufian|gloss1=to love|lufiende|gloss2=loving}}
+# {{ng|forms the present participle of class II weak verbs}}
+#: {{afex|ang|lufian<t:to love>|lufiende<t:loving>}}
 
 ====Declension====
 {{ang-adecl|-iende}}
@@ -2659,16 +2693,16 @@ Page 105 -ienne: -------- begin text --------
 ==Old English==
 
 ===Alternative forms===
-* {{alter|ang|-iġenne|-ianne|-iġanne}}
+* {{alt|ang|-iġenne|-ianne|-iġanne}}
 
 ===Pronunciation===
 * {{ang-IPA|-[i]enne}}
 
 ===Suffix===
-{{h|ang|suf}}
+{{ang-head|verbf|inflsuf=1}}
 
-# {{n-g|Used to form the inflected infinitive of class II weak verbs}}
-#: {{suffixusex|ang|lufian|gloss1=to love|lufienne|gloss2=to love}}
+# {{ng|forms the inflected infinitive of class II weak verbs}}
+#: {{afex|ang|lufian<t:to love>|lufienne<t:to love>}}
 
 ====See also====
 {{ang-conj|-ian<w2/ge:0>}}
@@ -2682,19 +2716,19 @@ Page 106 -ig: -------- begin text --------
 From {{inh|ang|gmw-pro|*-g|*-ag, -ig}}. Still distinct in the earliest texts.
 
 ====Alternative forms====
-* {{alter|ang|-iċ|-eġ}}
+* {{alt|ang|-iċ|-eġ}}
 
 ====Pronunciation====
 * {{ang-IPA|-iġ}}
 * {{rhymes|ang|ij|s=1}}
 
 ====Suffix====
-{{h|ang|suf|head=-iġ}}
+{{ang-adj|-iġ}}
 
-# {{l|en|-y}}; {{n-g|forms adjectives from nouns and verbs}}
+# {{l|en|-y}}; {{ng|forms adjectives from nouns and verbs}}
 
 =====Usage notes=====
-* The variant form ''-eġ'' (or ''-eg'') often occurs specifically when followed by suffixes containing back vowels. Ringe and Taylor (2014) suggest that prehistoric ''*-ag'' failed to fully raise to ''-iġ'' in this environment, with the variant reflecting a preserved transitional form<ref>{{R:ang:DOE|page=335}}</ref>.
+* The variant form ''-eġ'' (or ''-eg'') often occurs specifically when followed by suffixes containing back vowels. Ringe and Taylor (2014) suggest that prehistoric ''*-ag'' failed to fully raise to ''-iġ'' in this environment, with the variant reflecting a preserved transitional form.<ref>{{R:ang:DOE|page=335}}</ref>
 
 =====Declension=====
 {{ang-adecl|-iġ}}
@@ -2724,9 +2758,9 @@ From {{inh|ang|gmw-pro|*-i}}, {{m|gmw-pro|*-ī}}, from {{inh|ang|gem-pro|*-j-}},
 * {{rhymes|ang|ij|s=1}}
 
 ====Suffix====
-{{head|ang|suffix|head=-ig|head2=-iġ}}
+{{ang-noun|-ig,-iġ|m}}
 
-# {{non-gloss|Suffix creating diminutive nouns from other nouns}}.
+# {{ng|forms diminutive nouns from other nouns}}
 #: {{m|ang|bōs'''iġ'''}}
 
 =====Declension=====
@@ -2744,28 +2778,28 @@ Page 107 -iganne: -------- begin text --------
 ==Old English==
 
 ===Suffix===
-{{h|ang|suf|head=-iġanne}}
+{{ang-head|verbf|-iġanne|inflsuf=1}}
 
-# {{alternative form of|ang|-ienne}}
+# {{alt form|ang|-ienne}}
 -------- end text --------
 Page 107 -iganne: Skipped, no changes
 Page 108 -ige: -------- begin text --------
 ==Old English==
 
 ===Alternative forms===
-* {{alter|ang|-ie}}
+* {{alt|ang|-ie}}
 
 ===Pronunciation===
 * {{ang-IPA|-iġe}}
 
 ===Suffix===
-{{h|ang|suf|head=-iġe}}
+{{ang-head|verbf|-iġe|inflsuf=1}}
 
-# {{n-g|Used to form the first person singular present indicative of class II weak verbs}}
-#: {{suffixusex|ang|lufian|gloss1=to love|lufiġe|t2=I love}}
-# {{n-g|Used to form the singular present tense subjunctive of class II weak verbs}}
-#: {{suffixusex|ang|lufian|gloss1=to love|lufiġe|gloss2=(that) I/you/he/she/it love}}
-# {{senseid|ang|second person plural imperative}} {{lb|ang|with postpositioned {{l|ang|ġē|"ġē"}}}} {{n-g|Used to form the second person plural imperative of class II weak verbs}}
+# {{ng|marks the first person singular present indicative of class II weak verbs}}
+#: {{afex|ang|lufian<t:to love>|lufiġe<t:I love>}}
+# {{ng|marks the singular present tense subjunctive of class II weak verbs}}
+#: {{afex|ang|lufian<t:to love>|lufiġe<t:(that) I/you/he/she/it love>}}
+# {{senseid|ang|second person plural imperative}} {{lb|ang|with postpositioned {{l|ang|ġē|"ġē"}}}} {{ng|marks the second person plural imperative of class II weak verbs}}
 #: {{usex|ang|Ne swer'''ie''' ġē þurh ūtencymena goda naman!|t=Swear ye not by the names of foreign gods!}}
 
 ====Related terms====
@@ -2778,18 +2812,18 @@ Page 109 -igende: -------- begin text --------
 ==Old English==
 
 ===Suffix===
-{{h|ang|suf|head=-iġende}}
+{{ang-head|part|-iġende|inflsuf=1}}
 
-# {{alternative form of|ang|-iende}}
+# {{alt form|ang|-iende}}
 -------- end text --------
 Page 109 -igende: Skipped, no changes
 Page 110 -igenne: -------- begin text --------
 ==Old English==
 
 ===Suffix===
-{{h|ang|suf|head=-iġenne}}
+{{ang-head|verbf|-iġenne|inflsuf=1}}
 
-# {{alternative form of|ang|-ienne}}
+# {{alt form|ang|-ienne}}
 -------- end text --------
 Page 110 -igenne: Skipped, no changes
 Page 111 -igian: -------- begin text --------
@@ -2799,9 +2833,9 @@ Page 111 -igian: -------- begin text --------
 * {{ang-IPA|igian}}
 
 ===Suffix===
-{{head|ang|suffix}}
+{{ang-verb}}
 
-# {{alternative form of|ang|-gian}}
+# {{alt form|ang|-gian}}
 
 ====Conjugation====
 {{ang-conj|-igian<w2/ge:0>}}
@@ -2813,7 +2847,7 @@ Page 112 -ih: -------- begin text --------
 ===Suffix===
 {{head|ang|suffix}}
 
-# {{alternative form of|ang|-ig}}
+# {{alt form|ang|-ig}}
 
 -------- end text --------
 Page 112 -ih: Skipped, no changes
@@ -2821,7 +2855,7 @@ Page 113 -iht: -------- begin text --------
 ==Old English==
 
 ===Alternative forms===
-* {{alter|ang|-eht}}
+* {{alt|ang|-eht}}
 
 ===Etymology===
 From {{inh|ang|gmw-pro|*-aht}}. Akin to {{cog|osx|-aht}}, {{cog|goh|-aht}} ({{cog|de|-icht}}), {{cog|is|-óttr}}, {{cog|ang|-iġ}}.
@@ -2830,15 +2864,18 @@ From {{inh|ang|gmw-pro|*-aht}}. Akin to {{cog|osx|-aht}}, {{cog|goh|-aht}} ({{co
 * {{ang-IPA|-iht}}
 
 ===Suffix===
-{{h|ang|suf}}
+{{ang-adj}}
 
-# having, bearing, possessing; {{non-gloss|occasionally causes i-mutation of preceding vowels}}
-#: ''{{m|ang|stāniht}}, {{m|ang|stǣniht||stony, rocky}}''
-# characterized by; full of, covered with; equivalent to [[-ous]]
-#: {{uxi|ang|[[ifiht]]|covered in ivy}}
-#: {{uxi|ang|[[bogiht]]|crooked, full of bends}}
-#: {{uxi|ang|[[sceadiht]]|shadowy, shady, full of shadows}}
-# inclined to
+# {{ng|forms adjectives signifying having, bearing or possessing; occasionally causes {{lg|i-mutation}}}}
+#: {{afex|ang|stān<t:stone>|[[stāniht]], [[stǣniht]]<t:stony, rocky>}}
+#: {{afex|ang|ādela<t:mud, dirt>|ādeliht<t:filthy>}}
+#: {{afex|ang|clif<t:cliff; steeps slope>|clifiht<t:steep>}}
+# {{ng|forms adjectives meaning “characterized by; full of, covered with”}}; [[-ous]]
+#: {{af|ang|īfiġ<t:ivy>|īfiht<t:covered in ivy>}}
+#: {{af|ang|boga<t:bow {{q|bent weapon}}, arch>|bogiht<t:crooked, full of bends>}}
+#: {{af|ang|sċeadu<t:shadow>|sċeadiht<t:shadowy, shady, full of shadows>}}
+#: {{af|ang|wudu<t:wood; tree>|wudiht<t:thick with trees>}}
+# {{ng|forms adjectives meaning “inclined to”}}
 
 ====Derived terms====
 {{suffixsee|ang}}
@@ -2848,7 +2885,7 @@ Page 114 -incel: -------- begin text --------
 ==Old English==
 
 ===Alternative forms===
-* {{alter|ang|-inċil}}
+* {{alt|ang|-inċil}}
 
 ===Etymology===
 A metathetic alteration of {{cog|gem-pro|*-ikīna|pos=diminutive suffix}} + {{m|gem-pro|*-il-|pos=diminutive suffix}}.
@@ -2859,15 +2896,15 @@ Alternately, from {{inh|ang|gem-pro|*-ingilą}}, {{m|gem-pro|*-ingilaz}}.
 * {{ang-IPA|-in+cel}}
 
 ===Suffix===
-{{head|ang|suffix|g=n|head=-incel}}
+{{ang-noun||n|cat=diminutive suffixes}}
 
-# {{non-gloss|diminutive noun suffix}}
-#: {{uxi|ang|[[scipincel|sċip'''incel''']]|miniature ship}}
-#: {{uxi|ang|[[husincel|hūs'''incel''']]|habitation, dwelling}}
-#: {{uxi|ang|[[hæftincel|hæft'''incel''']]|slave [lit. "catchling", "little captive"]}}
-#: {{uxi|ang|[[stanincel|stān'''incel''']]|little stone}}
-#: {{uxi|ang|[[liþincel|liþ'''incel''']]|little joint}}
-#: {{uxi|ang|*[[weargincel|wearg'''incel''']]|butcher-bird, [[wariangle]]}}
+# {{ng|forms diminutive nouns}}
+#: {{uxi|ang|[[sċip'''incel''']]|miniature ship}}
+#: {{uxi|ang|[[hūs'''incel''']]|habitation, dwelling}}
+#: {{uxi|ang|[[hæft'''incel''']]|slave [lit. "catchling", "little captive"]}}
+#: {{uxi|ang|[[stān'''incel''']]|little stone}}
+#: {{uxi|ang|[[liþ'''incel''']]|little joint}}
+#: {{uxi|ang|*[[wearg'''incel''']]|butcher-bird, [[wariangle]]}}
 
 ====Declension====
 {{ang-decl-noun-a-n|-incl|nomsg=-incel|short=1}}
@@ -2877,17 +2914,15 @@ Alternately, from {{inh|ang|gem-pro|*-ingilą}}, {{m|gem-pro|*-ingilaz}}.
 
 ====Derived terms====
 {{suffixsee|ang}}
-
-{{cln|ang|diminutive suffixes}}
 -------- end text --------
 Page 114 -incel: Skipped, no changes
 Page 115 -incil: -------- begin text --------
 ==Old English==
 
 ===Suffix===
-{{h|ang|suf|head=-inċil}}
+{{ang-noun|-inċil|n|cat=diminutive suffixes}}
 
-# {{alternative form of|ang|-inċel}}
+# {{alt form|ang|-inċel}}
 -------- end text --------
 Page 115 -incil: Skipped, no changes
 Page 116 -ing: -------- begin text --------
@@ -2903,9 +2938,9 @@ Variant of {{m|ang|-ung}}.
 * {{alt|ang|-ung}}
 
 ====Suffix====
-{{head|ang|suffix|head=-ing|g=f}}
+{{ang-noun||f}}
 
-# {{non-gloss|Forming [[noun]]s from [[verb]]s, indicating [[action]], [[process]] or [[material]].}}
+# {{ng|forms nouns from verbs, indicating action, process or material}}
 
 =====Declension=====
 {{ang-decl-noun-o-f|-ing}}
@@ -2918,9 +2953,19 @@ Variant of {{m|ang|-ung}}.
 From {{inh|ang|gmw-pro|*-ing}}, from {{inh|ang|gem-pro|*-ingaz}}.
 
 ====Suffix====
-{{head|ang|suffix|head=-ing|g=m}}
+{{ang-noun||m|addlpos=proper noun}}
 
-# {{senseid|ang|son}} {{non-gloss|Forming [[derivative]]s of nouns with [[sense]] of ‘[[belong]]ing to, son of’.}}
+# {{senseid|ang|son}} {{ng|forms proper nouns from other proper nouns indicating the son of someone}}
+#: {{afex|ang|Cūþa<pos:proper name>|Cūþing<t:son of Cūþa>}}
+#: {{afex|ang|Cyneweald<pos:proper name>|Cynewealding<t:son of Cūþa>}}
+#: {{afex|ang|Scyld<ng:legendary Danish king>|Scylding<t:Dane><l:poetic><lit:son of Scyld>}}
+# {{ng|forms nouns from nouns, proper nouns and adjectives indicating belonging to, relating to or in the retinue of someone, often figuratively>}}
+#: {{afex|ang|heard<t:hard; brave>|hearding<t:brave man; warrior>}}
+#: {{afex|ang|æþele<t:noble>|æþeling<t:nobleman, prince>}}
+#: {{afex|ang|Cent<t:Kent>|Centingas<t:people of Kent>}}
+#: {{afex|ang|cyne-<t:royal>|cyning<t:king>}}
+#: {{afex|ang|fierd<t:army>|fyrding<t:army, host>}}
+#: {{afex|ang|sæcc<t:sack; sackcloth>|sæċċing<t:sackcloth>}}
 
 =====Declension=====
 {{ang-decl-noun-a-m|-ing}}
@@ -2939,9 +2984,9 @@ Page 117 -inga: -------- begin text --------
 ===Etymology 1===
 
 ====Suffix====
-{{head|ang|suffix}}
+{{ang-adv}}
 
-# {{alternative form of|ang|-unga|pos=adverbial suffix}}
+# {{alt form|ang|-unga}}; {{ng|forms adverbs from nouns (originally verbal nouns), verbs, adjectives, pronouns and prepositions}}
 
 ===Etymology 2===
 
@@ -2956,7 +3001,7 @@ Page 118 -isc: -------- begin text --------
 ==Old English==
 
 ===Alternative forms===
-* {{alter|ang|-ysċ}}
+* {{alt|ang|-ysċ}}
 
 ===Pronunciation===
 * {{ang-IPA|-isċ}}
@@ -2970,10 +3015,10 @@ From {{inh|ang|gmw-pro|*-isk}}.
 {{ang-adj|-isċ}}
 
 # [[-ish]]; {{ng|forms {{lg|relational}} adjectives, i.e. adjectives meaning “of or relating to”, from nouns and proper nouns}}
-#: {{suffixusex|ang|ċild|t1=child|ċildisċ|t2=childish}}
-#: {{suffixusex|ang|ielf|t1=elf|ielfisċ|t2=elvish}}
-#: {{suffixusex|ang|man|t1=person|mennisċ|t2=human}}
-#: {{suffixusex|ang|þēod|t1=nation|þēodisċ|t2=national}}
+#: {{afex|ang|ċild<t:child>|ċildisċ<t:childish>}}
+#: {{afex|ang|ielf<t:elf>|ielfisċ<t:elvish>}}
+#: {{afex|ang|man<t:person>|mennisċ<t:human>}}
+#: {{afex|ang|þēod<t:nation>|þēodisċ<t:national>}}
 
 =====Usage notes=====
 * Replaces {{ncog|la|-icus}} in loanwords.
@@ -2991,15 +3036,15 @@ From {{inh|ang|gmw-pro|*-isk}}.
 From {{inh|ang|gem-pro|*-iską}}, {{m|gem-pro|*-iskiją}}.
 
 ====Alternative forms====
-* {{alter|ang|-isċe}}
+* {{alt|ang|-isċe}}
 
 ====Suffix====
 {{ang-noun|-isċ|n}}
 
 # {{senseid|ang|collective}} {{ng|forms nouns with a collective or group force}}
-#: {{uxi|ang|[[þegnisc|þeġn'''isċ''']]|service, religious service, ministry}}
-#: {{uxi|ang|[[hiwisc|hīw'''isċ''']]|household}}
-#: {{uxi|ang|[[idisc|īd'''isċ''']]|property, household, family belongings, stuff}}
+#: {{uxi|ang|[[þeġn'''isċ''']]|service, religious service, ministry}}
+#: {{uxi|ang|[[hīw'''isċ''']]|household}}
+#: {{uxi|ang|[[īd'''isċ''']]|property, household, family belongings, stuff}}
 
 =====Declension=====
 {{ang-decl-noun-a-n|-isċ}}
@@ -3013,7 +3058,7 @@ Page 119 -isce: -------- begin text --------
 ==Old English==
 
 ===Alternative forms===
-* {{alter|ang|-isċ}}
+* {{alt|ang|-isċ}}
 
 ===Pronunciation===
 * {{ang-IPA|-isċe}}
@@ -3031,15 +3076,18 @@ Page 120 -isse: -------- begin text --------
 ==Old English==
 
 ===Etymology===
-From {{bor|ang|la-lat|-issa}}, from {{der|ang|grc|-ῐσσᾰ}}
+From {{bor|ang|la-lat|-issa}}, from {{der|ang|grc|-ῐσσᾰ}}.
 
 ===Pronunciation===
 * {{ang-IPA|isse}}
 
 ===Suffix===
-{{head|ang|suffix|f}}
+{{ang-noun||f}}
 
-# {{n-g|Forms nouns referring to female people. Attested only in the noun {{m|ang|abbadisse}}.}}
+# {{ng|forms female equivalent nouns}}
+
+====Usage notes====
+* Attested only in the noun {{m|ang|abbadisse}}.
 
 ====Declension====
 {{ang-decl-noun-n-f|-iss}}
@@ -3058,7 +3106,7 @@ Page 121 -ist: -------- begin text --------
 ===Suffix===
 {{h|ang|suf}}
 
-# {{alternative form of|ang|-ost}}
+# {{alt form|ang|-ost}}
 
 -------- end text --------
 Page 121 -ist: Skipped, no changes
@@ -3068,7 +3116,7 @@ Page 122 -istre: -------- begin text --------
 ===Suffix===
 {{h|ang|suf}}
 
-# {{alternative form of|ang|-estre}}
+# {{alt form|ang|-estre}}
 -------- end text --------
 Page 122 -istre: Skipped, no changes
 Page 123 -lac: -------- begin text --------
@@ -3086,15 +3134,15 @@ Also borrowed from Old Norse as {{cog|enm|-laik}}, {{m|enm|-leȝȝe}}.
 * {{ang-IPA|-lāc}}
 
 ===Suffix===
-{{head|ang|suffix|head=-lāc|g=n}}
+{{ang-noun|-lāc|n}}
 
-# {{non-gloss|noun suffix denoting activity}} (compare Modern {{cog|en|-ation}})
+# {{ng|forms nouns denoting activity}}
 #: {{uxi|ang|[[feohtlāc]]|t=fighting}}
-# [[practice]], action or process of
+# {{ng|forms nouns meaning “practice, action or process of”}}
 #: {{uxi|ang|[[wedlāc]]|t=pledge, plighted troth}}
-# act of
+# {{ng|forms nouns meaning “act of”}}
 #: {{uxi|ang|[[hǣmedlāc]]|t=sexual intercourse}}
-# [[gift]]
+# {{ng|forms nouns meaning “gift”}}
 #: {{uxi|ang|[[frēolāc]]|t=oblation, free-will offering}}
 #: {{uxi|ang|[[sǣlāc]]|t=sea-gift}}
 
@@ -3120,11 +3168,11 @@ From {{der|ang|gmw-pro|*laikijan}}, from {{der|ang|gem-pro|*laikijaną}}; relate
 * {{ang-IPA|-lǣċan}}
 
 ===Suffix===
-{{h|ang|suf|head=-lǣċan}}
+{{ang-verb|-lǣċan}}
 
-# {{n-g|verbal suffix (combining form) denoting action, process or making (compare English {{m|en|-ify}}), from {{m|ang|lǣcan}}, a derivative of {{m|ang|lāc}} noun suffix denoting activity or process}}
+# {{ng|forms verbs denoting action, process or making}}
 #: {{uxi|ang|[[cūþlǣċan]]|to make known, befriend}}
-# to become, turn, grow
+# {{ng|forms verbs signifying becoming}}
 #: {{uxi|ang|[[ǣfenlǣċan]]|to become evening}}
 #: {{uxi|ang|[[winterlǣċan]]|to turn wintry}}
 
@@ -3153,12 +3201,12 @@ Ultimately from {{inh|ang|gem-pro|*laibō}}. More at {{m+|gem-pro|*Anulaibaz}}.
 ===Pronunciation===
 * {{ang-IPA|lāf}}
 
-===Noun===
-{{ang-noun|-lāf|m}}
+===Suffix===
+{{ang-proper noun|-lāf|m}}
 
 # {{lb|ang|only in given names}} {{def-uncertain|ang}}
-## [[legacy]], [[heir]]
-## [[legate]], [[commander]]
+## {{ng|forms proper nouns meaning “legacy, heir”}}
+## {{ng|forms proper nouns meaning “[[legate]], commander”}}
 
 ====Declension====
 {{ang-decl-noun-a-m|-lāf|num=sg}}
@@ -3171,7 +3219,7 @@ Page 126 -leas: -------- begin text --------
 ==Old English==
 
 ===Alternative forms===
-* {{alter|ang|-lēs}}
+* {{alt|ang|-lēs}}
 
 ===Etymology===
 {{etymon|ang|:inh|gmw-pro:*-laus}}
@@ -3181,10 +3229,9 @@ Page 126 -leas: -------- begin text --------
 * {{ang-IPA|-lēas}}
 
 ===Suffix===
-{{h|ang|suf|head=-lēas}}
+{{ang-adj|-lēas}}
 
-# [[without]], [[free]] from, [[devoid]] of
-# [[bereft]] of
+# [[-less]]; {{ng|forms adjectives meaning “without, free of, devoid of, bereft of}}
 
 ====Declension====
 {{ang-adecl|-lēas}}
@@ -3209,7 +3256,7 @@ Page 127 -least: -------- begin text --------
 ===Suffix===
 {{head|ang|suffix|head=-lēast|g=f}}
 
-# {{alternative form of|ang|-līest}}
+# {{alt form|ang|-līest}}
 -------- end text --------
 Page 127 -least: Skipped, no changes
 Page 128 -lec: -------- begin text --------
@@ -3218,7 +3265,7 @@ Page 128 -lec: -------- begin text --------
 ===Suffix===
 {{h|ang|suf|head=-lēċ}}
 
-# {{alternative form of|ang|-līċ}}
+# {{alt form|ang|-līċ}}
 -------- end text --------
 Page 128 -lec: Skipped, no changes
 Page 129 -lenga: -------- begin text --------
@@ -3227,7 +3274,7 @@ Page 129 -lenga: -------- begin text --------
 ===Suffix===
 {{h|ang|suf}}
 
-# {{alternative form of|ang|-linga}}
+# {{alt form|ang|-linga}}
 -------- end text --------
 Page 129 -lenga: Skipped, no changes
 Page 130 -lepe: -------- begin text --------
@@ -3236,7 +3283,7 @@ Page 130 -lepe: -------- begin text --------
 ===Suffix===
 {{head|ang|suffix|head=-lēpe}}
 
-# {{alternative form of|ang|-hlīepe}}
+# {{alt form|ang|-hlīepe}}
 -------- end text --------
 Page 130 -lepe: Skipped, no changes
 Page 131 -lest: -------- begin text --------
@@ -3248,7 +3295,7 @@ Page 131 -lest: -------- begin text --------
 ===Suffix===
 {{head|ang|suffix|head=-lēst|g=f}}
 
-# {{alternative form of|ang|-līest}}
+# {{alt form|ang|-līest}}
 -------- end text --------
 Page 131 -lest: Skipped, no changes
 Page 132 -lian: -------- begin text --------
@@ -3264,7 +3311,7 @@ From {{inh|ang|gmw-pro|*-lōn}}, from {{inh|ang|gem-pro|*-lōną}}, perhaps rela
 ===Suffix===
 {{h|ang|suf}}
 
-# {{non-gloss|[[frequentative]] verbal suffix; indicating repetition}}
+# {{ng|[[frequentative]] verbal suffix; indicating repetition}}
 
 ====Conjugation====
 {{ang-conj|-lian<w2/ge:0>}}
@@ -3277,7 +3324,7 @@ Page 133 -lic: -------- begin text --------
 ==Old English==
 
 ===Alternative forms===
-* {{alter|ang|-lēċ|-līh|-lī}}
+* {{alt|ang|-lēċ|-līh|-lī}}
 
 ===Etymology===
 {{etymon|ang|:inh|gmw-pro:*-līk}}
@@ -3290,45 +3337,38 @@ From {{inh|ang|gmw-pro|*-līk}}, from {{inh|ang|gem-pro|*-līkaz}} (adjectival s
 * {{rhymes|ang|iːt͡ʃ|s=1}}
 
 ===Suffix===
-{{head|ang|suffix|head=-līċ|comparative|-līcra|superlative|-līcost}}
+{{ang-adj|-līċ|-līcra|-līcost}}
 
-# ''adjective-forming suffix meaning 'like' or 'relating to'''
-#: {{suffixusex|ang|ċild|gloss1=child|ċildlīċ|gloss2=childlike}}
-#: {{suffixusex|ang|dēad|gloss1=dead|dēadlīċ|gloss2=mortal}}
-#: {{suffixusex|ang|fēond|gloss1=enemy|fēondlīċ|gloss2=hostile}}
-#: {{suffixusex|ang|frēond|gloss1=friend|frēondlīċ|gloss2=friendly}}
-#: {{suffixusex|ang|ġefēra|gloss1=companion|ġefērlīċ|gloss2=social}}
-#: {{suffixusex|ang|lēof|gloss1=beloved|lēoflīċ|gloss2=lovely}}
-#: {{suffixusex|ang|lēoþ|gloss1=poem|lēoþlīċ|gloss2=poetic}}
-#: {{suffixusex|ang|līchama|gloss1=body|līchamlīċ|gloss2=physical}}
-#: {{suffixusex|ang|mennisċ|gloss1=human|mennisċlīċ|gloss2=humane}}
-#: {{suffixusex|ang|niht|gloss1=night|nihtlīċ|gloss2=nocturnal}}
-#: {{suffixusex|ang|niþer|gloss1=down|niþerlīċ|gloss2=low}}
-#: {{suffixusex|ang|open|gloss1=open|openlīċ|gloss2=public}}
-#: {{suffixusex|ang|stæf|gloss1=letter|stæflīċ|gloss2=literal}}
-#: {{suffixusex|ang|stōw|gloss1=place|stōwlīċ|gloss2=local}}
-#: {{suffixusex|ang|ūþwita|gloss1=philosopher|ūþwitlīċ|gloss2=philosophical}}
-#: {{suffixusex|ang|wer|gloss1=man|werlīċ|gloss2=manly or masculine}}
-#: {{suffixusex|ang|wīf|gloss1=woman|wīflīċ|gloss2=feminine}}
-#: {{suffixusex|ang|wundor|gloss1=miracle or wonder|wundorlīċ|gloss2=miraculous or wonderful}}
+# {{ng|forms adjectives meaning “like” or “relating to”}}
+#: {{afex|ang|ċild<t:child>|ċildlīċ<t:childlike>}}
+#: {{afex|ang|dēad<t:dead>|dēadlīċ<t:mortal>}}
+#: {{afex|ang|fēond<t:enemy>|fēondlīċ<t:hostile>}}
+#: {{afex|ang|frēond<t:friend>|frēondlīċ<t:friendly>}}
+#: {{afex|ang|ġefēra<t:companion>|ġefērlīċ<t:social>}}
+#: {{afex|ang|lēof<t:beloved>|lēoflīċ<t:lovely>}}
+#: {{afex|ang|lēoþ<t:poem>|lēoþlīċ<t:poetic>}}
+#: {{afex|ang|līchama<t:body>|līchamlīċ<t:physical>}}
+#: {{afex|ang|mennisċ<t:human>|mennisċlīċ<t:humane>}}
+#: {{afex|ang|niht<t:night>|nihtlīċ<t:nocturnal>}}
+#: {{afex|ang|niþer<t:down>|niþerlīċ<t:low>}}
+#: {{afex|ang|open<t:open>|openlīċ<t:public>}}
+#: {{afex|ang|stæf<t:letter>|stæflīċ<t:literal>}}
+#: {{afex|ang|stōw<t:place>|stōwlīċ<t:local>}}
+#: {{afex|ang|ūþwita<t:philosopher>|ūþwitlīċ<t:philosophical>}}
+#: {{afex|ang|wer<t:man>|werlīċ<t:manly or masculine>}}
+#: {{afex|ang|wīf<t:woman>|wīflīċ<t:feminine>}}
+#: {{afex|ang|wundor<t:miracle or wonder>|wundorlīċ<t:miraculous or wonderful>}}
 # ''denoting multiplicity'': [[-fold]]
 #: {{uxi|ang|[[þrilīċ]]|triple, three-fold}}
 
 ====Usage notes====
 * ''-Līċ'' is the most common adjectival suffix in Old English. It can be added to almost any word, often corresponding to Modern English {{m|en|-y}}.
-
 * It has no very definite difference in meaning from {{m|ang|-isċ}} and {{m|ang|-iġ}}, except that it is more common and different words happen to end in it.
-
 * ''-Līċ'' belongs to a class of suffixes which were derived from independent words, but which by the written period were no longer strongly identified with the words they were derived from (in this case, {{m|ang|līċ}} “dead body,” which once meant “body” ← “form”). According to Hogg,<ref>{{R:ang:GOE|volume=1|49}}</ref> the primary examples are {{m|ang|-bǣre}}, {{m|ang|-bora}}, {{m|ang|-cund}}, {{m|ang|-dōm}}, {{m|ang|-fæst}}, {{m|ang|-feald}}, {{m|ang|-ful}}, {{m|ang|-hād}}, {{m|ang|-lāc}}, {{m|ang|-lēas}}, ''-līċ'', {{m|ang|-rǣden}}, {{m|ang|-sċipe}}, {{m|ang|-sum}}, and {{m|ang|-weard}}.
-
 * The words created with these suffixes are called "quasi-compounds," which are stressed differently from true compounds. True compound nouns and adjectives always carry {{w|secondary stress}} on their final element: {{m|ang|foxhol}}, [ˈfoksˌhol]. But quasi-compounds are stressed variably: after a stressed syllable, i.e. a monosyllabic first element, the suffix undergoes reduced stress, unless the suffix is multisyllabic and not {{w|Resolution (meter)|resolved}}. Under this reduced stress, if the suffix has a long vowel or a diphthong, the long vowel is shortened and the diphthong becomes a monophthong (''ea'' becomes ''a'', ''eo'' becomes ''e'', ''ie'' becomes ''i'').
-
 * However, even when the vowel in these suffixes is short, it is traditionally written with a {{w|macron}} for consistency, because it is still long in the inflected forms. Likewise, the quasi-compounding suffixes {{m|ang|-feald}} and {{m|ang|-weard}} are often written with a diphthong even when they would have been pronounced ''-fald'', ''-ward''. Note that after an unstressed syllable, i.e. when the word it suffixes is multisyllabic, the long vowel/diphthong is retained even absent inflectional endings: {{m|ang|brōþorlīċ||brotherly}}, {{m|ang|mæġdenlīċ||girlish}}.
-
 * Note that personal names are stressed exactly the same way, with alterations such as ''Ælfred'' ("Alfred"), ''Ælfrēdes'' ("Alfred's") and ''Ēadward'', ''Ēadweardes''.
-
 * Throughout Old English, the palatal stops [t͡ʃ] and [d͡ʒ] were depalatalized directly before a consonant: ''-līcne'' (acc. sg. masc.), ''līcra'' (gen. pl.). This rule can also be seen in many other words, such as {{m|ang|þenċan}}, 2,3sg. pr. ind. ''þencst'', ''þencþ'', whence Modern English {{m|en|think}}. Note that the palatal fricatives [ʃ] and [j] remained palatal in this condition.<ref>{{R:ang:DOE|page=279}}</ref>
-
 * [[w:Phonological history of Old English#Palatalization|Palatalization]] never occurred directly before a back vowel (a, o, u) except to initial /sk/, so the c is pronounced like a hard k in the inflections ''-līcum'', ''-līca'', and ''-līcan''; also nom. sg. fem./nom-acc. pl. neut. ''-līc(u)'', which always ended in ''*-u'' at the time of palatalization. This same rule also produced many other alterations such as {{m|ang|fisċ||fish}}, pl. ''fiscas'' (later also ''fixas'' by {{w|metathesis}}); {{m|ang|wīċ||village}}, pl. ''wīc'' (whence Modern English {{m|en|-wich}} and {{m|en|-wick}} by [[w:Morphological leveling|leveling]]); and {{m|ang|ġelīċ||like}}, dat. pl. ''ġelīcum'', nom. sg. fem./nom-acc. pl. neut. ''ġelīc'', nom. pl. fem. ''ġelīca'', etc., whence Modern English {{m|en|like}}. So for most words ending in ġ, ċ, or sċ; note however that a few words once featured a following ''*(i)j'' which blocked a back vowel from preventing palatalization and later vanished, as in {{m|ang|rīċe||kingdom}}, pl. {{m|ang|rīċu}} ← ''*rīkju''.<ref>{{R:ang:GOE|volume=1|253}}</ref> Also, historical i-stems began to take non-i-stem endings only after palatalization had run its course: {{m|ang|swēġ||sound}}, pl. ''swēġas'' ← ''*swōġī''. Finally, [j] from original /j/ (as opposed to /ɣ/) was never depalatalized: {{m|ang|twēoġan||to doubt}} ← ''*twihōjan''.
 
 ====Declension====
@@ -3344,8 +3384,6 @@ From {{inh|ang|gmw-pro|*-līk}}, from {{inh|ang|gem-pro|*-līkaz}} (adjectival s
 
 ===References===
 {{reflist}}
-
-{{cln|ang|adjective-forming suffixes}}
 -------- end text --------
 Page 133 -lic: Skipped, no changes
 Page 134 -lice: -------- begin text --------
@@ -3359,9 +3397,9 @@ From {{inh|ang|gem-pro|*-līkê}}, equivalent to {{m|ang|-līċ|pos=adjectival s
 * {{ang-IPA|līċe}}
 
 ===Suffix===
-{{h|ang|suf|head=-līċe|cat2=adverb-forming suffixes}}
+{{ang-adv|-līċe}}
 
-# [[-ly]] (adverbial suffix)
+# [[-ly]]; {{ng|forms adverbs}}
 
 ====Derived terms====
 {{suffixsee|ang}}
@@ -3387,7 +3425,7 @@ From {{inh|ang|gmw-pro|*-lausiþu}}; {{surf|ang|-lēas<t:-less><type:root>|-þ<a
 ===Suffix===
 {{head|ang|suffix|head=-līest|g=f}}
 
-# {{lb|ang|West Saxon}} {{n-g|suffix denoting lack, want or absence of}}: [[-less]][[-ness|ness]]
+# {{lb|ang|West Saxon}} {{ng|suffix denoting lack, want or absence of}}: [[-less]][[-ness|ness]]
 #: {{uxi|ang|[[metelīest]]|lack of food, foodlessness}}
 #: {{uxi|ang|[[andġietlīest]]|lack of understanding}}
 
@@ -3419,7 +3457,7 @@ Page 137 -linc: -------- begin text --------
 ===Suffix===
 {{h|ang|suf}}
 
-# {{alternative form of|ang|-ling}}
+# {{alt form|ang|-ling}}
 -------- end text --------
 Page 137 -linc: Skipped, no changes
 Page 138 -ling: -------- begin text --------
@@ -3450,11 +3488,11 @@ From {{inh|ang|gmw-pro|*-ling}}, from {{inh|ang|gem-pro|*-ilingaz}}.
 ====Suffix====
 {{head|ang|suffix|head=-ling|g=m}}
 
-# {{senseid|ang|nominal}} {{non-gloss|suffix used in forming personal nouns}}
-#: {{uxi|ang|[[dīerling|dīer'''ling''']]|favorite, darling}}
-#: {{uxi|ang|[[rǣpling|rǣp'''ling''']]|prisoner}}
-# {{non-gloss|suffix forming diminutives}}
-#: {{uxi|ang|[[stærling|stær'''ling''']]|starling}}
+# {{senseid|ang|nominal}} {{ng|suffix used in forming personal nouns}}
+#: {{uxi|ang|[[dīer'''ling''']]|favorite, darling}}
+#: {{uxi|ang|[[rǣp'''ling''']]|prisoner}}
+# {{ng|suffix forming diminutives}}
+#: {{uxi|ang|[[stær'''ling''']]|starling}}
 # [[dynasty]], [[lineage]]
 #: Icling ("dynasty of Icel" or "House of Icel"); Ætheling (House of Ethel)
 
@@ -3475,7 +3513,7 @@ Page 139 -linga: -------- begin text --------
 ==Old English==
 
 ===Alternative forms===
-* {{alter|ang|-lenga|-lunga}}
+* {{alt|ang|-lenga|-lunga}}
 
 ===Etymology===
 {{suffix|ang|-ling|pos1=adverbial suffix|a|pos2=adverbial suffix|id2=adverbial}}
@@ -3500,7 +3538,7 @@ Page 140 -lipe: -------- begin text --------
 ===Suffix===
 {{head|ang|suffix|head=-līpe}}
 
-# {{alternative form of|ang|-hlīepe}}
+# {{alt form|ang|-hlīepe}}
 -------- end text --------
 Page 140 -lipe: Skipped, no changes
 Page 141 -list: -------- begin text --------
@@ -3512,7 +3550,7 @@ Page 141 -list: -------- begin text --------
 ===Suffix===
 {{head|ang|suffix|head=-līst|g=f}}
 
-# {{alternative form of|ang|-līest}}
+# {{alt form|ang|-līest}}
 -------- end text --------
 Page 141 -list: Skipped, no changes
 Page 142 -lunga: -------- begin text --------
@@ -3521,7 +3559,7 @@ Page 142 -lunga: -------- begin text --------
 ===Suffix===
 {{h|ang|suf}}
 
-# {{alternative form of|ang|-linga}}
+# {{alt form|ang|-linga}}
 -------- end text --------
 Page 142 -lunga: Skipped, no changes
 Page 143 -lyst: -------- begin text --------
@@ -3533,7 +3571,7 @@ Page 143 -lyst: -------- begin text --------
 ===Suffix===
 {{head|ang|suffix|head=-lȳst|g=f}}
 
-# {{alternative form of|ang|-līest}}
+# {{alt form|ang|-līest}}
 -------- end text --------
 Page 143 -lyst: Skipped, no changes
 Page 144 -ma: -------- begin text --------
@@ -3542,7 +3580,7 @@ Page 144 -ma: -------- begin text --------
 ===Suffix===
 {{head|ang|suffix}}
 
-# {{alternative form of|ang|-uma}}
+# {{alt form|ang|-uma}}
 
 -------- end text --------
 Page 144 -ma: Skipped, no changes
@@ -3556,9 +3594,9 @@ From {{inh|ang|gmw-pro|*-mālum}}. Identical to the dative/instrumental plural o
 * {{ang-IPA|mǣlum}}
 
 ===Suffix===
-{{h|ang|suf|head=-mǣlum}}
+{{ang-adv|-mǣlum}}
 
-# {{n-g|used to denote a fixed amount of something at a time}}
+# {{ng|forms adverbs denoting a fixed amount of something at a time}}
 #: {{uxi|ang|[[bitmǣlum]]|bit by bit}}
 #: {{uxi|ang|[[dropmǣlum]]|drop by drop}}
 #: {{uxi|ang|[[flocmǣlum]]|in flocks, in droves}}
@@ -3585,9 +3623,9 @@ Perhaps dates back to a {{w|Proto-Germanic}} ''*-mannijaz''. Equivalent to {{suf
 * {{ang-IPA|menne}}
 
 ===Suffix===
-{{h|ang|suf}}
+{{ang-adj}} {{tlb|ang|not productive}}
 
-# ''denotes having a certain number of people''
+# {{ng|forms adjectives denoting having a certain number of people}}
 
 ====Usage notes====
 * Only attested in the word {{m|ang|ǣmenne}}.
@@ -3601,16 +3639,16 @@ Page 147 -mest: -------- begin text --------
 
 ===Etymology===
 {{etymon|ang|:inh|gem-pro:*-umistaz<ety:af<*-umô><*-istaz>>}}
-From {{inh|ang|gem-pro|*-umistaz}}, from the comparative suffix {{m|gem-pro|*-umô}} + the regular superlative suffix {{m|gem-pro|*-istaz}}
+From {{inh|ang|gem-pro|*-umistaz}}, from the comparative suffix {{m|gem-pro|*-umô}} + the regular superlative suffix {{m|gem-pro|*-istaz}}.
 
 ===Pronunciation===
 * {{ang-IPA|-mest}}
 
 ===Suffix===
-{{h|ang|suf}}
+{{ang-adj}}
 
-# [[-most]]; used to form the superlative of certain words, such as cardinal directions
-#: {{suffixusex|ang|west|gloss1=west|westmest|gloss2=westernmost}}
+# [[-most]]; {{ng|forms the superlative of certain words, such as cardinal directions}}
+#: {{afex|ang|west<t:west>|westmest<t:westernmost>}}
 
 ====Descendants====
 * {{desc|enm|-most|-mest}}
@@ -3627,14 +3665,14 @@ From {{inh|ang|gem-pro|*-mōdaz}}, derived from {{m|gem-pro|*mōdaz||mind}} ({{c
 * {{ang-IPA|-mōd}}
 
 ===Suffix===
-{{h|ang|suf|head=-mōd}}
+{{ang-adj|-mōd}}
 
-# [[minded|-minded]]; also [[spirited|-spirited]], [[hearted|-hearted]]
-#: {{suffixusex|ang|ān|gloss1=one|ānmōd|gloss2=unanimous}}
-#: {{suffixusex|ang|ēaþe|gloss1=easy|ēaþmōd|gloss2=humble}}
-#: {{suffixusex|ang|miċel|gloss1=big|miċelmōd|gloss2=magnanimous}}
-#: {{suffixusex|ang|ofer-|gloss1=over|ofermōd|gloss2=proud}}
-#: {{suffixusex|ang|or-|gloss1=without|ormōd|gloss2=desperate}}
+# {{ng|forms adjectives meaning “[[minded|-minded]]”, “[[spirited|-spirited]]”, “[[hearted|-hearted]]”}}
+#: {{afex|ang|ān<t:one>|ānmōd<t:unanimous>}}
+#: {{afex|ang|ēaþe<t:easy>|ēaþmōd<t:humble>}}
+#: {{afex|ang|miċel<t:big>|miċelmōd<t:magnanimous>}}
+#: {{afex|ang|ofer-<t:over>|ofermōd<t:proud>}}
+#: {{afex|ang|or-<t:without>|ormōd<t:desperate>}}
 
 ====Declension====
 {{ang-adecl|-mōd}}
@@ -3653,11 +3691,11 @@ Page 149 -ne: -------- begin text --------
 * {{ang-IPA|-ne}}
 
 ===Suffix===
-{{h|ang|suf}}
+{{ang-head|adjf|inflsuf=1}}
 
-# {{n-g|Forms the strong masculine accusative singular of adjectives}}
-#: {{suffixusex|ang|blind|gloss1=blind|blindne}}
-#: {{suffixusex|ang|grēne|gloss1=green|grēnne}}
+# {{ng|marks the strong masculine accusative singular of adjectives}}
+#: {{afex|ang|blind<t:blind>|blindne}}
+#: {{afex|ang|grēne<t:green>|grēnne}}
 
 -------- end text --------
 Page 149 -ne: Skipped, no changes
@@ -3701,7 +3739,7 @@ Page 151 -ness: -------- begin text --------
 ===Suffix===
 {{ang-noun||f}}
 
-# {{alt form|ang|-nes|t={{l|en|-ness}}}}; {{ng|forms abstract nouns}}
+# {{alt form|ang|-nes}}: {{l|en|-ness}}; {{ng|forms abstract nouns}}
 
 ====Declension====
 {{ang-decl-noun-o-f|-ness}}
@@ -3722,10 +3760,10 @@ From {{inh|ang|gmw-pro|*-inōn}}, from {{inh|ang|gem-pro|*-inōną}}. Compare {{
 * {{ang-IPA|-nian}}
 
 ===Suffix===
-{{h|ang|suf}}
+{{ang-verb}}
 
-# {{n-g|suffix applied to nouns and adjectives to form verbs}}
-#: {{sufex|ang|lǣċe|t1=[[physician]], [[doctor]]|lāc'''nian'''|t2=to heal}}
+# {{ng|forms verbs from nouns and adjectives}}
+#: {{afex|ang|lǣċe<t:physician, doctor>|[[lāc'''nian''']]<t:to heal>}}
 
 ====Conjugation====
 {{ang-conj|-nian<w2/ge:0>}}
@@ -3737,8 +3775,6 @@ From {{inh|ang|gmw-pro|*-inōn}}, from {{inh|ang|gem-pro|*-inōną}}. Compare {{
 * {{desc|enm|-nien|-enien|-nen|-enen|-en}}
 ** {{desc|sco|-en}}
 ** {{desc|en|-en}}
-
-{{cln|ang|verb-forming suffixes}}
 -------- end text --------
 Page 152 -nian: Skipped, no changes
 Page 153 -nihte: -------- begin text --------
@@ -3751,10 +3787,10 @@ From {{inh|ang|gem-pro|*-nahtijaz}}. Cognate with {{cog|non|-nættr}}. Equivalen
 * {{ang-IPA|nihte}}
 
 ===Suffix===
-{{h|ang|suf}}
+{{ang-adj}}
 
-# [[day]](s) [[old]]
-# [[days]] [[lasting]]; -[[day]]
+# {{ng|forms adjectives meaning “[[day]](s) [[old]]”}}
+# {{ng|forms adjectives meaning “lasting a specific number of days”}}; -[[day]]
 
 ====Declension====
 {{ang-adecl|-nihte}}
@@ -3772,7 +3808,7 @@ Page 154 -ningas: -------- begin text --------
 ===Suffix===
 {{head|ang|suffix}}
 
-# {{alternative form of|ang|-unga}}
+# {{alt form|ang|-unga}}
 -------- end text --------
 Page 154 -ningas: Skipped, no changes
 Page 155 -nis: -------- begin text --------
@@ -3784,7 +3820,7 @@ Page 155 -nis: -------- begin text --------
 ===Suffix===
 {{ang-noun||f}}
 
-# {{alt form|ang|-nes|t=[[-ness]]}}; {{ng|forms abstract nouns}}
+# {{alt form|ang|-nes}}: [[-ness]]; {{ng|forms abstract nouns}}
 -------- end text --------
 Page 155 -nis: Skipped, no changes
 Page 156 -niss: -------- begin text --------
@@ -3793,22 +3829,22 @@ Page 156 -niss: -------- begin text --------
 ===Suffix===
 {{ang-noun||f}}
 
-# {{alt form|ang|-nes|t=[[-ness]]}}; {{ng|forms abstract nouns}}
+# {{alt form|ang|-nes}}: [[-ness]]; {{ng|forms abstract nouns}}
 -------- end text --------
 Page 156 -niss: Skipped, no changes
 Page 157 -noþ: -------- begin text --------
 ==Old English==
 
 ===Alternative forms===
-* {{alter|ang|-naþ}}
+* {{alt|ang|-naþ}}
 
 ===Etymology===
 {{unk|ang}}. Possibly related to {{l|ang|nōþ}}.
 
 ===Suffix===
-{{h|ang|suf|head=-noþ|g=m}}
+{{ang-noun||m}}
 
-# Used to form [[gerund]]s, a type of [[verbal noun]]s, from verbs<!-- indicating the action or procedure of the verb -->.
+# {{ng|forms [[verbal noun]]s from verbs}}
 
 ====Declension====
 {{ang-decl-noun-a-m|-noþ}}
@@ -3833,7 +3869,7 @@ Page 158 -nunges: -------- begin text --------
 ===Suffix===
 {{head|ang|suffix}}
 
-# {{alternative form of|ang|-unga}}
+# {{alt form|ang|-unga}}
 -------- end text --------
 Page 158 -nunges: Skipped, no changes
 Page 159 -nys: -------- begin text --------
@@ -3845,7 +3881,7 @@ Page 159 -nys: -------- begin text --------
 ===Suffix===
 {{ang-noun||f}}
 
-# {{alt form|ang|-nes|t=[[-ness]]}}; {{ng|forms abstract nouns}}
+# {{alt form|ang|-nes}}: [[-ness]]; {{ng|forms abstract nouns}}
 
 ====Declension====
 {{ang-decl-noun-o-f|-nyss|nomsg=-nys}}
@@ -3857,7 +3893,7 @@ Page 160 -nyss: -------- begin text --------
 ===Suffix===
 {{ang-noun||f}}
 
-# {{alt form|ang|-nes|t=[[-ness]]}}; {{ng|forms abstract nouns}}
+# {{alt form|ang|-nes}}: [[-ness]]; {{ng|forms abstract nouns}}
 -------- end text --------
 Page 160 -nyss: Skipped, no changes
 Page 161 -o: -------- begin text --------
@@ -3866,11 +3902,48 @@ Page 161 -o: -------- begin text --------
 ===Pronunciation===
 * {{ang-IPA|-o}}
 
-===Suffix===
-{{h|ang|suf}}
+===Etymology 1===
 
-# {{lb|ang|Anglian|Kentish}} {{alt form|ang|-e}}, as used to form the {{lg|first person}} {{lg|singular}} {{lg|present}} {{lg|indicative}} of {{lg|strong verb}}s and class I {{lg|weak verb}}s
-# {{alt form|ang|-u}}
+====Suffix====
+{{ang-noun||f}}
+
+# {{alt form|ang|-u}}; {{ng|forms abstract nouns}}
+
+===Etymology 2===
+
+====Suffix====
+{{ang-head|verbf|inflsuf=1}} {{tlb|ang|Anglian|Kentish}}
+
+# {{alt form|ang|-u}}; {{ng|forms the {{lg|first person}} singular {{lg|present}} {{lg|indicative}} of {{lg|strong verb}}s and class I {{lg|weak verb}}s}}
+
+===Etymology 3===
+
+====Suffix====
+{{ang-head|nounf|inflsuf=1|g=f}}
+
+# {{alt form|ang|-u}}; {{ng|forms the nominative singular of short ō-stem nouns}}
+
+===Etymology 4===
+
+====Suffix====
+{{ang-head|nounf|inflsuf=1}}
+
+# {{alt form|ang|-u}}; {{ng|forms the nominative and {{lg|accusative}} singular of short u-stem nouns}}
+
+===Etymology 5===
+From {{inh|ang|gmw-pro|*-u}}, from {{inh|ang|gem-pro|*-ō}}
+
+====Suffix====
+{{ang-head|nounf|inflsuf=1|g=n}}
+
+# {{alt form|ang|-u}}; {{ng|forms the nominative and accusative {{lg|plural}} of short a-stem and all ija-stem neuter nouns}}
+
+===Etymology 6===
+
+====Suffix====
+{{ang-head|adjf|inflsuf=1|g=n}}
+
+# {{alt form|ang|-u}}; {{ng|forms the strong nominative feminine singular and strong nominative/accusative neuter plural of adjectives}}
 
 -------- end text --------
 Page 161 -o: Skipped, no changes
@@ -3898,7 +3971,7 @@ Page 163 -od: -------- begin text --------
 ==Old English==
 
 ===Alternative forms===
-* {{alter|ang|-ad|-ed|-ud}}
+* {{alt|ang|-ad|-ed|-ud}}
 
 ===Etymology===
 {{etymon|ang|id=past participle|:inh|gem-pro:*-ōdaz<id:adjectival>}}
@@ -3908,17 +3981,17 @@ From a merger of {{inh|ang|gem-pro|*-ōdaz||pos=adjective suffix}} (from {{inh|a
 * {{ang-IPA|-od}}
 
 ===Suffix===
-{{ang-head|part}}
+{{ang-head|part|inflsuf=1}}
 
 # [[-ed]]; {{ng|forms the past participle of class II weak verbs}}
-#: {{suffixusex|ang|lufian|gloss1=to love|lufod|gloss2=loved}}
-#: {{suffixusex|ang|ġeānian|gloss1=to unite|ġeānod|gloss2=united}}
+#: {{afex|ang|lufian<t:to love>|lufod<t:loved>}}
+#: {{afex|ang|ġeānian<t:to unite>|ġeānod<t:united>}}
 
 ===Suffix===
 {{ang-adj}}
 
 # [[-ed]]; {{ng|forms adjectives from nouns and class 2 weak past participles, indicating the possession of a thing or a quality}}
-#: {{suffixusex|ang|hēafod|gloss1=head|ġehēafdod|gloss2=headed; having a head}}
+#: {{afex|ang|hēafod<t:head>|ġehēafdod<t:headed; having a head>}}
 
 ===Declension===
 {{ang-adecl|-od}}
@@ -3938,10 +4011,10 @@ Page 164 -odest: -------- begin text --------
 * {{ang-IPA|-odest}}
 
 ===Suffix===
-{{h|ang|suf}}
+{{ang-head|verbf|inflsuf=1}}
 
-# {{n-g|Used to form the second person singular preterite indicative of class II weak verbs}}
-#: {{suffixusex|ang|lufian|gloss1=to love|lufodest|gloss2=you/thou loved}}
+# {{ng|forms the second person singular preterite indicative of class II weak verbs}}
+#: {{afex|ang|lufian<t:to love>|lufodest<t:you/thou loved>}}
 
 ====See also====
 {{ang-conj|-ian<w2/ge:0>}}
@@ -3964,11 +4037,11 @@ From {{inh|ang|gmw-pro|*-ul}}, {{m|gmw-pro|*-il}}, from {{inh|ang|gem-pro|*-ulaz
 ===Suffix===
 {{ang-adj}}
 
-# {{ng|forms adjectives (usually from verbs or abstract nouns) denoting inclination or tendency toward (compare {{m+|en|-ative}})}}
+# {{ng|forms adjectives (usually from verbs or abstract nouns) denoting inclination or tendency toward}}; [[-ative]]
 #: {{afex|ang|sprecan<t:to speak, to talk>|sprecol<t:talkative>}}
 #: {{afex|ang|nǣm<t:taking, receiving>|nǣmel<t:receptive>}}
 #: {{afex|ang|hete<t:hate>|hetol<t:hostile>}}
-# [[apt]] to, [[able]] to
+# {{ng|forms adjectives meaning “[[apt]] to, [[able]] to”}}
 #: {{afex|ang|magan<t:to be able; to be strong, to prevail>|meagol<t:mighty, impressive; earnest; capable, possible><ng:with back umlaut>}}
 
 -------- end text --------
@@ -3979,7 +4052,7 @@ Page 166 -old: -------- begin text --------
 ===Suffix===
 {{head|ang|suffix}}
 
-# {{alternative form of|ang|-eld}}
+# {{alt form|ang|-eld}}
 -------- end text --------
 Page 166 -old: Skipped, no changes
 Page 167 -on: -------- begin text --------
@@ -3988,13 +4061,13 @@ Page 167 -on: -------- begin text --------
 ===Etymology 1===
 
 ====Alternative forms====
-* {{alter|ang|-an|-un}}
+* {{alt|ang|-an|-un}}
 
 ====Suffix====
-{{h|ang|suf}}
+{{ang-head|verbf|inflsuf=1}}
 
-# {{n-g|Marks the plural preterite indicative of strong verbs.}}
-#: {{suffixusex|ang|drīfan|gloss1=to drive|drifon|gloss2=we/you/they drove}}
+# {{ng|marks the plural preterite indicative of strong verbs}}
+#: {{afex|ang|drīfan<t:to drive>|drifon<t:we/you/they drove>}}
 
 =====Usage notes=====
 * As this suffix is added only to [[strong verb]]s, it is always accompanied by [[ablaut]] when it appears on a verb.
@@ -4005,9 +4078,9 @@ Page 167 -on: -------- begin text --------
 ===Etymology 2===
 
 ====Suffix====
-{{h|ang|suf}}
+{{ang-head|part|inflsuf=1}}
 
-# {{lb|ang|rare}} {{alternative form of|ang|-en}} (suffix forming past participles)
+# {{lb|ang|rare}} {{alt form|ang|-en}}; {{ng|forms past participles of strong verbs}}
 
 -------- end text --------
 Page 167 -on: Skipped, no changes
@@ -4017,7 +4090,7 @@ Page 168 -onga: -------- begin text --------
 ===Suffix===
 {{head|ang|suffix}}
 
-# {{alternative form of|ang|-unga}}
+# {{alt form|ang|-unga}}
 
 -------- end text --------
 Page 168 -onga: Skipped, no changes
@@ -4027,7 +4100,7 @@ Page 169 -onne: -------- begin text --------
 ===Suffix===
 {{h|ang|suf}}
 
-# {{alternative form of|ang|-enne}}
+# {{alt form|ang|-enne}}
 -------- end text --------
 Page 169 -onne: Skipped, no changes
 Page 170 -or: -------- begin text --------
@@ -4040,14 +4113,14 @@ Page 170 -or: -------- begin text --------
 From {{der|ang|gem-pro|*-ar-}}. Akin to {{cog|goh|-ar}}.
 
 ====Alternative forms====
-* {{alter|ang|-er}}
+* {{alt|ang|-er}}
 
 ====Suffix====
 {{ang-adj}}
 
 # {{ng|forms adjectives from verbs denoting tendency or causation}}
-#: {{suffixusex|ang|*slīpan|slipor|t2=slippery|t1=to slip, glide}}
-#: {{suffixusex|ang|wacian|t2=vigilant, watchful|wacor|t1=to be awake, be watchful}}
+#: {{afex|ang|*slīpan<t:to slip, to glide>|slipor<t;slippery>}}
+#: {{afex|ang|wacian<t:to be awake, to be watchful>|wacor<t:vigilant, watchful>}}
 
 =====Descendants=====
 * {{desc|en|-er}}
@@ -4059,12 +4132,12 @@ From {{der|ang|gem-pro|*-raz}}. Akin to {{cog|osx|-or}}, {{cog|goh|-ur}}.
 {{ang-noun||m}}
 
 # {{ng|[[pleonastic]] suffix often found on masculine ''a''-stem nouns, usually with no apparent change in meaning}}
-#: {{sufex|ang|ċeole|t1=throat|ċeolor|t2=collar, throat}}
-#: {{sufex|ang|eald|t1=old|ealdor|t2=chieftain, ruler}}
-#: {{sufex|ang|siġe|t1=victory|sigor|t2=victory}}
-#: {{sufex|ang|telga|t1=[[branch]], [[bough]]|telgor|t2=[[branch]], [[twig]]}}
-#: {{sufex|ang|dæġ|t1=day|dōgor|t2=day}}
-#: {{sufex|ang|sele|t1=hall|salor|t2=hall, palace}}
+#: {{afex|ang|ċeole<t:throat>|ċeolor<t:collar, throat>}}
+#: {{afex|ang|eald<t:old>|ealdor<t:chieftain, ruler>}}
+#: {{afex|ang|siġe<t:victory>|sigor<t:victory>}}
+#: {{afex|ang|telga<t:[[branch]], [[bough]]>|telgor<t:[[branch]], [[twig]]>}}
+#: {{afex|ang|dæġ<t:day>|dōgor<t:day>}}
+#: {{afex|ang|sele<t:hall>|salor<t:hall, palace>}}
 
 =====Declension=====
 {{ang-decl-noun-a-m|-r|nomsg=-or}}
@@ -4072,11 +4145,11 @@ From {{der|ang|gem-pro|*-raz}}. Akin to {{cog|osx|-or}}, {{cog|goh|-ur}}.
 ===Etymology 3===
 
 ====Suffix====
-{{ang-adv-comp}}
+{{ang-adv-comp|inflsuf=1}}
 
 # {{ng|forms the comparative degree of adverbs}}
-#: {{suffixusex|ang|hearde|heardor|t2=more severely|t1=severely}}
-#: {{suffixusex|ang|trumlīċe|trumlīcor|t2=more firmly|t1=firmly}}
+#: {{afex|ang|hearde<t:severely>|heardor<t:more severely>}}
+#: {{afex|ang|trumlīċe<t:firmly>|trumlīcor<t:more firmly>}}
 
 -------- end text --------
 Page 170 -or: Skipped, no changes
@@ -4087,11 +4160,12 @@ Page 171 -orian: -------- begin text --------
 * {{ang-IPA|-orian}}
 
 ===Suffix===
-{{h|ang|suf}}
+{{ang-verb}}
 
-# {{alternative form of|ang|-erian}}: a [[frequentative]] suffix
+# {{alt form|ang|-erian}}: {{ng|forms frequentative verbs}}
 
-{{cln|ang|class 2 weak verbs}}
+====Conjugation====
+{{ang-conj|-orian<w2/ge:0>}}
 -------- end text --------
 Page 171 -orian: Skipped, no changes
 Page 172 -ost: -------- begin text --------
@@ -4104,14 +4178,14 @@ Page 172 -ost: -------- begin text --------
 {{etymon|ang|id=most|:inh|gmw-pro:*-ōst<id:most>|text=++}}
 
 ====Alternative forms====
-* {{alter|ang|-ast|-est|-ist|-ust}}
+* {{alt|ang|-ast|-est|-ist|-ust}}
 
 ====Suffix====
-{{h|ang|suf}}
+{{ang-adj-sup|addlpos=superlative adverbs|inflsuf=1}}
 
-# {{n-g|Used to form superlative adjectives and adverbs}}
-#: {{suffixusex|ang|dēop|gloss1=deep|dēopost|gloss2=deepest}}
-#: {{suffixusex|ang|nytt|gloss1=useful|nyttost|gloss2=most useful}}
+# {{ng|forms superlative adjectives and adverbs}}
+#: {{afex|ang|dēop<t:deep>|dēopost<t:deepest>}}
+#: {{afex|ang|nytt<t:useful>|nyttost<t:most useful>}}
 
 =====Declension=====
 {{ang-adecl|-ost|type=weak}}
@@ -4124,7 +4198,7 @@ Page 172 -ost: -------- begin text --------
 ====Suffix====
 {{h|ang|suf}}
 
-# {{alternative form of|ang|-est}}
+# {{alt form|ang|-est}}
 
 -------- end text --------
 Page 172 -ost: Skipped, no changes
@@ -4140,7 +4214,7 @@ From {{inh|ang|gem-pro|*-utją}}.
 ===Suffix===
 {{ang-noun||n}}
 
-# {{alternative form of|ang|-et}}; {{ng|forms nouns from verbs and sometimes nouns and adjectives}}
+# {{alt form|ang|-et}}; {{ng|forms nouns from verbs and sometimes nouns and adjectives}}
 
 -------- end text --------
 Page 173 -ot: Skipped, no changes
@@ -4148,7 +4222,7 @@ Page 174 -oþ: -------- begin text --------
 ==Old English==
 
 ===Alternative forms===
-* {{alter|ang|-aþ|-uþ}}
+* {{alt|ang|-aþ|-uþ}}
 
 ===Etymology===
 From {{inh|ang|gmw-pro|*-ōþu}}, from {{inh|ang|gem-pro|*-ōþuz}}.
@@ -4161,11 +4235,11 @@ From {{inh|ang|gmw-pro|*-ōþu}}, from {{inh|ang|gem-pro|*-ōþuz}}.
 {{ang-noun||m}}
 
 # {{ng|forms concrete nouns from verbs}}
-#: {{sufex|ang|folgian|t1=to follow|folgoþ|t2=retinue, following}}
-#: {{sufex|ang|huntian|t1=to hunt|huntoþ|t2=hunting; catch, prey, booty}}
-#: {{sufex|ang|faran|t1=to travel, fare|faroþ|t2=water in motion, stream; ocean, sea, waves}}
-#: {{sufex|ang|drohtian|t1=to conduct oneself, behave|drohtaþ|t2=conduct, lifestyle}}
-#: {{sufex|ang|dugan|t1=to avail, be capable, be competent|duguþ|t2=manhood, virtue}}
+#: {{afex|ang|folgian<t:to follow>|folgoþ<t:retinue, following>}}
+#: {{afex|ang|huntian<t:to hunt>|huntoþ<t:hunting; catch, prey, booty>}}
+#: {{afex|ang|faran<t:to travel, fare>|faroþ<t:water in motion, stream; ocean, sea, waves>}}
+#: {{afex|ang|drohtian<t:to conduct oneself, behave>|drohtaþ<t:conduct, lifestyle>}}
+#: {{afex|ang|dugan<t:to avail, be capable, be competent>|duguþ<t:manhood, virtue>}}
 
 ====Declension====
 {{ang-decl-noun-a-m|-oþ}}
@@ -4192,7 +4266,7 @@ Alternaitvely, a later analogical formation from {{m|ang|seofoþa|t=seventh}}, {
 ====Suffix====
 {{head|ang|suffix}}
 
-# {{n-g|Forms ordinal numbers from {{m|ang|twēntigoþa|t=20th}} to {{m|ang|hundendleftigoþa
+# {{ng|forms ordinal numbers from {{m|ang|twēntigoþa|t=20th}} to {{m|ang|hundendleftigoþa
 |t=110th}} (and possibly unattested {{m|ang||*hundtwelftigoþa|t=120th}})}}
 
 =====Derived terms=====
@@ -4226,8 +4300,8 @@ From {{inh|ang|gmw-pro|*-iʀō}}, {{m|gmw-pro|*-ōʀō}}, from {{inh|ang|gem-pro
 ====Suffix====
 {{h|ang|suf}}
 
-# {{n-g|Used to form the comparative degree of adjectives}}
-#: {{suffixusex|ang|strang|gloss1=strong|strengra|gloss2=stronger}}
+# {{ng|forms the comparative degree of adjectives}}
+#: {{afex|ang|strang<t:strong>|strengra<t:stronger>}}
 
 =====Declension=====
 {{ang-adecl|-ra}}
@@ -4240,8 +4314,8 @@ From {{inh|ang|gmw-pro|*-iʀō}}, {{m|gmw-pro|*-ōʀō}}, from {{inh|ang|gem-pro
 ====Suffix====
 {{h|ang|suf}}
 
-# {{n-g|Used to form the genitive plural of adjectives}}
-#: {{suffixusex|ang|strang|gloss1=strong|strangra|gloss2=of the strong (ones)}}
+# {{ng|forms the genitive plural of adjectives}}
+#: {{afex|ang|strang<t:strong>|strangra<t:of the strong (ones)>}}
 
 -------- end text --------
 Page 176 -ra: Skipped, no changes
@@ -4255,24 +4329,24 @@ From {{m|ang|rǣden||condition, state}}, from {{inh|ang|gem-pro|*raidīniz||arra
 * {{ang-IPA|-rǣ̀den}}
 
 ===Suffix===
-{{h|ang|suf|head=-rǣden|g=f}}
+{{ang-noun|-rǣden|f}}
 
-# noun suffix denoting condition or state
+# {{ng|forms nouns denoting condition or state}}
 #: {{uxi|ang|[[brōþorrǣden]]|fellowship, brotherhood}}
 #: {{uxi|ang|[[burgrǣden]]|citizenship}}
-# suffix indicating activity
+# {{ng|forms nouns indicating activity}}
 #: {{uxi|ang|[[bedrǣden]]|prayer, intercession}}
 #: {{uxi|ang|[[bebodrǣden]]|authority, command}}
 #: {{uxi|ang|[[heordrǣden]]|custody, keeping}}
-# area of, jurisdiction of
+# {{ng|forms nouns meaning “area of, jurisdiction of”}}
 #: {{uxi|ang|[[lēodrǣden]]|region, country}}
 
 ====Declension====
 {{ang-decl-noun-o-f|-rǣdenn|nomsg=-rǣden}}
 
 ====Synonyms====
-*{{l|ang|-hād}}
-*{{l|ang|-sċipe}}
+* {{l|ang|-hād}}
+* {{l|ang|-sċipe}}
 
 ====Derived terms====
 {{suffixsee|ang}}
@@ -4314,7 +4388,7 @@ From {{inh|ang|gem-pro|*-ārijaz}}, likely from {{der|ang|la|-ārius}}.
 {{ang-noun||m}} {{tlb|ang|Late West Saxon}}
 
 # {{alt form|ang|-ere}}: [[-er]]; {{ng|forms masculine agent nouns, originally applied only to nouns}}
-#: {{afex|ang|fugol|t1=fowl, bird|fuglre|t2=fowler}}
+#: {{afex|ang|fugol<t:fowl, bird>|fuglre<t:fowler>}}
 
 =====Declension=====
 {{ang-decl-noun-ja-m|-r}}
@@ -4329,7 +4403,7 @@ From {{inh|ang|gem-pro|*-ārijaz}}, likely from {{der|ang|la|-ārius}}.
 {{nonlemma}}
 
 ====Suffix====
-{{ang-head|adjf|g=f}}
+{{ang-head|adjf|inflsuf=1|g=f}}
 
 # {{ng|marks the strong feminine genitive, dative, and instrumental singular of adjectives}}
 
@@ -4339,7 +4413,7 @@ Page 180 -red: -------- begin text --------
 ==Old English==
 
 ===Alternative forms===
-* {{alter|ang|-raþ|-reþ}}
+* {{alt|ang|-raþ|-reþ}}
 
 ===Pronunciation===
 * {{ang-IPA|-red}}
@@ -4347,7 +4421,7 @@ Page 180 -red: -------- begin text --------
 ===Suffix===
 {{h|ang|suf}}
 
-# {{alternative form of|ang|-raþ}}
+# {{alt form|ang|-raþ}}
 
 -------- end text --------
 Page 180 -red: Skipped, no changes
@@ -4355,16 +4429,16 @@ Page 181 -rian: -------- begin text --------
 ==Old English==
 
 ===Suffix===
-{{head|ang|suffix}}
+{{ang-verb}}
 
-# {{alternative form of|ang|-erian}}
+# {{alt form|ang|-erian}}: {{ng|forms frequentative verbs}}
 -------- end text --------
 Page 181 -rian: Skipped, no changes
 Page 182 -rice: -------- begin text --------
 ==Old English==
 
 ===Alternative forms===
-* {{alter|ang|-rȳċe||rare}}
+* {{alt|ang|-rȳċe||rare}}
 
 ===Etymology===
 From {{m|ang|rīċe|t=dominion, realm}}.
@@ -4373,9 +4447,9 @@ From {{m|ang|rīċe|t=dominion, realm}}.
 * {{ang-IPA|rī̂ċe}}
 
 ===Suffix===
-{{h|ang|suf|head=-rīċe|g=n}}
+{{ang-noun|-rīċe|n}}
 
-# {{lb|ang|combining form}} {{n-g|suffix appended to nouns to indicate office, ownership, guardianship, governance or dominion, equivalent to {{m+|en|-dom}}}}
+# [[-dom]]; {{ng|forms nouns indicating office, ownership, guardianship, governance or dominion}}
 #: {{uxi|ang|[[bisċoprīċe]]|a bishopric; the diocese of a bishop}}
 
 ====Declension====
@@ -4398,13 +4472,13 @@ From {{m|ang|rōf||number of soldiers, array; fierce}}. Akin to {{cog|osx|rōf||
 * {{ang-IPA|-rṑf}}
 
 ===Suffix===
-{{h|ang|suf|head=-rōf}}
+{{ang-adj|-rōf}}
 
-# suffix meaning full of or like (compare {{m|en|-ful}}, {{m|en|-ous}})
+# {{ng|forms adjectives meaning “full of” or “like”}}; [[-ful]], [[-ous]]
 #: {{uxi|ang|[[cwildrōf]]|fierce, savage, deadly}}
 #: {{uxi|ang|[[uncamprōf]]|unwarlike}}
 #: {{uxi|ang|[[heterōf]]|full of hate, hateful}}
-# [[brave]], [[noble]], or [[renowned]]
+# {{ng|forms adjectives meaning “brave”, “noble” or “renowned”}}
 #: {{uxi|ang|[[cynerōf]]|noble, renowned}}
 #: {{uxi|ang|[[gūþrōf]]|brave in battle}}
 
@@ -4422,8 +4496,8 @@ Page 184 -ru: -------- begin text --------
 ===Suffix===
 {{h|ang|suf}}
 
-# {{n-g|Used to form the nominative/accusative plural of z-stem nouns}}
-#: {{suffixusex|ang|ċild|gloss1=child|ċildru|gloss2=children}}
+# {{ng|forms the nominative/accusative plural of z-stem nouns}}
+#: {{afex|ang|ċild<t:child>|ċildru<t:children>}}
 
 ====Descendants====
 * {{desctree|enm|-re|id=plural}}
@@ -4436,7 +4510,7 @@ Page 185 -ryce: -------- begin text --------
 ===Suffix===
 {{head|ang|suffix|head=-rȳċe}}
 
-# {{alternative form of|ang|-rīċe}}
+# {{alt form|ang|-rīċe}}
 -------- end text --------
 Page 185 -ryce: Skipped, no changes
 Page 186 -s: -------- begin text --------
@@ -4471,12 +4545,11 @@ From {{m|ang|*sǣta||inhabitant, dweller}}. Akin to {{cog|osx|-sētio}}, {{cog|g
 * {{ang-IPA|-sǣ̀ta}}
 
 ===Suffix===
-{{h|ang|suf|head=-sǣta|g=m}}
+{{ang-noun|-sǣta|m}}
 
-# a resident or inhabitant of {{lb|ang|usually used with placenames}}
-#: {{uxi|ang|[[burgsǣta|burg'''sǣta''']]|city-dweller, citizens}}
-#: {{uxi|ang|[[landsǣta|land'''sǣta''']]|citizens of a nation}}
-#: {{uxi|ang|[[Dornsǣta|Dorn'''sǣte''']]|residents of Dorn, Dorset}}
+# {{ng|forms nouns for resident or inhabitant of a specified place; usually used with specific placenames, forming demonyms}}
+#: {{uxi|ang|[[burg'''sǣta''']]|city-dweller, citizen}}
+#: {{uxi|ang|[[land'''sǣta''']]|citizens of a nation}}
 #: {{uxi|ang|[[Sumorsǣta|Sumor'''sǣtan''']]|residents of Sumor, Somerset}}
 
 ====Declension====
@@ -4506,9 +4579,10 @@ From {{inh|ang|gmw-pro|*-sātī}}, originally meaning "residents" or "dwellers."
 * {{ang-IPA|sǣte}}
 
 ===Suffix===
-{{h|ang|suf|head=-sǣte}}
+{{ang-noun|-sǣte|m-p|addlpos=proper noun}}
 
-# [[resident]]s, [[dwellers]]: ''forms names of peoples and places''
+# {{ng|forms nouns for residents or inhabitants of a specified place; usually used with specific placenames, forming demonyms}}
+#: {{uxi|ang|[[Dorn'''sǣte''']]|residents of Dorn, Dorset}}
 
 ====Declension====
 {{ang-decl-noun|type=strong i-stem
@@ -4521,8 +4595,8 @@ From {{inh|ang|gmw-pro|*-sātī}}, originally meaning "residents" or "dwellers."
 ====Derived terms====
 {{suffixsee|ang}}
 
-===See also===
-* [[-sæta]]
+====Related terms====
+* {{l|ang|-sæta}}
 -------- end text --------
 Page 188 -sæte: Skipped, no changes
 Page 189 -sagol: -------- begin text --------
@@ -4552,9 +4626,9 @@ Inherited from {{inh|ang|gmw-pro|*-skapi}}, from {{inh|ang|gem-pro|*-skapiz}}.
 * {{ang-IPA|-sċiepe}}
 
 ===Suffix===
-{{head|ang|suffix|g=m|head=-sċiepe}}
+{{ang-noun|-sċiepe|m}}
 
-# {{n-g|noun-forming suffix}}: {{m|en|-ship}}
+# [[-ship]]; {{ng|forms abstract nouns from adjectives and nouns}}
 #* {{quote-text|ang|year=c. 1000|url=https://books.google.ca/books?id=fEjXOCbwu4sC&lpg=PA52&vq=w%C3%A6tersciepes&pg=PA52#v=snippet&q=w%C3%A6tersciepes&f=false|title=The Letter of Alexander the Great to Aristotle|passage=''Ða toforan monan upgonge þa cwomon þær Scorpiones þæt wyrmcyn swa hie ær gewunelice wæron toweard þæs wæter'''sciepes'''.''
 |translation= Then before moonrise those vermin called scorpions came, as they were accustomed, toward the water source.}}
 
@@ -4580,9 +4654,9 @@ Page 191 -scip: -------- begin text --------
 * {{ang-IPA|-sċìp}}
 
 ===Suffix===
-{{head|ang|suffix|g=m|head=-sċip}}
+{{ang-noun|-sċip|m}}
 
-# {{alt form of|ang|-sċiepe}}
+# {{alt form|ang|-sċiepe}}
 
 ====Declension====
 {{ang-decl-noun-i-m|-sċip}}
@@ -4595,9 +4669,12 @@ Page 192 -scipe: -------- begin text --------
 * {{ang-IPA|-sċìpe}}
 
 ===Suffix===
-{{head|ang|suffix|g=m|head=-sċipe}}
+{{ang-noun|-sċipe|m}}
 
-# {{alt form of|ang|-sċiepe}}
+# {{alt form|ang|-sċiepe}}
+#: {{afex|ang|frēond<t:friend>|frēondsċipe<t:friendship>}}
+#: {{afex|ang|hold<t:loyal>|holdsċipe<t:loyalty>}}
+#: {{afex|ang|wæter<t:water>|wætersċipe<t:body of water>}}
 
 ====Declension====
 {{ang-decl-noun-i-m|-sċip|short=1}}
@@ -4610,9 +4687,9 @@ Page 193 -scype: -------- begin text --------
 ==Old English==
 
 ===Suffix===
-{{h|ang|suf|head=-sċype}}
+{{ang-noun|-sċype|m}}
 
-# {{alternative form of|ang|-sċiepe}}
+# {{alt form|ang|-sċiepe}}
 -------- end text --------
 Page 193 -scype: Skipped, no changes
 Page 194 -sian: -------- begin text --------
@@ -4625,12 +4702,12 @@ From {{inh|ang|gmw-pro|*-isōn}}, from {{inh|ang|gem-pro|*-isōną}}.
 * {{ang-IPA|-sian}} {{q|depending on preceding sound}}
 
 ===Suffix===
-{{h|ang|suf}}
+{{ang-verb}}
 
-# verbal suffix added to adjectives, nouns, and (rarely) verb roots, generally causing i-mutation in the stem
-#: {{suffixusex|ang|clǣne|t1=clean, pure|clǣnsian|t2=to purify, cleanse}}
-#: {{suffixusex|ang|blōd|t1=blood|[[blētsian]], [[blēdsian]]|t2=to consecrate, bless}}
-#: {{suffixusex|ang|hwīnan|t1=whistle|[[hwinsian]]|t2=to make a whistling or whizzing sound}}
+# {{ng|forms verbs from adjectives, nouns, and (rarely) verb roots, generally causing {{lg|i-mutation}}}}
+#: {{afex|ang|clǣne<t:clean, pure>|clǣnsian<t:to purify, cleanse>}}
+#: {{afex|ang|blōd<t:blood>|[[blētsian]], [[blēdsian]]<t:to consecrate, bless>}}
+#: {{afex|ang|hwīnan<t:to whistle>|hwinsian<t:to make a whistling or whizzing sound>}}
 
 ====Conjugation====
 {{ang-conj|-sian<w2/ge:0>}}
@@ -4652,13 +4729,13 @@ From {{inh|ang|gmw-pro|*-siunī}}. Cognate with {{cog|goh|-siuni}}. Equivalent t
 * {{ang-IPA|sīene}}
 
 ===Suffix===
-{{h|ang|suf|head=-sīene}}
+{{ang-adj|-sīene}}
 
-# relating to [[sight]]: [[seen|-seen]], [[visible|-visible]], [[sighted|-sighted]]
-#: {{suffixusex|ang|ēage|gloss1=eye|ēagsīene|gloss2=apparent}}
-#: {{suffixusex|ang|sċearp|gloss1=sharp|sċearpsīene|gloss2=sharpsighted}}
-#: {{suffixusex|ang|seld-|gloss1=rare|seldsīene|gloss2=strange}}
-#: {{suffixusex|ang|þurh|gloss1=through|þurhsīene|gloss2=seethrough}}
+# [[seen|-seen]], [[visible|-visible]], [[sighted|-sighted]]; {{ng|forms adjectives relating to sight}}
+#: {{afex|ang|ēage<t:eye>|ēagsīene<t:apparent>}}
+#: {{afex|ang|sċearp<t:sharp>|sċearpsīene<t:sharpsighted>}}
+#: {{afex|ang|seld-<t:rare>|seldsīene<t:strange>}}
+#: {{afex|ang|þurh<t:through>|þurhsīene<t:seethrough>}}
 
 ====Derived terms====
 {{suffixsee|ang}}
@@ -4700,7 +4777,7 @@ From {{m|ang|stōw||place}}, from {{der|ang|gem-pro|*stōō||place}}, from {{der
 ===Suffix===
 {{h|ang|suf|head=-stōw|g=f}}
 
-# {{n-g|suffix found in many placenames denoting "place" or "place of"}}
+# {{ng|suffix found in many placenames denoting "place" or "place of"}}
 #: {{uxi|ang|[[Bryċġstōw]]|[[Bristol]]; literally: the place by the bridge}}
 # [[place]], [[area]]; [[provenance]] of, [[office]] of, [[jurisdiction]] of
 #: {{uxi|ang|[[folcstōw]]|a place in the country}}
@@ -4753,9 +4830,9 @@ From {{inh|ang|gmw-pro|*-sam}}, from {{inh|ang|gem-pro|*-samaz|t=same as}}. Akin
 {{h|ang|suf}}
 
 # [[characterized]] by some [[specific]] [[condition]] or [[quality]]; same as
-#: {{uxi|ang|[[angsum|ang'''sum''']]|difficult, constricted}}, {{uxi|ang|[[āþrotsum|āþrot'''sum''']]|irksome}}, {{uxi|ang|[[gecwēmsum|ġecwēm'''sum''']]|pleasing, pleasant}}
+#: {{uxi|ang|[[ang'''sum''']]|difficult, constricted}}, {{uxi|ang|[[āþrotsum|āþrot'''sum''']]|irksome}}, {{uxi|ang|[[gecwēmsum|ġecwēm'''sum''']]|pleasing, pleasant}}
 # having or exemplifying
-#: {{uxi|ang|[[wynsum|wyn'''sum''']]|joyful, winsome}}
+#: {{uxi|ang|[[wyn'''sum''']]|joyful, winsome}}
 
 ====Declension====
 {{ang-adecl|-sum}}
@@ -4774,7 +4851,7 @@ Page 200 -t: -------- begin text --------
 ===Suffix===
 {{h|ang|suf}}
 
-# {{alternative form of|ang|-þ,-þu}}
+# {{alt form|ang|-þ,-þu}}
 
 ====See also====
 {{suffixsee|ang}}
@@ -4785,10 +4862,10 @@ Page 201 -te: -------- begin text --------
 ==Old English==
 
 ===Suffix===
-{{h|ang|suf}}
+{{ang-head|verbf|inflsuf=1}}
 
-# {{n-g|Alternative form of {{m|ang|-de}} used to form the first and third person singular preterite indicative of certain class I weak verbs}}
-#: {{suffixusex|ang|reċċan|gloss1=to explain, argue|rehte|gloss2=I/he/she/it explained, argued}}
+# {{alt form|ang|-de}}; {{ng|marks the first and third person singular preterite indicative of certain class I weak verbs}}
+#: {{afex|ang|reċċan<t:to explain, argue>|rehte<t:I/he/she/it explained, argued>}}
 
 -------- end text --------
 Page 201 -te: Skipped, no changes
@@ -4798,14 +4875,14 @@ Page 202 -tene: -------- begin text --------
 ===Suffix===
 {{h|ang|suf|head=tēne}}
 
-# {{alternative form of|ang|-tīene}}
+# {{alt form|ang|-tīene}}
 -------- end text --------
 Page 202 -tene: Skipped, no changes
 Page 203 -tiene: -------- begin text --------
 ==Old English==
 
 ===Alternative forms===
-* {{alter|ang|-tēne}}
+* {{alt|ang|-tēne}}
 
 ===Etymology===
 {{etymon|ang|:der|gmw-pro:*tehun}}
@@ -4837,9 +4914,9 @@ From {{inh|ang|gem-pro|*tigiwiz}}, plural of {{m|gem-pro|*teguz||group of ten}}.
 {{h|ang|suf|head=-tiġ}}
 
 # [[-ty]] (used to form numerals denoting multiples of [[ten]])
-#: {{uxi|ang|[[twentig|twēn'''tiġ''']]|twenty}}
-#: {{uxi|ang|[[hundteontig|hundtēon'''tiġ''']]|one hundred}}
-#: {{uxi|ang|[[hundtwelftig|hundtwelf'''tiġ''']]|one hundred and twenty}}
+#: {{uxi|ang|[[twēn'''tiġ''']]|twenty}}
+#: {{uxi|ang|[[hundtēon'''tiġ''']]|one hundred}}
+#: {{uxi|ang|[[hundtwelf'''tiġ''']]|one hundred and twenty}}
 
 ====Derived terms====
 {{suffixsee|ang}}
@@ -4894,9 +4971,9 @@ Page 206 -þ: -------- begin text --------
 {{ang-noun||f}}
 
 # {{ng|forms abstract [[nouns]] from [[verbs]], [[adjectives]] or other [[nouns]]; generally causes {{lg|i-mutation}}}}
-#: {{afex|ang|fūl|t1=foul, polluted|fȳlþ|t2=filth, foulness}}
-#: {{afex|ang|earm|t1=poor|iermþ|t2=poverty}}
-#: {{afex|ang|þēof|t1=thief|þīefþ|t2=theft}}
+#: {{afex|ang|fūl<t:foul, polluted>|fȳlþ<t:filth, foulness>}}
+#: {{afex|ang|earm<t:poor>|iermþ<t:poverty>}}
+#: {{afex|ang|þēof<t:thief>|þīefþ<t:theft>}}
 
 =====Declension=====
 {{ang-decl-noun-o-f|-þ}}
@@ -4952,14 +5029,14 @@ Page 207 -þo: -------- begin text --------
 ===Suffix===
 {{h|ang|suf}}
 
-# {{alternative form of|ang|-þu}}
+# {{alt form|ang|-þu}}
 -------- end text --------
 Page 207 -þo: Skipped, no changes
 Page 208 -þor: -------- begin text --------
 ==Old English==
 
 ===Alternative forms===
-* {{alter|ang|-dor}}
+* {{alt|ang|-dor}}
 
 ===Etymology===
 From {{inh|ang|gmw-pro|*-þr}}, from {{inh|ang|gem-pro|*-þrą}}, from {{inh|ang|ine-pro|*-trom}}.
@@ -4970,10 +5047,10 @@ From {{inh|ang|gmw-pro|*-þr}}, from {{inh|ang|gem-pro|*-þrą}}, from {{inh|ang
 ===Suffix===
 {{head|ang|suffix|g=n|head=-þor}}
 
-# {{n-g|instrumental suffix creating neuter nouns from verbs}}
+# {{ng|instrumental suffix creating neuter nouns from verbs}}
 #: {{uxi|ang|[[rōþor]]|instrument used for rowing, rudder}}
 #: {{m|ang|hafenian||to [[hold]], to [[grasp]]}} → {{m|ang|hæf}} → {{m|ang|heaþor||restraint, confinement}}
-# {{n-g|suffix used to denote the agent or means by which an action is performed}}
+# {{ng|suffix used to denote the agent or means by which an action is performed}}
 #: {{uxi|ang|[[lēaþor]]|washing agent, soap, lather}}
 #: {{uxi|ang|[[ġealdor]]|magic charm, incantation, spell}}
 
@@ -4991,9 +5068,9 @@ Page 209 -þþ: -------- begin text --------
 * {{ang-IPA|-þþ}}
 
 ===Suffix===
-{{h|ang|suf}}
+{{ang-head|verbf|inflsuf=1}}
 
-# {{n-g|Third person singular present indicative ending of some weak verbs.}}
+# {{ng|marks the third person singular present indicative ending of some weak verbs}}
 #: {{uxi|ang|Hē cȳ'''︎þþ'''|he declares}}
 -------- end text --------
 Page 209 -þþ: Skipped, no changes
@@ -5001,7 +5078,7 @@ Page 210 -þu: -------- begin text --------
 ==Old English==
 
 ===Alternative forms===
-* {{alter|ang|-þ|-þo|-t|-to}}
+* {{alt|ang|-þ|-þo|-t|-to}}
 
 ===Etymology===
 Partly from {{inh|ang|gmw-pro|*-iþu}}, from {{inh|ang|gem-pro|*-iþō}}; and partly from {{af|ang|-þ|-u}}, where the ''-u'' denotes the īn-stem of nouns, and is thus indeclinable.
@@ -5010,9 +5087,12 @@ Partly from {{inh|ang|gmw-pro|*-iþu}}, from {{inh|ang|gem-pro|*-iþō}}; and pa
 * {{ang-IPA|-þu}}
 
 ===Suffix===
-{{head|ang|suffix|head=-þu|g=f}}
+{{ang-noun||f}}
 
-# forming abstract [[nouns]] from [[verbs]], [[adjectives]] or other [[nouns]]; generally causing mutation of root or preceding vowels
+# {{ng|forms abstract nouns from verbs, adjectives or other nouns, generally causing {{lg|i-mutation}}}}
+#: {{afex|strang<t:strong>|strengþu<t:strength>}}
+#: {{afex|ofermōd<t:proud>|ofermettu<t:pride>}}
+#: {{afex|ġeþingian<t:to settle (a dispute); to be reconciled>|ġeþingþu<t:agreement; court, assembly>}}
 
 ====Declension====
 ;o-stem
@@ -5033,7 +5113,7 @@ Page 211 -u: -------- begin text --------
 ==Old English==
 
 ===Alternative forms===
-* {{alter|ang|-o}}
+* {{alt|ang|-o}}
 
 ===Pronunciation===
 * {{ang-IPA|-u}}
@@ -5042,15 +5122,15 @@ Page 211 -u: -------- begin text --------
 From suppletive fusion of ō-stem feminine {{lg|singular}} {{lg|nominative}} ending {{m|ang|-u}} and {{inh|ang|gem-pro|*-į̄||feminine abstract ending}}. Akin to [[w:Gothic language|Gothic]] feminine abstracts in {{m|got|-𐌴𐌹}} (compare {{m|got|𐌼𐌹𐌺𐌹𐌻𐌴𐌹||greatness}}; {{m|got|𐌳𐌹𐌿𐍀𐌴𐌹||depth}}).
 
 ====Suffix====
-{{head|ang|suffix|head=-u|g=f}}
+{{ang-noun||f}}
 
-# {{n-g|ending used to form abstract nouns from adjectives (compare Modern English {{m|en|-ness}}), normally causing i-mutation, and remaining even when preceded by a long syllable}}
-#: {{suffixusex|ang|eald|gloss1=old|ieldu|gloss2=age}}
-#: {{suffixusex|ang|hāliġ|gloss1=holy, sacred; pious|hāliġu|gloss2=holiness}}
-#: {{suffixusex|ang|hāl|gloss1=sound, healthy, intact|hǣlu|gloss2=wholeness, health}}
-#: {{suffixusex|ang|hāt|gloss1=hot|hǣtu|gloss2=heat, warmth}}
-#: {{suffixusex|ang|mennisċ|gloss1=human, natural, humane|mennisċu|gloss2=humanity}}
-#: {{suffixusex|ang|miċel|gloss1=big, large; great|miċelu|gloss2=greatness, size}}
+# {{ng|forms abstract nouns from adjectives (compare Modern English {{m|en|-ness}}), normally causing {{lg|i-mutation}}, and remaining even when preceded by a long syllable}}
+#: {{afex|ang|eald<t:old>|ieldu<t:age>}}
+#: {{afex|ang|hāliġ<t:holy, sacred; pious>|hāliġu<t:holiness>}}
+#: {{afex|ang|hāl<t:sound, healthy, intact>|hǣlu<t:wholeness, health>}}
+#: {{afex|ang|hāt<t:hot>|hǣtu<t:heat, warmth>}}
+#: {{afex|ang|mennisċ<t:human, natural, humane>|mennisċu<t:humanity>}}
+#: {{afex|ang|miċel<t:big, large; great>|miċelu<t:greatness, size>}}
 
 =====Usage notes=====
 According to Ringe and Taylor[https://academic.oup.com/book/36266], this suffix began as indeclinable ''*-i'' in the singular and nominative/accusative plural, before the ō-stem feminine nominative singular was borrowed. In Anglian, the new ending was then extended to the rest of these forms. This same extension was not complete in Early West Saxon, but eventually won out in Late West Saxon. Spellings of these forms with ''-o'', and rarely ''-a'', reflect the merger of unstressed back vowels in later Old English.
@@ -5065,30 +5145,30 @@ According to Ringe and Taylor[https://academic.oup.com/book/36266], this suffix 
 From {{inh|ang|gmw-pro|*-u}}, from {{inh|ang|gem-pro|*-ō}}. [[apocope|Apocope]] should have caused the loss of this ending after heavy stems, but the Anglian dialects generally retained it by analogy with short stems, or for its morphological significance. In West Saxon, this apocope led to replacement with the {{lg|subjunctive}} {{lg|singular}} {{m|ang|-e}}, which was then extended to short stem verbs as well.
 
 ====Suffix====
-{{h|ang|suf}} {{tlb|ang|Anglian}}
+{{ang-head|verbf|inflsuf=1}} {{tlb|ang|Anglian}}
 
-# {{n-g|Used to form the {{lg|first person}} singular {{lg|present}} {{lg|indicative}} of {{lg|strong verb}}s and class I {{lg|weak verb}}s}}
-#: {{suffixusex|ang|beran|gloss1=bear|beru|t2=I bear}}
-#: {{suffixusex|ang|drīfan|gloss1=drive out|drīfu|t2=I drive out}}
-#: {{suffixusex|ang|sellan|gloss1=give|sellu|t2=I give}}
+# {{ng|forms the {{lg|first person}} singular {{lg|present}} {{lg|indicative}} of {{lg|strong verb}}s and class I {{lg|weak verb}}s}}
+#: {{afex|ang|beran<t:bear>|beru<t:I bear>}}
+#: {{afex|ang|drīfan<t:drive out>|drīfu<t:I drive out>}}
+#: {{afex|ang|sellan<t:give>|sellu<t:I give>}}
 
 ===Etymology 3===
-From {{inh|ang|gmw-pro|*-u}}, from {{inh|ang|gem-pro|*-ō}}
+From {{inh|ang|gmw-pro|*-u}}, from {{inh|ang|gem-pro|*-ō}}.
 
 ====Suffix====
-{{head|ang|suffix|head=-u|g=f}}
+{{ang-head|nounf|inflsuf=1|g=f}}
 
-# {{n-g|Used to form the nominative singular of short ō-stem nouns}}
+# {{ng|forms the nominative singular of short ō-stem nouns}}
 #: {{m|ang|ġief'''u'''||gift}}
 #: {{m|ang|luf'''u'''||love}}
 
 ===Etymology 4===
-From {{inh|ang|gmw-pro|*-u}}, from {{inh|ang|gem-pro|*-uz}}
+From {{inh|ang|gmw-pro|*-u}}, from {{inh|ang|gem-pro|*-uz}}.
 
 ====Suffix====
-{{head|ang|suffix|head=-u}}
+{{ang-head|nounf|inflsuf=1}}
 
-# {{n-g|Used to form the nominative and {{lg|accusative}} singular of short u-stem nouns}}
+# {{ng|forms the nominative and {{lg|accusative}} singular of short u-stem nouns}}
 #: {{m|ang|sun'''u'''||son}}
 #: {{m|ang|wud'''u'''||forest}}
 
@@ -5096,20 +5176,20 @@ From {{inh|ang|gmw-pro|*-u}}, from {{inh|ang|gem-pro|*-uz}}
 From {{inh|ang|gmw-pro|*-u}}, from {{inh|ang|gem-pro|*-ō}}
 
 ====Suffix====
-{{head|ang|suffix|head=-u|g=n}}
+{{ang-head|nounf|inflsuf=1|g=n}}
 
-# {{n-g|Used to form the nominative and accusative {{lg|plural}} of short a-stem and all ija-stem neuter nouns}}
-#: {{suffixusex|ang|clif|gloss1=cliff|clifu|gloss2=cliffs}}
-#: {{suffixusex|ang|sċip|gloss1=ship|sċipu|gloss2=ships}}
-#: {{suffixusex|ang|rīċe|gloss1=kingdom|rīċu|gloss2=kingdoms}}
+# {{ng|forms the nominative and accusative {{lg|plural}} of short a-stem and all ija-stem neuter nouns}}
+#: {{afex|ang|clif<t:cliff>|clifu<t:cliffs>}}
+#: {{afex|ang|sċip<t:ship>|sċipu<t:ships>}}
+#: {{afex|ang|rīċe<t:kingdom>|rīċu<t:kingdoms>}}
 
 ===Etymology 6===
 
 ====Suffix====
-{{head|ang|suffix}}
+{{ang-head|adjf|inflsuf=1|g=n}}
 
-# {{n-g|Forms the strong nominative feminine singular and strong nominative/accusative neuter plural of adjectives}}
-#: {{suffixusex|ang|unārīmedlīċ|unārīmedlīċu}}
+# {{ng|forms the strong nominative feminine singular and strong nominative/accusative neuter plural of adjectives}}
+#: {{afex|ang|unārīmedlīċ|unārīmedlīċu}}
 
 -------- end text --------
 Page 211 -u: Skipped, no changes
@@ -5117,7 +5197,7 @@ Page 212 -ū: -------- begin text --------
 ==Old English==
 
 ===Suffix===
-{{head|ang|suffix}}
+{{ang-head|nounf|addlpos=adjf|inflsuf=1}}
 
 # {{scribal abbreviation of|ang|-um}}
 
@@ -5129,7 +5209,7 @@ Page 213 -uc: -------- begin text --------
 ==Old English==
 
 ===Alternative forms===
-* {{alter|ang|-oc|-ic|-ec|-ac}}
+* {{alt|ang|-oc|-ic|-ec|-ac}}
 
 ===Etymology===
 {{ety|ang|:inh|gmw-pro:*-uk}}
@@ -5162,7 +5242,7 @@ Page 214 -ud: -------- begin text --------
 ==Old English==
 
 ===Suffix===
-{{ang-head|part}}
+{{ang-head|part|inflsuf=1}}
 
 # {{alt form|ang|-od}}: [[-ed]]; {{ng|forms the past participle of class II weak verbs}}
 
@@ -5186,8 +5266,8 @@ Page 215 -ul: -------- begin text --------
 ===Suffix===
 {{head|ang|suffix|head=-ul}}
 
-# {{alt form of|ang|-el}}
-# {{alt form of|ang|-ol}}
+# {{alt form|ang|-el}}
+# {{alt form|ang|-ol}}
 
 -------- end text --------
 Page 215 -ul: Skipped, no changes
@@ -5195,20 +5275,20 @@ Page 216 -um: -------- begin text --------
 ==Old English==
 
 ===Alternative forms===
-* {{alter|ang|-an|id=-um||late, confused}}
-* [[-ū]] {{q|scribal abbreviation}}
+* {{alt|ang|-an|id=-um||late, confused}}
+* {{alt|ang|-ū||scribal abbreviation}}
 
 ===Etymology===
 From {{inh|ang|gmw-pro|*-um}}, possibly from {{inh|ang|gem-pro|*-amaz}} with reduction and analogical zero-grade, ultimately from {{der|ang|ine-pro|*-mos}}, the dative-ablative plural ending. Cognate to modern {{cog|de|-en}} and {{cog|pl|-om}}.
 
 ===Suffix===
-{{head|ang|suffix|cat2=inflectional suffixes}}
+{{ang-head|nounf|addlpos=adjf|inflsuf=1}}
 
-# {{n-g|Used to form the dative plural of essentially all nouns}}
-#: {{suffixusex|ang|hund|gloss1=dog|hundum|gloss2=dogs}}
-#: {{suffixusex|ang|sċip|gloss1=ship|sċipum|gloss2=ships}}
-# {{n-g|Used to form the strong and weak dative and instrumental plural of adjectives}}
-# {{n-g|Used to form the strong dative singular of masculine and neuter adjectives}}
+# {{ng|forms the dative plural of essentially all nouns}}
+#: {{afex|ang|hund<t:dog>|hundum<t:dogs>}}
+#: {{afex|ang|sċip<t:ship>|sċipum<t:ships>}}
+# {{ng|forms the strong and weak dative and instrumental plural of adjectives}}
+# {{ng|forms the strong dative singular of masculine and neuter adjectives}}
 
 ====Usage notes====
 * The abbreviated form ''-ū'' is used inconsistently in writing, even within the same text; for example, line 5 of ''{{w|Beowulf}}'' includes the text {{m|ang|monegum|monegū}} {{m|ang|mægþum}}, which contains both the abbreviated and unabbreviated forms
@@ -5222,7 +5302,7 @@ Page 217 -uma: -------- begin text --------
 ==Old English==
 
 ===Alternative forms===
-* {{alter|ang|-ema|-ma}}
+* {{alt|ang|-ema|-ma}}
 * {{l|ang|-mest}} {{qualifier|when combined with additional superlative endings}}
 
 ===Etymology===
@@ -5235,13 +5315,13 @@ From {{inh|ang|gem-pro|*-umô}}.
 {{h|ang|suf}}
 
 # used to form the superlative of Old English adjectives
-#: {{uxi|ang|[[meduma|med'''uma''']]|midway in size, midmost}}
-#: {{uxi|ang|[[hindema|hind'''ema''']]|hindmost, last}}
-#: {{uxi|ang|[[forma|for'''ma''']]|first, earliest}}
+#: {{uxi|ang|[[med'''uma''']]|midway in size, midmost}}
+#: {{uxi|ang|[[hind'''ema''']]|hindmost, last}}
+#: {{uxi|ang|[[for'''ma''']]|first, earliest}}
 # used in combination with other superlative endings
-#: {{uxi|ang|[[fyrmesta|fur'''m'''esta]]|foremost}}
-#: {{uxi|ang|[[æftemest|æft'''em'''est]]|aftermost}}
-#: {{uxi|ang|[[ēastemest|ēast'''em'''est]]|easternmost}}
+#: {{uxi|ang|[[fur'''m'''esta]]|foremost}}
+#: {{uxi|ang|[[æft'''em'''est]]|aftermost}}
+#: {{uxi|ang|[[ēast'''em'''est]]|easternmost}}
 
 ====Derived terms====
 {{suffixsee|ang}}
@@ -5256,7 +5336,7 @@ Page 218 -un: -------- begin text --------
 ===Suffix===
 {{h|ang|suf}}
 
-# {{alternative form of|ang|-on|pos=strong plural past indicative suffix}}
+# {{alt form|ang|-on|pos=strong plural past indicative suffix}}
 
 -------- end text --------
 Page 218 -un: Skipped, no changes
@@ -5276,9 +5356,9 @@ Cognate with {{cog|osx|-unga}} ({{cog|nds|-inge}}, {{m|nds|-ing}}), {{cog|odt|-i
 * {{ang-IPA|-ung}}
 
 ===Suffix===
-{{head|ang|suffix|head=-ung|g=f}}
+{{ang-noun||f}}
 
-# forming [[nouns]] from [[verbs]], denoting verbal action or an instance of it; or denoting a substance involved in the verbal action
+# {{ng|forms nouns from verbs, denoting verbal action or an instance of it; or denoting a substance involved in the verbal action}}
 
 ====Usage notes====
 * In general, '''''-ung''''' is used with class Ia and II weak verbs, {{m|ang|-ing}} with all other verbs. 
@@ -5297,7 +5377,7 @@ Page 220 -unga: -------- begin text --------
 ==Old English==
 
 ===Alternative forms===
-* {{alter|ang|-inga|-enga|-onga|-ningas|-nunges}}
+* {{alt|ang|-inga|-enga|-onga|-ningas|-nunges}}
 
 ===Etymology===
 From {{m|ang|-ung}}, noun suffix + {{m|ang|-a}}, adverbial suffix.
@@ -5306,23 +5386,20 @@ From {{m|ang|-ung}}, noun suffix + {{m|ang|-a}}, adverbial suffix.
 * {{ang-IPA|-un+ga}}
 
 ===Suffix===
-{{h|ang|suf}}<!--When I get a chance I will look at these senses. I think -unga/-inga is actually added to verbs, with ''hwæthwugununges'' possibly being derived from a ghost verb or by analogy to so-derived adverbs [?] -->
+{{ang-adv}}
 
-# used to form adverbs from [[noun|nouns]], originally from verbal nouns
-#: {{uxi|ang|[[fǣringa]]|suddenly}}
-#: {{uxi|ang|[[wēninga]]|possibly, perhaps, by chance}}
-#: {{uxi|ang|[[healfunga]]|by halves, partially, to some extent, imperfectly}}
-#: {{uxi|ang|[[hōlunga]]|in vain, without reason}}
-# used to form adverbs from [[adjective|adjectives]]
-#: {{uxi|ang|[[fullunga]]|fully}}
-#: {{uxi|ang|[[dearnunga]]|secretly, privately, latently}}
-# used to create adverbs from pronouns
-#: {{m|ang|hwæthwegununges}}, {{m|ang|hwæthuguningas|t=somewhat|pos=adverb}}
-# used to create adverbs from prepositions
-#: {{uxi|ang|[[ġēanunga]]|directly}}
+# {{ng|forms adverbs from nouns (originally verbal nouns), verbs, adjectives, pronouns and prepositions}}
+#: {{af|ang|fǣr<t:sudden danger, peril>|[[færinga]], [[fǣrunga]]<t:suddenly>}}
+#: {{af|ang|wēn<t:belief, hope, expectation; probability>|[[wēnunga]], [[wēninga]]<t:possibly, perhaps, by chance>}}
+#: {{af|ang|healf<t:half>|healfunga<t:by halves, partially, to some extent, imperfectly>}}
+#: {{af|ang|hōlian<t:to oppress, to slander>|[[hōlinga]], [[hōlunga]]<t:in vain, without reason>}}
+#: {{af|ang|full<t:full>|fullunga<t:fully>}}
+#: {{af|ang|*dearnian<to conceal, to hide>|dearnunga<t:secretly, privately, latently>}}
+#: {{af|ang|[[hwæthwugu]], [[hwæthwegu]], [[hwæthugu]]<t:somewhat; something>|[[hwæthwegununges]], [[hwæthuguningas]]<t:somewhat>}}
+#: {{af|ang|ġeġn<t:again>|[[ġeġnunga]], [[ġeġninga]]<t:immediately, directly>}}
 
 ====Usage notes====
-* ''-unga'' is properly the suffix used with Class 2 Weak verbs, and ''-inga'' with all others. Occasionally the distinction is blurred and forms exist that do not adhere to the original rule.
+* ''-unga'' is properly the suffix used with Class 2 Weak verbs, and ''-inga'' with all others. The distinction is frequently blurred, and forms exist that do not adhere to the original rule.
 
 ====Derived terms====
 {{suffixsee|ang}}
@@ -5335,7 +5412,7 @@ Page 221 -ust: -------- begin text --------
 ===Suffix===
 {{h|ang|suf}}
 
-# {{alternative form of|ang|-ost}}
+# {{alt form|ang|-ost}}
 -------- end text --------
 Page 221 -ust: Skipped, no changes
 Page 222 -ut: -------- begin text --------
@@ -5344,7 +5421,7 @@ Page 222 -ut: -------- begin text --------
 ===Suffix===
 {{ang-noun||n}}
 
-# {{alternative form of|ang|-et}}; {{ng|forms nouns from verbs and sometimes nouns and adjectives}}
+# {{alt form|ang|-et}}; {{ng|forms nouns from verbs and sometimes nouns and adjectives}}
 
 -------- end text --------
 Page 222 -ut: Skipped, no changes
@@ -5354,14 +5431,14 @@ Page 223 -uþ: -------- begin text --------
 ===Suffix===
 {{ang-noun||m}}
 
-# {{alternative form of|ang|-oþ}}; {{ng|forms concrete nouns from verbs}}
+# {{alt form|ang|-oþ}}; {{ng|forms concrete nouns from verbs}}
 -------- end text --------
 Page 223 -uþ: Skipped, no changes
 Page 224 -ware: -------- begin text --------
 ==Old English==
 
 ===Alternative forms===
-* {{alter|ang|-waras|-waran|-waru}}
+* {{alt|ang|-waras|-waran|-waru}}
 
 ===Etymology===
 From {{inh|ang|gmw-pro|*-wari}}, from {{inh|ang|gem-pro|*warjaz|t=dwellers of}}. Cognate with {{cog|goh|-āri|t=inhabitants of}}.
@@ -5375,9 +5452,9 @@ From {{inh|ang|gmw-pro|*-wari}}, from {{inh|ang|gem-pro|*warjaz|t=dwellers of}}.
 # {{lb|ang|used in the singular}} suffix denoting inhabitants or residents of a place
 #: {{uxi|ang|eall sēo buruh'''waru'''|the people of a city, the entire citizenry}}
 # {{lb|ang|used in the plural}} suffix denoting inhabitants or residents of a place
-#: {{uxi|ang|[[burgwaras|burg'''waras''']]|residents of a burg, burghers, citizens}}
+#: {{uxi|ang|[[burg'''waras''']]|residents of a burg, burghers, citizens}}
 #: {{uxi|ang|[[Lundenwaran|Lundun'''waran''']]|Londoners}}
-#: {{uxi|ang|[[Rōmware|Rōm'''ware''']]|residents of Rome; Romans}}
+#: {{uxi|ang|[[Rōm'''ware''']]|residents of Rome; Romans}}
 
 ====Declension====
 * {{qualifier|masc. i-stem}}
@@ -5407,7 +5484,7 @@ Page 225 -weard: -------- begin text --------
 ==Old English==
 
 ===Alternative forms===
-* {{alter|ang|-werd}}
+* {{alt|ang|-werd}}
 
 ===Etymology===
 {{etymon|ang|:inh|gem-pro:*wardaz<id:turn>}}
@@ -5419,11 +5496,13 @@ Akin to {{cog|ofs|-ward}}, {{cog|osx|-ward}}, {{cog|non|verðr}}, {{cog|de|-wär
 * {{ang-IPA|-wèard}}
 
 ===Suffix===
-{{h|ang|suf}}
+{{ang-adj|addlpos=adverb}}
 
-# {{n-g|Forming adjectives and nouns from adjectives or prepositions, with the sense of "in the direction of, toward".}}
-#: {{uxi|ang|[[ēasteweard|ēaste'''weard''']]|eastward}}, {{uxi|ang|[[tōweard|tō'''weard''']]|future|q=adjective and noun}}
-# {{n-g|Forming adverbs from adjectives or prepositions, with the sense of "in the direction of, toward".}}
+# {{ng|forms adjectives and adverbs from adjectives, adverbs, nouns and prepositions, signifying “in the direction of, toward”}}
+#: {{afex|ang|ūt<t:out>|ūtweard<outward, to the outside>}}
+#: {{afex|ang|ēast<t:east>|ēastweard<eastward>}}
+#: {{afex|ang|hām<t:home>|hāmweard<homeward>}}
+#: {{afex|ang|þider<t:thither>|þiderweard<thitherward, in that direction>}}
 
 ====Derived terms====
 * {{l|ang|-weardes}}
@@ -5445,9 +5524,11 @@ From {{inh|ang|gmw-pro|*-wardas}}, equivalent to {{suf|ang|-weard|es}}.
 * {{ang-IPA|-wèardes}}
 
 ===Suffix===
-{{h|ang|suf}}
+{{ang-adv}}
 
-# {{alternative form of|ang|-weard}}
+# {{alt form|ang|-weard}}
+#: {{afex|ang|upp<t:up>|upweardes<t:upwards>}}
+#: {{afex|ang|hām<t:home>|hāmweardes<t:homeward(s)>}}
 
 ====Descendants====
 * {{desc|enm|-wardes|-wardis|-wardus}}
@@ -5465,15 +5546,15 @@ From {{der|ang|gmw-pro|*wandī}}, from {{der|ang|gem-pro|*wandijaz|t=turning, di
 * {{ang-IPA|-wènde}}
 
 ===Suffix===
-{{h|ang|suf}}
+{{ang-adj}}
 
-# suffix meaning tending toward, promoting, or exemplified by; [[-ing]], [[-able]]
-#: {{uxi|ang|[[halwende|hāl'''wende''']]|healing, heathful, salutary}}
-#: {{uxi|ang|[[laþwende|lāþ'''wende''']]|hateful, hostile}}
-#: {{uxi|ang|[[leofwende|lēof'''wende''']]|kind, loving, gracious, agreeable}}
-#: {{uxi|ang|[[lufwende|luf'''wende''']]|lovable, pleasant}}
-#: {{uxi|ang|[[miswende|mis'''wende''']]|erring, misbehaving}}
-#: {{uxi|ang|[[hatwende|hāt'''wende''']]|hot, burning}}
+# {{ng|forms adjectives meaning tending toward, promoting, or exemplified by}}; [[-ing]], [[-able]]
+#: {{uxi|ang|[[hāl'''wende''']]|healing, heathful, salutary}}
+#: {{uxi|ang|[[lāþ'''wende''']]|hateful, hostile}}
+#: {{uxi|ang|[[lēof'''wende''']]|kind, loving, gracious, agreeable}}
+#: {{uxi|ang|[[luf'''wende''']]|lovable, pleasant}}
+#: {{uxi|ang|[[mis'''wende''']]|erring, misbehaving}}
+#: {{uxi|ang|[[hāt'''wende''']]|hot, burning}}
 
 ====Declension====
 {{ang-adecl|-wende}}
@@ -5486,15 +5567,15 @@ Page 228 -weorþ: -------- begin text --------
 From {{m|ang|weorþ}} or {{inh|ang|gmw-pro|*-werþ}}.
 
 ===Pronunciation===
-* {{ang-IPA|weorþ}}
+* {{ang-IPA|-weorþ}}
 
 ===Suffix===
-{{h|ang|suf|head=-weorþ}}
+{{ang-adj}}
 
-# [[worthy]] of
-#: {{m|ang|ārweorþ|ār'''weorþ'''}}
-# [[entitled]] to
-#: {{m|ang|mōtweorþ|mōt'''weorþ'''}}
+# {{ng|forms adjectives meaning “worthy of”}}
+#: {{afex|ang|ār<t:honor>|ārweorþ<t:honorable; venerable; pious>}}
+# {{ng|forms adjectives meaning “entitled to”}}
+#: {{afex|ang|mōt<t:moot, assembly>|mōtweorþ<t:entitled to attend the moot>}}
 
 ====Related terms====
 * {{l|ang|-wierþe}}
@@ -5509,14 +5590,14 @@ Page 229 -werd: -------- begin text --------
 ===Suffix===
 {{h|ang|suf}}
 
-# {{alternative form of|ang|-weard}}
+# {{alt form|ang|-weard}}
 -------- end text --------
 Page 229 -werd: Skipped, no changes
 Page 230 -wierþe: -------- begin text --------
 ==Old English==
 
 ===Alternative forms===
-* {{alter|ang|-wirþe|-wyrþe}}
+* {{alt|ang|-wirþe|-wyrþe}}
 
 ===Etymology===
 Derived from {{der|ang|gmw-pro|*wirþī}}, from {{der|ang|gem-pro|*wirþijaz|t=worthy, worth}}.
@@ -5525,14 +5606,14 @@ Derived from {{der|ang|gmw-pro|*wirþī}}, from {{der|ang|gem-pro|*wirþijaz|t=w
 * {{ang-IPA|-wìerþe}}
 
 ===Suffix===
-{{h|ang|suf}}
+{{ang-adj}} {{tlb|ang|West Saxon}}
 
-# {{lb|ang|West Saxon}} worthy of
+# {{ng|forms adjectives meaning “worthy of”}}
 #: {{uxi|ang|[[stēorwierþe]]|blameworthy, reprehensible}}
-# {{lb|ang|West Saxon}} able to, capable of
+# {{ng|forms adjectives meaning “able to, capable of”}}
 #: {{uxi|ang|[[stǣlwierþe]]|serviceable}}
 #: {{uxi|ang|[[bōtwierþe]]|pardonable, forgiveable}}
-# {{lb|ang|West Saxon}} fit for, tending to
+# {{ng|forms adjectives meaning “fit for, tending to”}}
 #: {{uxi|ang|[[notwierþe]]|noteful, useful}}
 
 ====Related terms====
@@ -5550,9 +5631,11 @@ Page 231 -wille: -------- begin text --------
 From {{inh|ang|gem-pro|*-wiljaz}}. Cognate with {{cog|got|-𐍅𐌹𐌻𐌾𐌹𐍃}}. Equivalent to {{suf|ang|willa|e|id2=adjectival}}.
 
 ===Suffix===
-{{h|ang|suf}}
+{{ang-adj}}
 
-# -willed
+# -[[willed]]; {{ng|forms adjectives indicating having a specified type of will}}
+#: {{afex|ān<t:one, sole>|ānwille<t:obstinate>}}
+#: {{afex|self<t:self>|selfwille<t:spontaneous, voluntary>}}
 
 ====Derived terms====
 {{suffixsee|ang}}
@@ -5568,9 +5651,9 @@ From {{inh|ang|gmw-pro|*-wintrī}}, from {{inh|ang|gem-pro|*-wintruz}}. Cognate 
 * {{ang-IPA|wintre}}
 
 ===Suffix===
-{{h|ang|suf}}
+{{ang-adj}}
 
-# [[years]] [[old]]
+# {{ng|forms adjectives meaning “year(s) old”}}; -[[year]]-[[old]]
 #* '''c. 893''', [[w:Alfred the Great|King Alfred's]] ''[[w:Doom Book|Laws]]''
 #*: {{quote|ang|Tīen'''wintre''' cniht mæġ bēon þīefþe ġewita.|A ten'''-year-old''' boy can be an accessory to a theft.}}
 #* '''late 9th century''', ''[https://www.helsinkicorpus.arts.gla.ac.uk/browse.py?fs=100&format=html&highlight=&pb=true&params=false&toc=author&pln=false&text=mart The Old English Martyrology]''
@@ -5583,7 +5666,7 @@ From {{inh|ang|gmw-pro|*-wintrī}}, from {{inh|ang|gem-pro|*-wintruz}}. Cognate 
 #*: {{quote|ang|Hannibal ġecȳðde þone nīþ and þone hete þe hē beforan his fæder ġeswōr þā hē nigon'''wintre''' cniht wæs þæt hē nǣfre ne wurde Rōmāna frēond.|Hannibal showed the hatred and the malice that he felt when he swore before his father as a nine-'''year-old''' boy that he would never become a friend of the Romans.}}
 #* '''late 9th century''', [https://books.google.com/books?id=xtM0rOEXqJIC&pg=PA91 translation] of [[w:Orosius|Orosius’]] ''History Against the Pagans''
 #*: {{quote|ang|Æfter þām hīe ġesetton tictātor þæt hē sċolde bēon hearra ofer þā consulas, sē wæs hāten Decius Iūnius. Hē næs būtan seofontīene'''wintre'''.|After that, they chose a dictator to rule over the consuls, whose name was Decius Junius. He was only seventeen '''years old'''.}}
-# [[years]] [[lasting]]
+# {{ng|forms adjectives meaning “lasting a specific number of years”}}; -[[year]]
 #* '''late 9th century''', [https://books.google.com/books?id=xtM0rOEXqJIC&pg=PA126 translation] of [[w:Orosius|Orosius’]] ''History Against the Pagans''
 #*: {{quote|ang|Dioclētiānus and Maximiānus bebudon ēhtnesse cristenra manna—Dioclētiānus ēastane and Maximiānus westane—and for þām bebode wurdon fela martyra on tīen'''wintrum''' fierste.|Diocletian and Maximian ordered the persecution of Christians—Diocletian from the east and Maximian from the west—and because of that order there were many martyrs in a ten-'''year''' period.}}
 
@@ -5609,14 +5692,14 @@ Page 233 -wirþe: -------- begin text --------
 ===Suffix===
 {{h|ang|suf}}
 
-# {{alternative form of|ang|-wierþe}}
+# {{alt form|ang|-wierþe}}
 -------- end text --------
 Page 233 -wirþe: Skipped, no changes
 Page 234 -wis: -------- begin text --------
 ==Old English==
 
 ===Alternative forms===
-* {{alter|ang|-wīsan}}
+* {{alt|ang|-wīsan}}
 
 ===Etymology===
 {{etymon|ang|:inh|gmw-pro:*-wīs<ety:inh<gem-pro:*-wīsaz<ety:from<*wīsaz>>>>}}
@@ -5626,9 +5709,9 @@ From {{inh|ang|gmw-pro|*-wīs}}, from {{inh|ang|gem-pro|*-wīsaz}}, related to {
 * {{ang-IPA|-wī̀s}}
 
 ===Suffix===
-{{h|ang|suf|head=-wīs}}
+{{ang-adj|-wīs}}
 
-# {{lb|ang|adjectival suffix}} denoting a specified way, manner, condition, habit or direction
+# {{ng|forms adjectives denoting a specified way, manner, condition, habit or direction}}; [[-wise]]
 #: {{uxi|ang|[[rihtwīs]]|right-wise, righteous, just}}
 #: {{uxi|ang|[[nīedwīs]]|necessary, needful}}
 #: {{uxi|ang|[[medwīs]]|dull, stupid, foolish}}
@@ -5656,19 +5739,23 @@ From {{m|ang|wīse||manner, way, condition, direction}}.
 * {{ang-IPA|-wī̀se}}
 
 ===Suffix===
-{{h|ang|suf|head=-wīse|g=f}}
+{{ang-noun|-wīse|f}}
 
-# {{lb|ang|noun suffix}} state of, manner of, [[condition]]; [[direction]]
-#: {{sufex|ang|riht|t1=[[just]], [[right]]|-wīse|rihtwīse|t3=[[righteousness]], [[justice]]}}
-#: {{sufex|ang|cniht|t1=[[boy]], [[youth]]|-wīse|cnihtwīse|t3=[[boyishness]]}}
-#: {{sufex|ang|cyne-|t1=[[public]], [[nation]], [[kindred]]|-wīse|cynewīse|t3=[[commonwealth]], [[state]]}}
-#: {{sufex|ang|lēoþ|t1=[[song]], [[tune]], [[poem]]|-wīse|lēoþwīse|t3=[[poetry]], [[verse]]}}
-#: {{sufex|ang|bēag|t1=[[ring]], [[hoop]], [[circle]]|-wīse|bēagwīse|t3=[[sphere]], [[circular]] [[form]]}}
-# {{lb|ang|noun suffix}} the custom or fashion of
-#: {{sufex|ang|mynster|t1=[[minister]]|-wīse|mynsterwīse|t3=[[monastic]] [[custom]]}}
-#: {{sufex|ang|fierd|t1=[[militia]]|-wīse|fierdwīse|t3=[[military]] [[style]]}}
-# {{lb|ang|adverbial suffix}} in the manner or fashion of; in the direction of
-#: {{sufex|ang|hyse|t1=[[son]], [[youth]]|-wīse|hysewīse|t3=like a [[young]] [[man]]}}
+# {{ng|forms nouns indicating the state or manner of or signifying a [[condition]] or [[direction]]}}
+#: {{afex|ang|riht<t:just, right>|-wīse|rihtwīse<t:righteousness, justice>}}
+#: {{afex|ang|cniht<t:boy, youth>|-wīse|cnihtwīse<t:boyishness>}}
+#: {{afex|ang|cyne-<t:public, nation, kindred>|-wīse|cynewīse<t:commonwealth, state>}}
+#: {{afex|ang|lēoþ<t:song, tune, poem>|-wīse|lēoþwīse<t:poetry, verse>}}
+#: {{afex|ang|bēag<t:ring, hoop, circle>|-wīse|bēagwīse<t:sphere, circular form>}}
+# {{ng|forms nouns meaning “custom” or “fashion”}}
+#: {{afex|ang|mynster<t:minister>|-wīse|mynsterwīse<t:monastic custom>}}
+#: {{afex|ang|fierd<t:militia>|-wīse|fierdwīse<t:military style>}}
+
+===Suffix===
+{{ang-adv|-wīse}}
+
+# {{ng|forms adverbs meaning “in the manner or fashion of” or “in the direction of”}}; [[-wise]]
+#: {{afex|ang|hyse<t:son, youth>|-wīse|hysewīse<t:like a young man>}}
 
 ====Declension====
 {{ang-decl-noun-n-f|-wīs}}
@@ -5695,80 +5782,40 @@ From combining form of {{cog|ang|wist||being}}. Akin to {{cog|ang|wesan||to be}}
 {{ang-decl-noun-i-f|-wist}}
 -------- end text --------
 Page 236 -wist: Skipped, no changes
-Page 237 -wyrde: -------- begin text --------
-==Old English==
-
-===Etymology===
-Compound words from {{inh|ang|gem-pro|*wurdiją}}. More at {{l|ang|word}}.
-
-===Pronunciation===
-* {{ang-IPA|-wyrde}}
-
-===Suffix===
-{{ang-adj|-wyrde}}
-
-# {{n-g|Forming adjectives and nouns from adjectives, with the sense of "a kind of speech".}}
-#: {{ux|ang|Wes ðū ðīnum yldrum ārfæst symle, '''fæġerwyrde'''|Be thou ever honourable to thine elders, '''fair in word'''}}
-#: {{ux|ang|þæt gē ne bēon tō '''biterwyrde''', ne bealufulle on mōde|That ye be not '''bitter in speech''', nor baleful in spirit}}
-
-====Derived terms====
-{{col|ang
-|bealdwyrde<t:bold in speech>
-|biterwyrde<t:bitter in speech>
-|fæġerwyrde<t:fair in speech>
-|felawyrde<t:many-worded, talkative>
-|hōcorwyrde<t:scornful, derisive>
-|hrædwyrde<t:hasty in speech>
-|līþwyrde<t:gentle in speech>
-|snotorwyrde<t:prudent in speech>
-|stuntwyrde<t:foolish in speech>
-|swǣswyrde<t:pleasant in speech>
-|wærwyrde<t:wary, cautious in speech>
-|wīswyrde<t:wise in speech>
-}}
-
-===Suffix===
-{{ang-noun||n}}
-
-# {{n-g|Forming nouns from nouns or adjectives, with the sense of "a kind of speech".}}
-#: {{ux|ang|Hētan him ðæt '''andwyrde''' secgan|They ordered him to give that '''answer'''}}
-#: {{ux|ang|Ðæt ic mǣge sum rust on weg adrīfan of mīnre tungan, ðæt ic mǣge becuman to brǣddran '''gewyrde'''|That I may drive away some rust from my tongue, so that I may attain more broader '''verbosity'''}}
-
-====Declension====
-{{ang-decl-noun-a-n|-wyrd|nomsg=-wyrde}}
-
-====Derived terms====
-* {{l|ang|andwyrde||answer}}
-* {{l|ang|ġewyrde||speech, conversation, verbosity}}
-* {{l|ang|bīwyrde||byword, proverb}}
-* {{l|ang|fracoþwyrde||insult, abusive language}}
--------- end text --------
-Page 237 -wyrde: Skipped, no changes
 Page 238 -wyrþe: -------- begin text --------
 ==Old English==
 
 ===Suffix===
-{{h|ang|suf}}
+{{ang-adj}}
 
-# {{alternative form of|ang|-wierþe}}
+# {{alt form|ang|-wierþe}}
 -------- end text --------
 Page 238 -wyrþe: Skipped, no changes
 Page 239 -ysc: -------- begin text --------
 ==Old English==
 
-===Suffix===
-{{h|ang|suf|head=-ysċ}}
+===Etymology 1===
 
-# {{alternative form of|ang|-isċ}}
+====Suffix====
+{{ang-adj}}
+
+# {{alt form|ang|-isċ}}; {{ng|forms relational adjectives}}
+
+===Etymology 2===
+
+====Suffix====
+{{ang-noun||n}}
+
+# {{alt form|ang|-isċ}}; {{ng|forms collective nouns}}
 -------- end text --------
 Page 239 -ysc: Skipped, no changes
 Page 240 -ystre: -------- begin text --------
 ==Old English==
 
 ===Suffix===
-{{h|ang|suf}}
+{{ang-noun||f}}
 
-# {{alternative form of|ang|-estre}}
+# {{alt form|ang|-estre}}; {{ng|forms female agent nouns}}
 -------- end text --------
 Page 240 -ystre: Skipped, no changes
 Page 241 -ᚨᚦ: -------- begin text --------
@@ -5806,16 +5853,16 @@ Page 2 -adan: -------- begin text --------
 ==Old English==
 
 ===Suffix===
-{{ang-head|verbf}}
+{{ang-head|verbf|inflsuf=1}}
 
-# {{alternative form of|ang|-odon}}; {{ng|marks the plural preterite indicative of class II weak verbs}}
+# {{alt form|ang|-odon}}; {{ng|marks the plural preterite indicative of class II weak verbs}}
 -------- end text --------
 Page 2 -adan: Skipped, no changes
 Page 3 -ade: -------- begin text --------
 ==Old English==
 
 ===Suffix===
-{{ang-head|verbf}}
+{{ang-head|verbf|inflsuf=1}}
 
 # {{alt form|ang|-ode}}; {{ng|marks the first and third person singular preterite indicative and singular subjunctive indicative of class II weak verbs}}
 -------- end text --------
@@ -5910,20 +5957,20 @@ Page 11 -æ: -------- begin text --------
 ==Old English==
 
 ===Suffix===
-{{ang-head|nounf}} {{tlb|ang|Early Old English}}
+{{ang-head|nounf|inflsuf=1}} {{tlb|ang|Early Old English}}
 
-# {{alternative form of|ang|-e|id=dative}}; {{ng|marks the dative singular of ''a''-stem/''ō''-stem nouns}}
-#  {{alternative form of|ang|-e|id=ō-stem}}; {{ng|marks the accusative/genitive singualr of ''ō''-stem nouns}}
+# {{alt form|ang|-e|id=dative}}; {{ng|marks the dative singular of ''a''-stem/''ō''-stem nouns}}
+#  {{alt form|ang|-e|id=ō-stem}}; {{ng|marks the accusative/genitive singular of ''ō''-stem nouns}}
 -------- end text --------
 Page 11 -æ: Skipped, no changes
 Page 12 -æs: -------- begin text --------
 ==Old English==
 
 ===Suffix===
-{{ang-head|nounf|addlpos=adjf}} {{tlb|ang|Early Old English}}
+{{ang-head|nounf|addlpos=adjf|inflsuf=1}} {{tlb|ang|Early Old English}}
 
-# {{alternative form of|ang|-es}}; {{ng|marks the genitive singular of ''a''-stem nouns}}
-# {{alternative form of|ang|-es}}; {{ng|marks the strong masculine/neuter genitive singular of adjectives}}
+# {{alt form|ang|-es}}; {{ng|marks the genitive singular of ''a''-stem nouns}}
+# {{alt form|ang|-es}}; {{ng|marks the strong masculine/neuter genitive singular of adjectives}}
 -------- end text --------
 Page 12 -æs: Skipped, no changes
 Page 13 -bæra: -------- begin text --------
@@ -6753,7 +6800,7 @@ Page 80 -ena: -------- begin text --------
 {{head|ang|suffix form}}
 
 # {{ng|forms the genitive plural of n-stem masculine, n-stem feminine{{,}} and some ō-stem feminine nouns}}
-#: {{afex|ang|stela|gloss1=stalk|stelena|gloss2=stalks'}}
+#: {{afex|ang|stela<t:stalk>|stelena<t:stalks'>}}
 
 =====Descendants=====
 * {{desc|enm|-ene|alts=1}}
@@ -9875,7 +9922,7 @@ Page 337 -ode: -------- begin text --------
 ==Old English==
 
 ===Alternative forms===
-* {{alter|ang|-ade|-ude}}
+* {{alt|ang|-ade|-ude}}
 
 ===Etymology===
 {{etymon|ang|:inh|gem-pro:*-ōd-}}
@@ -9886,10 +9933,10 @@ From the merger of several [[Proto-Germanic]] inflections.
 * {{ang-IPA|-ode}}
 
 ===Suffix===
-{{ang-head|verbf}}
+{{ang-head|verbf|inflsuf=1}}
 
 # {{ng|marks the first and third person singular preterite indicative and singular subjunctive indicative of class II weak verbs}}
-#: {{suffixusex|ang|lufian|gloss1=to love|lufode|gloss2=I/he/she/it loved}}
+#: {{afex|ang|lufian<t:to love>|lufode<t:I/he/she/it loved>}}
 
 ====Descendants====
 * {{desctree|enm|-ede}}
@@ -9957,10 +10004,10 @@ Page 342 -odon: -------- begin text --------
 * {{ang-IPA|-odon}}
 
 ===Suffix===
-{{ang-head|verbf}}
+{{ang-head|verbf|inflsuf=1}}
 
 # {{ng|marks the plural preterite indicative of class II weak verbs}}
-#: {{suffixusex|ang|lufian|gloss1=to love|lufodon|gloss2=we/you/they loved}}
+#: {{afex|ang|lufian<t:to love>|lufodon<t:we/you/they loved>}}
 
 ====See also====
 {{ang-conj|-ian<w2/ge:0>}}
@@ -10627,8 +10674,8 @@ Page 397 -st: -------- begin text --------
 ===Suffix===
 {{head|ang|suffix form}}
 
-# {{n-g|Used to form the second person singular present indicative of strong verbs and certain Class I weak verbs}}
-#: {{suffixusex|ang|drīfan|gloss1=to drive|drīfst|gloss2=you/thou drive}}
+# {{ng|forms the second person singular present indicative of strong verbs and certain Class I weak verbs}}
+#: {{afex|ang|drīfan<t:to drive>|drīfst<t:you/thou drive>}}
 -------- end text --------
 Page 397 -st: Skipped, no changes
 Page 398 -stowa: -------- begin text --------
@@ -10887,7 +10934,7 @@ Page 419 -ude: -------- begin text --------
 ==Old English==
 
 ===Suffix===
-{{ang-head|verbf}}
+{{ang-head|verbf|inflsuf=1}}
 
 # {{alt form|ang|-ode}}; {{ng|marks the first and third person singular preterite indicative and singular subjunctive indicative of class II weak verbs}}
 -------- end text --------
