@@ -119,10 +119,6 @@ local function parse_and_insert_inflection(data, args, field, label, accel)
 		end,
 		label = label,
 		accel = accel and {form = accel} or nil,
-		-- If we want check_missing support, we need to supply the following:
-		-- check_missing = true,
-		-- lang = lang,
-		-- plpos = plpos,
 	}
 end
 
@@ -148,10 +144,6 @@ local function insert_inflection(data, terms, label, accel)
 		terms = terms,
 		label = label,
 		accel = accel and {form = accel} or nil,
-		-- If we want check_missing support, we need to supply the following:
-		-- check_missing = true,
-		-- lang = lang,
-		-- plpos = plpos,
 	}
 end
 
@@ -290,6 +282,7 @@ local function get_noun_pos(is_proper)
 			local params = {
 				["indecl"] = boolean_param,
 				[1] = {list = "g", disallow_holes = true, type = "genders", flatten = true}, -- gender(s)
+				["gerund"] = boolean_param,
 			}
 			for _, spec in ipairs(get_noun_inflection_specs(langcode)) do
 				local param, desc = unpack(spec)
@@ -356,6 +349,10 @@ local function get_noun_pos(is_proper)
 				insert(data.categories, data.langname .. " indeclinable nouns")
 			end
 
+			if args.gerund then
+				data.pos_category = "verbal nouns"
+			end
+
 			-- Process all inflections.
 			for _, spec in ipairs(get_noun_inflection_specs(data.langcode)) do
 				local param, desc = unpack(spec)
@@ -394,7 +391,7 @@ local function get_verb_pos()
 	return {
 		params = params,
 		func = function(args, data)
-			local allowed_aspects = require("Module:table").listToSet {
+			local allowed_aspects = m_table.listToSet {
 				"pf", "impf", "biasp", "both", "impf-det", "impf-indet", "impf-freq", "?"
 			}
 
@@ -404,7 +401,7 @@ local function get_verb_pos()
 			local det_allowed = true
 			local freq_allowed = true
 			local function insert_label_and_cat(aspect, label)
-				-- Preserve qualifiers, labels, references.
+				-- Preserve decorations.
 				aspect = aspect and m_table.shallowCopy(aspect) or {}
 				aspect.term = nil
 				aspect.label = label
@@ -508,16 +505,16 @@ local function get_adj_adv_pos(pos)
 			local default_sups = {}
 			local comps = parse_inflection(data, args, 1)
 			if comps[1] then
-				lang_data = langs_supported[data.langcode]
+				local lang_data = langs_supported[data.langcode]
 				if comps[1].term == "-" then
 					if not comps[2] then
-						-- Preserve any qualifiers, labels, etc.
+						-- Preserve any decorations.
 						comps[1].label = "not " .. glossary_link("comparable")
 						comps[1].term = nil
 						insert(data.inflections, comps[1])
 						insert(data.categories, data.langname .. " uncomparable " .. data.pos_category)
 					else
-						-- Preserve any qualifiers, labels, etc.
+						-- Preserve any decorations.
 						comps[1].label = "not generally " .. glossary_link("comparable")
 						comps[1].term = nil
 						insert(data.inflections, comps[1])
@@ -554,7 +551,7 @@ local function get_adj_adv_pos(pos)
 				if sup.term == "+" then
 					for _, def_sup in ipairs(default_sups) do
 						def_sup = m_table.shallowCopy(def_sup)
-						m_headword_utilities.combine_termobj_qualifiers_labels(def_sup, sup)
+						m_headword_utilities.combine_termobj_decorations(def_sup, sup)
 						insert(combined_sups, def_sup)
 					end
 				else
@@ -597,10 +594,10 @@ local function get_part_pos()
 				error("Internal error: Unable to handle languages other than Polish for participles: " .. data.langname)
 			end
 			-- Compute allowed aspects, and map incomplete aspects to specs with a "?" in them.
-			local allowed_aspects = require("Module:table").listToSet {
+			local allowed_aspects = m_table.listToSet {
 				"pf", "impf", "biasp", "both", "pf-it", "pf-sem", "impf-it", "impf-dur", "?"
 			}
-			local allowed_types = require("Module:table").listToSet {
+			local allowed_types = m_table.listToSet {
 				"pass", "act", "ant-adv", "cont-adv", "?"
 			}
 
@@ -608,7 +605,7 @@ local function get_part_pos()
 				if not nolink then
 					label = glossary_link(label)
 				end
-				-- Preserve qualifiers, labels, references.
+				-- Preserve decorations.
 				aspect = aspect and m_table.shallowCopy(aspect) or {}
 				aspect.term = nil
 				aspect.label = label
