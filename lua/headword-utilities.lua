@@ -4,21 +4,31 @@ local export = {}
 FIXME:
 1. Implement ? = unknown or uncertain. There should be no label by default but it should be configurable.
    The default category should be "{plpos} with unknown or uncertain plurals" for nouns/proper nouns. It should
-   be an error to specify values along with this.
+   be an error to specify values along with this. [DONE]
 2. Implement ! = unattested. The default label should be "{label} not attested". The default category should be
    "{plpos} with unattested plurals" for nouns/proper nouns. It should be an error to specify values along with
-   this.
-3. Implement +- = sometimes has a value, e.g. "countable and uncountable" for plurals.
+   this. [DONE]
+3. Implement +- = sometimes has a value, e.g. "countable and uncountable" for plurals. [DONE]
 4. Implement ~ standing for the pagename in heads and inflections. [DONE]
 5. Implement abbr= for abbreviations. [DONE]
-6. Extract from insert_inflection the logic to handle the special mode signals, determine the actual label and
-   category and the actual values without inserting them.
+6. Split insert_inflection into process_for_insertion() (which implements the logic for handling special mode signals)
+   and insert_processed_inflection() (which implements the labels and categories for mode signals) so that we can handle
+   mode signals correctly. [DONE]
 7. Support no_label for booleans.
 8. Document the various types of parts of speech and implement pos_category per part of speech definition. [DONE]
-9. Implement apply_link_modifiers() for head=~...
+9. Implement apply_link_modifiers() for head=~~...
 10. Correctly handle var=both. [DONE]
-11. Implement checkredlinks and port simplify_pos to [[Module:headword]].
-12. Fix longstanding accelerator bug: if embeddded links in inflection, don't make it green.
+11. Implement checkredlinks and port simplify_pos to [[Module:headword]]. [CHECKREDLINKS SET; SIMPLIFY_POS NOT PORTED YET.]
+12. Fix longstanding accelerator bug: if embedded links in inflection, don't make it green. [DONE]
+13. Implement process_terms() callback after process_for_insertion. [DONE]
+14. Implement validate_and_canonicalize() callback. [NOT DONE; INSTEAD HAVE A SEPARATE CANONICALIZE CALLBACK]
+15. Document new methods.
+16. Implement process_one_term() callback after process_for_insertion. [DONE]
+17. Implement process() at a stage to happen universally when there is no argument to parse. [DONE]
+18. Skip mode signals during validation and canonicalization. [DONE]
+19. Implement inflsuf= with special handling and special inflectional categories. [DONE]
+20. Add support for "boolean or string" type.
+21. Support invocation-specified or user-specified languages. [DONE]
 ]==]
 local require_when_needed = require("Module:utilities/require when needed")
 local affix_module = "Module:affix"
@@ -45,9 +55,11 @@ local concat = table.concat
 local remove = table.remove
 local sort = table.sort
 
+local contains = require_when_needed(table_module, "contains")
 local deep_equals = require_when_needed(table_module, "deepEquals")
 local extend = require_when_needed(table_module, "extend")
 local insert_if_not = require_when_needed(table_module, "insertIfNot")
+local is_array = require_when_needed(table_module, "isArray")
 local list_to_set = require_when_needed(table_module, "listToSet")
 local serial_comma_join = require_when_needed(table_module, "serialCommaJoin")
 local shallow_copy = require_when_needed(table_module, "shallowCopy")
@@ -68,23 +80,6 @@ local format_decorations = require_when_needed(decorations_module, "format_decor
 local singularize = require_when_needed(en_utilities_module, "singularize")
 local canonicalize_pos = require_when_needed(headword_module, "canonicalize_pos")
 local pluralize_pos = require_when_needed(headword_module, "pluralize_pos")
-
-
-local function split_on_comma(val)
-	if val:find(",") then
-		return require(parse_interface_module).split_on_comma(val)
-	else
-		return {val}
-	end
-end
-
-local function ine(val)
-	if not val then
-		return nil
-	end
-	val = mw.text.trim(val)
-	return val ~= "" and val or nil
-end
 
 --[==[ intro:
 This module contains utilities for constructing language-specific headword modules.
@@ -148,6 +143,85 @@ There are several versions of the part of speech (POS) of a given term:
 [fill in]
 ]==]
 
+local inflection_to_cats_and_label = {
+	plural = {
+		filter_pos = function(posvars)
+			-- plurals also occur with determiners, adjectives etc. and we don't want to generate categories like
+			-- 'countable determiners', 'countable adjectives', etc. Note that the passed-in `simp_plpos` has
+			-- `proper nouns` converted to `nouns`.
+			return posvars.simp_plpos == "nouns"
+		end,
+		cats = {"countable nouns"},
+		no_cats = {"uncountable nouns"},
+		fixed_adj_label = "<<countable>>",
+		fixed_adj_no_label = "<<uncountable>>",
+		sometimes_label = "<<countable>> and <<uncountable>>",
+		unattested_cats = "nouns with unattested plurals",
+		unknown_cats = "nouns with unknown or uncertain plurals",
+	},
+	comparative = {
+		cats = {"comparable {simp_plpos}"},
+		no_cats = {"uncomparable {simp_plpos}"},
+		fixed_adj_label = "<<comparable>>",
+	},
+	["female equivalent"] = {
+		cats = {"{simp_plpos} with other-gender equivalents"},
+	},
+	["male equivalent"] = {
+		cats = {"{simp_plpos} with other-gender equivalents"},
+	},
+}
+
+local param_mods = {
+	alt = {}, -- always allow so e.g. - can be specified as a suffix form
+	id = {}, -- disabled when `is_head = true`
+	q = {type = "qualifier"},
+	qq = {type = "qualifier"},
+	l = {type = "labels"},
+	ll = {type = "labels"},
+	-- [[Module:headword]] expects part references in `.refs`.
+	ref = {item_dest = "refs", type = "references", store = "insert-flattened"},
+}
+
+local optional_param_mods = {
+	g = {item_dest = "genders", type = "genders"},
+	lang = {type = "language"},
+	sc = {type = "script"},
+	t = {item_dest = "gloss"},
+	gloss = {},
+	pos = {},
+	ng = {},
+	lit = {},
+	tr = {},
+	ts = {},
+	face = {},
+	nolinkinfl = {type = "boolean"},
+}
+
+local optional_headword_param_mods = {
+	sc = {type = "script"},
+	tr = {},
+	ts = {},
+}
+
+
+local function split_on_comma(val)
+	if val:find(",") then
+		return require(parse_interface_module).split_on_comma(val)
+	else
+		return {val}
+	end
+end
+
+local function ine(val)
+	if not val then
+		return nil
+	end
+	val = mw.text.trim(val)
+	return val ~= "" and val or nil
+end
+
+
 --[=[
 Add decorations to a term. `termobj` is the object describing the term, which should optionally contain:
 * left qualifiers in `q`, an array of strings;
@@ -187,38 +261,6 @@ local function add_decorations(text, termobj, lang)
 	return text
 end
 
-local param_mods = {
-	alt = {}, -- always allow so e.g. - can be specified as a suffix form
-	id = {}, -- disabled when `is_head = true`
-	q = {type = "qualifier"},
-	qq = {type = "qualifier"},
-	l = {type = "labels"},
-	ll = {type = "labels"},
-	-- [[Module:headword]] expects part references in `.refs`.
-	ref = {item_dest = "refs", type = "references", store = "insert-flattened"},
-}
-
-local optional_param_mods = {
-	g = {item_dest = "genders", type = "genders"},
-	lang = {type = "language"},
-	sc = {type = "script"},
-	t = {item_dest = "gloss"},
-	gloss = {},
-	pos = {},
-	lit = {},
-	tr = {},
-	ts = {},
-	face = {},
-	nolinkinfl = {type = "boolean"},
-}
-
-local optional_headword_param_mods = {
-	sc = {type = "script"},
-	tr = {},
-	ts = {},
-}
-
-
 --[==[
 Parse a single inflection or headword form or list of such forms. In either case, inline modifiers may be attached.
 `data` is an object with the following fields:
@@ -239,6 +281,8 @@ Parse a single inflection or headword form or list of such forms. In either case
   comma).
 * `parse_lang_prefix`: If specified, allow a language prefix to precede a form, and if found, store into the `.lang`
   field of the returned object.
+* `disable_special_modes`: If specified, don't recognize and treat specially the special mode signals (e.g. '-' for
+  no inflection, '?' for unknown, etc.).
 * `preserve_splitchar`, `delimiter_key`, `escape_fun`, `unescape_fun`, `pre_normalize_modifiers`: As in
   `parse_inline_modifiers` in [[Module:parse utilities]].
 Returns an object suitable for storing as one element of one of the lists in `headdata.inflections`, where `headdata`
@@ -270,6 +314,13 @@ function export.parse_term_with_modifiers(data)
 	local paramname, val, frob = data.paramname, data.val, data.frob
 
 	local function generate_obj(term, parse_err)
+		if not data.disable_special_modes and export.special_modes[term] then
+			return {
+				term = term,
+				_is_mode = true
+			}
+		end
+
 		if frob then
 			term = frob(term, parse_err)
 		end
@@ -290,7 +341,6 @@ function export.parse_term_with_modifiers(data)
 	if (val:find("<", nil, true) or data.splitchar) and not term_contains_top_level_html(val) and
 		-- don't parse inline modifiers if is_head and the value begins with a ~ (link modifier syntax)
 		(not data.is_head or not val:find("^~")) then
-		local param_mods = param_mods
 		if data.is_head then
 			param_mods = shallow_copy(param_mods)
 			param_mods.id = nil
@@ -500,6 +550,7 @@ function export.simplify_pos(pos, preserve_proper_nouns, preserve_lemma_status)
 			end
 		end
 	end
+	return plpos
 end
 
 function export.get_pos_variants(pos)
@@ -519,24 +570,43 @@ Canonicalize a single term or term-like object or a list of either into a list o
 term or list to canonicalize, and `field` is the name of the field holding the term (defaulting to {"term"}). This
 does the minimal work necessary, meaning that the return value may partly or completely share memory with the value
 passed in. As a special case, if `abterms` is {nil}, {nil} is returned. If `origin` or `originating_term` are specified,
-add fields `origin` and/or `originating_term` containing the specified value(s) to each resulting term-like object (in
+add fields `_origin` and/or `_originating_term` containing the specified value(s) to each resulting term-like object (in
 this case, the object will be copied a necessary to avoid side-effecting the passed-in objects). `origin` is intended to
 be a string indicating where the term originated from (e.g. {"default"} if a default value, {"resolve_special"} if
 originating from a shortcut value such as {"+"}) and `originating_term` is the shortcut term itself, if any. (There is
-generally no such term for default values.)
+generally no such term for default values.) If `termobj_for_string_terms` is specified, any terms in `abterms` specified
+as strings will have all their properties other than `field` taken from `termobj_for_string_terms`.
 ]==]
-function export.canonicalize_termobj_list(abterms, field, origin, originating_term)
+function export.canonicalize_termobj_list(abterms, field, origin, originating_term, termobj_for_string_terms)
 	if abterms == nil then
 		return nil
 	end
+	local function make_termobj_from_string_term(term)
+		local retval
+		if termobj_for_string_terms then
+			retval = shallow_copy(termobj_for_string_terms)
+		else
+			retval = {}
+		end
+		retval[field] = term
+		retval._origin = origin
+		retval._originating_term = originating_term
+		return retval
+	end
+
+	local function shallow_copy_and_add_origin(termobj)
+		termobj = shallow_copy(termobj)
+		termobj._origin = origin
+		termobj._originating_term = originating_term
+		return termobj
+	end
+
 	field = field or "term"
 	if type(abterms) == "string" then
-		return {{[field] = abterms, origin = origin, originating_term = originating_term}}
+		return {make_termobj_from_string_term(abterms)}
 	elseif not abterms[1] then
 		if origin ~= nil or originating_term ~= nil then
-			abterms = shallow_copy(abterms)
-			abterms.origin = origin
-			abterms.originating_term = originating_term
+			abterms = shallow_copy_and_add_origin(abterms)
 		end
 		return {abterms}
 	else
@@ -553,9 +623,7 @@ function export.canonicalize_termobj_list(abterms, field, origin, originating_te
 			if origin ~= nil or originating_term ~= nil then
 				abterms = shallow_copy(abterms)
 				for i, abterm in ipairs(abterms) do
-					abterms[i] = shallow_copy(abterm)
-					abterms[i].origin = origin
-					abterms[i].originating_term = originating_term
+					abterms[i] = shallow_copy_and_add_origin(abterm)
 				end
 			end
 			return abterms
@@ -564,12 +632,10 @@ function export.canonicalize_termobj_list(abterms, field, origin, originating_te
 	local retval = {}
 	for _, term in ipairs(abterms) do
 		if type(term) == "string" then
-			insert(retval, {[field] = term, origin = origin, originating_term = originating_term})
+			insert(retval, make_termobj_from_string_term(term))
 		else
 			if origin ~= nil or originating_term ~= nil then
-				term = shallow_copy(term)
-				term.origin = origin
-				term.originating_term = originating_term
+				term = shallow_copy_and_add_origin(term)
 			end
 			insert(retval, term)
 		end
@@ -662,7 +728,7 @@ local function with_value_fallback_label(props)
 	return "with " .. (props.label_for_cats_and_modes or props.label)
 end
 
---[=[
+--[==[ var:
 Table describing how to handle the "mode" signals at the beginning of an inflection, generally indicating whether the
 inflection exists and to what extent. The key is the mode signal itself, and the value is table with the following keys:
 * `exists`: The value to return in the `exists` field of the object returned by `process_for_insertion`. This is
@@ -683,8 +749,8 @@ inflection exists and to what extent. The key is the mode signal itself, and the
   may simply have a value such as {"+"}, which is processed later by resolve_special().
 * `disallow_additional`: If true, no additional terms are allowed after the mode signal; if present, an error is
   thrown.
-]=]
-local special_modes = {
+]==]
+export.special_modes = {
 	["-"] = {exists = "no", prefix = "no_",
 		fallback_label = no_value_fallback_label,
 	}, -- converted to "--+" if a term follows
@@ -711,7 +777,7 @@ local special_modes = {
 	},
 	["!"] = {exists = "unattested", prefix = "unattested_", disallow_additional = true,
 		fallback_label = function(props)
-			return props.label_for_cats_and_modes .. " unattested"
+			return (props.label_for_cats_and_modes or props.label) .. " unattested"
 		end,
 		-- No default cats; provided for plurals in inflection_to_cats_and_label.
 	},
@@ -723,11 +789,13 @@ local special_modes = {
 
 function export.process_for_insertion(data)
 	local terms, mode_default, headdata = data.terms, data.mode_default, data.headdata
-	local retval = {}
+	local retval = {
+		headdata = data.headdata,
+	}
 
 	if terms and terms[1] then
 		local mode = terms[1].term
-		local modespec = special_modes[mode]
+		local modespec = export.special_modes[mode]
 		if modespec then
 			terms = shallow_copy(terms)
 			retval.mode_term = terms[1]
@@ -847,7 +915,7 @@ function export.insert_processed_inflection(data)
 
 	-- Handle the fixed label (if any) and cats (if any) associated with a mode.
 	if processed.mode then
-		local modespec = special_modes[processed.mode]
+		local modespec = export.special_modes[processed.mode]
 		local mode_prefix = modespec.prefix
 		local fixed_label = data[mode_prefix .. "label"]
 		if not fixed_label and modespec.fallback_label then
@@ -869,13 +937,13 @@ function export.insert_processed_inflection(data)
 		if mode_cats then
 			insert_cats(mode_cats)
 		end
-	elseif data.cats then
+	elseif processed.terms[1] and data.cats then
 		-- If no mode, no fixed label but there may be categories.
 		insert_cats(data.cats)
 	end
 
 	local terms = processed.terms
-	if terms and terms[1] then
+	if terms[1] then
 		-- FIXME, if there's a mode we shallow_copy() twice.
 		terms = shallow_copy(terms)
 		terms.label = export.replace_glossary_links_in_label(label)
@@ -1801,46 +1869,68 @@ function export.apply_link_modifiers(linked_term, modifier_spec, lang)
 end
 
 
-local inflection_to_cats_and_label = {
-	plural = {
-		filter_pos = function(posvars)
-			-- plurals also occur with determiners, adjectives etc. and we don't want to generate categories like
-			-- 'countable determiners', 'countable adjectives', etc. Note that the passed-in `simp_plpos` has
-			-- `proper nouns` converted to `nouns`.
-			return posvars.simp_plpos == "nouns"
-		end,
-		cats = {"countable nouns"},
-		no_cats = {"uncountable nouns"},
-		fixed_adj_label = "<<countable>>",
-		fixed_adj_no_label = "<<uncountable>>",
-		sometimes_label = "<<countable>> and <<uncountable>>",
-		unattested_cats = "nouns with unattested plurals",
-		unknown_cats = "nouns with unknown or uncertain plurals",
-	},
-	comparative = {
-		cats = {"comparable {simp_plpos}"},
-		no_cats = {"uncomparable {simp_plpos}"},
-		fixed_adj_label = "<<comparable>>",
-	},
-	["female equivalent"] = {
-		cats = {"{simplified_plpos} with other-gender equivalents"},
-	},
-	["male equivalent"] = {
-		cats = {"{simplified_plpos} with other-gender equivalents"},
-	},
-}
+function export.format_validation_error_list(data)
+	local valid_list, valid_set, canonicalize = data.valid_list, data.valid_set, data.canonicalize
+	if not valid_list then
+		valid_list = {}
+		for valid_item, value in pairs(valid_set) do
+			if canonicalize then
+				if valid_item == value then
+					insert(valid_list, valid_item)
+				else
+					insert(valid_list, ("%s (mapped to %s)"):format(valid_item, value))
+				end
+			else
+				insert(valid_list, valid_item)
+			end
+		end
+		table.sort(valid_list)
+	end
+	return mw.text.listToText(valid_list, nil, " or ")
+end
+
+function export.validation_error(data)
+	local item_type, item, valid_list, valid_set, canonicalize =
+		data.item_type, data.item, data.valid_list, data.valid_set, data.canonicalize
+	if not valid_list then
+		valid_list = {}
+		for valid_item, value in pairs(valid_set) do
+			if canonicalize then
+				if valid_item == value then
+					insert(valid_list, valid_item)
+				else
+					insert(valid_list, ("%s (mapped to %s)"):format(valid_item, value))
+				end
+			else
+				insert(valid_list, valid_item)
+			end
+		end
+		table.sort(valid_list)
+	end
+	error(("Invalid %s: %s; expected one of %s"):format(item_type, item,
+			export.format_validation_error_list {
+				valid_list = valid_list,
+				valid_set = valid_set,
+				canonicalize = canonicalize,
+			}
+		))
+end
 
 --[=[
 Validate the items in `items` against the list or set of valid items in `valid_items`. If `field` is given, fetch the
 item to check from that-named field of each object in `items`; otherwise use the items in `items` directly. If an error
 occurs, `item_type` specifies the type of item to mention in the error message, which will also list the allowed items
 (either taken directly from `valid_items` if a list, or from the sorted keys if a set).
+
+If `canonicalize`, `valid_items` must be a set mapping items to their canonical equivalents, and the items in `items`
+will be canonicalized accordingly and returned.
 ]=]
-local function validate_items(data)
+local function validate_items(data, canonicalize)
 	local items, field, valid_items, item_type =
 		data.items, data.field, data.valid_items, data.item_type
-	local valid_set
-	if valid_items[1] then
+	local valid_list, valid_set
+	if not canonicalize and valid_items[1] and is_array(valid_items) then
+		valid_list = valid_items
 		valid_set = list_to_set(valid_items)
 	else
 		valid_set = valid_items
@@ -1850,50 +1940,52 @@ local function validate_items(data)
 		if field then
 			item = item[field]
 		end
-		if not valid_set[item] then
-			local valid_list
-			if valid_items[1] then
-				valid_list = valid_items
-			else
-				valid_list = {}
-				for valid_item, _ in pairs(valid_items) do
-					insert(valid_list, valid_item)
-				end
-				table.sort(valid_list)
-			end
-			error(("Invalid %s: %s; expected one of %s"):format(item_type, item, mw.text.listToText(valid_list)))
+		if not item._is_mode and not valid_set[item] then
+			export.validation_error {
+				item_type = item_type,
+				item = item,
+				valid_list = valid_list,
+				valid_set = not valid_list and valid_set or nil,
+				canonicalize = canonicalize,
+			}
 		end
 	end
 end
 
 function export.validate_genders(data)
-	local genders, valid_genders, gender_type, no_augment = data.genders, data.valid_genders, data.gender_type,
-		data.no_augment
+	local genders, valid_genders, gender_type, no_augment, canonicalize =
+		data.genders, data.valid_genders, data.gender_type, data.no_augment, data.canonicalize
 	if not genders then
-		return
+		return genders
 	end
 	gender_type = gender_type or "headword"
-	local valid_gender_set = list_to_set(valid_genders)
+	local valid_gender_set
+	if not data.canonicalize and valid_genders[1] and is_array(valid_genders) then
+		valid_gender_set = list_to_set(valid_genders)
+	else
+		valid_gender_set = valid_genders
+	end
 	local augmented_gender_set
 	if no_augment then
 		augmented_gender_set = valid_gender_set
 	else
 		augmented_gender_set = {}
-		for g, _ in pairs(valid_gender_set) do
-			augmented_gender_set[g] = true
+		for g, gval in pairs(valid_gender_set) do
+			augmented_gender_set[g] = gval
 			if g:find("^m") and not g:find("^mf") and valid_gender_set[g:gsub("^m", "f")] then
-				augmented_gender_set[g:gsub("^m", "mf")] = true
-				augmented_gender_set[g:gsub("^m", "mfbysense")] = true
-				augmented_gender_set[g:gsub("^m", "mfequiv")] = true
+				augmented_gender_set[g:gsub("^m", "mf")] = type(gval) == "string" and (gval:gsub("^m", "mf")) or gval
+				augmented_gender_set[g:gsub("^m", "mfbysense")] = type(gval) == "string" and (gval:gsub("^m", "mfbysense")) or gval
+				augmented_gender_set[g:gsub("^m", "mfequiv")] = type(gval) == "string" and (gval:gsub("^m", "mfequiv")) or gval
 			end
 		end
 	end
 
-	validate_items {
+	return validate_items {
 		items = genders,
 		field = "spec",
 		valid_items = augmented_gender_set,
 		item_type = ("%s gender"):format(gender_type),
+		canonicalize = canonicalize,
 	}
 end
 
@@ -1979,11 +2071,12 @@ end
 --[==[
 Validate the genders in `genders` (a list of gender spec objects, as produced by {type = "genders"} in
 [[Module:parameters]] and accepted by [[Module:gender and number]]), checking that all specified genders are in the list
-given in `valid_genders`. Optional `props` controls how the validation happens. In particular, unless `props.no_augment`
-is given, then for any gender beginning with `m`, if a corresponding gender beginning with `f` occurs, analogous genders
-beginning with `mf`, `mfbysense` and `mfequiv` are also allowed. For example, if `m-d` (masculine dual) and `f-d`
-(feminine dual) both occur, genders `mf-d`, `mfbysense-d` and `mfequiv-d` are also allowed. If a disallowed gender is
-given, an error occurs, giving the disallowed gender along with the list of all allowed genders.
+or set given in `valid_genders`. Optional `props` controls how the validation happens. In particular, unless
+`props.no_augment` is given, then for any gender beginning with `m`, if a corresponding gender beginning with `f`
+occurs, analogous genders beginning with `mf`, `mfbysense` and `mfequiv` are also allowed. For example, if `m-d`
+(masculine dual) and `f-d` (feminine dual) both occur, genders `mf-d`, `mfbysense-d` and `mfequiv-d` are also allowed.
+If a disallowed gender is given, an error occurs, giving the disallowed gender along with the list of all allowed
+genders.
 ]==]
 function Headdata:validate_genders(genders, valid_genders, props)
 	-- FIXME: This has no dependency on self. Uses should be converted to call export.validate_genders() directly.
@@ -2099,7 +2192,7 @@ function Headdata:insert_processed_inflection(processed, label, props)
 		end
 		local spec = inflection_to_cats_and_label[bare_label]
 		if spec and (not spec.filter_pos or spec.filter_pos(self:get_pos_variants())) then
-			-- Copy the propererties other than filter_pos into `props`, but don't overwrite any existing values.
+			-- Copy the properties other than filter_pos into `props`, but don't overwrite any existing values.
 			for specprop, specval in pairs(spec) do
 				if specprop ~= "filter_pos" and props[specprop] == nil then
 					props[specprop] = specval
@@ -2120,7 +2213,8 @@ function Headdata:insert_processed_inflection(processed, label, props)
 	canon_props.headdata = self
 	canon_props.processed = processed
 	canon_props.label = label
-	return export.insert_processed_inflection(canon_props)
+	export.insert_processed_inflection(canon_props)
+	return processed
 end
 
 --[==[
@@ -2190,7 +2284,16 @@ function Headdata:resolve_special(terms, handle_special, props)
 	local infls = {}
 	local is_special = props.is_special or function(_data, infl) return infl.term == "+" end
 	for _, termobj in ipairs(terms) do
-		if not is_special(self, termobj) then
+		local is_special_retval
+		if type(is_special) == "function" then
+			is_special_retval = is_special(self, termobj)
+		elseif type(is_special) == "table" then
+			is_special_retval = contains(is_special, termobj.term)
+		else
+			error(("Internal error: When checking whether term is special, is_special is neither a function nor a " ..
+					"list, but is %s; term is %s"):format(dump(is_special), dump(termobj)))
+		end
+		if not is_special_retval then
 			insert(infls, termobj)
 		else
 			for _, headobj in ipairs(self.heads) do
@@ -2528,6 +2631,7 @@ function export.process_headword(data)
 			pos_param = pos_param,
 			head_param = head_param,
 			is_suffix = false,
+			processed_specs = {},
 			insert_specs = {},
 		},
 		-- We may change this below to "suffix" or normalize it.
@@ -2559,7 +2663,8 @@ function export.process_headword(data)
 		-- suffixes, rather than suffix forms, even if they form non-lemma forms (e.g. modern English -s and archaic
 		-- -eth form the third-singular present indicative of a verb, i.e. they form a verb form, but they are not
 		-- themselves forms of some other suffix, which is what a suffix form is). We also display the label of
-		-- inflectional suffixes specially, and add an additional category 'LANG inflectional suffixes'.
+		-- inflectional suffixes specially, and add an additional category 'LANG inflectional suffixes' along with
+		-- categories like 'LANG POS inflectional suffixes' in place of 'LANG POS suffix forms' etc.
 		inflsuf = boolean_param,
 		clitic = {type = "boolean or string"},
 		addlpos = true,
@@ -2775,6 +2880,9 @@ function export.process_headword(data)
 		not args.nosuffix and pagename_is_suffix() and pos_category ~= "suffixes" and pos_category ~= "suffix forms"
 	) then
 		headdata.process_props.is_suffix = true
+		local pos_list_for_inflectional_suffix = {}
+		local pos_list_for_suffix_form = {}
+		local pos_list_for_forming_suffix = {}
 		local function handle_suffix_pos(pos, is_first)
 			-- Use the actual POS for the label we insert, but simplify the POS for the category. We need to separately check
 			-- each of them to see if they end in 'forms' because e.g. 'comparative adjectives' gets simplified to
@@ -2782,29 +2890,40 @@ function export.process_headword(data)
 			local form_type = pos:match("^(.*) forms$")
 			if form_type then
 				if args.inflsuf then
-					headdata:insert_fixed_inflection(form_type .. " form inflectional suffix")
+					insert(pos_list_for_inflectional_suffix, form_type)
 				else
-					headdata:insert_fixed_inflection(form_type .. " suffix form")
+					insert(pos_list_for_suffix_form, form_type)
 				end
 			else
 				local singular_pos = require(en_utilities_module).singularize(pos)
-				headdata:insert_fixed_inflection(("%s-forming %ssuffix"):format(
-					singular_pos, args.inflsuf and "inflectional " or ""))
-			end
-			local simplified_pos = export.simplify_pos(pos, "preserve_proper_nouns", "preserve_lemma_status")
-			local simplified_form_type = simplified_pos:match("^(.*) forms$")
-			if simplified_form_type then
-				headdata:insert_category(("%s suffix forms"):format(simplified_form_type))
-			else
-				local singular_simplified_pos = require(en_utilities_module).singularize(simplified_pos)
-				headdata:insert_category(("%s-forming suffixes"):format(singular_simplified_pos))
+				if args.inflsuf then
+					insert(pos_list_for_inflectional_suffix, singular_pos)
+				else
+					insert(pos_list_for_forming_suffix, singular_pos .. "-")
+				end
 			end
 			if args.inflsuf then
 				headdata:insert_category("inflectional suffixes")
 			end
+			local simplified_pos = export.simplify_pos(pos, "preserve_proper_nouns", "preserve_lemma_status")
+			local simplified_form_type = simplified_pos:match("^(.*) forms$")
+			if simplified_form_type then
+				if args.inflsuf then
+					headdata:insert_category(("%s inflectional suffixes"):format(simplified_form_type))
+				else
+					headdata:insert_category(("%s suffix forms"):format(simplified_form_type))
+				end
+			else
+				local singular_simplified_pos = require(en_utilities_module).singularize(simplified_pos)
+				if args.inflsuf then
+					headdata:insert_category(("%s inflectional suffixes"):format(singular_simplified_pos))
+				else
+					headdata:insert_category(("%s-forming suffixes"):format(singular_simplified_pos))
+				end
+			end
 			local postype
 			if args.inflsuf then
-				postype = "suffixes"
+				postype = "lemma"
 			end
 			if not postype then
 				postype = require(headword_module).pos_lemma_or_nonlemma(pos)
@@ -2837,6 +2956,15 @@ function export.process_headword(data)
 				addlpos = canonicalize_pos(addlpos)
 				handle_suffix_pos(addlpos, false)
 			end
+		end
+		if pos_list_for_inflectional_suffix[1] then
+			headdata:insert_fixed_inflection(mw.text.listToText(pos_list_for_inflectional_suffix) .. " inflectional suffix")
+		end
+		if pos_list_for_suffix_form[1] then
+			headdata:insert_fixed_inflection(mw.text.listToText(pos_list_for_suffix_form) .. " suffix form")
+		end
+		if pos_list_for_forming_suffix[1] then
+			headdata:insert_fixed_inflection(mw.text.listToText(pos_list_for_forming_suffix) .. "forming suffix")
 		end
 	end
 
@@ -2966,6 +3094,34 @@ function export.process_headword(data)
 					vals = headdata:resolve_special(vals, infl.resolve_special, resolve_special_props)
 				end
 
+				-- Canonicalize the value(s).
+				if vals ~= nil and infl.canonicalize ~= nil then
+					if typ == "boolean" then
+						interr('Cannot specify canonicalize= when type is "boolean"')
+					end
+					local newvals = {}
+					local field = typ == "genders" and "spec" or "term"
+					for _, val in ipairs(vals) do
+						local newval
+						if val._is_mode then
+							newval = val
+						else
+							if type(infl.canonicalize) == "function" then
+								newval = infl.canonicalize(val[field])
+							else
+								newval = val[field]
+								newval = infl.canonicalize[newval] or newval
+							end
+						end
+						if val[field] ~= newval then
+							val = shallow_copy(val)
+							val[field] = newval
+						end
+						insert(newvals, val)
+					end
+					vals = newvals
+				end
+
 				-- Validate the value(s).
 				if vals ~= nil and infl.validate ~= nil then
 					if typ == "boolean" then
@@ -2973,7 +3129,11 @@ function export.process_headword(data)
 					elseif type(infl.validate) == "function" then
 						infl.validate(headdata, vals)
 					elseif typ == "genders" then
-						headdata:validate_genders(vals, infl.validate)
+						export.validate_genders {
+							genders = vals,
+							valid_genders = infl.validate,
+							no_augment = resolve_prop(infl.no_augment_genders),
+						}
 					elseif typ == "string" then
 						validate_items {
 							items = vals,
@@ -2986,22 +3146,68 @@ function export.process_headword(data)
 					end
 				end
 
-				-- Run the process_after_parse handler, if it exists.
-				if vals ~= nil and infl.process_after_parse ~= nil then
-					local intentionally_nil
-					vals, intentionally_nil = infl.process_after_parse(headdata, vals)
-					if vals == nil and not intentionally_nil then
-						interr("If you return nil from process_after_parse, you must return a second non-nil return " ..
-							"value to indicate that the nil return value was intentional")
+				local function run_and_check_return_value(fun, funname, ...)
+					local retval, intentionally_nil = fun(...)
+					if retval == nil and not intentionally_nil then
+						interr(("If you return nil from %s, you must return a second non-nil return " ..
+							"value to indicate that the nil return value was intentional"):format(funname))
 					end
+					return retval
 				end
 
-				-- "Implement" the values, if non-falsy (i.e. we don't want to fire on boolean false or empty list).
-				-- If a fixed label is specified, insert it. Then, depending on the type, attach the values to a label
-				-- as an inflection, set the `genders` field, or do nothing if boolean (throwing an error if there was
-				-- no fixed label).
-				local insert_request = resolve_prop(infl.request, vals)
-				if vals == true or type(vals) == "table" and vals[1] or insert_request then
+				-- Run the process_after_parse handler, if it exists.
+				if vals ~= nil and infl.process_after_parse ~= nil then
+					vals = run_and_check_return_value(infl.process_after_parse, "process_after_parse", headdata, vals)
+				end
+
+				-- Process strings for insertion, to handle special mode signals like -, +-, ?, etc.
+				local processed
+				if typ == "string" then
+					local process_for_insertion_props = resolve_prop(infl.process_for_insertion_props, vals)
+					processed = headdata:process_for_insertion(vals, process_for_insertion_props)
+					headdata.process_props.processed_specs[param] = processed
+					if processed.numterms > 0 and infl.process_one_term ~= nil then
+						local processed_terms = {}
+						for _, termobj in ipairs(processed.terms) do
+							local processed_term = run_and_check_return_value(infl.process_one_term, "process_one_term",
+								headdata, termobj)
+							if processed_term ~= nil then
+								-- FIXME: Should we add an origin of "process_one_term" here? (But this would erase
+								-- any "default" or "resolve_special" origins.)
+								local newterms = export.canonicalize_termobj_list(processed_term, "term", nil, nil,
+									termobj)
+								for _, newterm in ipairs(newterms) do
+									insert(processed_terms, newterm)
+								end
+							end
+						end
+						processed = shallow_copy(processed)
+						processed.terms = processed_terms
+						processed.numterms = #processed_terms
+					end
+					if processed.numterms > 0 and infl.process_terms ~= nil then
+						local process_terms_result = run_and_check_return_value(infl.process_terms, "process_terms",
+							processed)
+						process_terms_result = process_terms_result or {}
+						if process_terms_result[1] or not next(process_terms_result) then
+							processed = shallow_copy(processed)
+							processed.terms = process_terms_result
+							processed.numterms = #process_terms_result
+						elseif not process_terms_result.terms or not process_terms_result.numterms then
+							error("Return value from process_terms() should be either a list of term objects or a " ..
+								"`processed` structure containing such a list")
+						else
+							processed = process_terms_result
+						end
+					end
+					vals = processed.terms
+				end
+
+				local inserted_fixed_label
+				-- "Implement" the values. Fixed labels and cats only fire when non-falsy (i.e. we don't want to fire
+				-- on boolean false or empty list). We call insert_processed_inflection() always because there may be
+				-- a mode even when there are no values.
+				if vals == true or type(vals) == "table" and vals[1] then
 					if infl.fixed_label and infl.all_fixed_label then
 						interr("Cannot specify both fixed_label= and all_fixed_label=; specify one or the other")
 					end
@@ -3035,7 +3241,6 @@ function export.process_headword(data)
 						all_fixed_label = fixed_label
 						fixed_label = nil
 					end
-					local inserted_fixed_label
 					if fixed_label then
 						if typ == "boolean" then
 							interr("Boolean fixed_label values should have been converted to all_fixed_label")
@@ -3072,39 +3277,48 @@ function export.process_headword(data)
 							inserted_fixed_label = true
 						end)
 					end
-					local inserted_vals
-					if infl.label ~= nil then
-						if typ ~= "string" then
-							interr(("label=%s can only be specified for type 'string', not '%s'"):format(
-								dump(infl.label), typ
-							))
-						end
-						local label = resolve_prop(infl.label, vals)
-						if label ~= nil then
-							local insert_inflection_props = resolve_prop(infl.insert_inflection_props, vals)
-							local function copy_to_insert_inflection_props(field, val)
-								local fieldval = val or resolve_prop(infl[field], vals)
-								if fieldval ~= nil then
-									if insert_inflection_props == nil then
-										insert_inflection_props = {}
-									else
-										insert_inflection_props = shallow_copy(insert_inflection_props)
-									end
-									insert_inflection_props[field] = fieldval
-								end
-							end
-							copy_to_insert_inflection_props("label_for_cats_and_modes")
-							copy_to_insert_inflection_props("no_auto_cats")
-							copy_to_insert_inflection_props("accel")
-							copy_to_insert_inflection_props("accel_form")
-							if insert_request then
-								copy_to_insert_inflection_props("request", insert_request)
-							end
-							local insert_spec = headdata:insert_inflection(vals, label, insert_inflection_props)
-							headdata.process_props.insert_specs[param] = insert_spec
-							inserted_vals = true
-						end
+				end
+
+				-- See above; if there's a label (which can only happen when typ == "string"), always call
+				-- insert_processed_inflection.
+				local inserted_vals
+				if infl.label ~= nil then
+					if typ ~= "string" then
+						interr(("label=%s can only be specified for type 'string', not '%s'"):format(
+							dump(infl.label), typ
+						))
 					end
+					local label = resolve_prop(infl.label, vals)
+					if label ~= nil then
+						local insert_processed_inflection_props =
+							resolve_prop(infl.insert_processed_inflection_props, vals)
+						local function copy_to_insert_processed_inflection_props(field, val)
+							local fieldval = val or resolve_prop(infl[field], vals)
+							if fieldval ~= nil then
+								if insert_processed_inflection_props == nil then
+									insert_processed_inflection_props = {}
+								else
+									insert_processed_inflection_props =
+										shallow_copy(insert_processed_inflection_props)
+								end
+								insert_processed_inflection_props[field] = fieldval
+							end
+						end
+						copy_to_insert_processed_inflection_props("label_for_cats_and_modes")
+						copy_to_insert_processed_inflection_props("no_auto_cats")
+						copy_to_insert_processed_inflection_props("accel")
+						copy_to_insert_processed_inflection_props("accel_form")
+						copy_to_insert_processed_inflection_props("request")
+						if not processed then
+							interr("`processed` structure wasn't properly created")
+						end
+						headdata:insert_processed_inflection(processed, label, insert_processed_inflection_props)
+						inserted_vals = true
+					end
+				end
+
+				-- See above; only fire for cats (and gender insertion) on non-falsy values.
+				if vals == true or type(vals) == "table" and vals[1] then
 					if typ == "genders" then
 						headdata.genders = vals
 					end
@@ -3144,14 +3358,20 @@ function export.process_headword(data)
 					elseif typ == "string" then
 						if not inserted_vals and not inserted_fixed_label and not inserted_cat then
 							interr(("User set value(s) %s for %s= but no inflection inserted and no fixed label " ..
-								"or category added; if you took action in process_after_parse(), make sure to " ..
-								"return `nil, true`"):format(dump(vals), param))
+								"or category added"):format(dump(vals), param))
 						end
+					end
+					if processed then
+						-- FIXME, convert to use `processed_specs` field and remove this
+						headdata.process_props.insert_specs[param] = processed
 					end
 				end
 			else -- no param specified
 				if infl.label or infl.all_fixed_label then
 					interr("Cannot have label= or all_fixed_label= without specifying a param")
+				end
+				if infl.process then
+					infl.process(headdata)
 				end
 				if infl.fixed_label then
 					local labelobjs = resolve_prop(infl.fixed_label)
@@ -3203,6 +3423,7 @@ function export.process_headword(data)
 	end
 
 	headdata:parse_and_insert_inflection("abbr", "abbreviation")
+	headdata.checkredlinks = resolve_prop(checkredlinks)
 
 	setmetatable(headdata, nil)
 	headdata.process_props = nil
