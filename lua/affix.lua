@@ -5,9 +5,9 @@ local debug_force_cat = false -- if set to true, always display categories even 
 local m_links = require("Module:links")
 local m_str_utils = require("Module:string utilities")
 local m_table = require("Module:table")
+local decorations_module = "Module:decorations"
 local en_utilities_module = "Module:en-utilities"
 local etymology_module = "Module:etymology"
-local pron_qualifier_module = "Module:pron qualifier"
 local scripts_module = "Module:scripts"
 local utilities_module = "Module:utilities"
 -- Export this so the category code in [[Module:category tree/etymology]] can access it.
@@ -476,16 +476,14 @@ function export.join_formatted_parts(data)
 	local qq = data.data.qq
 	local l = data.data.l
 	local ll = data.data.ll
-	local infl = data.data.infl
-	if q and q[1] or qq and qq[1] or l and l[1] or ll and ll[1] or infl and infl[1] then
-		result = require(pron_qualifier_module).format_qualifiers {
+	if q and q[1] or qq and qq[1] or l and l[1] or ll and ll[1] then
+		result = require(decorations_module).format_decorations {
 			lang = lang,
 			text = result,
 			q = q,
 			qq = qq,
 			l = l,
 			ll = ll,
-			infl = infl,
 		}
 	end
 
@@ -545,7 +543,7 @@ function export.link_term(part, data, include_separator)
 			sort_key = data.sort_key,
 			nocat = data.nocat,
 			template_name = "affix",
-			qualifiers_labels_on_outside = true,
+			decorations_on_outside = true,
 			borrowing_type = data.borrowing_type,
 			force_cat = data.force_cat or debug_force_cat,
 		}
