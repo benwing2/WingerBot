@@ -10,39 +10,49 @@
 
 local export = {}
 
+--[=[
+FIXME:
+1. Dates like `1 march 2025` with the day of the month being 1 and the month lowercased are treated as month-year-only.
+   The relevant code checks for a capitalized word; it should probably instead check for the actual month names or
+   abbrevs.
+]=]
 -- Named constants for all modules used, to make it easier to swap out sandbox versions.
 local check_isxn_module = "Module:check isxn"
 local debug_track_module = "Module:debug/track"
+local en_utilities_module = "Module:en-utilities"
 local italics_module = "Module:italics"
 local labels_module = "Module:labels"
 local languages_module = "Module:languages"
+local languages_error_module = "Module:languages/error"
 local links_module = "Module:links"
 local number_utilities_module = "Module:number utilities"
 local parameters_module = "Module:parameters"
 local parse_utilities_module = "Module:parse utilities"
 local qualifier_module = "Module:qualifier"
 local roman_numerals_module = "Module:roman numerals"
+local scribunto_module = "Module:Scribunto"
 local script_utilities_module = "Module:script utilities"
 local scripts_module = "Module:scripts"
+local string_pattern_escape_module = "Module:string/patternEscape"
+local string_replacement_escape_module = "Module:string/replacementEscape"
 local string_utilities_module = "Module:string utilities"
 local table_module = "Module:table"
+local template_parser_module = "Module:template parser"
 local usex_module = "Module:usex"
 local usex_templates_module = "Module:usex/templates"
 local utilities_module = "Module:utilities"
 local yesno_module = "Module:yesno"
 
-local m_string_utils = require(string_utilities_module)
-
-local utils_pluralize = m_string_utils.pluralize
-local rsubn = m_string_utils.gsub
-local rmatch = m_string_utils.match
-local rfind = m_string_utils.find
-local rsplit = m_string_utils.split
-local rgsplit = m_string_utils.gsplit
-local ulen = m_string_utils.len
-local usub = m_string_utils.sub
-local u = m_string_utils.char
-local upper = m_string_utils.upper
+local concat = table.concat
+local insert = table.insert
+local new_title = mw.title.new
+local remove = table.remove
+local require = require
+local sort = table.sort
+local u = mw.ustring.char
+local ugsub = mw.ustring.gsub
+local umatch = mw.ustring.match
+local unpack = unpack or table.unpack -- Lua 5.2 compatibility
 
 -- Use HTML entities here to avoid parsing issues (esp. with brackets)
 local SEMICOLON_SPACE = "&#59; "
@@ -54,47 +64,255 @@ local TEMP_GT = u(0xFFF2)
 local TEMP_LBRAC = u(0xFFF3)
 local TEMP_RBRAC = u(0xFFF4)
 local TEMP_SEMICOLON = u(0xFFF5)
-local L2R = u(0x200E)
-local R2L = u(0x200F)
 
-html_entity_to_replacement = {
-  {entity="&lt;", repl=TEMP_LT},
-  {entity="&gt;", repl=TEMP_GT},
-  {entity="&#91;", entity_pat="&#0*91;", repl=TEMP_LBRAC},
-  {entity="&#93;", entity_pat="&#0*93;", repl=TEMP_RBRAC},
-}
-
-local function track(page)
-	require(debug_track_module)("quote/" .. page)
-	return true
+local function apply_subst(...)
+	apply_subst = require(usex_module).apply_subst
+	return apply_subst(...)
 end
 
--- version of rsubn() that discards all but the first return value
-local function rsub(term, foo, bar)
-	local retval = rsubn(term, foo, bar)
-	return retval
+local function check_isbn(...)
+	check_isbn = require(check_isxn_module).check_isbn
+	return check_isbn(...)
+end
+
+local function check_issn(...)
+	check_issn = require(check_isxn_module).check_issn
+	return check_issn(...)
+end
+
+local function debug_track(...)
+	debug_track = require(debug_track_module)
+	return debug_track(...)
+end
+
+local function decode_entities(...)
+	decode_entities = require(string_utilities_module).decode_entities
+	return decode_entities(...)
+end
+
+local function embedded_language_links(...)
+	embedded_language_links = require(links_module).embedded_language_links
+	return embedded_language_links(...)
+end
+
+local function escape_wikicode(...)
+	escape_wikicode = require(parse_utilities_module).escape_wikicode
+	return escape_wikicode(...)
+end
+
+local function find_best_script_without_lang(...)
+	find_best_script_without_lang = require(scripts_module).findBestScriptWithoutLang
+	return find_best_script_without_lang(...)
+end
+
+local function find_parameters(...)
+	find_parameters = require(template_parser_module).find_parameters
+	return find_parameters(...)
+end
+
+local function format_categories(...)
+	format_categories = require(utilities_module).format_categories
+	return format_categories(...)
+end
+
+local function format_processed_labels(...)
+	format_processed_labels = require(labels_module).format_processed_labels
+	return format_processed_labels(...)
+end
+
+local function format_qualifier(...)
+	format_qualifier = require(qualifier_module).format_qualifier
+	return format_qualifier(...)
+end
+
+local function format_usex(...)
+	format_usex = require(usex_module).format_usex
+	return format_usex(...)
+end
+
+local function get_lang(...)
+	get_lang = require(languages_module).getByCode
+	return get_lang(...)
+end
+
+local function get_number(...)
+	get_number = require(number_utilities_module).get_number
+	return get_number(...)
+end
+
+local function get_script(...)
+	get_script = require(scripts_module).getByCode
+	return get_script(...)
+end
+
+local function gsplit(...)
+	gsplit = require(string_utilities_module).gsplit
+	return gsplit(...)
+end
+
+local function page_should_be_ignored(...)
+	page_should_be_ignored = require(usex_templates_module).page_should_be_ignored
+	return page_should_be_ignored(...)
+end
+
+local function parse_inline_modifiers(...)
+	parse_inline_modifiers = require(parse_utilities_module).parse_inline_modifiers
+	return parse_inline_modifiers(...)
+end
+
+local function parse_inline_modifiers_from_segments(...)
+	parse_inline_modifiers_from_segments = require(parse_utilities_module).parse_inline_modifiers_from_segments
+	return parse_inline_modifiers_from_segments(...)
+end
+
+local function parse_multi_delimiter_balanced_segment_run(...)
+	parse_multi_delimiter_balanced_segment_run = require(parse_utilities_module).parse_multi_delimiter_balanced_segment_run
+	return parse_multi_delimiter_balanced_segment_run(...)
+end
+
+local function parse_term_with_lang(...)
+	parse_term_with_lang = require(parse_utilities_module).parse_term_with_lang
+	return parse_term_with_lang(...)
+end
+
+local function pattern_escape(...)
+	pattern_escape = require(string_pattern_escape_module)
+	return pattern_escape(...)
+end
+
+local function pluralize(...)
+	pluralize = require(en_utilities_module).pluralize
+	return pluralize(...)
+end
+
+local function process_params(...)
+	process_params = require(parameters_module).process
+	return process_params(...)
+end
+
+local function remove_links(...)
+	remove_links = require(links_module).remove_links
+	return remove_links(...)
+end
+
+local function roman_to_arabic(...)
+	roman_to_arabic = require(roman_numerals_module).roman_to_arabic
+	return roman_to_arabic(...)
+end
+
+local function replacement_escape(...)
+	replacement_escape = require(string_replacement_escape_module)
+	return replacement_escape(...)
+end
+
+local function scribunto_parameter_key(...)
+	scribunto_parameter_key = require(scribunto_module).scribunto_parameter_key
+	return scribunto_parameter_key(...)
+end
+
+local function serial_comma_join(...)
+	serial_comma_join = require(table_module).serialCommaJoin
+	return serial_comma_join(...)
+end
+
+local function shallow_copy(...)
+	shallow_copy = require(table_module).shallowCopy
+	return shallow_copy(...)
+end
+
+local function split(...)
+	split = require(string_utilities_module).split
+	return split(...)
+end
+
+local function split_alternating_runs(...)
+	split_alternating_runs = require(parse_utilities_module).split_alternating_runs
+	return split_alternating_runs(...)
+end
+
+local function split_and_process_raw_labels(...)
+	split_and_process_raw_labels = require(labels_module).split_and_process_raw_labels
+	return split_and_process_raw_labels(...)
+end
+
+local function split_on_comma(...)
+	split_on_comma = require(parse_utilities_module).split_on_comma
+	return split_on_comma(...)
+end
+
+local function tag_text(...)
+	tag_text = require(script_utilities_module).tag_text
+	return tag_text(...)
+end
+
+local function tag_transcription(...)
+	tag_transcription = require(script_utilities_module).tag_transcription
+	return tag_transcription(...)
+end
+
+local function tag_translit(...)
+	tag_translit = require(script_utilities_module).tag_translit
+	return tag_translit(...)
+end
+
+local function ulen(...)
+	ulen = require(string_utilities_module).len
+	return ulen(...)
+end
+
+local function unitalicize_brackets(...)
+	unitalicize_brackets = require(italics_module).unitalicize_brackets
+	return unitalicize_brackets(...)
+end
+
+local function upper(...)
+	upper = require(string_utilities_module).upper
+	return upper(...)
+end
+
+local function usub(...)
+	usub = require(string_utilities_module).sub
+	return usub(...)
+end
+
+local function yesno(...)
+	yesno = require(yesno_module)
+	return yesno(...)
+end
+
+local function track(page)
+	debug_track("quote/" .. page)
 end
 
 local function maintenance_line(text)
-	return "<span class=\"maintenance-line\" style=\"color: #777777;\">(" .. text .. ")</span>"
+	return '<span class="maintenance-line">(' .. text .. ")</span>"
 end
 
 local function isbn(text)
-	return "[[Special:BookSources/" .. text .. "|→ISBN]]" ..
-		require(check_isxn_module).check_isbn(text, "&nbsp;<span class=\"error\" style=\"font-size:88%\">Invalid&nbsp;ISBN</span>[[Category:Pages with ISBN errors]]")
+	return "[[Special:BookSources/"
+		.. text
+		.. "|→ISBN]]"
+		.. check_isbn(
+			text,
+			'&nbsp;<span class="error" style="font-size:88%">Invalid&nbsp;ISBN</span>[[Category:Pages with ISBN errors]]'
+		)
 end
 
 local function issn(text)
-	return "[https://www.worldcat.org/issn/" .. text .. " →ISSN]" ..
-		require(check_isxn_module).check_issn(text, "&nbsp;<span class=\"error\" style=\"font-size:88%\">Invalid&nbsp;ISSN</span>[[Category:Pages with ISSN errors]]")
+	return "[https://www.worldcat.org/issn/"
+		.. text
+		.. " →ISSN]"
+		.. check_issn(
+			text,
+			'&nbsp;<span class="error" style="font-size:88%">Invalid&nbsp;ISSN</span>[[Category:Pages with ISSN errors]]'
+		)
 end
 
 local function lccn(text)
-	local origtext = text
-	text = rsub(text, " ", "")
-	if rfind(text, "%-") then
+	text = text:gsub(" ", "")
+	if text:find("-") then
 		-- old-style LCCN; reformat per request by [[User:The Editor's Apprentice]]
-		local prefix, part1, part2 = rmatch(text, "^(.-)([0-9]+)%-([0-9]+)$")
+		local prefix, part1, part2 = text:match("^(.-)(%d+)%-(%d+)$")
 		if prefix then
 			if ulen(part2) < 6 then
 				part2 = ("0"):rep(6 - ulen(part2)) .. part2
@@ -106,76 +324,38 @@ local function lccn(text)
 end
 
 local function format_date(text)
-	return mw.getCurrentFrame():callParserFunction{name="#formatdate", args=text}
+	return mw.getCurrentFrame():callParserFunction("#formatdate", text, "dmy")
 end
 
-local function tag_nowiki(text)
-	return mw.getCurrentFrame():callParserFunction{name="#tag", args={"nowiki", text}}
-end
-
-local function split_on_comma(term)
-	if term:find(",%s") then
-		return require(parse_utilities_module).split_on_comma(term)
-	else
-		return rsplit(term, ",", true)
-	end
-end
-
-local function yesno(val, default)
-	if not val then
-		return default
-	end
-	return require(yesno_module)(val, default)
-end
-
--- Convert a raw lb= param (or nil) to a list of label info objects of the format described in get_label_info() in
--- [[Module:labels]]). Unrecognized labels will end up with an unchanged display form. Return nil if nil passed in.
-local function get_label_list_info(raw_lb, lang)
-	if not raw_lb then
+-- Parse a raw ll= param (or nil) to individual label info objects and then concatenate them appropriately into a
+-- qualifier input, respecting flags like `omit_preComma` and `omit_postSpace` in the label specs.
+local function parse_and_format_labels(raw_ll, lang)
+	if not raw_ll then
 		return nil
 	end
-	return require(labels_module).get_label_list_info(split_on_comma(raw_lb), lang, "nocat")
-end
-
--- Parse a raw lb= param (or nil) to individual label info objects and then concatenate them appropriately into a
--- qualifier input, respecting flags like `omit_preComma` and `omit_postSpace` in the label specs.
-local function parse_and_format_labels(raw_lb, lang)
-	local labels = get_label_list_info(raw_lb, lang)
-	if labels then
-		labels = require(labels_module).format_processed_labels {
-			labels = labels, lang = lang, no_ib_content = true
-		}
-		if labels ~= "" then -- not sure labels can be an empty string but it seems possible in some circumstances
-			return {labels}
-		end
+	local labels = split_and_process_raw_labels{labels = raw_ll, lang = lang, nocat = true}
+	labels = format_processed_labels{labels = labels, lang = lang, no_ib_content = true}
+	if labels ~= "" then -- not sure labels can be an empty string but it seems possible in some circumstances
+		return {labels}
 	end
 end
 
 -- Convert a comma-separated list of language codes to a comma-separated list of language names. `fullname` is the
 -- name of the parameter from which the list of language codes was fetched.
-local function format_langs(langs, fullname)
-	langs = rsplit(langs, "%s*,%s*")
-	for i, langcode in ipairs(langs) do
-		local lang = require(languages_module).getByCode(langcode, fullname, "allow etym")
-		langs[i] = lang:getCanonicalName()
+local function format_langs(langs)
+	local names = {}
+	for i, lang in ipairs(langs) do
+		names[i] = lang:getCanonicalName()
 	end
-	if #langs == 1 then
-		return langs[1]
-	else
-		return require(table_module).serialCommaJoin(langs)
+	if #names == 1 then
+		return names[1]
 	end
+	return serial_comma_join(names)
 end
 
-
-local function get_first_lang(langs, fullname, get_non_etym, required)
-	local langcode = langs and rsplit(langs, ",", true)[1] or not required and "und" or nil
-	local lang = require(languages_module).getByCode(langcode, fullname, "allow etym")
-	if get_non_etym then
-		lang = lang:getFull()
-	end
-	return lang
+local function get_first_lang(langs)
+	return langs[1] or get_lang("und")
 end
-
 
 --[=[
 Normally we parse off inline modifiers and language code prefixes in various places, e.g. he:מרים<tr:Miryem>. But we
@@ -188,9 +368,8 @@ foo<q:similar to {{m|fr|bar}}> (if we end up supporting such modifiers).
 Also exclude things that look like URL's from being parsed as having language code prefixes.
 ]=]
 local function val_should_not_be_parsed_for_annotations(val)
-	return val:find("^[^<]*<[a-z]*[^a-z:]") or val:find("^[a-z]+://")
+	return val:find("^[^<]*<%l*[^%l:]") or val:find("^%l+://")
 end
-
 
 local param_mods = {
 	t = {
@@ -202,21 +381,18 @@ local param_mods = {
 	tr = {},
 	ts = {},
 	subst = {},
-	sc = {
-		convert = function(arg, parse_err)
-			return require(scripts_module).getByCode(arg, parse_err)
-		end,
-	},
+	sc = {type = "script"},
 	f = {
 		convert = function(arg, parse_err)
-			local prefix, val = rmatch(arg, "^(.-):([^ ].*)$")
+			local prefix, val = arg:match("^(.-):([^ ].*)$")
 			if not prefix then
 				prefix = ""
 				val = arg
 			end
-			local tags, sc = rmatch(prefix, "^(.*)/(.-)$")
-			if sc then
-				sc = require(scripts_module).getByCode(sc, parse_err)
+			local tags, sc_code, sc = prefix:match("^(.*)/(.-)$")
+			if sc_code then
+				sc = get_script(sc_code) or
+					require(languages_error_module)(sc_code, parse_err, "script code", nil, "not real lang")
 			else
 				tags = prefix
 			end
@@ -224,10 +400,7 @@ local param_mods = {
 			if tags ~= "" then
 				quals = split_on_comma(tags)
 				for i, qual in ipairs(quals) do
-					local obj = require(languages_module).getByCode(qual, nil, "allow etym")
-					if not obj then
-						obj = require(scripts_module).getByCode(qual)
-					end
+					local obj = get_lang(qual, nil, "allow etym") or get_script(qual)
 					quals[i] = obj or qual
 				end
 			end
@@ -242,6 +415,33 @@ local param_mods = {
 	q = {},
 	qq = {},
 }
+
+local function generate_obj_annotated_text(text, parse_err, paramname)
+	local obj = {}
+	if text:find(":[^ ]") or text:find("%[%[") then
+		local display, is_wikipedia_wikisource
+		obj.text, obj.lang, obj.link, display, is_wikipedia_wikisource =
+			parse_term_with_lang {
+				term = text,
+				parse_err = parse_err,
+				paramname = paramname
+			}
+		-- HACK: If object is a Wikipedia or Wikisource link, we need to convert it to a two-part link
+		-- to avoid the w: or s: prefix showing. We should probably avoid this by calling
+		-- language_link() (in [[Module:links]]) in format_annotated_text() instead of the hacky stuff
+		-- that we currently do; but we need to test that carefully to make sure it doesn't do things like
+		-- munge % signs.
+		if is_wikipedia_wikisource and not obj.text:find("%[%[") and not obj.text:find("%]%]") then
+			-- Don't directly set .alt, because then if the user specifies <alt:...>, it will cause an error in
+			-- parse_inline_modifiers().
+			obj.display = display
+		end
+	else
+		obj.text = text
+		obj.link = text
+	end
+	return obj
+end
 
 --[=[
 Parse a textual property that may be in a foreign language or script and may be annotated with a language prefix and/or
@@ -288,30 +488,19 @@ local function parse_annotated_text(val, fullname, explicit_gloss)
 	-- default, and then we do script detection and again wrap the text in the same CSS, which increases the size even
 	-- more.)
 	if val_should_not_be_parsed_for_annotations(val) then
-		return {text = val, link = val, noscript = true}
-	end
-	local function generate_obj(text, parse_err_or_paramname)
-		local obj = {}
-		if text:find(":[^ ]") or text:find("%[%[") then
-			obj.text, obj.lang, obj.link = require(parse_utilities_module).parse_term_with_lang(text,
-				parse_err_or_paramname)
-		else
-			obj.text = text
-			obj.link = text
-		end
-		return obj
+		return {text = val, link = val, noscript = true, gloss = explicit_gloss}
 	end
 
 	local obj
 	if val:find("<") then
 		-- Check for inline modifier.
-		obj = require(parse_utilities_module).parse_inline_modifiers(val, {
+		obj = parse_inline_modifiers(val, {
 			paramname = fullname,
 			param_mods = param_mods,
-			generate_obj = generate_obj,
+			generate_obj = generate_obj_annotated_text,
 		})
 	else
-		obj = generate_obj(val, fullname)
+		obj = generate_obj_annotated_text(val, nil, fullname)
 	end
 
 	if explicit_gloss then
@@ -321,15 +510,60 @@ local function parse_annotated_text(val, fullname, explicit_gloss)
 	return obj
 end
 
+local html_entity_char_to_replacement = {
+	["<"] = TEMP_LT,
+	[">"] = TEMP_GT,
+	["["] = TEMP_LBRAC,
+	["]"] = TEMP_RBRAC,
+}
 
-local function undo_html_entity_replacement(txt)
-	txt = txt:gsub(TEMP_SEMICOLON, ";")
-	for _, html_entity_to_repl in ipairs(html_entity_to_replacement) do
-		txt = txt:gsub(html_entity_to_repl.repl, html_entity_to_repl.entity)
+local function html_entity_replacement(entity, code_without_semicolon, hash, xcode, x, code)
+	-- Try to decode the entity. If successful, Replace certain special HTML entities (those that are bracket-like)
+	-- with single Unicode characters; otherwise, replace the semicolon with a special character so it won't get
+	-- interpreted as a delimiter.
+	local ch = decode_entities(entity)
+	if ch ~= entity then
+		return html_entity_char_to_replacement[ch] or code_without_semicolon .. TEMP_SEMICOLON
 	end
-	return txt
+	-- If the entity doesn't decode, escape it anyway iff it follows a valid format.
+	if hash == "" then
+		-- Any nonstandard MediaWiki-only entities have now been filtered off, so treat any non-ASCII characters as
+		-- invalid.
+		return xcode:match("^[^\128-\255]+$") and code_without_semicolon .. TEMP_SEMICOLON or entity
+	elseif x == "" then
+		return xcode:match("^%d+$") and code_without_semicolon .. TEMP_SEMICOLON or entity
+	end
+	return code:match("^%x+$") and code_without_semicolon .. TEMP_SEMICOLON or entity
 end
 
+local html_entity_replacement_to_char = {
+	[TEMP_LT] = "&lt;",
+	[TEMP_GT] = "&gt;",
+	[TEMP_LBRAC] = "&#91;",
+	[TEMP_RBRAC] = "&#93;",
+	[TEMP_SEMICOLON] = ";",
+}
+
+local function undo_html_entity_replacement(txt)
+	-- Pattern covers everything in html_entity_replacement_to_char.
+	return (txt:gsub("\239\191[\177-\181]", html_entity_replacement_to_char))
+end
+
+-- NOTE: We try hard to optimize this function for the common cases and avoid loading [[Module:parse utilities]]
+-- in such cases. The cases we can handle without loading [[Module:parse utilities]] are single values (no
+-- semicolons present) without inline modifiers or language prefixes, and multi-entity values (semicolons present)
+-- without (a) brackets of any kind (including parens, braces and angle brackets; angle brackets typically indicate
+-- inline modifiers and other brackets may protect a semicolon from being interpreted as a delimiter);
+-- (b) ampersands (which may indicate HTML entities, which protect a semicolon from being interpreted as a
+-- delimiter); and (c) colons not followed by a space (which may indicate a language prefix).
+local function generate_obj_multivalued_annotated_text(text, parse_err, paramname, no_undo_html_entity_replacement)
+	local obj = generate_obj_annotated_text(text, parse_err, paramname)
+	if not no_undo_html_entity_replacement then
+		obj.text = undo_html_entity_replacement(obj.text)
+		obj.link = undo_html_entity_replacement(obj.link)
+	end
+	return obj
+end
 
 --[=[
 Similar to parse_annotated_text() but the parameter value may contain multiple semicolon-separated entities, each with
@@ -374,30 +608,6 @@ local function parse_multivalued_annotated_text(val, fullname, explicit_gloss, e
 	-- values in the multivalued param. Entities are most commonly people (typically authors, editors, translators or
 	-- the like), but may be the names of publishers, locations, or other entities. "Entity" can also refer to HTML
 	-- entities; in the places where this occurs, the variable name contains 'html' in it.
-
-	-- NOTE: We try hard to optimize this function for the common cases and avoid loading [[Module:parse utilities]]
-	-- in such cases. The cases we can handle without loading [[Module:parse utilities]] are single values (no
-	-- semicolons present) without inline modifiers or language prefixes, and multi-entity values (semicolons present)
-	-- without (a) brackets of any kind (including parens, braces and angle brackets; angle brackets typically indicate
-	-- inline modifiers and other brackets may protect a semicolon from being interpreted as a delimiter);
-	-- (b) ampersands (which may indicate HTML entities, which protect a semicolon from being interpreted as a
-	-- delimiter); and (c) colons not followed by a space (which may indicate a language prefix).
-	local function generate_obj(text, parse_err_or_paramname, no_undo_html_entity_replacement)
-		local obj = {}
-		if text:find(":[^ ]") or text:find("%[%[") then
-			obj.text, obj.lang, obj.link = require(parse_utilities_module).parse_term_with_lang(text,
-				parse_err_or_paramname)
-		else
-			obj.text = text
-			obj.link = text
-		end
-		if not no_undo_html_entity_replacement then
-			obj.text = undo_html_entity_replacement(obj.text)
-			obj.link = undo_html_entity_replacement(obj.link)
-		end
-		return obj
-	end
-
 	local splitchar, english_delim
 	if val:find("^,") then
 		splitchar = ","
@@ -413,7 +623,7 @@ local function parse_multivalued_annotated_text(val, fullname, explicit_gloss, e
 		if val_should_not_be_parsed_for_annotations(val) then
 			return {{text = val, link = val, noscript = true}}
 		else
-			return {generate_obj(val, fullname, "no undo html entity replacement")}
+			return {generate_obj_multivalued_annotated_text(val, nil, fullname, "no undo html entity replacement")}
 		end
 	end
 
@@ -423,36 +633,37 @@ local function parse_multivalued_annotated_text(val, fullname, explicit_gloss, e
 	-- delimiter).
 	if not val:find("[<>%[%](){}&]") then
 		local entity_objs = {}
-		for entity in rgsplit(val, "%s*" .. splitchar .. "%s*") do
+		for entity in gsplit(val, "%s*" .. splitchar .. "%s*") do
 			if val_should_not_be_parsed_for_annotations(entity) then
-				table.insert(entity_objs, {text = entity, link = entity, noscript = true})
+				insert(entity_objs, {
+					text = entity,
+					link = entity,
+					noscript = true
+				})
 			else
-				table.insert(entity_objs, generate_obj(entity, fullname, "no undo html entity replacement"))
+				insert(entity_objs, generate_obj_multivalued_annotated_text(entity, nil, fullname, "no undo html entity replacement"))
 			end
 		end
 		return entity_objs
 	end
 
-	-- The rest of the code does the general case. First we replace certain special HTML entities (those that are
-	-- bracket-like) with single Unicode characters.
-	for _, html_entity_to_repl in ipairs(html_entity_to_replacement) do
-		val = rsub(val, html_entity_to_repl.entity_pat or html_entity_to_repl.entity, html_entity_to_repl.repl)
+	-- Escape HTML entities, and get rid of directionality markers.
+	local amp = val:find("&", nil, true)
+	if amp then
+		-- The pattern is more permissive than the usual entity pattern, as MediaWiki has some nonstandard entities
+		-- that have non-ASCII characters in their codes.
+		val = val:gsub("((&(#?)(([xX]?)([%w\128-\255]+)));)", html_entity_replacement)
 	end
-	-- HTML entities per https://en.wikipedia.org/wiki/List_of_XML_and_HTML_character_entity_references must be either
-	-- decimal numeric (&#8209;), hexadecimal numeric (&#x200E;) or named (&Aring;, &frac34;, etc.). In all three
-	-- cases, we replace the semicolon with a special character so it won't get interpreted as a delimiter.
-	val = val:gsub("(&#[0-9]+);", "%1" .. TEMP_SEMICOLON)
-	val = val:gsub("(&#x[0-9a-fA-F]+);", "%1" .. TEMP_SEMICOLON)
-	val = val:gsub("(&[0-9a-zA-Z_]+);", "%1" .. TEMP_SEMICOLON)
-	val = val:gsub(L2R, ""):gsub(R2L, "")
-
-	local put = require(parse_utilities_module)
+	-- Pattern covers left-to-right (U+200E) and right-to-left (U+200F).
+	val = val:gsub("\226\128[\142\143]", "")
 
 	-- Parse balanced segment runs, treating HTML entities for left and right bracket and left and right angle bracket
 	-- as matching literal versions of the same characters.
-	local entity_runs = put.parse_multi_delimiter_balanced_segment_run(val,
+	local entity_runs = parse_multi_delimiter_balanced_segment_run(
+		val,
 		{{"[" .. TEMP_LBRAC, "]" .. TEMP_RBRAC}, {"(", ")"}, {"{", "}"}, {"<" .. TEMP_LT, ">" .. TEMP_GT}},
-		true)
+		true
+	)
 	if type(entity_runs) == "string" then
 		local undo_val = undo_html_entity_replacement(val)
 		-- Parse error due to unbalanced delimiters. Don't throw an error here; instead, don't attempt to parse off
@@ -462,7 +673,7 @@ local function parse_multivalued_annotated_text(val, fullname, explicit_gloss, e
 	end
 
 	-- Split on semicolon (or comma), possibly surrounded by whitespace.
-	local separated_groups = put.split_alternating_runs(entity_runs, "%s*" .. splitchar .. "%s*")
+	local separated_groups = split_alternating_runs(entity_runs, "%s*" .. splitchar .. "%s*")
 
 	-- Process each value.
 	local entity_objs = {}
@@ -472,51 +683,57 @@ local function parse_multivalued_annotated_text(val, fullname, explicit_gloss, e
 		while j <= #entity_group do
 			if not entity_group[j]:find("^<.*>$") then
 				entity_group[j - 1] = entity_group[j - 1] .. entity_group[j] .. entity_group[j + 1]
-				table.remove(entity_group, j)
-				table.remove(entity_group, j)
+				remove(entity_group, j)
+				remove(entity_group, j)
 			else
 				j = j + 2
 			end
 		end
 
-		local oneval = undo_html_entity_replacement(table.concat(entity_group))
+		local oneval = undo_html_entity_replacement(concat(entity_group))
 		-- When checking for inline modifiers, exclude HTML entry with <span ...>, <i ...>, <br/> or similar in it,
 		-- caused by wrapping an argument in {{l|...}}, {{lang|...}} or similar. Also exclude URL's from being parsed
 		-- as having language code prefixes. This works analogously to parse_annotated_text(); see there for more.
 		if val_should_not_be_parsed_for_annotations(oneval) then
-			table.insert(entity_objs, {text = oneval, link = oneval, noscript = true})
+			insert(entity_objs, {
+				text = oneval,
+				link = oneval,
+				noscript = true
+			})
 		else
 			local obj
 			if #entity_group > 1 then
 				-- Check for inline modifier.
-				obj = put.parse_inline_modifiers_from_segments {
+				obj = parse_inline_modifiers_from_segments({
 					group = entity_group,
 					arg = oneval,
 					props = {
 						paramname = fullname,
 						param_mods = param_mods,
-						generate_obj = generate_obj,
-					}
-				}
+						generate_obj = generate_obj_multivalued_annotated_text,
+					},
+				})
 			else
-				obj = generate_obj(entity_group[1], fullname)
+				obj = generate_obj_multivalued_annotated_text(entity_group[1], nil, fullname)
 			end
-			table.insert(entity_objs, obj)
+			insert(entity_objs, obj)
 		end
 	end
 
 	if explicit_gloss then
 		if #entity_objs > 1 then
-			error(("Can't specify |%s= along with multiple %s-separated entities in |%s=; use the <t:...> "
-				.. "inline modifier attached to the individual entities"):format(
-				explicit_gloss_fullname, english_delim, fullname))
+			error(
+				(
+					"Can't specify |%s= along with multiple %s-separated entities in |%s=; use the <t:...> "
+					.. "inline modifier attached to the individual entities"
+				):format(explicit_gloss_fullname, english_delim, fullname)
+			)
 		end
 		entity_objs[1].gloss = explicit_gloss
 	end
 
 	return entity_objs
 end
-
 
 --[=[
 Format a text property that may be in a foreign language or script, along with annotations. This is conceptually
@@ -525,21 +742,24 @@ more appropriate for bibliographic entries. The output looks like this:
 
 TEXT [TRANSLIT /TRANSCRIPTION/, GLOSS]
 
-`textobj` is as returned by parse_annotated_text(). `tag_text`, if supplied, is a function of one argument to further
-wrap the text after it has been processed and CSS-tagged appropriately, directly before insertion. `tag_gloss` is a
+`textobj` is as returned by parse_annotated_text(). `tag_text_func`, if supplied, is a function of one argument to further
+wrap the text after it has been processed and CSS-tagged appropriately, directly before insertion. `tag_gloss_func` is a
 similar function for the gloss.
 ]=]
-local function format_annotated_text(textobj, tag_text, tag_gloss)
+local function format_annotated_text(textobj, tag_text_func, tag_gloss_func)
 	if not textobj then
 		return nil
 	end
 	local text, link = textobj.text, textobj.link
-	local subst, tr, ts, f, gloss, alt = textobj.subst, textobj.tr, textobj.ts, textobj.f, textobj.gloss, textobj.alt
+	local subst, tr, ts, f, gloss = textobj.subst, textobj.tr, textobj.ts, textobj.f, textobj.gloss
+	-- Retrieve the display text, either specified by the user (.alt) or by parse_annotated_text() (.display) when a
+	-- Wikipedia link is given.
+	local alt = textobj.alt or textobj.display
 
 	if alt then
 		if link:find("%[%[") or link:find("%]%]") then
-			errmsg = ("Can't currently handled embedded links in '%s', with <alt:...> text '%s'"):format(link, alt)
-			error(require(parse_utilities_module).escape_wikicode(errmsg))
+			local errmsg = ("Can't currently handle embedded links in '%s', with <alt:...> text '%s'"):format(link, alt)
+			error(escape_wikicode(errmsg))
 		end
 		text = ("[[%s|%s]]"):format(link, alt)
 	end
@@ -547,16 +767,20 @@ local function format_annotated_text(textobj, tag_text, tag_gloss)
 	-- See above for `noscript`, meaning HTML was found in the text value, probably generated using {{lang|...}}.
 	-- {{lang}} already script-tags the text and processes embedded language links, so we don't want to do it again (in
 	-- fact, the code below within the if-clause is similar to what {{lang}} does). In such a case, an explicit language
-	-- won't be available and findBestScriptWithoutLang() may not be accurate, so we can't do automatic transliteration.
+	-- won't be available and find_best_script_without_lang() may not be accurate, so we can't do automatic transliteration.
 	if not textobj.noscript then
 		local lang = textobj.lang
 		-- As an optimization, don't do script detection on an argument that contains only ASCII.
-		local sc = textobj.sc or lang and lang:findBestScript(text) or not text:find("^[ -~]$") and
-			require(scripts_module).findBestScriptWithoutLang(text) or nil
+		local sc = textobj.sc
+			or lang and lang:findBestScript(text)
+			or not text:find("^[ -~]$") and find_best_script_without_lang(text)
+			or nil
 		-- As an optimization, don't do any of the following if there's no language, script, translit or transcription,
 		-- as will be the case with simple ASCII values.
 		if lang or sc or tr or ts then
-			lang = lang or require(languages_module).getByCode("und", true)
+			if not lang then
+				lang = get_lang("und")
+			end
 
 			if tr == "-" then
 				tr = nil
@@ -564,9 +788,9 @@ local function format_annotated_text(textobj, tag_text, tag_gloss)
 				-- might return nil
 				local text_for_tr = text
 				if subst then
-					text_for_tr = require(usex_module).apply_subst(text_for_tr, subst)
+					text_for_tr = apply_subst(text_for_tr, subst)
 				else
-					text_for_tr = require(links_module).remove_links(text)
+					text_for_tr = remove_links(text)
 				end
 
 				tr = (lang:transliterate(text_for_tr, sc))
@@ -578,46 +802,43 @@ local function format_annotated_text(textobj, tag_text, tag_gloss)
 				-- should not happen, and embedded_language_links() should do nothing if no embedded links
 				-- are present. To work around this, only call embedded_language_links() when there are
 				-- embedded links present.
-				text = require(links_module).embedded_language_links{
+				text = embedded_language_links({
 					term = text,
 					lang = lang,
 					sc = sc,
-				}
+				})
 			end
 			if lang:getCode() ~= "und" or sc:getCode() ~= "Latn" then
-				text = require(script_utilities_module).tag_text(text, lang, sc)
+				text = tag_text(text, lang, sc)
 			end
 
 			if tr then
 				-- Should we link to the transliteration of languages with lang:link_tr()? Probably not because `text` is not
 				-- likely to be a term that has an entry.
-				tr = require(script_utilities_module).tag_translit(tr, lang, "usex")
+				tr = tag_translit(tr, lang, "usex")
 			end
 			if ts then
-				ts = require(script_utilities_module).tag_transcription(ts, lang, "usex")
+				ts = tag_transcription(ts, lang, "usex")
 			end
 		end
 	end
 
-	text = require(italics_module).unitalicize_brackets(text)
-	if tag_text then
-		text = tag_text(text)
+	text = unitalicize_brackets(text)
+	if tag_text_func then
+		text = tag_text_func(text)
 	end
 
 	local parts = {}
-	local function ins(txt)
-		table.insert(parts, txt)
-	end
 
 	if textobj.q then
-		ins(require(qualifier_module).format_qualifier(textobj.q) .. " ")
+		insert(parts, format_qualifier(textobj.q) .. " ")
 	end
 
-	ins(text)
+	insert(parts, text)
 
 	if tr or ts or f or gloss then
-		local parts = {}
-		ins(SPACE_LBRAC)
+		insert(parts, SPACE_LBRAC)
+		local subparts = {}
 		if tr or ts then
 			local tr_ts
 			if ts then
@@ -628,7 +849,7 @@ local function format_annotated_text(textobj, tag_text, tag_gloss)
 			else
 				tr_ts = tr or ts
 			end
-			table.insert(parts, tr_ts)
+			insert(subparts, tr_ts)
 		end
 		if f then
 			for _, ff in ipairs(f) do
@@ -645,15 +866,17 @@ local function format_annotated_text(textobj, tag_text, tag_gloss)
 						lang = qual
 					end
 				end
-				lang = lang or require(languages_module).getByCode("und", true)
-				sc = sc or require(scripts_module).findBestScriptWithoutLang(ff.val)
-				local val = require(links_module).embedded_language_links{
+				if not lang then
+					lang = get_lang("und")
+				end
+				sc = sc or find_best_script_without_lang(ff.val)
+				local val = embedded_language_links({
 					term = ff.val,
 					lang = lang,
-					sc = sc
-				}
+					sc = sc,
+				})
 				if lang:getCode() ~= "und" or sc:getCode() ~= "Latn" then
-					val = require(script_utilities_module).tag_text(val, lang, sc)
+					val = tag_text(val, lang, sc)
 				end
 				local qual_prefix
 				if ff.quals then
@@ -662,85 +885,103 @@ local function format_annotated_text(textobj, tag_text, tag_gloss)
 							ff.quals[i] = qual:getCanonicalName()
 						end
 					end
-					qual_prefix = table.concat(ff.quals, "/") .. ": "
+					qual_prefix = concat(ff.quals, "/") .. ": "
 				else
 					qual_prefix = ""
 				end
-				table.insert(parts, qual_prefix .. val)
+				insert(subparts, qual_prefix .. val)
 			end
 		end
 		if gloss then
 			gloss = '<span class="e-translation">' .. gloss .. "</span>"
-			gloss = require(italics_module).unitalicize_brackets(gloss)
-			if tag_gloss then
-				gloss = tag_gloss(gloss)
+			gloss = unitalicize_brackets(gloss)
+			if tag_gloss_func then
+				gloss = tag_gloss_func(gloss)
 			end
-			table.insert(parts, gloss)
+			insert(subparts, gloss)
 		end
-		ins(table.concat(parts, ", "))
-		ins(RBRAC)
+		insert(parts, concat(subparts, ", "))
+		insert(parts, RBRAC)
 	end
 
 	if textobj.qq then
-		ins(" " .. require(qualifier_module).format_qualifier(textobj.qq))
+		insert(parts, " " .. format_qualifier(textobj.qq))
 	end
 
-	return table.concat(parts)
+	return concat(parts)
 end
-
 
 --[=[
 Format a multivalued text property that may be in a foreign language or script, along with annotations. This is the
 multivalued analog to format_annotated_text(), and formats each individual entity using format_annotated_text(),
 joining the results with `delimiter`, which defaults to ", ". It `delimiter` is "and" or "or", join the results using
-serialCommaJoin() in [[Module:table]] with the specified conjunction.
+serial_comma_join() with the specified conjunction.
 
-`textobjs` is as returned by parse_multivalued_annotated_text(). `tag_text` and `tag_gloss` are as in
+`textobjs` is as returned by parse_multivalued_annotated_text(). `tag_text_func` and `tag_gloss_func` are as in
 format_annotated_text().
 ]=]
-local function format_multivalued_annotated_text(textobjs, delimiter, tag_text, tag_gloss)
+local function format_multivalued_annotated_text(textobjs, delimiter, tag_text_func, tag_gloss_func)
 	if not textobjs then
 		return nil
 	end
 	if #textobjs == 1 then
-		return format_annotated_text(textobjs[1], tag_text, tag_gloss)
+		return format_annotated_text(textobjs[1], tag_text_func, tag_gloss_func)
 	end
 	local parts = {}
 	for _, textobj in ipairs(textobjs) do
-		table.insert(parts, format_annotated_text(textobj, tag_text, tag_gloss))
+		insert(parts, format_annotated_text(textobj, tag_text_func, tag_gloss_func))
 	end
-	if rfind(parts[#parts], "^'*et al[.']*$") then
+	
+	-- Change delimiter to semicolon if the items themselves contain commas (e.g., in ", Jr.")
+	local use_semicolon = false
+	for _, obj in ipairs(textobjs) do
+		-- Use remove_links to ignore commas in links
+		if obj.text and remove_links(obj.text):find(", ") then
+			use_semicolon = true
+			break
+		end
+	end
+	
+	local n = #parts
+	if n > 0 and parts[n]:match("^'*et al[.']*$") then
 		-- Special handling for 'et al.'
-		parts[#parts] = "''et al.''"
-		if #parts == 2 then
-			return table.concat(parts, " ")
+		parts[n] = "''et al.''"
+		if n == 2 then
+			-- author et al.
+			return concat(parts, " ")
+		else
+			-- author 1, author 2, et al.
+			return concat(parts, (use_semicolon and "; ") or ", ")
 		end
 		if delimiter == "and" or delimiter == "or" then
 			delimiter = ", "
 		end
-		return table.concat(parts, delimiter)
+		return concat(parts, delimiter)
 	end
 	if delimiter == "and" or delimiter == "or" then
-		return require(table_module).serialCommaJoin(parts, {conj = delimiter})
-	else
-		return table.concat(parts, delimiter or ", ")
+		return serial_comma_join(parts, {conj = delimiter})
 	end
+	return concat(parts, delimiter or ((use_semicolon and "; ") or ", "))
 end
-
 
 -- Fancy version of ine() (if-not-empty). Converts empty string to nil, but also strips leading/trailing space.
 local function ine(arg)
-	if not arg then return nil end
+	if not arg then
+		return nil
+	elseif type(arg) ~= "string" then
+		return arg
+	end
 	arg = mw.text.trim(arg)
-	if arg == "" then return nil end
+	if arg == "" then
+		return nil
+	end
 	return arg
 end
 
-
 local abbrs = {
-	["a."] = { anchor = "a.", full = "ante", },
-	["c."] = { anchor = "c.", full = "circa", },
-	["p."] = { anchor = "p.", full = "post", },
+	["a."] = {anchor = "a.", full = "ante"},
+	["c."] = {anchor = "c.", full = "circa"},
+	["p."] = {anchor = "p.", full = "post"},
 }
 
 -- Process prefixes 'a.' (ante), 'c.' (circa) and 'p.' (post) at the beginning of an arbitrary date or year spec.
@@ -752,15 +993,19 @@ local function process_ante_circa_post(date)
 	local abbr_prefix = ""
 
 	if abbr then
-		abbr_prefix = "''[[Appendix:Glossary#" .. abbr.anchor .. '|<abbr title="' .. abbr.full .. '">' ..
-			abbr.anchor .. "</abbr>]]'' "
+		abbr_prefix = "''[[Appendix:Glossary#"
+			.. abbr.anchor
+			.. '|<abbr title="'
+			.. abbr.full
+			.. '">'
+			.. abbr.anchor
+			.. "</abbr>]]'' "
 		-- Remove lowercase letter, period, and space from beginning of date parameter.
-		date = rsub(date, "^%l%.%s*", "")
+		date = ugsub(date, "^%l%.%s*", "")
 	end
 
 	return abbr_prefix, date
 end
-
 
 -- Format the arguments that specify the date of the quotation. These include the following:
 -- |date=: The date. If |start_date= is given, this is the end date.
@@ -791,8 +1036,16 @@ end
 -- Returns two values: the formatted date and a boolean indicating whether to add a maintenance category
 -- [[:Category:Requests for date in LANG entries]]. The first return value will be nil if nothing is to be added
 -- (in which case the scond return value will always be nil).
-local function format_date_args(a, get_full_paramname, alias_map, parampref, paramsuf, bold_year,
-	maintenance_line_no_date)
+local function format_date_args(
+	a,
+	get_full_paramname,
+	alias_map,
+	parampref,
+	paramsuf,
+	bold_year,
+	maintenance_line_no_date,
+    year_last
+)
 	local output = {}
 
 	parampref = parampref or ""
@@ -805,10 +1058,6 @@ local function format_date_args(a, get_full_paramname, alias_map, parampref, par
 		return alias_map[fullname] or fullname
 	end
 
-	local function ins(text)
-		table.insert(output, text)
-	end
-
 	-- Format `timestamp` (a timestamp referencing a date) according to the spec in `code`. `param` is the base name of
 	-- the parameter from which the timestamp was fetched, for error messages.
 	local function format_date_with_code(code, timestamp, param)
@@ -818,9 +1067,12 @@ local function format_date_args(a, get_full_paramname, alias_map, parampref, par
 			return date
 		else
 			-- All the formats used in format_date_args() are fine, so the timestamp must be at fault.
-			error(("Timestamp |%s=%s (possibly canonicalized from its original format) could not be parsed; see the "
-				.. "[[mw:Help:Extension:ParserFunctions##time|documentation for the #time parser function]]"
-				):format(pname(param), tostring(timestamp)))
+			error(
+				(
+					"Timestamp |%s=%s (possibly canonicalized from its original format) could not be parsed; see the "
+					.. "[[mw:Help:Extension:ParserFunctions##time|documentation for the #time parser function]]"
+				):format(pname(param), tostring(timestamp))
+			)
 		end
 	end
 
@@ -838,9 +1090,9 @@ local function format_date_args(a, get_full_paramname, alias_map, parampref, par
 		if day ~= "1" then
 			return true
 		end
-		local english_month = timestamp:find("[A-Z]")
-		local canon_timestamp = mw.text.trim((timestamp:gsub("[^0-9]+", " ")))
-		local seen_nums = rsplit(canon_timestamp, " ", true)
+		local english_month = timestamp:find("%u")
+		local canon_timestamp = mw.text.trim((timestamp:gsub("%D+", " ")))
+		local seen_nums = split(canon_timestamp, " ", true)
 		local saw_one = false
 		for _, num in ipairs(seen_nums) do
 			if num == "1" or num == "01" then
@@ -854,18 +1106,28 @@ local function format_date_args(a, get_full_paramname, alias_map, parampref, par
 		return #seen_nums >= 3 or english_month and #seen_nums >= 2
 	end
 
-
 	-- Format a date with boldfaced year, as e.g. '''2023''' August 3. `explicit_day_given` indicates whether to include
 	-- the day; if false, the return value will be e.g. '''2023''' August. `date_param` is the base name of the param
 	-- from which the date was fetched, for error messages.
 	local function format_bold_date(date, explicit_day_given, date_param)
+		local day_month_code = explicit_day_given and "j F" or "F"
 		local month_day_code = explicit_day_given and "F j" or "F"
-		if bold_year then
-			-- This formats like "'''2023''' August 3" (or "'''2023''' August" if day not explicitly given).
-			return format_date_with_code("'''Y''' " .. month_day_code, date, date_param)
+		if year_last then
+			if bold_year then
+				-- This formats like "3 August '''2023'''" (or "August '''2023'''" if day not explicitly given).
+				return format_date_with_code(day_month_code .. " '''Y'''", date, date_param)
+			else
+				-- This formats like "3 August 2023" (or "August 2023" if day not explicitly given).
+				return format_date_with_code(day_month_code .. " Y", date, date_param)
+			end
 		else
-			-- This formats like "2023 August 3" (or "2023 August" if day not explicitly given).
-			return format_date_with_code("Y " .. month_day_code, date, date_param)
+			if bold_year then
+				-- This formats like "'''2023''' August 3" (or "'''2023''' August" if day not explicitly given).
+				return format_date_with_code("'''Y''' " .. month_day_code, date, date_param)
+			else
+				-- This formats like "2023 August 3" (or "2023 August" if day not explicitly given).
+				return format_date_with_code("Y " .. month_day_code, date, date_param)
+			end
 		end
 	end
 
@@ -881,16 +1143,25 @@ local function format_date_args(a, get_full_paramname, alias_map, parampref, par
 	-- `parampref` is the prefix added to "date" to get the parameter name.
 	local function fix_date(date, param_pref)
 		if tonumber(date) ~= nil then
-			error(("|%s= should contain a full date (year, month, day of month); use |%s= for year"):
-				format(pname(param_pref .. "date"), pname(param_pref .. "year")))
-		elseif date and date:find "%s*%a+,%s*%d+%s*$" then
-			error(("|%s= should contain a full date (year, month, day of month); use |%s=, |%s= for month and year"):
-				format(pname(param_pref .. "date"), pname(param_pref .. "month"), pname(param_pref .. "year")))
+			error(
+				("|%s= should contain a full date (year, month, day of month); use |%s= for year"):format(
+					pname(param_pref .. "date"),
+					pname(param_pref .. "year")
+				)
+			)
+		elseif date and date:find("%s*%a+,%s*%d+%s*$") then
+			error(
+				("|%s= should contain a full date (year, month, day of month); use |%s=, |%s= for month and year"):format(
+					pname(param_pref .. "date"),
+					pname(param_pref .. "month"),
+					pname(param_pref .. "year")
+				)
+			)
 		end
 		if date then
-			date = rsub(date, "(%d+ %a+),", "%1")
-			date = rsub(date, "^(%d%d%d%d) (%a+ %d%d?)$", "%2 %1")
-			return date
+			-- Commas are replaced with spaces to prevent parsing issues
+			local fixed_date = ugsub(date, ", *", " ")
+			return (ugsub(ugsub(fixed_date or date, "(%d+ %a+),", "%1"), "^(%d%d%d%d) (%a+ %d%d?)$", "%2 %1"))
 		end
 	end
 
@@ -904,20 +1175,37 @@ local function format_date_args(a, get_full_paramname, alias_map, parampref, par
 		error(("Only one of |%s= or |%s= should be specified"):format(pname("date"), pname("year")))
 	end
 	if date and month then
-		error(("|%s= should only be specified in conjunction with |%s=, not with |%s="):
-			format(pname("month"), pname("year"), pname("date")))
+		error(
+			("|%s= should only be specified in conjunction with |%s=, not with |%s="):format(
+				pname("month"),
+				pname("year"),
+				pname("date")
+			)
+		)
 	end
 	if start_date and start_year then
 		error(("Only one of |%s= or |%s= should be specified"):format(pname("start_date"), pname("start_year")))
 	end
 	if start_date and start_month then
-		error(("|%s= should only be specified in conjunction with |%s=, not with |%s="):
-			format(pname("start_month"), pname("start_year"), pname("start_date")))
+		error(
+			("|%s= should only be specified in conjunction with |%s=, not with |%s="):format(
+				pname("start_month"),
+				pname("start_year"),
+				pname("start_date")
+			)
+		)
 	end
 	if (start_date or start_year) and not (date or year) then
-		error(("|%s= or |%s=/|%s= cannot be specified without specifying |%s= or |%s=/|%s="):
-			format(pname("start_date"), pname("start_year"), pname("start_month"),
-				pname("date"), pname("year"), pname("month")))
+		error(
+			("|%s= or |%s=/|%s= cannot be specified without specifying |%s= or |%s=/|%s="):format(
+				pname("start_date"),
+				pname("start_year"),
+				pname("start_month"),
+				pname("date"),
+				pname("year"),
+				pname("month")
+			)
+		)
 	end
 
 	local dash = "&nbsp;– "
@@ -937,13 +1225,17 @@ local function format_date_args(a, get_full_paramname, alias_map, parampref, par
 			if bold_year and not yearobj.text:find("'''") then
 				-- Clone the year object before modifying it because we may use it later to check against the current
 				-- year (if we're dealing with start_year).
-				yearobj = require(table_module).shallowcopy(yearobj)
+				yearobj = shallow_copy(yearobj)
 				yearobj.text = "'''" .. yearobj.text .. "'''"
 				if yearobj.alt then
 					yearobj.alt = "'''" .. yearobj.alt .. "'''"
 				end
 			end
-			return format_annotated_text(yearobj) .. (monthobj and " " .. format_annotated_text(monthobj) or "")
+			if year_last then
+				return (monthobj and format_annotated_text(monthobj) .. " " or "") .. format_annotated_text(yearobj)
+			else
+				return format_annotated_text(yearobj) .. (monthobj and " " .. format_annotated_text(monthobj) or "")
+			end
 		end
 	end
 
@@ -952,58 +1244,93 @@ local function format_date_args(a, get_full_paramname, alias_map, parampref, par
 	local start_yearobj = parse_annotated_text(start_year, pname("start_year"))
 	local start_monthobj = parse_annotated_text(start_month, pname("start_month"))
 
-	if yearobj then
+	if start_yearobj then
+		local abbr_prefix
+		abbr_prefix, start_yearobj.text = process_ante_circa_post(start_yearobj.text)
+		start_yearobj.link = select(2, process_ante_circa_post(start_yearobj.link))
+		insert(output, abbr_prefix)
+	elseif yearobj then
 		local abbr_prefix
 		abbr_prefix, yearobj.text = process_ante_circa_post(yearobj.text)
-		_, yearobj.link = process_ante_circa_post(yearobj.link)
-		ins(abbr_prefix)
+		yearobj.link = select(2, process_ante_circa_post(yearobj.link))
+		insert(output, abbr_prefix)
 	end
 
 	if start_date or start_year then
-		ins(format_date_or_year_month(start_date, start_yearobj, start_monthobj, start_day_explicitly_given,
-			"start_date"))
 		local cur_year = yearobj and yearobj.text or format_date_with_code("Y", date, "date")
 		local cur_month = monthobj and monthobj.text or date and format_date_with_code("F", date, "date") or nil
 		local cur_day = date and day_explicitly_given and format_date_with_code("j", date, "date") or nil
 		local beg_year = start_yearobj and start_yearobj.text or format_date_with_code("Y", start_date, "start_date")
-		local beg_month = start_monthobj and start_monthobj.text or
-			start_date and format_date_with_code("F", start_date, "start_date") or nil
-		local beg_day = start_date and start_day_explicitly_given and
-			format_date_with_code("j", start_date, "start_date") or nil
-
-		if cur_year ~= beg_year then
-			-- Different years; insert current date in full.
-			if not cur_month or cur_month == beg_month then
-				ins("–")
+		local beg_month = start_monthobj and start_monthobj.text
+			or start_date and format_date_with_code("F", start_date, "start_date")
+			or nil
+		local beg_day = start_date
+				and start_day_explicitly_given
+				and format_date_with_code("j", start_date, "start_date")
+			or nil
+	
+		if year_last then
+			if beg_day then
+				insert(output, beg_day .. " " .. beg_month)
 			else
-				ins(dash)
+				insert(output, beg_month)
 			end
-			ins(format_date_or_year_month(date, yearobj, monthobj, day_explicitly_given, "date"))
+			if beg_year ~= cur_year then
+            	insert(output, " " .. beg_year)
+            end
+		else
+			insert(output, format_date_or_year_month(
+				start_date,
+				start_yearobj,
+				start_monthobj,
+				start_day_explicitly_given,
+				"start_date"
+			))
+		end
+	
+	    if cur_year ~= beg_year then
+			-- Different years; insert current date in full.
+			if beg_month or cur_month then
+				insert(output, dash)
+			else
+	            insert(output, "–")
+	        end
+	        insert(output, format_date_or_year_month(date, yearobj, monthobj, day_explicitly_given, "date"))
 		elseif cur_month and cur_month ~= beg_month then
 			local month_ins = monthobj and format_annotated_text(monthobj) or cur_month
 			-- Same year but different months; insert current month and (if available) current day.
 			if cur_day then
-				ins(dash)
-				ins(month_ins)
-				ins(" " .. cur_day)
+				insert(output, dash)
+				if year_last then
+					insert(output, cur_day .. " " .. month_ins)
+				else
+					insert(output, month_ins .. " " .. cur_day)
+				end
 			else
 				if beg_day then
-					ins(dash)
+					insert(output, dash)
 				else
-					ins("–")
+					insert(output, "–")
 				end
-				ins(month_ins)
+				insert(output, month_ins)
 			end
 		elseif cur_day and cur_day ~= beg_day then
 			-- Same year and month but different days; insert current day.
-			ins("–")
-			ins(cur_day)
+			insert(output, "–")
+			insert(output, cur_day)
 		else
 			-- Same year, month and day; or same year and month, and day not available; or same year, and month and
 			-- day not available. Do nothing. FIXME: Should we throw an error?
 		end
+		if year_last and beg_year == cur_year then
+        	if cur_month then
+        		insert(output, " " .. cur_year)
+        	else
+            	insert(output, " " .. cur_year)
+        	end
+        end
 	elseif date or yearobj then
-		ins(format_date_or_year_month(date, yearobj, monthobj, day_explicitly_given, "date"))
+		insert(output, format_date_or_year_month(date, yearobj, monthobj, day_explicitly_given, "date"))
 	elseif not maintenance_line_no_date then
 		-- Not main quote date. Return nil, caller will handle.
 		return nil, nil
@@ -1011,40 +1338,28 @@ local function format_date_args(a, get_full_paramname, alias_map, parampref, par
 		local accessdate = getp("accessdate")
 		if accessdate then
 			local explicit_day_given = date_has_day_specified(accessdate, "accessdate")
-			ins(format_bold_date(accessdate, explicit_day_given, "accessdate") .. " (last accessed)")
+			insert(output, format_bold_date(accessdate, explicit_day_given, "accessdate") .. " (last accessed)")
 		else
-			if mw.title.getCurrentTitle().nsText ~= "Template" then
+			if mw.title.getCurrentTitle().namespace ~= 10 then
 				return maintenance_line(maintenance_line_no_date), true
-			else
-				return nil, nil
 			end
+			return nil, nil
 		end
 	end
 
-	return ine(table.concat(output)), nil
+	return ine(concat(output)), nil
 end
-
 
 local function tag_with_cite(txt)
 	return "<cite>" .. txt .. "</cite>"
 end
 
-
-local function pluralize(txt)
-	-- Try to shortcut loading [[Module:string utilities]].
-	if txt:find("[sxzhy%]]$") then
-		return utils_pluralize(txt)
-	else
-		return txt .. "s"
-	end
-end
-
 -- Display the source line of the quote, above the actual quote text. This contains the majority of the logic of this
 -- module (formerly contained in {{quote-meta/source}}).
-function export.source(args, alias_map, format_as_cite)
+function export.source(args, alias_map, format_as_cite, other_controls)
 	local tracking_categories = {}
 
-	local argslang = args.lang or args[1]
+	local argslang = args[1] or args.lang
 	if not argslang then
 		-- For the moment, only trigger an error on mainspace pages and
 		-- other pages that are not user pages or pages containing discussions.
@@ -1052,11 +1367,9 @@ function export.source(args, alias_map, format_as_cite)
 		-- categories. User and discussion pages have not generally been
 		-- fixed up to include a language code and so it's more helpful
 		-- to use a maintenance line than signal an error.
-		local FULLPAGENAME = mw.title.getCurrentTitle().fullText
-		local NAMESPACE = mw.title.getCurrentTitle().nsText
-
-		if NAMESPACE ~= "Template" and not require(usex_templates_module).page_should_be_ignored(FULLPAGENAME) then
-			require(languages_module).err(nil, 1)
+		local current_title = mw.title.getCurrentTitle()
+		if not (current_title.namespace == 10 or page_should_be_ignored(current_title.fullText)) then
+			require(languages_error_module)(nil, 1)
 		end
 	end
 
@@ -1066,8 +1379,8 @@ function export.source(args, alias_map, format_as_cite)
 		return alias_map[param] or param
 	end
 
-	local output = {}
-	local sep
+	local output, sep = {}
+	local overrides = other_controls and other_controls.overrides or {}
 
 	-- Add text to the output. The text goes into a list, and we concatenate all the list components together at the
 	-- end. To make it easier to handle comma-separated items, we keep track (in `sep`) of the separator (if any) that
@@ -1079,15 +1392,17 @@ function export.source(args, alias_map, format_as_cite)
 	-- to ", "), so the next time around we do add a comma to separate `text` from the preceding piece of text.
 	local function add(text)
 		if sep then
-			table.insert(output, sep)
+			insert(output, sep)
 		end
-		table.insert(output, text)
+		insert(output, text)
 		sep = nil
 	end
 	local function add_with_sep(text, next_sep)
 		add(text)
 		sep = next_sep or ", "
 	end
+
+	-- FIXME: This is all very over-engineered, which makes it slow and memory-inefficient.
 
 	-- Return a function that generates the actual parameter name associated with a base param (e.g. "author", "last").
 	-- The actual parameter name may have an index added (an empty string for the first set of params, e.g. author=,
@@ -1099,27 +1414,26 @@ function export.source(args, alias_map, format_as_cite)
 	end
 	-- Function to fetch the actual parameter name associated with a base param (see make_get_full_paramname() above).
 	-- Assigned at various times below by calling make_get_full_paramname(). We do it this way so that we can have
-	-- wrapper functions that access params and define them only oncec.
+	-- wrapper functions that access params and define them only once.
 	local get_full_paramname
 	-- Return two values: the value of a parameter given the base param name (which may have a numeric index added),
 	-- and the parameter name from which the value was fetched (which may be an alias, i.e. you can't necessarily fetch
 	-- the parameter value from args[] given this name). The base parameter can be a list of such base params, which
 	-- are checked in turn, or nil, in which case nil is returned.
 	local function a_with_name(param)
-		if type(param) == "table" then
-			for _, par in ipairs(param) do
-				local val, fullname = a_with_name(par)
-				if val then
-					return val, fullname
-				end
-			end
-			return nil
-		end
 		if not param then
 			return nil
+		elseif type(param) ~= "table" then
+			local fullname = get_full_paramname(param)
+			return args[fullname], alias(fullname)
 		end
-		local fullname = get_full_paramname(param)
-		return args[fullname], alias(fullname)
+		for _, par in ipairs(param) do
+			local val, fullname = a_with_name(par)
+			if val then
+				return val, alias(fullname)
+			end
+		end
+		return nil
 	end
 	-- Fetch the value of a parameter given the base param name (which may have a numeric index added). The base
 	-- parameter can be a list of such base params, which are checked in turn, or nil, in which case nil is returned.
@@ -1144,19 +1458,19 @@ function export.source(args, alias_map, format_as_cite)
 	-- a language prefix and/or inline modifiers), parse the annotations and convert the result into a formatted string.
 	-- This is the same as parse_and_format_annotated_text() below but also returns the full param name as the second
 	-- return value.
-	local function parse_and_format_annotated_text_with_name(param, tag_text, tag_gloss)
+	local function parse_and_format_annotated_text_with_name(param, tag_text_func, tag_gloss_func)
 		local val, fullname = a_with_name(param)
 		local obj = parse_annotated_text(val, fullname)
-		return format_annotated_text(obj, tag_text, tag_gloss), fullname
+		return format_annotated_text(obj, tag_text_func, tag_gloss_func), fullname
 	end
 
 	-- Convenience function to fetch a parameter that may be in a foreign language or text (and may consequently have
 	-- a language prefix and/or inline modifiers), parse the modifiers and convert the result into a formatted string.
 	-- This is a wrapper around parse_annotated_text() and format_annotated_text(). `param` is the base parameter name (see
-	-- a_with_name()), `tag_text` is an optional function to tag the parameter text after all other processing (e.g.
-	-- wrap in <cite>...</cite> tags), and `tag_gloss` is a similar function for the parameter translation/gloss.
-	local function parse_and_format_annotated_text(param, tag_text, tag_gloss)
-		return (parse_and_format_annotated_text_with_name(param, tag_text, tag_gloss))
+	-- a_with_name()), `tag_text_func` is an optional function to tag the parameter text after all other processing (e.g.
+	-- wrap in <cite>...</cite> tags), and `tag_gloss_func` is a similar function for the parameter translation/gloss.
+	local function parse_and_format_annotated_text(param, tag_text_func, tag_gloss_func)
+		return (parse_and_format_annotated_text_with_name(param, tag_text_func, tag_gloss_func))
 	end
 
 	-- Convenience function to fetch a multivalued parameter that may be in a foreign language or text (and may
@@ -1164,19 +1478,19 @@ function export.source(args, alias_map, format_as_cite)
 	-- formatted string. This is the multivalued analog to parse_and_format_annotated_text_with_name() and returns two
 	-- values, the formatted string and the full name of the parameter fetched. `delimiter` is as in
 	-- format_multivalued_annotated_text().
-	local function parse_and_format_multivalued_annotated_text_with_name(param, delimiter, tag_text, tag_gloss)
+	local function parse_and_format_multivalued_annotated_text_with_name(param, delimiter, tag_text_func, tag_gloss_func)
 		local val, fullname = a_with_name(param)
 		local objs = parse_multivalued_annotated_text(val, fullname)
 		local num_objs = objs and #objs or 0
-		return format_multivalued_annotated_text(objs, delimiter, tag_text, tag_gloss), fullname, num_objs
+		return format_multivalued_annotated_text(objs, delimiter, tag_text_func, tag_gloss_func), fullname, num_objs
 	end
 
 	-- Convenience function to fetch a multivalued parameter that may be in a foreign language or text (and may
 	-- consequently have a language prefix and/or inline modifiers), parse the modifiers and convert the result into a
 	-- formatted string. This is the multivalued analog to parse_and_format_annotated_text(). `delimiter` is as in
 	-- format_multivalued_annotated_text().
-	local function parse_and_format_multivalued_annotated_text(param, delimiter, tag_text, tag_gloss)
-		return (parse_and_format_multivalued_annotated_text_with_name(param, delimiter, tag_text, tag_gloss))
+	local function parse_and_format_multivalued_annotated_text(param, delimiter, tag_text_func, tag_gloss_func)
+		return (parse_and_format_multivalued_annotated_text_with_name(param, delimiter, tag_text_func, tag_gloss_func))
 	end
 
 	-- This determines whether to display "Mary Bloggs, transl." (if there's no author preceding) or "translated by
@@ -1185,9 +1499,7 @@ function export.source(args, alias_map, format_as_cite)
 
 	-- When formatting as a citation, the priority is to display a name and a date before the book/chapter title
 	-- this tracks whether or not the author/date has been displayed
-	local date_outputted = false
-	local formatted_date = nil
-	local formatted_origdate = nil
+	local date_outputted, formatted_date, formatted_origdate, need_date = false
 	local function add_date(no_paren)
 		if not date_outputted then
 			if no_paren then
@@ -1211,7 +1523,7 @@ function export.source(args, alias_map, format_as_cite)
 	end
 
 	local function is_anonymous(val)
-		return rfind(val, "^[Aa]nonymous$") or rfind(val, "^[Aa]non%.?$")
+		return val:match("^[Aa]nonymous$") or val:match("^[Aa]non%.?$")
 	end
 
 	-- Add a formatted author (whose values may be specified using `author` or, for compatibility purposes, split
@@ -1236,9 +1548,25 @@ function export.source(args, alias_map, format_as_cite)
 	--    (e.g. "trans-last"), and `trans_last_fullname` is the full parameter name holding that value (or nil for
 	--    no such parameter).
 	-- * `last_first` if set, when parameters `first` and `last` are used, display the author name as "last, first"
-	local function add_author(author, author_fullname, trans_author, trans_author_fullname, authorlink,
-		authorlink_fullname, trans_authorlink, trans_authorlink_fullname, first, first_fullname, trans_first,
-		trans_first_fullname, last, last_fullname, trans_last, trans_last_fullname, last_first)
+	local function add_author(
+		author,
+		author_fullname,
+		trans_author,
+		trans_author_fullname,
+		authorlink,
+		authorlink_fullname,
+		trans_authorlink,
+		trans_authorlink_fullname,
+		first,
+		first_fullname,
+		trans_first,
+		trans_first_fullname,
+		last,
+		last_fullname,
+		trans_last,
+		trans_last_fullname,
+		last_first
+	)
 		local function make_author_with_url(txt, txtparam, authorlink, authorlink_param)
 			if authorlink then
 				if authorlink:find("%[%[") then
@@ -1255,8 +1583,8 @@ function export.source(args, alias_map, format_as_cite)
 
 		local num_authorobjs
 		if author then
-			local authorobjs = parse_multivalued_annotated_text(author, author_fullname, trans_author,
-				trans_author_fullname)
+			local authorobjs =
+				parse_multivalued_annotated_text(author, author_fullname, trans_author, trans_author_fullname)
 			num_authorobjs = #authorobjs
 			if num_authorobjs == 1 then
 				if is_anonymous(authorobjs[1].text) then
@@ -1264,28 +1592,48 @@ function export.source(args, alias_map, format_as_cite)
 					authorobjs[1].link = "anonymous author"
 				end
 				if authorlink then
-					authorobjs[1].text = make_author_with_url(authorobjs[1].text, "|" .. author_fullname,
-						authorlink, "|" .. authorlink_fullname)
-					authorobjs[1].link = make_author_with_url(authorobjs[1].link, "|" .. author_fullname,
-						authorlink, "|" .. authorlink_fullname)
+					authorobjs[1].text = make_author_with_url(
+						authorobjs[1].text,
+						"|" .. author_fullname,
+						authorlink,
+						"|" .. authorlink_fullname
+					)
+					authorobjs[1].link = make_author_with_url(
+						authorobjs[1].link,
+						"|" .. author_fullname,
+						authorlink,
+						"|" .. authorlink_fullname
+					)
 				end
 				if authorobjs[1].gloss and trans_authorlink then
-					authorobjs[1].gloss = make_author_with_url(authorobjs[1].gloss,
-						("<t:...> in |%s"):format(author_fullname), trans_authorlink, "|" .. trans_author_fullname)
+					authorobjs[1].gloss = make_author_with_url(
+						authorobjs[1].gloss,
+						("<t:...> in |%s"):format(author_fullname),
+						trans_authorlink,
+						"|" .. trans_author_fullname
+					)
 				end
 				add(format_multivalued_annotated_text(authorobjs))
 			elseif trans_authorlink then
-				error(("Can't specify |%s= along with multiple semicolon-separated entities in |%s=; use the "
-					.. "<t:...> inline modifier attached to the individual entities and put the link directly "
-					.. "in the value of the inline modifier"):format(trans_authorlink_fullname, author_fullname))
+				error(
+					(
+						"Can't specify |%s= along with multiple semicolon-separated entities in |%s=; use the "
+						.. "<t:...> inline modifier attached to the individual entities and put the link directly "
+						.. "in the value of the inline modifier"
+					):format(trans_authorlink_fullname, author_fullname)
+				)
 			else
 				-- Allow an authorlink with multiple authors, e.g. for use with |author=Max Mills; Harvey Mills
 				-- with |authorlink=Max and Harvey. For this we have to generate the entire text and link it
 				-- all.
 				local formatted_text = format_multivalued_annotated_text(authorobjs)
 				if authorlink then
-					formatted_text = make_author_with_url(formatted_text, "|" .. author_fullname, authorlink,
-						"|" .. authorlink_fullname)
+					formatted_text = make_author_with_url(
+						formatted_text,
+						"|" .. author_fullname,
+						authorlink,
+						"|" .. authorlink_fullname
+					)
 				end
 				add(formatted_text)
 			end
@@ -1314,10 +1662,15 @@ function export.source(args, alias_map, format_as_cite)
 					trans_author = trans_last
 				end
 				if trans_authorlink then
-					local trans_authorparam = trans_first and
-						("|%s |%s"):format(trans_first_fullname, trans_last_fullname) or "|" .. trans_last_fullname
-					trans_author = make_author_with_url(trans_author, trans_authorparam, trans_authorlink,
-						trans_authorlink_fullname)
+					local trans_authorparam = trans_first
+							and ("|%s |%s"):format(trans_first_fullname, trans_last_fullname)
+						or "|" .. trans_last_fullname
+					trans_author = make_author_with_url(
+						trans_author,
+						trans_authorparam,
+						trans_authorlink,
+						trans_authorlink_fullname
+					)
 				end
 			end
 			add(author)
@@ -1333,8 +1686,13 @@ function export.source(args, alias_map, format_as_cite)
 		return num_authorobjs
 	end
 
-	local function add_authorlike(param, prefix_with_preceding_authors, suffix_without_preceding_authors,
-		suffix_if_multiple, anonymous_suffix)
+	local function add_authorlike(
+		param,
+		prefix_with_preceding_authors,
+		suffix_without_preceding_authors,
+		suffix_if_multiple,
+		anonymous_suffix
+	)
 		local delimiter = author_outputted and "and" or ", "
 		local entities, _, num_entities = parse_and_format_multivalued_annotated_text_with_name(param, delimiter)
 		if not entities then
@@ -1344,8 +1702,12 @@ function export.source(args, alias_map, format_as_cite)
 			-- If tlr=anonymous or similar given, display as "anonymous translator" or similar. If a specific
 			-- anonymous suffix not given, try to derive the anonymous suffix from the non-preceding-author suffix.
 			if not anonymous_suffix then
-				local cleaned_suffix = suffix_without_preceding_authors:gsub("&#32;", " "):gsub("&nbsp;", " ")
-					:gsub("&#160;", " "):gsub("&#91;", "["):gsub("&#93;", "]")
+				local cleaned_suffix = suffix_without_preceding_authors
+					:gsub("&#32;", " ")
+					:gsub("&nbsp;", " ")
+					:gsub("&#160;", " ")
+					:gsub("&#91;", "[")
+					:gsub("&#93;", "]")
 				cleaned_suffix = mw.text.trim(cleaned_suffix)
 				if not anonymous_suffix then
 					anonymous_suffix = " " .. cleaned_suffix:match("^, (.*)$")
@@ -1380,9 +1742,19 @@ function export.source(args, alias_map, format_as_cite)
 	end
 
 	local function has_new_title_or_author()
-		return args["2ndauthor"] or args["2ndlast"] or args.chapter2 or args.title2 or
-			args.tlr2 or args.mainauthor2 or args.editor2 or args.editors2 or args.compiler2 or args.compilers2 or
-			args.director2 or args.directors2
+		return args["2ndauthor"]
+			or args["2ndlast"]
+			or args.chapter2
+			or args.title2
+			or args.tlr2
+			or args.edtlr2
+			or args.mainauthor2
+			or args.editor2
+			or args.editors2
+			or args.compiler2
+			or args.compilers2
+			or args.director2
+			or args.directors2
 	end
 
 	local function has_newversion()
@@ -1422,19 +1794,7 @@ function export.source(args, alias_map, format_as_cite)
 			chap_series = chap_series .. " (" .. chap_seriesvolume .. ")"
 		end
 
-		if not chap then
-			if chap_num then
-				error(("Cannot specify |%s= without |%s=; put the numeric value in |%s= directly"):
-					format(chap_num_fullname, chap_fullname, chap_fullname))
-			end
-			if chap_plain then
-				return chap_plain .. (chap_series or "")
-			end
-			return nil
-		end
-
-		local cleaned_chap = chap:gsub("<sup>[^<>]*</sup>", ""):gsub("[*+#]", "")
-		local chapterurl = aurl(param .. "url")
+		local chapterurl
 		local function make_chapter_with_url(chap)
 			if chapterurl then
 				return "[" .. chapterurl .. " " .. chap .. "]"
@@ -1442,16 +1802,46 @@ function export.source(args, alias_map, format_as_cite)
 				return chap
 			end
 		end
+		
+		if not chap then
+			if chap_num then
+				error(
+					("Cannot specify |%s= without |%s=; put the numeric value in |%s= directly"):format(
+						chap_num_fullname,
+						chap_fullname,
+						chap_fullname
+					)
+				)
+			end
+			if chap_plain then
+				chapterurl = aurl(param .. "url")
+				return make_chapter_with_url(chap_plain .. (chap_series or ""))
+			end
+			return nil
+		end
+
+		local cleaned_chap = chap:gsub("<sup>[^<>]*</sup>", ""):gsub("[*+#]", "")
+		chapterurl = aurl(param .. "url")
 
 		local formatted
 
-		if require(number_utilities_module).get_number(cleaned_chap) then
+		if numeric_prefix and get_number(cleaned_chap) then
 			-- Arabic chapter number
 			formatted = numeric_prefix .. make_chapter_with_url(chap)
-		elseif rfind(cleaned_chap, "^[mdclxviMDCLXVI]+$") and require(roman_numerals_module).roman_to_arabic(cleaned_chap, true) then
+		elseif
+			numeric_prefix
+			and cleaned_chap:match("^[mdclxviMDCLXVI]+$")
+			and roman_to_arabic(cleaned_chap, true)
+			and (not overrides[param] or not overrides[param].noroman)
+		then
 			-- Roman chapter number
 			formatted = numeric_prefix .. make_chapter_with_url(upper(chap))
 		else
+			-- strip leading ! (used to force text-mode for titles that look like Roman numerals like "mil" and "dill")
+			if chap:find("^!") then
+				chap = chap:gsub("^!", "")
+			end
+
 			-- Must be a chapter name
 			local chapterobj = parse_annotated_text(chap, chap_fullname, a("trans-" .. param))
 			chapterobj.text = make_chapter_with_url(chapterobj.text)
@@ -1498,10 +1888,11 @@ function export.source(args, alias_map, format_as_cite)
 
 		if format_as_cite and author_outputted and not date_outputted then
 			add_date()
-			sep = " "
+			sep = ", "
 		end
 
 		add_authorlike("chapter_tlr", "translated by ", ", transl.", nil, " translator")
+		add_authorlike("chapter_edtlr", "edited and translated by ", ", ed. and transl.", nil, " editor and translator")
 
 		local function add_sg_and_pl_authorlike(noun, verbed)
 			local sgparam = noun
@@ -1520,9 +1911,25 @@ function export.source(args, alias_map, format_as_cite)
 			end
 		end
 
+		local formatted_entry = format_chapterlike("entry", nil, "“", "”")
 		local formatted_chapter = format_chapterlike("chapter", "chapter ", "“", "”")
-		local chapter_outputted = false
+
+		local function add_entry()
+			if formatted_entry then
+				add_with_sep(formatted_entry)
+				if not a("notitle") then
+					add("in ")
+					author_outputted = false
+				else
+					author_outputted = true
+				end
+				formatted_entry = nil
+			end
+		end
+
 		local function add_chapter()
+			add_entry()
+
 			if formatted_chapter then
 				add_with_sep(formatted_chapter)
 				if not a("notitle") then
@@ -1542,10 +1949,10 @@ function export.source(args, alias_map, format_as_cite)
 			if format_as_cite then
 				if role then
 					if actor then
-						add_with_sep(actor)
+						add_with_sep(actor .. " as ")
 					end
 					sep = nil
-					add_with_sep(" as " .. role)
+					add_with_sep(role)
 				elseif actor then
 					add_with_sep(actor .. " (" .. (#actor_objs > 1 and "actors" or "actor") .. ")")
 				end
@@ -1562,14 +1969,12 @@ function export.source(args, alias_map, format_as_cite)
 			end
 		end
 
-
 		if format_as_cite then
-
 			if date_outputted then
 				add_chapter()
 			end
 
-			output_len = #output
+			local output_len = #output
 
 			local mainauthor = parse_and_format_multivalued_annotated_text("mainauthor")
 			if mainauthor then
@@ -1580,6 +1985,7 @@ function export.source(args, alias_map, format_as_cite)
 			author_outputted = false
 
 			add_authorlike("tlr", "translated by ", ", transl.", nil, " translator")
+			add_authorlike("edtlr", "edited and translated by ", ", ed. and transl.", nil, " editor and translator")
 			author_outputted = false
 
 			add_sg_and_pl_authorlike("editor", "edited")
@@ -1599,9 +2005,7 @@ function export.source(args, alias_map, format_as_cite)
 			end
 
 			add_chapter()
-
 		else
-
 			add_chapter()
 
 			local mainauthor = parse_and_format_multivalued_annotated_text("mainauthor")
@@ -1611,6 +2015,7 @@ function export.source(args, alias_map, format_as_cite)
 			end
 
 			add_authorlike("tlr", "translated by ", ", transl.", nil, " translator")
+			add_authorlike("edtlr", "edited and translated by ", ", ed. and transl.", nil, " editor and translator")
 
 			add_sg_and_pl_authorlike("editor", "edited")
 			add_sg_and_pl_authorlike("compiler", "compiled")
@@ -1620,7 +2025,6 @@ function export.source(args, alias_map, format_as_cite)
 			add_authorlike("lyrics-translator", nil, " (translation)", nil, " lyrics translator")
 			add_authorlike("composer", nil, " (music)", nil, " composer")
 		end
-
 
 		local title, title_fullname = a_with_name("title")
 		local need_comma = false
@@ -1651,10 +2055,10 @@ function export.source(args, alias_map, format_as_cite)
 			error(("Supply only one of |%s= and |%s="):format(url_fullname, urls_fullname))
 		end
 		local function verify_title_supplied(url_name)
-			if not title then
-				-- There are too many cases of this to throw an error at this time.
+			-- There are too many cases of this to throw an error at this time.
+			-- if not title then
 				-- error(("If |%s= is given, |%s= must also be supplied"):format(url_name, title_fullname))
-			end
+			-- end
 		end
 		if archiveurl or url then
 			verify_title_supplied(archiveurl and archiveurl_fullname or url_fullname)
@@ -1666,11 +2070,17 @@ function export.source(args, alias_map, format_as_cite)
 			add("&lrm;<sup>" .. urls .. "</sup>")
 		end
 
-		-- display (in Language) if language is provided and is not English
-		if format_as_cite and ind == "" and ine(args[1]) and ine(args[1]) ~= "und" and ine(args[1]) ~= "en" then
-			langs = format_langs(args.lang or args[1], "1")
-			if langs then
-				add(" (in " .. langs .. ")")
+		-- display (in Language) if language is provided and is not English and not overriden by termlang or worklang
+		if format_as_cite and ind == "" and not (args.termlang or args.worklang) and (args[1] or args.lang) then
+			local lang = get_first_lang(args[1] or args.lang)
+			if lang then
+				local langcode = lang:getCode()
+				if not (langcode == "und" or langcode == "en") then
+					local langs = format_langs(args[1] or args.lang)
+					if langs then
+						add(" (in " .. langs .. ")")
+					end
+				end
 			end
 		end
 
@@ -1703,10 +2113,10 @@ function export.source(args, alias_map, format_as_cite)
 		-- it is linked to the specified URL. Note that any of the specs can be foreign text, e.g. foreign numbers
 		-- (including with optional inline modifiers), and such text is handled appropriately.
 		local function format_numeric_param(paramname, singular_desc)
-			local sgval, sg_fullname = a_with_name(paramname)
+			local sgval = a_with_name(paramname)
 			local sgobj = parse_annotated_text(sgval, paramname)
 			local plparamname = paramname .. "s"
-			local plval, pl_fullname = a_with_name(plparamname)
+			local plval = a_with_name(plparamname)
 			local plobj = parse_annotated_text(plval, plparamname)
 			local plainval, plain_fullname = parse_and_format_annotated_text_with_name(paramname .. "_plain")
 
@@ -1727,18 +2137,14 @@ function export.source(args, alias_map, format_as_cite)
 					if val == "unnumbered" then
 						numspec = "unnumbered " .. singular_desc
 					else
-						local function get_plural_desc()
-							-- Only call when needed to potentially avoid a module load.
-							return pluralize(singular_desc)
-						end
 						local desc
 						if val:find("^!") then
 							val = val:gsub("^!", "")
-							desc = sgval and singular_desc or get_plural_desc()
+							desc = sgval and singular_desc or pluralize(singular_desc)
 						else
 							local check_val = val
 							if check_val:find("%[") then
-								check_val = require(links_module).remove_links(check_val)
+								check_val = remove_links(check_val)
 								-- convert URL's of the form [URL DISPLAY] to the displayed value
 								check_val = check_val:gsub("%[[^ %[%]]* ([^%[%]]*)%]", "%1")
 							end
@@ -1751,9 +2157,13 @@ function export.source(args, alias_map, format_as_cite)
 							check_val = check_val:gsub("&#8212;", "—")
 							-- Check for en-dash or em-dash, or two numbers (possibly with stuff after like 12a-15b)
 							-- separated by a hyphen or by comma a followed by a space (to avoid firing on thousands separators).
-							if rfind(check_val, "[–—]") or check_val:find(" and ") or rfind(check_val, "[0-9]+[^ ]* *%- *[0-9]+")
-								or rfind(check_val, "[0-9]+[^ ]* *, +[0-9]+")  then
-								desc = get_plural_desc()
+							if
+								umatch(check_val, "[–—]")
+								or check_val:find(" and ")
+								or check_val:match("%d+[^ ]* *%- *%d+")
+								or check_val:match("%d+[^ ]* *, +%d+")
+							then
+								desc = pluralize(singular_desc)
 							else
 								desc = singular_desc
 							end
@@ -1795,32 +2205,31 @@ function export.source(args, alias_map, format_as_cite)
 		local annotations = {}
 		local genre = a("genre")
 		if genre then
-			table.insert(annotations, genre)
+			insert(annotations, genre)
 		end
 		local format = a("format")
 		if format then
-			table.insert(annotations, format)
+			insert(annotations, format)
 		end
 		local medium = a("medium")
 		if medium then
-			table.insert(annotations, medium)
+			insert(annotations, medium)
 		end
 
 		-- Now handle the display of language annotations like "(in French)" or
 		-- "(quotation in Nauruan; overall work in German)".
-		local quotelang = args.lang or args[1]
-		local quotelang_fullname = 1
+		local quotelang = args[1] or args.lang
 		if not quotelang then
 			if ind == "" then
 				-- This can only happen for certain non-mainspace pages, e.g. Talk pages; otherwise an error is thrown
 				-- above.
-				table.insert(annotations, maintenance_line("Please specify the language of the quote using |1="))
+				insert(annotations, maintenance_line("Please specify the language of the quote using |1="))
 			else
 				-- do nothing in newversion= portion
 			end
 		elseif ind == "" then
-			local worklang, worklang_fullname = a_with_name("worklang")
-			local termlang, termlang_fullname = a_with_name("termlang")
+			local worklang = a("worklang")
+			local termlang = a("termlang")
 			worklang = worklang or quotelang
 			termlang = termlang or quotelang
 
@@ -1828,24 +2237,24 @@ function export.source(args, alias_map, format_as_cite)
 				if worklang == termlang then
 					-- do nothing
 				else
-					table.insert(annotations, "in " .. format_langs(quotelang, quotelang_fullname))
+					insert(annotations, "in " .. format_langs(quotelang))
 				end
 			else
 				if quotelang ~= termlang then
-					table.insert(annotations, "quotation in " .. format_langs(quotelang, quotelang_fullname))
+					insert(annotations, "quotation in " .. format_langs(quotelang))
 				end
-				table.insert(annotations, "overall work in " .. format_langs(worklang, worklang_fullname))
+				insert(annotations, "overall work in " .. format_langs(worklang))
 			end
 		else
-			local lang2, lang2_fullname = a_with_name("lang")
+			local lang2 = a("lang2")
 			if lang2 then
-				table.insert(annotations, "in " .. format_langs(lang2, lang2_fullname))
+				insert(annotations, "in " .. format_langs(lang2))
 			end
 		end
 
 		if #annotations > 0 then
 			sep = nil
-			add_with_sep(" (" .. table.concat(annotations, SEMICOLON_SPACE) .. ")")
+			add_with_sep(" (" .. concat(annotations, SEMICOLON_SPACE) .. ")")
 		end
 
 		local artist = parse_and_format_multivalued_annotated_text("artist", "and")
@@ -1870,10 +2279,10 @@ function export.source(args, alias_map, format_as_cite)
 		local quoted_in = parse_and_format_annotated_text("quoted_in", tag_with_cite, tag_with_cite)
 		if quoted_in then
 			add_with_sep("quoted in " .. quoted_in)
-			table.insert(tracking_categories, "Quotations using quoted-in parameter")
+			insert(tracking_categories, "Quotations using quoted-in parameter")
 		end
 
-		local location = parse_and_format_multivalued_annotated_text("location")
+		local location = parse_and_format_multivalued_annotated_text("location", "; ")
 		local publisher = parse_and_format_multivalued_annotated_text("publisher", "; ")
 		if publisher then
 			if location then
@@ -1889,65 +2298,20 @@ function export.source(args, alias_map, format_as_cite)
 			add_date("no_paren")
 		end
 
-		local source = parse_and_format_multivalued_annotated_text("source", "and")
-		if source then
-			add_with_sep("sourced from " .. source)
-		end
-
-		local original = parse_and_format_annotated_text("original", tag_with_cite, tag_with_cite)
-		local by = parse_and_format_multivalued_annotated_text("by", "and")
-		local origtype = a("deriv") or "translation"
-		if original or by then
-			add_with_sep(origtype .. " of " .. (original or "original") .. (by and " by " .. by or ""))
-		end
-
-		-- Handle origlang=, origworklang=. How we handle them depends on whether the original title or author are explicitly
-		-- given.
-		local origlang, origlang_fullname = a_with_name("origlang")
-		local origworklang, origworklang_fullname = a_with_name("origworklang")
-		local origlangtext, origworklangtext
-		if origlang then
-			origlangtext = "in " .. format_langs(origlang, origlang_fullname)
-		end
-		if origworklang then
-			origworklangtext = "overall work in " .. format_langs(origworklang, origworklang_fullname)
-		end
-		if origlang or origworklang then
-			if original or by then
-				local orig_annotations = {}
-				if origlangtext then
-					table.insert(orig_annotations, origlangtext)
-				end
-				if origworklangtext then
-					table.insert(orig_annotations, origworklangtext)
-				end
-				sep = nil
-				add_with_sep(" (" .. table.concat(orig_annotations, SEMICOLON_SPACE) .. ")")
-			else
-				add_with_sep(origtype .. " of original" .. (origlangtext and " " .. origlangtext or ""))
-				if origworklangtext then
-					sep = nil
-					add_with_sep(" (" .. origworklangtext .. ")")
-				end
+		if ind ~= "" and has_newversion() then
+			local formatted_new_date = format_date_args(a, get_full_paramname, alias_map, "", "", nil, "Please provide a date or year", true)
+			if formatted_new_date then
+				add_with_sep(formatted_new_date)
 			end
 		end
-
+		
 		-- Fetch date_published=/year_published=/month_published= and format appropriately.
-		local formatted_date_published = format_date_args(a, get_full_paramname, alias_map, "", "_published")
+		local formatted_date_published = format_date_args(a, get_full_paramname, alias_map, "", "_published", nil, nil, true)
 		local platform = parse_and_format_multivalued_annotated_text("platform", "and")
 		if formatted_date_published then
 			add_with_sep("published " .. formatted_date_published .. (platform and " via " .. platform or ""))
 		elseif platform then
 			add_with_sep("via " .. platform)
-		end
-
-		if ind ~= "" and has_newversion() then
-			local formatted_new_date, this_need_date = format_date_args(a, get_full_paramname, alias_map, "", "", nil, 
-				"Please provide a date or year")
-			need_date = need_date or this_need_date
-			if formatted_new_date then
-				add_with_sep(formatted_new_date)
-			end
 		end
 
 		-- From here on out, there should always be a preceding item, so we
@@ -1974,12 +2338,12 @@ function export.source(args, alias_map, format_as_cite)
 		end
 
 		add_identifier("bibcode", "[https://adsabs.harvard.edu/abs/", " →Bibcode]")
-		add_identifier("doi", "<span class=\"neverexpand\">[https://doi.org/", " →DOI]</span>")
+		add_identifier("doi", '<span class="neverexpand">[https://doi.org/', " →DOI]</span>")
 		add_identifier("isbn", "", "", isbn)
 		add_identifier("issn", "", "", issn)
 		add_identifier("jstor", "[https://www.jstor.org/stable/", " →JSTOR]")
 		add_identifier("lccn", "", "", lccn)
-		add_identifier("oclc", "[https://www.worldcat.org/title/", " →OCLC]")
+		add_identifier("oclc", "[https://search.worldcat.org/title/", " →OCLC]")
 		add_identifier("ol", "[https://openlibrary.org/works/OL", "/ →OL]")
 		add_identifier("pmid", "[https://www.ncbi.nlm.nih.gov/pubmed/", " →PMID]")
 		add_identifier("pmcid", "[https://www.ncbi.nlm.nih.gov/pmc/articles/", "/ →PMCID]")
@@ -1990,33 +2354,48 @@ function export.source(args, alias_map, format_as_cite)
 			small(id)
 		end
 
-		local archiveurl, archiveurl_fullname = aurl_with_name("archiveurl")
+		archiveurl, archiveurl_fullname = aurl_with_name("archiveurl")
 		if archiveurl then
 			add(", archived from ")
 			local url, url_fullname = aurl_with_name("url")
 			if not url then
 				-- attempt to infer original URL from archive URL; this works at
 				-- least for Wayback Machine (web.archive.org) URL's
-				url = rmatch(archiveurl, "/(https?:.*)$")
+				url = archiveurl:match("/(https?:.*)$")
 				if not url then
-					error(("When |%s= is specified, |%s= must also be included"):format(archiveurl_fullname,
-						url_fullname))
+					error(
+						("When |%s= is specified, |%s= must also be included"):format(archiveurl_fullname, url_fullname)
+					)
 				end
 			end
 			add("[" .. url .. " the original] on ")
 			local archivedate, archivedate_fullname = a_with_name("archivedate")
 			if archivedate then
 				add(format_date(archivedate))
-			elseif (string.sub(archiveurl, 1, 28) == "https://web.archive.org/web/") then
+			elseif string.sub(archiveurl, 1, 28) == "https://web.archive.org/web/" then
 				-- If the archive is from the Wayback Machine, then it already contains the date
-				-- Get the date and format into ISO 8601
-				local wayback_date = string.sub(archiveurl, 29, 29+7)
-				wayback_date = string.sub(wayback_date, 1, 4) .. "-" .. string.sub(wayback_date, 5, 6) .. "-" ..
-					string.sub(wayback_date, 7, 8)
+				-- Get the date and format it
+				local wayback_date = string.sub(archiveurl, 29, 29 + 7)
+				wayback_date = string.sub(wayback_date, 1, 4)
+					.. "-"
+					.. string.sub(wayback_date, 5, 6)
+					.. "-"
+					.. string.sub(wayback_date, 7, 8)
 				add(format_date(wayback_date))
+			elseif string.sub(archiveurl, 1, 21) == "https://megalodon.jp/" then
+				local megalodon_date = string.sub(archiveurl, 22, 25)
+					.. "-"
+					.. string.sub(archiveurl, 27, 28)
+					.. "-"
+					.. string.sub(archiveurl, 29, 30)
+				add(format_date(megalodon_date))
 			else
-				error(("When |%s= is specified, |%s= must also be included"):format(
-					archiveurl_fullname, archivedate_fullname))
+				error(
+					("When |%s= is specified, |%s= must also be included"):format(
+						archiveurl_fullname,
+						archivedate_fullname
+					)
+				)
 			end
 		end
 		if a("accessdate") then
@@ -2067,6 +2446,49 @@ function export.source(args, alias_map, format_as_cite)
 		handle_numeric_param("page", a("page_prefix") or "page", ", ")
 		handle_numeric_param("column", a("column_prefix") or "column", ", ")
 		handle_numeric_param("line", a("line_prefix") or "line", ", ")
+
+		local source = parse_and_format_multivalued_annotated_text("source", "and")
+		if source then
+			add(", sourced from " .. source)
+		end
+
+		local original = parse_and_format_annotated_text("original", tag_with_cite, tag_with_cite)
+		local by = parse_and_format_multivalued_annotated_text("by", "and")
+		local origtype = a("deriv") or "translation"
+		if original or by then
+			add(", " .. origtype .. " of " .. (original or "original") .. (by and " by " .. by or ""))
+		end
+
+		-- Handle origlang=, origworklang=. How we handle them depends on whether the original title or author are explicitly
+		-- given.
+		local origlang = a("origlang")
+		local origworklang = a("origworklang")
+		local origlangtext, origworklangtext
+		if origlang then
+			origlangtext = "in " .. format_langs(origlang)
+		end
+		if origworklang then
+			origworklangtext = "overall work in " .. format_langs(origworklang)
+		end
+		if origlang or origworklang then
+			if original or by then
+				local orig_annotations = {}
+				if origlangtext then
+					insert(orig_annotations, origlangtext)
+				end
+				if origworklangtext then
+					insert(orig_annotations, origworklangtext)
+				end
+				add(" (" .. concat(orig_annotations, SEMICOLON_SPACE) .. ")")
+			else
+				add(", " .. origtype .. " of original" .. (origlangtext and " " .. origlangtext or ""))
+				if origworklangtext then
+					sep = nil
+					add(" (" .. origworklangtext .. ")")
+				end
+			end
+		end
+
 		-- FIXME: Does this make sense? What is other=?
 		local other = parse_and_format_annotated_text("other")
 		if other then
@@ -2078,7 +2500,8 @@ function export.source(args, alias_map, format_as_cite)
 		-- Find maximum indexed author or last name.
 		local maxind = math.max(args.author.maxindex, args.last.maxindex)
 		-- Include max index of ancillary params so we get an error message about their use without the primary params.
-		local ancillary_params = { "trans-author", "authorlink", "trans-authorlink", "first", "trans-first", "trans-last" }
+		local ancillary_params =
+			{"trans-author", "authorlink", "trans-authorlink", "first", "trans-first", "trans-last"}
 		for _, ancillary in ipairs(ancillary_params) do
 			maxind = math.max(maxind, args[ancillary].maxindex)
 		end
@@ -2086,15 +2509,29 @@ function export.source(args, alias_map, format_as_cite)
 		local num_authors = 0
 		for i = 1, maxind do
 			local ind = i == 1 and "" or i
-			local author = args.author[i]
-			local last = args.last[i]
-			if args.author[i] or args.last[i] then
-				local this_num_authors = add_author(args.author[i], "author" .. ind, args["trans-author"][i],
-					"trans-author" .. ind, args.authorlink[i], "authorlink" .. ind, args["trans-authorlink"][i],
-					"trans-authorlink" .. ind, args.first[i], "first" .. ind, args["trans-first"][i], "trans-first" .. ind,
-					args.last[i], "last" .. ind, args["trans-last"][i], "trans-last" .. ind, last_first)
+			local author, last = args.author[i], args.last[i]
+			if author or last then
+				local this_num_authors = add_author(
+					author,
+					"author" .. ind,
+					args["trans-author"][i],
+					"trans-author" .. ind,
+					args.authorlink[i],
+					"authorlink" .. ind,
+					args["trans-authorlink"][i],
+					"trans-authorlink" .. ind,
+					args.first[i],
+					"first" .. ind,
+					args["trans-first"][i],
+					"trans-first" .. ind,
+					last,
+					"last" .. ind,
+					args["trans-last"][i],
+					"trans-last" .. ind,
+					last_first
+				)
 				num_authors = num_authors + this_num_authors
-				sep = ", "
+				sep = last_first and "; " or ", "
 			else
 				for _, cant_have in ipairs(ancillary_params) do
 					if args[cant_have][i] then
@@ -2112,14 +2549,16 @@ function export.source(args, alias_map, format_as_cite)
 			sep = nil
 			--Test for new version of work.
 			add(SEMICOLON_SPACE)
-			if args.newversion then -- newversion= is intended for English text, e.g. "quoted in" or "republished as".
-				add(args.newversion)
-			elseif not args.edition2 then
-				if has_new_title_or_author() then
-					add("republished as")
-				else
-					add("republished")
+			-- newversion= is intended for English text, e.g. "quoted in" or "republished as".
+			-- FIXME, explain the 'not args.edition2' here
+			local newversion = args.newversion or not args.edition2 and "republished as"
+			if newversion then
+				-- If no title, author or chapter, chop off "as" and "in" so we don't get e.g.
+				-- 'translated as c. 1025'.
+				if not has_new_title_or_author() then
+					newversion = newversion:gsub(" as$", ""):gsub(" in$", "")
 				end
+				add(newversion)
 			end
 			add(" ")
 			return ""
@@ -2139,18 +2578,29 @@ function export.source(args, alias_map, format_as_cite)
 		add("[")
 	end
 
+	bold_year = not format_as_cite
+	year_last = format_as_cite
+
+	formatted_date, need_date = format_date_args(
+		a,
+		get_full_paramname,
+		alias_map,
+		nil,
+		nil,
+		bold_year,
+		"Can we [[:Category:Requests for date|date]] this quote?",
+		year_last
+	)
+
+	-- Fetch origdate=/origyear=/origmonth= and format appropriately.
+	formatted_origdate = format_date_args(a, get_full_paramname, alias_map, "orig", nil, nil, nil, year_last)
+
+	local num_authors
 	if format_as_cite then
 		num_authors = add_authors(args, "last_first")
-        if author_outputted then
+		if author_outputted then
 			sep = " "
 		end
-
-		local need_date
-		formatted_date, need_date = format_date_args(a, get_full_paramname, alias_map, nil, nil, nil,
-			"Can we [[:Category:Requests for date|date]] this quote?")
-
-		-- Fetch origdate=/origyear=/origmonth= and format appropriately.
-		formatted_origdate = format_date_args(a, get_full_paramname, alias_map, "orig")
 
 		-- Display all the text that comes after the author, for the main portion.
 		postauthor("", num_authors, "format_as_cite")
@@ -2161,11 +2611,28 @@ function export.source(args, alias_map, format_as_cite)
 
 		-- Add the newversion author(s).
 		if args["2ndauthor"] or args["2ndlast"] then
-			num_authors = add_author(args["2ndauthor"], "2ndauthor", nil, nil, args["2ndauthorlink"], "2ndauthorlink", nil,
-				nil, args["2ndfirst"], "2ndfirst", nil, nil, args["2ndlast"], "2ndlast", nil, nil, "last_first")
+			num_authors = add_author(
+				args["2ndauthor"],
+				"2ndauthor",
+				nil,
+				nil,
+				args["2ndauthorlink"],
+				"2ndauthorlink",
+				nil,
+				nil,
+				args["2ndfirst"],
+				"2ndfirst",
+				nil,
+				nil,
+				args["2ndlast"],
+				"2ndlast",
+				nil,
+				nil,
+				"last_first"
+			)
 			sep = ", "
 		else
-			for _, cant_have in ipairs { "2ndauthorlink", "2ndfirst" } do
+			for _, cant_have in ipairs{"2ndauthorlink", "2ndfirst"} do
 				if args[cant_have] then
 					error(("Can't have |%s= without |2ndauthor= or |2ndlast="):format(cant_have))
 				end
@@ -2174,18 +2641,12 @@ function export.source(args, alias_map, format_as_cite)
 
 		-- Display all the text that comes after the author, for the "newversion" section.
 		postauthor(2, num_authors, "format_as_cite")
-
 	else
-
-		local formatted_date, need_date = format_date_args(a, get_full_paramname, alias_map, nil, nil, "bold year",
-			"Can we [[:Category:Requests for date|date]] this quote?")
 		if formatted_date then
 			need_comma = true
 			add(formatted_date)
 		end
 
-		-- Fetch origdate=/origyear=/origmonth= and format appropriately.
-		local formatted_origdate = format_date_args(a, get_full_paramname, alias_map, "orig")
 		if formatted_origdate then
 			need_comma = true
 			add(SPACE_LBRAC .. formatted_origdate .. RBRAC)
@@ -2208,11 +2669,27 @@ function export.source(args, alias_map, format_as_cite)
 
 		-- Add the newversion author(s).
 		if args["2ndauthor"] or args["2ndlast"] then
-			num_authors = add_author(args["2ndauthor"], "2ndauthor", nil, nil, args["2ndauthorlink"], "2ndauthorlink", nil,
-				nil, args["2ndfirst"], "2ndfirst", nil, nil, args["2ndlast"], "2ndlast", nil, nil)
+			num_authors = add_author(
+				args["2ndauthor"],
+				"2ndauthor",
+				nil,
+				nil,
+				args["2ndauthorlink"],
+				"2ndauthorlink",
+				nil,
+				nil,
+				args["2ndfirst"],
+				"2ndfirst",
+				nil,
+				nil,
+				args["2ndlast"],
+				"2ndlast",
+				nil,
+				nil
+			)
 			sep = ", "
 		else
-			for _, cant_have in ipairs { "2ndauthorlink", "2ndfirst" } do
+			for _, cant_have in ipairs{"2ndauthorlink", "2ndfirst"} do
 				if args[cant_have] then
 					error(("Can't have |%s= without |2ndauthor= or |2ndlast="):format(cant_have))
 				end
@@ -2221,21 +2698,17 @@ function export.source(args, alias_map, format_as_cite)
 
 		-- Display all the text that comes after the author, for the "newversion" section.
 		postauthor(2, num_authors)
-
-	end
-
-	if args.usenodot and not args.nodot then
-		add(".")
 	end
 
 	if not args.nocolon then
 		sep = nil
 		add(":")
+	elseif args.usenodot and not args.nodot then
+		add(".")
 	end
 
-
 	-- Concatenate output portions to form output text.
-	local output_text = table.concat(output)
+	local output_text = concat(output)
 
 	-- Remainder of code handles adding categories. We add one or more of the following categories:
 	--
@@ -2251,248 +2724,118 @@ function export.source(args, alias_map, format_as_cite)
 	--    Appendix: and Citations: pages.
 
 	local categories = {}
-
-	local termlang = get_first_lang(args.termlang or argslang, true)
+	local termlang = get_first_lang(args.termlang or argslang)
 
 	if args.nocat then
-		table.insert(tracking_categories, "Quotations using nocat parameter")
+		if format_as_cite then
+			insert(tracking_categories, "Citations using nocat parameter")
+		else
+			insert(tracking_categories, "Quotations using nocat parameter")
+		end
 	else
-		local title
-		if args.pagename then -- for testing, doc pages, etc.
-			title = mw.title.new(args.pagename)
-			if not title then
-				error(("Bad value for `args.pagename`: '%s'"):format(args.pagename))
+		-- don't create language tracking categories for citations
+		if not format_as_cite then
+			local title
+			if args.pagename then -- for testing, doc pages, etc.
+				title = mw.title.new(args.pagename)
+				if not title then
+					error(("Bad value for `args.pagename`: '%s'"):format(args.pagename))
+				end
+			else
+				title = mw.title.getCurrentTitle()
 			end
-		else
-			title = mw.title.getCurrentTitle()
-		end
-		-- Only add [[Citations:foo]] to [[:Category:LANG terms with quotations]] if [[foo]] exists.
-		local ok_to_add_cat
-		if title.nsText ~= "Citations" then
-			ok_to_add_cat = true
-		else
-			local mainspace_title = mw.title.new(title.text)
-			if mainspace_title and mainspace_title.exists then
+			-- Only add [[Citations:foo]] to [[:Category:LANG terms with quotations]] if [[foo]] exists.
+			local ok_to_add_cat
+			if title.nsText ~= "Citations" then
 				ok_to_add_cat = true
+			else
+				local mainspace_title = mw.title.new(title.text)
+				if mainspace_title and mainspace_title.exists then
+					ok_to_add_cat = true
+				end
 			end
-		end
-		if ok_to_add_cat then
-			table.insert(categories, termlang:getFullName() .. " terms with quotations")
+			if ok_to_add_cat then
+				insert(categories, termlang:getFullName() .. " terms with quotations")
+			end
 		end
 		if need_date then
-			local argslangobj = get_first_lang(argslang, 1)
-			table.insert(categories, "Requests for date in " .. argslangobj:getCanonicalName() .. " entries")
+			local argslangobj = get_first_lang(argslang)
+			insert(categories, "Requests for date in " .. argslangobj:getCanonicalName() .. " entries")
 		end
 	end
 
-	local FULLPAGENAME = mw.title.getCurrentTitle().fullText
-	return output_text .. (not lang and "" or
-		(#categories > 0 and require(utilities_module).format_categories(categories, lang, args.sort) or "") ..
-		(#tracking_categories > 0 and require(utilities_module).format_categories(tracking_categories, lang, args.sort,
-			nil, not require(usex_templates_module).page_should_be_ignored(FULLPAGENAME)) or ""))
+	return output_text .. (
+		not termlang and "" or
+		(#categories > 0 and format_categories(categories, termlang, args.sort) or "") .. (
+			#tracking_categories > 0
+				and format_categories(
+					tracking_categories,
+					termlang,
+					args.sort,
+					nil,
+					not page_should_be_ignored(mw.title.getCurrentTitle().fullText)
+				)
+			or ""
+		)
+	)
 end
 
-
-local function set_chapter_plain_for_song_av(p)
-	local track = p.get("track")
-	local time = p.get("time")
-	local at = p.get("at")
-	local chapter_plain_parts = {}
-	local function ins(text)
-		table.insert(chapter_plain_parts, text)
-	end
-	if track then
-		ins("track " .. track)
-		if time or at then
-			ins(", ")
-		end
-	end
-	if time then
-		ins(time .. " from the start")
-		if at then
-			ins(", " .. at)
-		end
-	elseif at then
-		ins(at)
-	end
-	local chapter_plain = table.concat(chapter_plain_parts)
-	if chapter_plain ~= "" then
-		p.set("chapter_plain", chapter_plain)
-	end
-end
-
-
---[==[
-Type-specific processing (for type= and type2=). The key is the type (which should correspond to the part of the
-template name after 'quote-' or 'cite-') and the value is an object with properties. Currently the only property
-supported is `process`, a function of one argument, which is an object of properties (especially, functions),
-conventionally notated as `p`. The properties supported by `p` are:
-
-* get(param): Retrieve the value of parameter `param`. Return value is nil if the parameter is nonexistent or empty.
-	This automatically converts parameters to their `newversion` form when type2= is being used; most parameters add 2
-	at the end, but `author`, `authorlink`, `first` and `last` become `2ndauthor`, `2ndauthorlink`, `2ndfirst` and
-	`2ndlast`.
-* set(param, value, noerror_if_exists): Set the value of `param` to `value`; if nil, remove the parameter's value.
-	This normally throws an error if `param` already has a value; use `noerror_if_exists` to suppress this.
-]==]
-
--- template nameEach spec is `{canon, aliases, with_newversion}` where `canon` is the canonical
+-- Alias specs for type= and type2=. Each spec is `{canon, aliases, with_newversion}` where `canon` is the canonical
 -- parameter (with "2" added if type2= is being handled), `aliases` is a comma-separated string of aliases (with "2"
 -- added if type2= is being handled, except for numeric params), and `with_newversion` indicates whether we should
 -- process this spec if type2= is being handled.
-local type_specs = {
-	av = {
-		process = function(p)
-			p.process_aliases {
-				{"author", "writer,writers"},
-				{"chapter", "episode"},
-				{"chapterurl", "episodeurl"},
-				{"trans-chapter", "trans-episode"},
-				{"chapter_series", "episode_series"},
-				{"chapter_seriesvolume", "episode_seriesvolume"},
-				{"chapter_number", "episode_number"},
-				{"chapter_plain", "episode_plain"},
-				{"volume", "season"},
-				{"volumes", "seasons"},
-				{"volume_plain", "season_plain"},
-				{"volumeurl", "seasonurl"},
-				{"platform", "network"},
-			}
-			p.set("volume_prefix", "season")
-			p.set("number_prefix", "episode")
-			set_chapter_plain_for_song_av(p)
-		end,
-		no_error_on = {"track", "time", "at"},
-	},
+local type_alias_specs = {
+    av = {
+    	{"author", "writer,writers", true},
+    	{"chapter", "episode", true},
+    	{"chapterurl", "episodeurl", true},
+    	{"trans-chapter", "trans-episode", true},
+    	{"chapter_tlr", "episode_tlr,episode_tlrs,episode_translator,episode_translators", true},
+    	{"chapter_edtlr", "episode_edtlr,episode_edtlrs,episode_editor_translator,episode_editors_translators", true},
+    	{"chapter_series", "episode_series", true},
+    	{"chapter_seriesvolume", "episode_seriesvolume", true},
+    	{"chapter_number", "episode_number", true},
+    	{"chapter_plain", "episode_plain", true},
+    	{"volume", "season", true},
+    	{"volumes", "seasons", true},
+    	{"volume_plain", "season_plain", true},
+    	{"volumeurl", "seasonurl", true},
+    	{"platform", "network", true},
+    },
 	book = {
-		process = function(p)
-			p.process_aliases {
-				{"author", "3"},
-				{"chapter", "entry"},
-				{"chapterurl", "entryurl"},
-				{"trans-chapter", "trans-entry"},
-				{"chapter_series", "entry_series"},
-				{"chapter_seriesvolume", "entry_seriesvolume"},
-				{"chapter_number", "entry_number"},
-				{"chapter_plain", "entry_plain"},
-				{"title", "4"},
-				{"url", "5"},
-				{"year", "2"},
-				{"page", "6"},
-				{"text", "7"},
-				{"t", "8"},
-			}
-		end,
-	},
-	hansard = {
-		process = function(p)
-			p.process_aliases {
-				{"author", "speaker"},
-				{"chapter", "debate,title"},
-				{"series", "house"},
-			}
-			p.set("title", p.get("report") or "parliamentary debates")
-		end,
-		no_error_on = {"report"},
+		{"author", "3"},
+		{"title", "4"},
+		{"url", "5"},
+		{"year", "2"},
+		{"page", "6"},
+		{"text", "7"},
+		{"t", "8"},
 	},
 	journal = {
-		process = function(p)
-			p.process_aliases {
-				{"year", "2"},
-				{"author", "3"},
-				{"chapter", "title,article,4"},
-				{"chapterurl", "titleurl,articleurl"},
-				{"trans-chapter", "trans-title,trans-article"},
-				{"chapter_tlr", "article_tlr"},
-				{"chapter_series", "article_series"},
-				{"chapter_seriesvolume", "article_seriesvolume"},
-				{"chapter_number", "article_number"},
-				{"chapter_plain", "title_plain,article_plain"},
-				{"title", "journal,magazine,newspaper,work,5"},
-				{"trans-title", "trans-journal,trans-magazine,trans-newspaper,trans-work"},
-				{"url", "6"},
-				{"page", "7"},
-				{"source", "newsagency"},
-				{"text", "8"},
-				{"t", "9"},
-			}
-		end,
-	},
-	["mailing list"] = {
-		set_params = function(get, set)
-			set("author", get("author") or get("email") and " &lt;''" .. get("email") .. "''&rt;")
-			local group_or_list = get("group") or get("list")
-			if group_or_list then
-				set("title", "<kbd>" .. group_or_list .. "</kbd> [[w:Electronic mailing list|mailing list]]")
-			else
-				set(maintenance_line("Please supply mailing list name in group= or list="))
-			end
-			set("section", get("id") and "message-id &lt;" .. get("id") .. "&gt;")
-			if not get("url") then
-				local googleid = get("googleid")
-				if googleid then
-					local group = 
-				set("url", get("url") or get("googleid") and "http://groups.google.com/group/{{{group|{{{newsgroup|{{{5|}}}}}}}}}/browse_thread/thread/{{{googleid}}}}}}}}")
-	newsgroup = {
-		process = function(p)
-			-- These must happen before setting title= from group=/newsgroup=.
-			p.process_aliases {
-				{"chapter", "title"},
-				{"trans-chapter", "trans-title"},
-			}
-			local author = p.get("author")
-			local email = p.get("email")
-			if email then
-				p.set("author", (author or "") .. " &lt;''" .. email .. "''&gt;", "noerror")
-			end
-			local group = p.get("group") or p.get("newsgroup")
-			if group then
-				p.set("title", "<kbd>" .. group .. "</kbd>")
-			end
-
-			p.set("title", p.get("report") or "parliamentary debates")
-		end,
-		no_error_on = {"report"},
-	},
-	song = {
-		process = function(p)
-			p.set("default-authorlabel", "(lyrics and music)")
-			p.set("chapter", p.get("title") or maintenance_line("Please provide the song title in title="))
-			set_chapter_plain_for_song_av(p)
-			-- These must happen after retrieving title= for setting chapter=.
-			p.process_aliases {
-				{"chapterurl", "titleurl"},
-				{"trans-chapter", "trans-title"},
-				{"chapter_series", "title_series"},
-				{"chapter_seriesvolume", "title_seriesvolume"},
-				{"chapter_number", "title_number"},
-				{"title", "album,work"},
-				{"trans-title", "trans-album,trans-work"},
-			}
-			local url = p.get("url")
-			local time = p.get("time")
-			local and_t
-			if url and time and url:find("^https://www%.youtube%.com/watch%?v=") then
-				local h, m, s = time:match("^(%d+):(%d%d):(%d%d)$")
-				if h then
-					and_t = ("%sh%sm%ss"):format(h, m, s)
-				else
-					m, s = time:match("^(%d+):(%d%d)$")
-					if m then
-						and_t = m == "0" and ("%ss"):format(s) or ("%sm%ss"):format(m, s)
-					end
-				end
-			end
-			if and_t then
-				p.set("url", url .. and_t, "noerror")
-			end
-		end,
-		no_error_on = {"title", "track", "time", "at"},
+		{"year", "2"},
+		{"author", "3"},
+		{"chapter", "title,article,4", true},
+		{"chapterurl", "titleurl,articleurl", true},
+		{"trans-chapter", "trans-title,trans-article", true},
+		{"chapter_tlr", "title_tlr,title_tlrs,title_translator,title_translators,article_tlr,article_tlrs,article_translator,article_translators", true},
+		{"chapter_edtlr", "title_edtlr,title_edtlrs,title_editor_translator,title_editors_translators,article_edtlr,article_edtlrs,article_editor_translator,article_editors_translators", true},
+		{"chapter_series", "title_series,article_series", true},
+		{"chapter_seriesvolume", "title_seriesvolume,article_seriesvolume", true},
+		{"chapter_number", "title_number,article_number", true},
+		{"chapter_plain", "title_plain,article_plain", true},
+		{"title", "journal,magazine,newspaper,work,5", true},
+		{"trans-title", "trans-journal,trans-magazine,trans-newspaper,trans-work", true},
+		{"tlr", "journal_tlr,journal_tlrs,journal_translator,journal_translators,magazine_tlr,magazine_tlrs,magazine_translator,magazine_translators,newspaper_tlr,newspaper_tlrs,newspaper_translator,newspaper_translators,work_tlr,work_tlrs,work_translator,work_translators", true},
+		{"edtlr", "journal_edtlr,journal_edtlrs,journal_editor_translator,journal_editors_translators,magazine_edtlr,magazine_edtlrs,magazine_editor_translator,magazine_editors_translators,newspaper_edtlr,newspaper_edtlrs,newspaper_editor_translator,newspaper_editors_translators,work_edtlr,work_edtlrs,work_editor_translator,work_editors_translators", true},
+		{"url", "6,journalurl,magazineurl,newspaperurl,workurl", true},
+		{"page", "7"},
+		{"source", "newsagency,news_agency", true},
+		{"text", "8"},
+		{"t", "9"},
 	},
 }
 
-
--- Process internally-handled aliases related to type= or type2=. `args` is a table of arguments; `typ` is the value of
+-- Process interally-handled aliases related to type= or type2=. `args` is a table of arguments; `typ` is the value of
 -- type= or type2=; newversion=true if we're dealing with type2=; alias_map is used to keep track of alias mappings
 -- seen.
 local function process_type_aliases(args, typ, newversion, alias_map)
@@ -2501,21 +2844,26 @@ local function process_type_aliases(args, typ, newversion, alias_map)
 	if not type_alias_specs[typ] then
 		local possible_values = {}
 		for possible, _ in pairs(type_alias_specs) do
-			table.insert(possible_values, possible)
+			insert(possible_values, possible)
 		end
-		table.sort(possible_values)
-		error(("Unrecognized value '%s' for type%s=; possible values are %s"):format(
-			typ, ind, table.concat(possible_values, ",")))
+		sort(possible_values)
+		error(
+			("Unrecognized value '%s' for type%s=; possible values are %s"):format(
+				typ,
+				ind,
+				concat(possible_values, ",")
+			)
+		)
 	end
 
 	for _, alias_spec in ipairs(type_alias_specs[typ]) do
 		local canon, aliases, with_newversion = unpack(alias_spec)
 		if with_newversion or not newversion then
 			canon = canon .. ind
-			aliases = rsplit(aliases, ",", true)
+			aliases = split(aliases, ",", true)
 			local saw_alias = nil
 			for _, alias in ipairs(aliases) do
-				if rfind(alias, "^[0-9]+$") then
+				if alias:match("^%d+$") then
 					alias = tonumber(alias)
 					if deprecated then
 						alias = alias - 1
@@ -2536,7 +2884,7 @@ local function process_type_aliases(args, typ, newversion, alias_map)
 					error(("|%s= is an alias of |%s=; cannot specify a value for both"):format(saw_alias, canon))
 				end
 				args[canon] = args[saw_alias]
-				-- Wipe out the original after copying. This important in case of a param that has general significance
+				-- Wipe out the original after copying. This is important in case of a param that has general significance
 				-- but has been redefined (e.g. {{quote-av}} redefines number= for the episode number, and
 				-- {{quote-journal}} redefines title= for the chapter= (article). It's also important due to unhandled
 				-- parameter checking.
@@ -2546,7 +2894,6 @@ local function process_type_aliases(args, typ, newversion, alias_map)
 		end
 	end
 end
-
 
 -- Clone and combine frame's and parent's args while also assigning nil to empty strings. Handle aliases and ignores.
 local function clone_args(direct_args, parent_args)
@@ -2566,12 +2913,23 @@ local function clone_args(direct_args, parent_args)
 	-- processing, saying that title= and its alias album= are both present.
 	local ignores = ine(direct_args.ignore)
 	if ignores then
-		for ignore in rgsplit(ignores, "%s*,%s*") do
+		for ignore in gsplit(ignores, "%s*,%s*") do
 			args[ignore] = nil
 		end
 	end
 
 	local alias_map = {}
+	local other_controls = {}
+	
+	-- noroman
+	local noroman = ine(direct_args.noroman)
+	if noroman then
+		other_controls.overrides = other_controls.overrides or {}
+		for param in gsplit(noroman, "%s*,%s*") do
+			other_controls.overrides[param] = (other_controls.overrides[param] or {})
+			other_controls.overrides[param].noroman = true
+		end
+	end
 
 	-- Process internally-specified aliases using type= or type2=.
 	local typ = args.type or direct_args.type
@@ -2601,17 +2959,17 @@ local function clone_args(direct_args, parent_args)
 	local aliases = ine(direct_args.alias)
 	if aliases then
 		-- Allow and discard a trailing semicolon, to make managing multiple aliases easier.
-		aliases = rsub(aliases, "%s*;$", "")
-		for alias_spec in rgsplit(aliases, "%s*;%s*") do
-			local alias_spec_parts = rsplit(alias_spec, "%s*:%s*")
+		aliases = ugsub(aliases, "%s*;$", "")
+		for alias_spec in gsplit(aliases, "%s*;%s*") do
+			local alias_spec_parts = split(alias_spec, "%s*:%s*")
 			if #alias_spec_parts ~= 2 then
 				error(("Alias spec '%s' should have one colon in it"):format(alias_spec))
 			end
 			local dest, sources = unpack(alias_spec_parts)
-			sources = rsplit(sources, "%s*,%s*")
+			sources = split(sources, "%s*,%s*")
 			local saw_source = nil
 			for _, source in ipairs(sources) do
-				if rfind(source, "^[0-9]+$") then
+				if source:match("^%d+$") then
 					source = tonumber(source)
 				end
 				if args[source] then
@@ -2641,144 +2999,261 @@ local function clone_args(direct_args, parent_args)
 	-- in parent_args (they are params we overwrite in the direct args).
 	local error_ifs = ine(direct_args.error_if)
 	if error_ifs then
-		for error_if in rgsplit(error_ifs, "%s*,%s*") do
+		for error_if in gsplit(error_ifs, "%s*,%s*") do
 			if ine(parent_args[error_if]) then
-				error(("Cannot specify a value |%s=%s as it would be overwritten or ignored"):format(error_if, ine(parent_args[error_if])))
+				error(
+					("Cannot specify a value |%s=%s as it would be overwritten or ignored"):format(
+						error_if,
+						ine(parent_args[error_if])
+					)
+				)
 			end
 		end
 	end
-	
+
 	for pname, param in pairs(direct_args) do
 		-- ignore control params
-		if pname ~= "ignore" and pname ~= "alias" and pname ~= "error_if" then
+		if pname ~= "ignore" and pname ~= "alias" and pname ~= "error_if" and pname ~= "noroman" then
 			args[pname] = ine(param)
 		end
 	end
 
-	return args, alias_map
+	return args, alias_map, other_controls
 end
 
 local function get_args(frame_args, parent_args, require_lang)
 	-- FIXME: We are processing arguments twice, once in clone_args() and then again in [[Module:parameters]]. This is
 	-- wasteful of memory.
 
-	local cloned_args, alias_map = clone_args(frame_args, parent_args)
+	local cloned_args, alias_map, other_controls = clone_args(frame_args, parent_args)
 	local deprecated = ine(parent_args.lang)
+
+	local alias_of_t = {alias_of = "t"}
+	local boolean = {type = "boolean"}
+	local language_sublist = {type = "language", sublist = true}
+	local list_allow_holes = {list = true, allow_holes = true}
+	local script = {type = "script"}
 
 	-- First, the "single" params that don't have FOO2 or FOOn versions.
 	local params = {
-        -- FIXME: temporary, set required=1 when cite- calls use 1= as lang
-		[deprecated and "lang" or 1] = {required = require_lang, default = "und"},
-		newversion = {},
-		["2ndauthor"] = {},
-		["2ndauthorlink"] = {},
-		["2ndfirst"] = {},
-		["2ndlast"] = {},
-		nocat = {type = "boolean"},
-		nocolon = {type = "boolean"},
-		lang2 = {},
+		[deprecated and "lang" or 1] = {required = require_lang, type = "language", sublist = true, default = "und"},
+		["lang2"] = language_sublist,
+		["newversion"] = true,
+		["author"] = list_allow_holes,
+		["2ndauthor"] = true,
+		["trans-author"] = list_allow_holes,
+		["authorlink"] = list_allow_holes,
+		["2ndauthorlink"] = true,
+		["trans-authorlink"] = list_allow_holes,
+		["first"] = list_allow_holes,
+		["2ndfirst"] = true,
+		["trans-first"] = list_allow_holes,
+		["last"] = list_allow_holes,
+		["2ndlast"] = true,
+		["trans-last"] = list_allow_holes,
+		["nocat"] = boolean,
+		["nocolon"] = boolean,
 
 		-- quote params
-		text = {},
+		text = true,
 		passage = {alias_of = "text"},
-		tr = {},
+		tr = true,
 		transliteration = {alias_of = "tr"},
-		ts = {},
+		ts = true,
 		transcription = {alias_of = "ts"},
-		norm = {},
+		norm = true,
 		normalization = {alias_of = "norm"},
-		sc = {},
-		normsc = {},
-		sort = {},
-		subst = {},
-		footer = {},
-		lit = {},
-		t = {},
-		translation = {alias_of = "t"},
-		gloss = {alias_of = "t"},
-		lb = {},
-		brackets = {type = "boolean"},
+		normurl = true,
+		normalizationurl = {alias_of = "normurl"},
+		sc = script,
+		normsc = script,
+		sort = true,
+		subst = true,
+		footer = true,
+		lit = true,
+		liturl = true,
+		t = true,
+		turl = true,
+		translation = alias_of_t,
+		translationurl = {alias_of = "turl"},
+		gloss = alias_of_t,
+		ll = true,
+		lb = {alias_of = "ll", deprecated = true},
+		brackets = boolean,
 		-- original quote params
-		origtext = {},
-		origtr = {},
-		origts = {},
-		orignorm = {},
-		origsc = {},
-		orignormsc = {},
-		origsubst = {},
-		origlb = {},
+		origtext = true,
+		origtr = true,
+		origts = true,
+		origurl = true,
+		orignorm = true,
+		origsc = script,
+		orignormsc = script,
+		orignormurl = true,
+		origsubst = true,
+		origll = true,
+		origlb = {alias_of = "origll", deprecated = true},
 
-		["usenodot"] = {type = "boolean"},
-		["nodot"] = {type = "boolean"},
+		usenodot = boolean,
+		nodot = boolean,
+		inline = boolean,
 
+		asquote = boolean,
+		ascite = boolean,
 	}
 
-	-- Then the list params (which have FOOn versions).
-	local list_spec = {list = true, allow_holes = true}
-	for _, list_param in ipairs {
-		"author", "last", "first", "authorlink", "trans-author", "trans-last", "trans-first", "trans-authorlink"
+	-- Most params have PARAM2 variants for use with `newversion`. FIXME: We should generalize this to
+	-- allow PARAMN variants for any N.
+	local function add_with_2(param, value)
+		params[param] = value
+		params[param .. "2"] = value
+	end
+
+	local function alias_with_2(alias, canon)
+		params[alias] = {alias_of = canon}
+		params[alias .. "2"] = {alias_of = canon .. "2"}
+	end
+		
+	for _, param12 in ipairs{
+		"worklang",
+		"termlang",
+		"origlang",
+		"origworklang"
 	} do
-		params[list_param] = list_spec
+		add_with_2(param12, language_sublist)
 	end
 
 	-- Then the newversion params (which have FOO2 versions).
-	for _, param12 in ipairs {
+	for _, param12 in ipairs{
 		-- author-like params; author params themselves are either list params (author=, last=, etc.) or single params
 		-- (2ndauthor=, 2ndlast=, etc.)
-		"coauthors", "quotee", "tlr", "editor", "editors", "mainauthor", "compiler", "compilers", "director", "directors",
-		"lyricist", "lyrics-translator", "composer", "role", "actor", "artist", "feat",
+		"coauthors",
+		"quotee",
+		"tlr",
+		"edtlr",
+		"editor",
+		"editors",
+		"mainauthor",
+		"compiler",
+		"compilers",
+		"director",
+		"directors",
+		"lyricist",
+		"lyrics-translator",
+		"composer",
+		"role",
+		"actor",
+		"artist",
+		"feat",
 
 		-- author control params
 		"default-authorlabel",
 		"authorlabel",
 
 		-- title
-		"title", "trans-title", "series", "seriesvolume", "notitle",
+		"title",
+		"trans-title",
+		"series",
+		"seriesvolume",
+		"notitle",
+
+		-- entry
+		"entry",
+		"entryurl",
+		"trans-entry",
 
 		-- chapter
-		"chapter", "chapterurl", "chapter_number", "chapter_plain", "chapter_series", "chapter_seriesvolume",
-		"trans-chapter", "chapter_tlr",
+		"chapter",
+		"chapterurl",
+		"chapter_number",
+		"chapter_plain",
+		"chapter_series",
+		"chapter_seriesvolume",
+		"trans-chapter",
+		"chapter_tlr",
+		"chapter_edtlr",
 
 		-- section
-		"section", "sectionurl", "section_number", "section_plain", "section_series", "section_seriesvolume",
+		"section",
+		"sectionurl",
+		"section_number",
+		"section_plain",
+		"section_series",
+		"section_seriesvolume",
 		"trans-section",
 
 		-- other video-game params
-		"system", "scene", "level",
+		"system",
+		"scene",
+		"level",
 
 		-- URL
-		"url", "urls", "archiveurl",
+		"url",
+		"urls",
+		"archiveurl",
 
 		-- edition
-		"edition", "edition_plain",
-
-		-- language params
-		"worklang", "termlang", "origlang", "origworklang",
+		"edition",
+		"edition_plain",
 
 		-- ID params
-		"bibcode", "doi", "isbn", "issn", "jstor", "lccn", "oclc", "ol", "pmid", "pmcid", "ssrn", "urn", "id",
+		"bibcode",
+		"doi",
+		"isbn",
+		"issn",
+		"jstor",
+		"lccn",
+		"oclc",
+		"ol",
+		"pmid",
+		"pmcid",
+		"ssrn",
+		"urn",
+		"id",
 
 		-- misc date params; most date params handled below
-		"archivedate", "accessdate", "nodate",
+		"archivedate",
+		"accessdate",
+		"nodate",
 
 		-- numeric params handled below
 
 		-- other params
-		"type", "genre", "format", "medium", "others", "quoted_in", "location", "publisher",
-		"original", "by", "deriv",
-		"note", "note_plain",
-		"other", "source", "platform",
+		"type",
+		"genre",
+		"format",
+		"medium",
+		"others",
+		"quoted_in",
+		"location",
+		"publisher",
+		"original",
+		"by",
+		"deriv",
+		"note",
+		"note_plain",
+		"other",
+		"source",
+		"platform",
 	} do
-		params[param12] = {}
-		params[param12 .. "2"] = {}
+		add_with_2(param12, true)
 	end
 
 	-- Then the aliases of newversion params (which have FOO2 versions).
-	for _, param12_aliased in ipairs {
+	for _, param12_aliased in ipairs{
 		{"role", "roles"},
 		{"role", "speaker"},
+		{"tlr", "tlrs"},
 		{"tlr", "translator"},
 		{"tlr", "translators"},
+		{"edtlr", "edtlrs"},
+		{"edtlr", "editor_translator"},
+		{"edtlr", "editors_translators"},
+		{"chapter_tlr", "chapter_tlrs"},
+		{"chapter_tlr", "chapter_translator"},
+		{"chapter_tlr", "chapter_translators"},
+		{"chapter_edtlr", "chapter_edtlrs"},
+		{"chapter_edtlr", "chapter_editor_translator"},
+		{"chapter_edtlr", "chapter_editors_translators"},
 		{"doi", "DOI"},
 		{"isbn", "ISBN"},
 		{"issn", "ISSN"},
@@ -2792,29 +3267,33 @@ local function get_args(frame_args, parent_args, require_lang)
 		{"urn", "URN"},
 	} do
 		local canon, alias = unpack(param12_aliased)
-		params[alias] = {alias_of = canon}
-		params[alias .. "2"] = {alias_of = canon .. "2"}
+		alias_with_2(alias, canon)
 	end
 
 	-- Then the date params.
-	for _, datelike in ipairs { {"", ""}, {"orig", ""}, {"", "_published"} } do
+	for _, datelike in ipairs{{"", ""}, {"orig", ""}, {"", "_published"}} do
 		local pref, suf = unpack(datelike)
-		for _, arg in ipairs { "date", "year", "month", "start_date", "start_year", "start_month" } do
-			params[pref .. arg .. suf] = {}
-			params[pref .. arg .. suf .. "2"] = {}
+		for _, arg in ipairs{"date", "year", "month", "start_date", "start_year", "start_month"} do
+			add_with_2(pref .. arg .. suf, true)
 		end
 	end
 
+	local numeric_param_suffixes = {"", "s", "_plain", "url", "_prefix"}
 	-- Then the numeric params.
-	for _, numeric in ipairs { "volume", "issue", "number", "line", "page", "column" } do
-		for _, suf in ipairs { "", "s", "_plain", "url", "_prefix" } do
-			params[numeric .. suf] = {}
-			params[numeric .. suf .. "2"] = {}
+	for _, numeric in ipairs{"volume", "issue", "number", "line", "page", "column"} do
+		for _, suf in ipairs(numeric_param_suffixes) do
+			add_with_2(numeric .. suf, true)
+		end
+	end
+	-- And the aliases of numeric params.
+	for _, numeric_aliased in ipairs{{"volume", "vol"}} do
+		local canon, alias = unpack(numeric_aliased)
+		for _, suf in ipairs(numeric_param_suffixes) do
+			alias_with_2(alias .. suf, canon .. suf)
 		end
 	end
 
-	args = require(parameters_module).process(cloned_args, params, nil, "quote", "quote_t")
-	return args, alias_map
+	return process_params(cloned_args, params), alias_map, other_controls
 end
 
 local function get_origtext_params(args)
@@ -2824,38 +3303,36 @@ local function get_origtext_params(args)
 		-- hyphens (there are more restrictions but this is close enough). Also check for nonstandard Latin etymology
 		-- language codes (e.g. VL. or LL.). (There used to be more nonstandard codes but they have all been
 		-- eliminated.)
-		origtextlang, origtext = args.origtext:match("^([a-z][a-z][a-z-]*):([^ ].*)$")
+		origtextlang, origtext = args.origtext:match("^(%l%l[%l-]*):([^ ].*)$")
 		if not origtextlang then
 			-- Special hack for Latin variants, which can have nonstandard etym codes, e.g. VL., LL.
-			origtextlang, origtext = args.origtext:match("^([A-Z]L%.):([^ ].*)$")
+			origtextlang, origtext = args.origtext:match("^(%uL%.):([^ ].*)$")
 		end
 		if not origtextlang then
 			error("origtext= should begin with a language code prefix")
 		end
-		origtextlang = require("Module:languages").getByCode(origtextlang, "origtext", "allow etym")
-		origsc = args.origsc and require(scripts_module).getByCode(args.origsc, "origsc") or nil
-		orignormsc = args.orignormsc == "auto" and args.orignormsc or
-			args.orignormsc and require(scripts_module).getByCode(args.orignormsc, "orignormsc") or nil
+		origtextlang = get_lang(origtextlang, nil, "allow etym") or
+			error("origtext= should begin with a language code prefix")
+		origsc = args.origsc
+		orignormsc = args.orignormsc
 	else
-		for _, noparam in ipairs { "origtr", "origts", "origsc", "orignorm", "orignormsc", "origsubst", "origlb" } do
+		for _, noparam in ipairs{"origtr", "origts", "origsc", "orignorm", "orignormsc", "origsubst", "origll"} do
 			if args[noparam] then
 				error(("Cannot specify %s= without origtext="):format(noparam))
 			end
 		end
 	end
-    return origtext, origtextlang, origsc, orignormsc
+	return origtext, origtextlang, origsc, orignormsc
 end
 
-local function get_quote(args, usex_args)
-
+local function get_quote(args, is_cite)
 	local text = args.text
 	local gloss = args.t
 	local tr = args.tr
 	local ts = args.ts
 	local norm = args.norm
-	local sc = args.sc and require(scripts_module).getByCode(args.sc, "sc") or nil
-	local normsc = args.normsc == "auto" and args.normsc or
-		args.normsc and require(scripts_module).getByCode(args.normsc, "normsc") or nil
+	local sc = args.sc
+	local normsc = args.normsc
 
 	-- Fetch original-text parameters.
 	local origtext, origtextlang, origsc, orignormsc = get_origtext_params(args)
@@ -2864,201 +3341,186 @@ local function get_quote(args, usex_args)
 	if text or gloss or tr or ts or norm or args.origtext then
 		-- Pass "und" here rather than cause an error; there will be an error on mainspace, Citations, etc. pages
 		-- in any case in source() if the language is omitted.
-		local lang = get_first_lang(args[1] or args.lang, 1)
-		local termlang = args.termlang and get_first_lang(args.termlang, "termlang") or lang
+		local lang = get_first_lang(args[1] or args.lang)
+		local termlang = args.termlang and get_first_lang(args.termlang) or lang
 
 		local usex_data = {
 			lang = lang,
 			termlang = termlang,
 			usex = text,
+			-- We don't supply url here as we handle url= separately.
 			sc = sc,
 			translation = gloss,
+			translationurl = args.turl,
 			normalization = norm,
 			normsc = normsc,
+			normurl = args.normurl,
 			transliteration = tr,
 			transcription = ts,
 			brackets = args.brackets,
 			subst = args.subst,
 			lit = args.lit,
+			liturl = args.liturl,
 			footer = args.footer,
-			qq = parse_and_format_labels(args.lb, lang),
+			qq = parse_and_format_labels(args.ll, lang),
 			quote = "quote-meta",
 			orig = origtext,
 			origlang = origtextlang,
 			origsc = origsc,
+			origurl = args.origurl,
 			orignorm = args.orignorm,
 			orignormsc = orignormsc,
+			orignormurl = args.orignormurl,
 			origtr = args.origtr,
 			origts = args.origts,
 			origsubst = args.origsubst,
-			origqq = parse_and_format_labels(args.origlb, lang),
+			origqq = parse_and_format_labels(args.origll, lang),
+			noreq = args.noreq,
+			nocat = is_cite or args.nocat,
 		}
 
-        if usex_args then
-			for k, v in pairs(usex_args) do
-				usex_data[k] = v
+		if args.inline then
+			-- don't let usex format the footer, otherwise it gets inlined with the rest of the quoted text
+			usex_data.footer = nil
+			usex_data.inline = 1
+
+			text = format_usex(usex_data)
+			if text then
+				text = " “" .. text .. "”"
+			else
+				text = ""
 			end
+			if args.footer then
+				text = text .. "<dl><dd>" .. args.footer .. "</dd></dl>"
+			end
+		else
+			text = "<dl><dd>" .. format_usex(usex_data) .. "</dd></dl>"
 		end
-
-		return require(usex_module).format_usex(usex_data)
+	elseif args.footer then
+		text = "<dl><dd>" .. args.footer .. "</dd></dl>"
 	end
-
+	return text
 end
-
 
 -- External interface, meant to be called from a template. Replaces {{quote-meta}} and meant to be the primary
 -- interface for {{quote-*}} templates.
 function export.quote_t(frame)
-    local args, alias_map = get_args(frame.args, frame:getParent().args, "require_lang")
-
-	local parts = {}
-	local function ins(text)
-		table.insert(parts, text)
+	local args, alias_map, other_controls = get_args(frame.args, frame:getParent().args, "require_lang")
+	if args.ascite then
+		return export.cite_t(frame)
 	end
 
-	ins('<div class="citation-whole"><span class="cited-source">')
-	ins(export.source(args, alias_map))
-	ins("</span><dl><dd>")
-
-    --ins(get_quote(args))
-    ins(get_quote(args))
-
-	ins("</dd></dl></div>")
-	local retval = table.concat(parts)
-	return deprecated and frame:expandTemplate{title = "check deprecated lang param usage", args = {retval, lang = args.lang}} or retval
+	return show_quote(args, alias_map, other_controls)
 end
 
-
-local function cite_t(frame)
-	local parent_args = {}
-	for k, v in pairs(frame:getParent().args) do
-		if k == "language" then
-			k = "lang"
-		end
-		parent_args[k] = v
-	end
-
+function show_quote(args, alias_map, other_controls)
 	local parts = {}
-	local function ins(text)
-		table.insert(parts, text)
-	end
 
-    -- FIXME: temporary, remove when cite- calls use 1= as lang
-    -- if 1= is defined and is not a valid language code, assume that the cite- template
-    -- is using the older style where 1= is the year. Shift all numbered params by 1
-    -- and set 1= as lang= (if available) or "und"
-    if ine(parent_args[1]) then
-		local langobj = get_first_lang(ine(parent_args[1]))
+	insert(parts, '<div class="citation-whole"><span class="cited-source">')
+	insert(parts, export.source(args, alias_map, nil, other_controls))
+	insert(parts, "</span>")
 
-	    -- 1 is not a valid language code, assume it's a year for backwards compatability
-        -- increase all numbered parameters by 1 to make room for 1= as lang_id(s)
-	    if langobj == nil then
-			-- add tracking category for cleanup
-			ins("[[Category:Pages using bad params when calling Template:cite-old]]")
-			for x=10,2,-1 do
-				parent_args[x] = parent_args[x-1]
-			end
-			parent_args[1] = parent_args.lang or "und"
-	    end
-	else
-		parent_args[1] = parent_args.lang or "und"
-    end
-	-- delete "lang" to avoid triggering deprecated lang= handling (used by quote-* templates)
-	parent_args.lang = nil
+	insert(parts, get_quote(args))
 
-    local args, alias_map = get_args(frame.args, parent_args)
-	
-	-- don't nag for translations
-	if args.text and not args.t then
-		args.t = "-"
-	end
-
-	local len_visible = args.text and ulen(rsubn(args.text, "<[^<>]+>", "")) or 0
-
-	local use_inline_quotes = args.text and ((not args.t or args.t == "-") or len_visible<80) and len_visible<=300 and not string.match(args.text, "<br>")
-	if len_visible == 0 then
-		args.nocolon = true
-	end
-
-	ins('<span class="citation-whole"><span class="cited-source">')
-	ins(export.source(args, alias_map, "format_as_cite"))
-	ins("</span>")
-
-    if use_inline_quotes then
-		-- don't let usex format the footer, otherwise it gets inlined with the rest of the quoted text
-	    local text = get_quote(args, {inline=use_inline_quotes, footer=nil})
-		if text then
-			ins(" “" .. text  .. "”")
-		end
-		if args.footer then
-			ins("<dl><dd>" .. args.footer .. "</dd></dl>")
-		end
-	else
-	    local text = get_quote(args)
-		if text then
-			ins("<dl><dd>" .. text .. "</dd></dl>")
-		end
-	end
-
-	ins("</span>")
-
-	local retval = table.concat(parts)
-	return deprecated and frame:expandTemplate{title = "check deprecated lang param usage", args = {retval, lang = args.lang}} or retval
+	insert(parts, "</div>")
+	local retval = concat(parts)
+	return deprecated and frame:expandTemplate({
+			title = "check deprecated lang param usage",
+			args = {retval, lang = args.lang},
+		}) or retval
 end
 
 -- External interface, meant to be called from a template. Replaces {{cite-meta}} and meant to be the primary
 -- interface for {{cite-*}} templates.
 function export.cite_t(frame)
-    -- FIXME: temporary code, catch errors with pcall. If there's an error, fallback to a copy of the old
-    -- template and categorize for cleanup.
-	local success, msg
-	success, msg = pcall(cite_t, frame)
-	if success then
-		return msg
-	end
-
-	local args = {}
+	local parent_args = {}
 	for k, v in pairs(frame:getParent().args) do
-		if k == "language" then
-			k = "lang"
-		end
-		args[k] = v
+		parent_args[k] = v
 	end
 
-	local template_name = frame:getParent():getTitle()
-	template_name = template_name:gsub("^Template:", "")
-	template_name = template_name:gsub("^User:JeffDoozan/", "")
-    -- handle aliases of "cite-book", no other cite- templates have aliases
-	template_name = (template_name == "cite-text" or template_name == "Cite book" or template_name == "cite book") and "cite-book" or template_name
+	-- use "und" as lang if none provided
+	if parent_args[1] == nil then
+		parent_args[1] = "und"
+	end
 
-	local res = frame:expandTemplate{ title = 'User:JeffDoozan/' .. template_name .. '-old', args = args }
-	return res .. '<span class="attentionseeking" title=\'' .. mw.text.nowiki(msg) .. '\'></span>[[Category:Pages using bad params when calling Template:' .. template_name .. ']]'
+	local args, alias_map, other_controls = get_args(frame.args, parent_args)
+	if args.asquote then
+		return show_quote(args, alias_map, other_controls)
+	end
 
+	return show_cite(args, alias_map, other_controls)
 end
+
+function show_cite(args, alias_map, other_controls)
+
+	local parts = {}
+
+	-- don't nag for translations
+	if args.text and not args.t then
+		args.noreq = 1
+	end
+
+	local len_visible = args.text and ulen((args.text:gsub("<[^<>]+>", ""))) or 0
+	if len_visible == 0 then
+		if not args.t or args.t == "-" then
+			args.nocolon = true
+		end
+	elseif args.inline == nil then
+		args.inline = not (
+			args.block_text
+			or len_visible > 300
+			or (args.t and not args.t == "-" and len_visible < 80)
+			or string.match(args.text, "<br>")
+		)
+	end
+
+	insert(parts, '<span class="citation-whole"><span class="cited-source">')
+	insert(parts, export.source(args, alias_map, "format_as_cite", other_controls))
+	insert(parts, "</span>")
+	insert(parts, get_quote(args, "is_cite"))
+	insert(parts, "</span>")
+
+	local retval = concat(parts)
+	return deprecated
+			and frame:expandTemplate({
+				title = "check deprecated lang param usage",
+				args = {retval, lang = args.lang},
+			})
+		or retval
+end
+
 -- External interface, meant to be called from a template.
 function export.call_quote_template(frame)
-	local iparams = {
-		["template"] = {},
-		["textparam"] = {},
-		["pageparam"] = {},
-		["allowparams"] = {list = true},
-		["propagateparams"] = {list = true},
-	}
-	local iargs, other_direct_args = require(parameters_module).process(frame.args, iparams, "return unknown", "quote", "call_quote_template")
+    return export.call_template(frame)
+end
 
-	local function process_paramref(paramref)
-		if not paramref then
-			return {}
-		end
-		local params = rsplit(paramref, "%s*,%s*")
-		for i, param in ipairs(params) do
-			if rfind(param, "^[0-9]+$") then
-				param = tonumber(param)
-			end
-			params[i] = param
-		end
-		return params
+-- External interface, for calling a template with overloaded parameters.
+function export.overload(frame)
+	local iargs, overloaded_args = process_params(frame.args, {
+		[1] = {required = true}
+	}, true)
+
+	local parent_args = frame:getParent().args
+	for k, v in pairs(parent_args) do
+		overloaded_args[k] = v
 	end
+
+	return frame:expandTemplate{title = iargs[1], args = overloaded_args}
+end
+
+-- External interface, meant to be called from a template.
+function export.call_template(frame, direct_args)
+	local parent = frame:getParent()
+	local parent_args = parent.args
+
+	local parameter_sublist = {type = "parameter", sublist = true}
+	local iargs, other_direct_args = process_params(direct_args or frame.args, {
+		["template"] = true,
+		["textparam"] = parameter_sublist,
+		["pageparam"] = parameter_sublist,
+		["propagateparams"] = parameter_sublist,
+		["allowparams"] = {sublist = true}, -- Doesn't use type = "parameter", because any that end in :list get processed differently.
+	}, true)
 
 	local function fetch_param(source, params)
 		for _, param in ipairs(params) do
@@ -3070,103 +3532,137 @@ function export.call_quote_template(frame)
 	end
 
 	local params = {
-		["text"] = {},
-		["passage"] = {},
-		["footer"] = {},
-		["brackets"] = {},
+		["text"] = true,
+		["passage"] = true,
+		["footer"] = true, -- always propagates, but gets special formatting
 	}
-	local textparams = process_paramref(iargs.textparam)
-	for _, param in ipairs(textparams) do
-		params[param] = {}
+
+	-- paramaters that can be used during template declaration or included in template calls
+	-- if the template is called with param=- it will set any declared value to nil
+	local always_propagate = {
+		["brackets"] = true,
+		["usenodot"] = true,
+		["nodot"] = true,
+		["ascite"] = true,
+		["asquote"] = true,
+	}
+	for k,v in pairs(always_propagate) do
+		params[k] = v
 	end
-	local pageparams = process_paramref(iargs.pageparam)
-	if #pageparams > 0 then
-		params["page"] = {}
-		params["pages"] = {}
-		for _, param in ipairs(pageparams) do
-			params[param] = {}
+
+	local textparam = iargs.textparam or {}
+	for _, param in ipairs(textparam) do
+		params[param] = true
+	end
+
+	local pageparam = iargs.pageparam or {}
+	local pageparam1 = pageparam[1]
+	if pageparam1 ~= nil then
+		params["page"], params["pages"] = true, true
+		for _, param in ipairs(pageparam) do
+			params[param] = true
 		end
 	end
 
-	local parent_args = frame:getParent().args
-	local allow_all = false
-	for _, allowspec in ipairs(iargs.allowparams) do
-		for _, allow in ipairs(rsplit(allowspec, "%s*,%s*")) do
-			local param = rmatch(allow, "^(.*):list$")
+	local allowparams, allow_all, list = iargs.allowparams, false
+	if allowparams ~= nil then
+		for _, allow in ipairs(allowparams) do
+			local param = allow:match("^(.*):list$")
 			if param then
-				if rfind(param, "^[0-9]+$") then
-					param = tonumber(param)
+				if list == nil then
+					list = {list = true}
 				end
-				params[param] = {list = true}
+				params[scribunto_parameter_key(param)] = list
 			elseif allow == "*" then
+				track("no parameter checking")
 				allow_all = true
 			else
-				if rfind(allow, "^[0-9]+$") then
-					allow = tonumber(allow)
-				end
-				params[allow] = {}
+				params[scribunto_parameter_key(allow)] = true
+			end
+		end
+	else
+		local template_name = parent:getTitle()
+		local template_title = new_title(template_name)
+		local content = template_title:getContent()
+		local seen = {}
+		-- Detect all params used by the parent template. param:get_name() takes the
+		-- parent frame arg table as an argument so that preprocessing will take
+		-- them into account, since it will matter if the name contains another
+		-- parameter (e.g. the outer param in "{{{foo{{{bar}}}baz}}}" will change
+		-- depending on the value for bar=). `seen` memoizes results based on the
+		-- raw parameter text (which is stored as a string in the parameter object),
+		-- which avoids unnecessary param:get_name() calls, which are non-trivial.
+		for param in find_parameters(content) do
+			local raw = param.raw
+			if not seen[raw] then
+				local allow = param:get_name(parent_args)
+				params[scribunto_parameter_key(allow)] = true
+				seen[raw] = true
 			end
 		end
 	end
 
-	local params_to_propagate = {}
-	for _, propagate_spec in ipairs(iargs.propagateparams) do
-		for _, param in ipairs(process_paramref(propagate_spec)) do
-			table.insert(params_to_propagate, param)
-			params[param] = {}
+	local propagateparams = iargs.propagateparams or {}
+	for _, param in ipairs(propagateparams) do
+		params[param] = true
+	end
+
+	local args = process_params(parent_args, params, allow_all)
+
+	if textparam[1] ~= "-" then
+		other_direct_args.passage = args.text or args.passage or fetch_param(args, textparam)
+	end
+	if not (pageparam1 == nil or pageparam1 == "-") then
+		other_direct_args.page = fetch_param(args, pageparam) or args.page or other_direct_args.page or nil
+		other_direct_args.pages = args.pages or other_direct_args.pages or nil
+		if other_direct_args.page == "-" then
+			other_direct_args.page = nil
+		end
+		if other_direct_args.pages == "-" then
+			other_direct_args.pages = nil
+		end
+	end
+	if args.footer then
+		other_direct_args.footer = frame:expandTemplate{title = "small", args = {args.footer}}
+	end
+	for param, _ in pairs(always_propagate) do
+		if args[param] == "-" then
+			other_direct_args[param] = nil
+		else
+			other_direct_args[param] = args[param] or other_direct_args[param] or nil
 		end
 	end
 
-	local args = require(parameters_module).process(parent_args, params, allow_all, "quote", "call_quote_template")
-	parent_args = require(table_module).shallowcopy(parent_args)
 
-	if textparams[1] ~= "-" then
-		other_direct_args.passage = args.text or args.passage or fetch_param(args, textparams)
-	end
-	if #pageparams > 0 and pageparams[1] ~= "-" then
-		other_direct_args.page = fetch_param(args, pageparams) or args.page or nil
-		other_direct_args.pages = args.pages
-	end
-	if args.footer then
-		other_direct_args.footer = frame:expandTemplate { title = "small", args = {args.footer} }
-	end
-	other_direct_args.brackets = args.brackets
-	-- Don't copy author to authorlink if Wikipedia link already present or any embedded link or HTML are present; also
-	-- check for left bracket encoded as an HTML entity, which will lead to issues as well.
-	if not other_direct_args.authorlink and other_direct_args.author and
-		not other_direct_args.author:find("[%[<]") and not other_direct_args.author:find("w:") and
-		not other_direct_args.author:find("&#91;") then
-		other_direct_args.authorlink = other_direct_args.author
-	end
 	-- authorlink=- can be used to prevent copying of author= to authorlink= but we don't want to propagate this to
 	-- the actual {{quote-*}} code.
 	if other_direct_args.authorlink == "-" then
 		other_direct_args.authorlink = nil
 	end
-	for _, param in ipairs(params_to_propagate) do
+	for _, param in ipairs(propagateparams) do
 		if args[param] then
 			other_direct_args[param] = args[param]
 		end
 	end
 
-	return frame:expandTemplate { title = iargs.template or "quote-book", args = other_direct_args }
+	return frame:expandTemplate{title = iargs.template or "quote-book", args = other_direct_args}
 end
 
 local paramdoc_param_replacements = {
 	passage = {
-		param_with_synonym = '<<synonym>>, {{para|text}}, or {{para|passage}}',
-		param_no_synonym = '{{para|text}} or {{para|passage}}',
+		param_with_synonym = "<<synonym>>, {{para|text}}, or {{para|passage}}",
+		param_no_synonym = "{{para|text}} or {{para|passage}}",
 		text = [=[
 * <<params>> – the passage to be quoted.]=],
 	},
 	page = {
-		param_with_synonym = '<<synonym>> or {{para|page}}, or {{para|pages}}',
-		param_no_synonym = '{{para|page}} or {{para|pages}}',
+		param_with_synonym = "<<synonym>> or {{para|page}}, or {{para|pages}}",
+		param_no_synonym = "{{para|page}} or {{para|pages}}",
 		text = [=[
 * <<params>> – '''mandatory in some cases''': the page number(s) quoted from. When quoting a range of pages, note the following:
 ** Separate the first and last pages of the range with an [[en dash]], like this: {{para|pages|10–11}}.
 ** You must also use {{para|pageref}} to indicate the page to be linked to (usually the page on which the Wiktionary entry appears).
-: This parameter must be specified to have the template link to the online version of the work.]=]
+: This parameter must be specified to have the template link to the online version of the work.]=],
 	},
 	page_with_roman_preface = {
 		param_with_synonym = {"inherit", "page"},
@@ -3175,11 +3671,11 @@ local paramdoc_param_replacements = {
 * <<params>> – '''mandatory in some cases''': the page number(s) quoted from. If quoting from the preface, specify the page number(s) in lowercase Roman numerals. When quoting a range of pages, note the following:
 ** Separate the first and last page number of the range with an [[en dash]], like this: {{para|pages|10–11}} or {{para|pages|iii–iv}}.
 ** You must also use {{para|pageref}} to indicate the page to be linked to (usually the page on which the Wiktionary entry appears).
-: This parameter must be specified to have the template link to the online version of the work.]=]
+: This parameter must be specified to have the template link to the online version of the work.]=],
 	},
 	chapter = {
-		param_with_synonym = '<<synonym>> or {{para|chapter}}',
-		param_no_synonym = '{{para|chapter}}',
+		param_with_synonym = "<<synonym>> or {{para|chapter}}",
+		param_no_synonym = "{{para|chapter}}",
 		text = [=[
 * <<params>> – the name of the chapter quoted from.]=],
 	},
@@ -3198,17 +3694,15 @@ local paramdoc_param_replacements = {
 	trailing_params = {
 		text = [=[
 * {{para|footer}} – a comment on the passage quoted.
-* {{para|brackets}} – use {{para|brackets|on}} to surround a quotation with [[bracket]]s. This indicates that the quotation either contains a mere mention of a term (for example, “some people find the word '''''manoeuvre''''' hard to spell”) rather than an actual use of it (for example, “we need to '''manoeuvre''' carefully to avoid causing upset”), or does not provide an actual instance of a term but provides information about related terms.]=],
-	}
+* {{para|brackets}} – use {{para|brackets|on}} to surround a quotation with [[bracket#Noun|brackets]]. This indicates that the quotation either contains a mere mention of a term (for example, “some people find the word '''''manoeuvre''''' hard to spell”) rather than an actual use of it (for example, “we need to '''manoeuvre''' carefully to avoid causing upset”), or does not provide an actual instance of a term but provides information about related terms.]=],
+	},
 }
 
 function export.paramdoc(frame)
-	local params = {
-		[1] = {},
-	}
-
 	local parargs = frame:getParent().args
-	local args = require(parameters_module).process(parargs, params, nil, "quote", "paramdoc")
+	local args = process_params(parargs, {
+		[1] = true,
+	})
 
 	local text = args[1]
 
@@ -3216,14 +3710,16 @@ function export.paramdoc(frame)
 		local function sub_param(synonym)
 			local subbed_paramtext
 			if synonym then
-				subbed_paramtext = rsub(paramtext_synonym, "<<synonym>>", "{{para|" .. synonym .. "}}")
+				subbed_paramtext = paramtext_synonym:gsub("<<synonym>>", "{{para|" .. replacement_escape(synonym) .. "}}")
 			else
 				subbed_paramtext = paramtext_no_synonym
 			end
-			return frame:preprocess(rsub(text_to_sub, "<<params>>", subbed_paramtext))
+			return frame:preprocess((text_to_sub:gsub("<<params>>", replacement_escape(subbed_paramtext))))
 		end
-		text = rsub(text, "<<" .. param .. ">>", function() return sub_param() end)
-		text = rsub(text, "<<" .. param .. ":(.-)>>", sub_param)
+		text = text:gsub("<<" .. pattern_escape(param) .. ">>", function()
+			return sub_param()
+		end)
+		text = text:gsub("<<" .. pattern_escape(param) .. ":(.-)>>", sub_param)
 	end
 
 	local function fetch_text(param_to_replace, key)
@@ -3235,21 +3731,29 @@ function export.paramdoc(frame)
 		if type(val) == "table" and val[1] == "inherit" then
 			return fetch_text(val[2], key)
 		end
-		error("Internal error: Unrecognized value for param '" .. param_to_replace .. "', key '" .. key .. "': "
-			.. mw.dumpObject(val))
+		error(
+			"Internal error: Unrecognized value for param '"
+				.. param_to_replace
+				.. "', key '"
+				.. key
+				.. "': "
+				.. mw.dumpObject(val)
+		)
 	end
 
 	for param_to_replace, spec in pairs(paramdoc_param_replacements) do
-		local function fetch(key)
-			return fetch_text(param_to_replace, key)
-		end
-
 		if not spec.param_no_synonym then
 			-- Text to substitute directly.
-			text = rsub(text, "<<" .. param_to_replace .. ">>", function() return frame:preprocess(fetch("text")) end)
+			text = text:gsub("<<" .. pattern_escape(param_to_replace) .. ">>", function()
+				return frame:preprocess(fetch_text(param_to_replace, "text"))
+			end)
 		else
-			do_param_with_optional_synonym(param_to_replace, fetch("text"), fetch("param_with_synonym"),
-				fetch("param_no_synonym"))
+			do_param_with_optional_synonym(
+				param_to_replace,
+				fetch_text(param_to_replace, "text"),
+				fetch_text(param_to_replace, "param_with_synonym"),
+				fetch_text(param_to_replace, "param_no_synonym")
+			)
 		end
 	end
 
