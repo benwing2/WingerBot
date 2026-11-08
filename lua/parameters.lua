@@ -55,7 +55,10 @@ local current_title_text, current_namespace, sets -- Defined when needed.
 local namespaces = mw.site.namespaces
 
 --[==[
-Loaders for functions in other modules, which overwrite themselves with the target function when called. This ensures modules are only loaded when needed, retains the speed/convenience of locally-declared pre-loaded functions, and has no overhead after the first call, since the target functions are called directly in any subsequent calls.]==]
+Loaders for functions in other modules, which overwrite themselves with the target function when called. This ensures
+modules are only loaded when needed, retains the speed/convenience of locally-declared pre-loaded functions, and has no
+overhead after the first call, since the target functions are called directly in any subsequent calls.
+]==]
 local function decode_entities(...)
 	decode_entities = require(string_utilities_module).decode_entities
 	return decode_entities(...)
@@ -249,12 +252,13 @@ Possible parameter tags are listed below:
 ; {default =}
 : Specifies a default input value for the parameter, if it is absent or empty. This will be processed as though it were
   the input instead, so (for example) {default = "und"} with the type {"language"} will return a language object for
-  [[:Category:Undetermined language|Undetermined language]] if no language code is provided. When used on list
-  parameters, this specifies a default value for the first item in the list only. Note that it is not possible to
-  generate a default that depends on the value of other parameters. If used together with {required = true}, the default
-  applies only to template pages (see the following entry), as a side effect of the fact that "required" parameters
-  aren't actually required on template pages. This can be used to show an example of the template in action when the
-  template page is visited; however, it is preferred to use `template_default` for this purpose, for clarity.
+  [[:Category:Undetermined language|Undetermined language]] if no language code is provided. (As an exception, numbers
+  and booleans can be specified either as-is or in string format.) When used on list parameters, this specifies a
+  default value for the first item in the list only. Note that it is not possible to generate a default that depends on
+  the value of other parameters. If used together with {required = true}, the default applies only to template pages
+  (see the following entry), as a side effect of the fact that "required" parameters aren't actually required on
+  template pages. This can be used to show an example of the template in action when the template page is visited;
+  however, it is preferred to use `template_default` for this purpose, for clarity.
 ; {template_default =}
 : Specifies a default input value for absent or empty parameters only on the template demo invocation (the invocation of
   the template that is displayed when the template page that implements the template is viewed). Template pages are
@@ -297,7 +301,14 @@ Possible parameter tags are listed below:
 : Specifies what value type to convert the argument into. The default is to leave it as a text string. Alternatives are:
 :; {type = "boolean"}
 :: The value is treated as a boolean value, either true or false. No value, the empty string, and the strings {"0"},
-   {"no"}, {"n"}, {"false"}, {"f"} and {"off"} are treated as {false}, all other values are considered {true}.
+   {"no"}, {"n"}, {"false"}, {"f"} and {"off"} (case-insensitive) are treated as {false}, all other values are
+   considered {true}.
+:; {type = "boolean or string"}
+:: The value is treated as either a boolean value (true or false) or some other string value. The strings {"0"}, {"no"},
+   {"n"}, {"false"}, {"f"} and {"off"} (case-insensitive) are treated as {false}; the string {"1"}, {"yes"}, {"y"},
+   {"true"}, {"t"} and {"on"} (case-insensitive) are treated as {true}; and all other values are left as-is. You can use
+   `set` to restrict the possible strings that are allowed; the values specified using `set` should not include {true}
+   or {false}.
 :; {type = "number"}
 :: The value is converted into a number, and throws an error if the value is not parsable as a number. Input values may
    be signed (`+` or `-`), and may contain decimal points and leading zeroes. If {allow_hex = true}, then hexadecimal
@@ -306,7 +317,9 @@ Possible parameter tags are listed below:
    special number values (`inf` and `nan`) are not possible inputs.
 :; {type = "range"}
 :: The value is interpreted as a hyphen-separated range of two numbers (e.g. {"2-4"} is interpreted as the range from
-   {2} to {4}). A number input without a hyphen is interpreted as a range from that number to itself (e.g. the input {"1"} is interpreted as the range from {1} to {1}). Any optional flags which are available for numbers will also work for ranges.
+   {2} to {4}). A number input without a hyphen is interpreted as a range from that number to itself (e.g. the input
+   {"1"} is interpreted as the range from {1} to {1}). Any optional flags which are available for numbers will also work
+   for ranges.
 :; {type = "language"}
 :: The value is interpreted as a full or [[Wiktionary:Languages#Etymology-only languages|etymology-only language]] code
    language code (or name, if {method = "name"}) and converted into the corresponding object (see [[Module:languages]]).
@@ -409,7 +422,10 @@ Possible parameter tags are listed below:
   are allowed values and the values are either `true` or a string naming a value found elsewhere in the table as a key.
   In the latter case, the key is an alias and the value is the canonical value, and if the user uses the alias, it will
   automatically be mapped to the canonical value. In such a case, the canonical value cannot itself be an alias. The use
-  of `set` is disallowed if {type = "boolean"} and causes an error to be thrown.
+  of `set` is disallowed if {type = "boolean"} and causes an error to be thrown. The values given should be strings
+  (i.e. pre-conversion values) unless {type = "number"}, in which case they should be numbers. If
+  {type = "boolean or string"}, the values specified using {set =} are those that ''cannot'' be interpreted as a
+  boolean; boolean strings (e.g. {"1"}, {"0"}, {"true"}, {"false"}, etc.) are always allowed in addition.
 ; {sublist =}
 : The value of the parameter is a delimiter-separated list of individual raw values. The resulting field in `args` will
   be a Lua list (i.e. a table with numeric indices) of the converted values. If {sublist = true} is given, the values
@@ -617,7 +633,7 @@ local function validate_alias_options(...)
 		disallow_holes = true,
 		disallow_missing = true,
 	}
-	
+
 	function validate_alias_options(param, name, main_param, alias_of)
 		for k in pairs(param) do
 			if invalid[k] then
@@ -641,7 +657,7 @@ local function validate_alias_options(...)
 			end
 		end
 	end
-	
+
 	validate_alias_options(...)
 end
 
@@ -751,23 +767,24 @@ local function split_sublist(val, name, sublist)
 	return iterate_list(sublist(val, make_parse_err(val, name)))
 end
 
--- For parameter named `name` with value `val` and param spec `param`, if the `set` field is specified, verify that the
--- value is one of the one specified in `set`, and throw an error otherwise. `name` is taken directly from the
--- corresponding parameter passed into convert_val() and may be a function to signal an error. Optional `param_type` is
--- a string specifying the conversion type of `val` and is used for special-casing: If `param_type` is "boolean", an
--- internal error is thrown (since `set` cannot be used in conjunction with booleans) and if `param_type` is "number",
--- no checking happens because in this case `set` contains numbers and is checked inside the number conversion function
--- itself, after converting `val` to a number. Return the canonical value of `val` (which may be different from `val`
--- if an alias map is given).
-local function check_set(val, name, param, param_type)
-	if param_type == "boolean" then
-		error(format('Internal error: cannot use `set` with `type = "%s"`', param_type))
+--[=[
+For parameter named `name` with value `val` and param spec `param`, if the `set` field is specified, verify that the
+value is one of the one specified in `set`, and throw an error otherwise. `name` is taken directly from the
+corresponding parameter passed into convert_val() and may be a function to signal an error. Optional `param_type` is a
+string specifying the conversion type of `val` and is used for special-casing: If `param_type` is "boolean", an internal
+error is thrown (since `set` cannot be used in conjunction with booleans); and if `param_type` is "number" or
+"boolean or string", and `called_from_converter` is not given, no checking happens because in these cases `set` needs to
+be called by the conversion function itself (respectively after converting `val` to a number or processing boolean
+strings). Return the canonical value of `val` (which may be different from `val` if an alias map is given).
+]=]
+local function check_set(val, name, param, param_type, called_from_converter)
 	-- Needs to be special cased because the check happens after conversion to numbers.
-	elseif param_type == "number" then
+	if (param_type == "number" or param_type == "boolean or string") and not called_from_converter then
 		return val
 	end
 
-	local set, map = param.set
+	local set = param.set
+	local map
 	if sets == nil then
 		map = finalize_set(set, name)
 		sets = {[set] = map}
@@ -794,7 +811,12 @@ local function check_set(val, name, param, param_type)
 			insert(list, ("%s (alias of %s)"):format(dump(k), dump(v)))
 		end
 	end
-	-- If the parameter is not required then put "or empty" at the end of the list, to avoid implying the parameter is actually required.
+	-- If the parameter type is "boolean or string", put "a boolean string value" because such values are allowed.
+	if param_type == "boolean or string" then
+		insert(list, "a boolean string value")
+	end
+	-- If the parameter is not required then put "or empty" at the end of the list, to avoid implying the parameter is
+	-- actually required.
 	if not param.required then
 		insert(list, "empty")
 	end
@@ -802,7 +824,8 @@ local function check_set(val, name, param, param_type)
 end
 
 local function convert_language(val, name, param, allow_etym)
-	local method, func = param.method
+	local method = param.method
+	local func
 	if method == nil or method == "code" then
 		func, method = get_language_by_code, "code"
 	elseif method == "name" then
@@ -854,12 +877,29 @@ end
 
 -- TODO: validate parameter specs separately, as it's making the handler code really messy at the moment.
 local type_handlers = setmetatable({
-	["boolean"] = function(val)
-		return yesno(val, true)
+	["boolean"] = function(val, name, param)
+		local newval = yesno(val, val)
+		if newval ~= true and newval ~= false then
+			newval = true
+		end
+		return newval
+	end,
+
+	["boolean or string"] = function(val, name, param)
+		local newval = yesno(val, val)
+		if newval ~= true and newval ~= false then
+			if param.set then
+				newval = check_set(newval, name, param, "boolean or string", "called_from_converter")
+			else
+				newval = true
+			end
+		end
+		return newval
 	end,
 
 	["family"] = function(val, name, param)
-		local method, func = param.method
+		local method = param.method
+		local func
 		if method == nil or method == "code" then
 			func, method = get_family_by_code, "code"
 		elseif method == "name" then
@@ -895,8 +935,7 @@ local type_handlers = setmetatable({
 		end
 		local num = convert_number(val, allow_hex)
 		if param.set then
-			-- Don't pass in "number" here; otherwise no checking will happen.
-			num = check_set(num, name, param)
+			num = check_set(num, name, param, "number", "called_from_converter")
 		end
 		if num then
 			return num
@@ -1037,16 +1076,24 @@ local type_handlers = setmetatable({
 		error(format('Internal error: expected `fallback` for type `Wikimedia language` to be of type "boolean" or undefined, but saw %s', dump(fallback)))
 	end,
 }, {
-	-- TODO: decode HTML entities in all input values. Non-trivial to implement, because we need to avoid any downstream functions decoding the output from this module, which would be double-decoding. Note that "title" has this implemented already, and it needs to have both the raw input and the decoded input to avoid double-decoding by me.title.new, so any implementation can't be as simple as decoding in __call then passing the result to the handler.
+	-- TODO: decode HTML entities in all input values. Non-trivial to implement, because we need to avoid any downstream
+	-- functions decoding the output from this module, which would be double-decoding. Note that "title" has this
+	-- implemented already, and it needs to have both the raw input and the decoded input to avoid double-decoding by
+	-- mw.title.new, so any implementation can't be as simple as decoding in __call then passing the result to the
+	-- handler.
 	__call = function(self, val, name, param, param_type, default)
 		local val_type = type(val)
 		-- TODO: check this for all possible parameter types.
-		if val_type == param_type then
+		if val_type == param_type or val_type == "boolean" and param_type == "boolean or string" then
 			return val
 		elseif val_type ~= "string" then
 			local expected = "string"
-			if default and (param_type == "boolean" or param_type == "number") then
-				expected = param_type .. " or " .. expected
+			if default then
+				if param_type == "boolean or string" then
+					expected = param_type
+				elseif param_type == "boolean" or param_type == "number" then
+					expected = param_type .. " or " .. expected
+				end
 			end
 			error(format(
 				"Internal error: %sargument %s has the type %s; expected a %s.",
@@ -1080,7 +1127,8 @@ local function convert_val(val, name, param, default)
 	if sublist and type(val) == "string" then
 		local retlist, set = {}, param.set
 		if convert then
-			local thisindex, thisval, insval, parse_err = 0
+			local thisindex = 0
+			local thisval, insval, parse_err
 			if is_callable(name) then
 				-- We assume the passed-in error function in `name` already shows the parameter name and raw value.
 				function parse_err(msg)
@@ -1100,6 +1148,7 @@ local function convert_val(val, name, param, default)
 				if set then
 					v = check_set(v, name, param, param_type)
 				end
+				insval = v
 				insert(retlist, convert(type_handlers(v, name, param, param_type, default), parse_err))
 			end
 		else
@@ -1331,9 +1380,11 @@ the remainder to the function that handles a specific inflectional type.
 ]==]
 function export.process(args, params, return_unknown)
 	-- Process parameters for specific properties
-	local args_new, args_unknown, any_args_set, required, patterns, list_args, index_list, args_placeholders, placeholders_n = {}
+	local args_new = {}
+	local args_unknown, any_args_set, required, patterns, list_args, index_list, args_placeholders, placeholders_n
 
-	-- TODO: memoize the processing of each unique `param` value, since it's common for the same value to be used for many parameter names.
+	-- TODO: memoize the processing of each unique `param` value, since it's common for the same value to be used for
+	-- many parameter names.
 	for name, param in pairs(params) do
 		validate_name(name, "parameter names")
 		if param ~= true then
@@ -1503,8 +1554,9 @@ function export.process(args, params, return_unknown)
 				name, val_type
 			)
 		end
-		
-		local orig_name, raw_type, index, canonical = name, type(name)
+
+		local orig_name, raw_type = name, type(name)
+		local index, canonical
 
 		if raw_type == "number" then
 			if index_list and name >= index_list then
