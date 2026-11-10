@@ -333,8 +333,8 @@ local function parse_and_format_labels(raw_ll, lang)
 	if not raw_ll then
 		return nil
 	end
-	local labels = split_and_process_raw_labels{labels = raw_ll, lang = lang, nocat = true}
-	labels = format_processed_labels{labels = labels, lang = lang, no_ib_content = true}
+	local labels = split_and_process_raw_labels {labels = raw_ll, lang = lang, nocat = true}
+	labels = format_processed_labels {labels = labels, lang = lang, no_ib_content = true}
 	if labels ~= "" then -- not sure labels can be an empty string but it seems possible in some circumstances
 		return {labels}
 	end
@@ -808,7 +808,7 @@ local function format_annotated_text(textobj, tag_text_func, tag_gloss_func)
 					sc = sc,
 				})
 			end
-			if lang:getCode() ~= "und" or sc:getCode() ~= "Latn" then
+			if lang:getCode() ~= "und" or sc and sc:getCode() ~= "Latn" then
 				text = tag_text(text, lang, sc)
 			end
 
@@ -931,7 +931,7 @@ local function format_multivalued_annotated_text(textobjs, delimiter, tag_text_f
 	for _, textobj in ipairs(textobjs) do
 		insert(parts, format_annotated_text(textobj, tag_text_func, tag_gloss_func))
 	end
-	
+
 	-- Change delimiter to semicolon if the items themselves contain commas (e.g., in ", Jr.")
 	local use_semicolon = false
 	for _, obj in ipairs(textobjs) do
@@ -941,7 +941,7 @@ local function format_multivalued_annotated_text(textobjs, delimiter, tag_text_f
 			break
 		end
 	end
-	
+
 	local n = #parts
 	if n > 0 and parts[n]:match("^'*et al[.']*$") then
 		-- Special handling for 'et al.'
@@ -953,10 +953,6 @@ local function format_multivalued_annotated_text(textobjs, delimiter, tag_text_f
 			-- author 1, author 2, et al.
 			return concat(parts, (use_semicolon and "; ") or ", ")
 		end
-		if delimiter == "and" or delimiter == "or" then
-			delimiter = ", "
-		end
-		return concat(parts, delimiter)
 	end
 	if delimiter == "and" or delimiter == "or" then
 		return serial_comma_join(parts, {conj = delimiter})
@@ -1035,17 +1031,11 @@ end
 --
 -- Returns two values: the formatted date and a boolean indicating whether to add a maintenance category
 -- [[:Category:Requests for date in LANG entries]]. The first return value will be nil if nothing is to be added
--- (in which case the scond return value will always be nil).
-local function format_date_args(
-	a,
-	get_full_paramname,
-	alias_map,
-	parampref,
-	paramsuf,
-	bold_year,
-	maintenance_line_no_date,
-    year_last
-)
+-- (in which case the second return value will always be nil).
+local function format_date_args(data)
+	local a, get_full_paramname, alias_map, parampref, paramsuf, bold_year, maintenance_line_no_date, year_last =
+		data.a, data.get_full_paramname, data.alias_map, data.parampref, data.paramsuf, data.bold_year,
+		data.maintenance_line_no_date, data.year_last
 	local output = {}
 
 	parampref = parampref or ""
@@ -1268,7 +1258,7 @@ local function format_date_args(
 				and start_day_explicitly_given
 				and format_date_with_code("j", start_date, "start_date")
 			or nil
-	
+
 		if year_last then
 			if beg_day then
 				insert(output, beg_day .. " " .. beg_month)
@@ -1287,7 +1277,7 @@ local function format_date_args(
 				"start_date"
 			))
 		end
-	
+
 	    if cur_year ~= beg_year then
 			-- Different years; insert current date in full.
 			if beg_month or cur_month then
@@ -1354,8 +1344,10 @@ local function tag_with_cite(txt)
 	return "<cite>" .. txt .. "</cite>"
 end
 
--- Display the source line of the quote, above the actual quote text. This contains the majority of the logic of this
--- module (formerly contained in {{quote-meta/source}}).
+--[==[
+Display the source line of the quote, above the actual quote text. This contains the majority of the logic of this
+module (formerly contained in {{tl|quote-meta/source}}).
+]==]
 function export.source(args, alias_map, format_as_cite, other_controls)
 	local tracking_categories = {}
 
@@ -1379,7 +1371,8 @@ function export.source(args, alias_map, format_as_cite, other_controls)
 		return alias_map[param] or param
 	end
 
-	local output, sep = {}
+	local output = {}
+	local sep
 	local overrides = other_controls and other_controls.overrides or {}
 
 	-- Add text to the output. The text goes into a list, and we concatenate all the list components together at the
@@ -1499,7 +1492,8 @@ function export.source(args, alias_map, format_as_cite, other_controls)
 
 	-- When formatting as a citation, the priority is to display a name and a date before the book/chapter title
 	-- this tracks whether or not the author/date has been displayed
-	local date_outputted, formatted_date, formatted_origdate, need_date = false
+	local date_outputted = false
+	local formatted_date, formatted_origdate, need_date
 	local function add_date(no_paren)
 		if not date_outputted then
 			if no_paren then
@@ -1585,6 +1579,8 @@ function export.source(args, alias_map, format_as_cite, other_controls)
 		if author then
 			local authorobjs =
 				parse_multivalued_annotated_text(author, author_fullname, trans_author, trans_author_fullname)
+			-- parse_multivalued_annotated_text only returns nil when `author` is nil, which it isn't.
+			---@cast authorobjs -nil
 			num_authorobjs = #authorobjs
 			if num_authorobjs == 1 then
 				if is_anonymous(authorobjs[1].text) then
@@ -1802,7 +1798,7 @@ function export.source(args, alias_map, format_as_cite, other_controls)
 				return chap
 			end
 		end
-		
+
 		if not chap then
 			if chap_num then
 				error(
@@ -1844,6 +1840,8 @@ function export.source(args, alias_map, format_as_cite, other_controls)
 
 			-- Must be a chapter name
 			local chapterobj = parse_annotated_text(chap, chap_fullname, a("trans-" .. param))
+			-- parse_annotated_text only returns nil when `chap` is nil, which it isn't.
+			---@cast chapterobj -nil
 			chapterobj.text = make_chapter_with_url(chapterobj.text)
 			chapterobj.link = make_chapter_with_url(chapterobj.link)
 			formatted = (textual_prefix or "") .. format_annotated_text(chapterobj) .. (textual_suffix or "")
@@ -2054,10 +2052,10 @@ function export.source(args, alias_map, format_as_cite, other_controls)
 		if url and urls then
 			error(("Supply only one of |%s= and |%s="):format(url_fullname, urls_fullname))
 		end
-		local function verify_title_supplied(url_name)
+		local function verify_title_supplied(_url_name)
 			-- There are too many cases of this to throw an error at this time.
 			-- if not title then
-				-- error(("If |%s= is given, |%s= must also be supplied"):format(url_name, title_fullname))
+				-- error(("If |%s= is given, |%s= must also be supplied"):format(_url_name, title_fullname))
 			-- end
 		end
 		if archiveurl or url then
@@ -2133,7 +2131,11 @@ function export.source(args, alias_map, format_as_cite, other_controls)
 				if plainval then
 					numspec = plainval
 				else
-					local val = sgobj and sgobj.text or plobj.text
+					-- Because we returned on `not sgval and not plval and not plainval`, one of the three must be
+					-- truthy. In this arm, `plainval` is falsy so `sgval` or `plval` (and hence `sgobj` or `plobj`)
+					-- must be truthy.
+					local val = sgobj and sgobj.text or plobj and plobj.text or
+						error("Internal error: one of sgobj or plobj must be true")
 					if val == "unnumbered" then
 						numspec = "unnumbered " .. singular_desc
 					else
@@ -2169,6 +2171,8 @@ function export.source(args, alias_map, format_as_cite, other_controls)
 							end
 						end
 						local obj = sgobj or plobj
+						-- See above. One of `sgobj` or `plobj` must be truthy.
+						--- @cast obj -nil
 						obj.text = val
 						if obj.link:find("^!") then
 							obj.link = obj.link:gsub("^!", "")
@@ -2299,14 +2303,29 @@ function export.source(args, alias_map, format_as_cite, other_controls)
 		end
 
 		if ind ~= "" and has_newversion() then
-			local formatted_new_date = format_date_args(a, get_full_paramname, alias_map, "", "", nil, "Please provide a date or year", true)
+			local formatted_new_date = format_date_args {
+				a = a,
+				get_full_paramname = get_full_paramname,
+				alias_map = alias_map,
+				parampref = "",
+				paramsuf = "",
+				maintenance_line_no_date = "Please provide a date or year",
+				year_last = true,
+			}
 			if formatted_new_date then
 				add_with_sep(formatted_new_date)
 			end
 		end
-		
+
 		-- Fetch date_published=/year_published=/month_published= and format appropriately.
-		local formatted_date_published = format_date_args(a, get_full_paramname, alias_map, "", "_published", nil, nil, true)
+		local formatted_date_published = format_date_args {
+			a = a,
+			get_full_paramname = get_full_paramname,
+			alias_map = alias_map,
+			parampref = "",
+			paramsuf = "_published",
+			year_last = true,
+		}
 		local platform = parse_and_format_multivalued_annotated_text("platform", "and")
 		if formatted_date_published then
 			add_with_sep("published " .. formatted_date_published .. (platform and " via " .. platform or ""))
@@ -2578,22 +2597,23 @@ function export.source(args, alias_map, format_as_cite, other_controls)
 		add("[")
 	end
 
-	bold_year = not format_as_cite
-	year_last = format_as_cite
-
-	formatted_date, need_date = format_date_args(
-		a,
-		get_full_paramname,
-		alias_map,
-		nil,
-		nil,
-		bold_year,
-		"Can we [[:Category:Requests for date|date]] this quote?",
-		year_last
-	)
+	formatted_date, need_date = format_date_args {
+		a = a,
+		get_full_paramname = get_full_paramname,
+		alias_map = alias_map,
+		bold_year = not format_as_cite,
+		maintenance_line_no_date = "Can we [[:Category:Requests for date|date]] this quote?",
+		year_last = format_as_cite,
+	}
 
 	-- Fetch origdate=/origyear=/origmonth= and format appropriately.
-	formatted_origdate = format_date_args(a, get_full_paramname, alias_map, "orig", nil, nil, nil, year_last)
+	formatted_origdate = format_date_args {
+		a = a,
+		get_full_paramname = get_full_paramname,
+		alias_map = alias_map,
+		parampref = "orig",
+		year_last = format_as_cite,
+	}
 
 	local num_authors
 	if format_as_cite then
@@ -2632,7 +2652,7 @@ function export.source(args, alias_map, format_as_cite, other_controls)
 			)
 			sep = ", "
 		else
-			for _, cant_have in ipairs{"2ndauthorlink", "2ndfirst"} do
+			for _, cant_have in ipairs {"2ndauthorlink", "2ndfirst"} do
 				if args[cant_have] then
 					error(("Can't have |%s= without |2ndauthor= or |2ndlast="):format(cant_have))
 				end
@@ -2689,7 +2709,7 @@ function export.source(args, alias_map, format_as_cite, other_controls)
 			)
 			sep = ", "
 		else
-			for _, cant_have in ipairs{"2ndauthorlink", "2ndfirst"} do
+			for _, cant_have in ipairs {"2ndauthorlink", "2ndfirst"} do
 				if args[cant_have] then
 					error(("Can't have |%s= without |2ndauthor= or |2ndlast="):format(cant_have))
 				end
@@ -2920,7 +2940,7 @@ local function clone_args(direct_args, parent_args)
 
 	local alias_map = {}
 	local other_controls = {}
-	
+
 	-- noroman
 	local noroman = ine(direct_args.noroman)
 	if noroman then
@@ -3112,8 +3132,8 @@ local function get_args(frame_args, parent_args, require_lang)
 		params[alias] = {alias_of = canon}
 		params[alias .. "2"] = {alias_of = canon .. "2"}
 	end
-		
-	for _, param12 in ipairs{
+
+	for _, param12 in ipairs {
 		"worklang",
 		"termlang",
 		"origlang",
@@ -3123,7 +3143,7 @@ local function get_args(frame_args, parent_args, require_lang)
 	end
 
 	-- Then the newversion params (which have FOO2 versions).
-	for _, param12 in ipairs{
+	for _, param12 in ipairs {
 		-- author-like params; author params themselves are either list params (author=, last=, etc.) or single params
 		-- (2ndauthor=, 2ndlast=, etc.)
 		"coauthors",
@@ -3239,7 +3259,7 @@ local function get_args(frame_args, parent_args, require_lang)
 	end
 
 	-- Then the aliases of newversion params (which have FOO2 versions).
-	for _, param12_aliased in ipairs{
+	for _, param12_aliased in ipairs {
 		{"role", "roles"},
 		{"role", "speaker"},
 		{"tlr", "tlrs"},
@@ -3271,29 +3291,29 @@ local function get_args(frame_args, parent_args, require_lang)
 	end
 
 	-- Then the date params.
-	for _, datelike in ipairs{{"", ""}, {"orig", ""}, {"", "_published"}} do
+	for _, datelike in ipairs {{"", ""}, {"orig", ""}, {"", "_published"}} do
 		local pref, suf = unpack(datelike)
-		for _, arg in ipairs{"date", "year", "month", "start_date", "start_year", "start_month"} do
+		for _, arg in ipairs {"date", "year", "month", "start_date", "start_year", "start_month"} do
 			add_with_2(pref .. arg .. suf, true)
 		end
 	end
 
 	local numeric_param_suffixes = {"", "s", "_plain", "url", "_prefix"}
 	-- Then the numeric params.
-	for _, numeric in ipairs{"volume", "issue", "number", "line", "page", "column"} do
+	for _, numeric in ipairs {"volume", "issue", "number", "line", "page", "column"} do
 		for _, suf in ipairs(numeric_param_suffixes) do
 			add_with_2(numeric .. suf, true)
 		end
 	end
 	-- And the aliases of numeric params.
-	for _, numeric_aliased in ipairs{{"volume", "vol"}} do
+	for _, numeric_aliased in ipairs {{"volume", "vol"}} do
 		local canon, alias = unpack(numeric_aliased)
 		for _, suf in ipairs(numeric_param_suffixes) do
 			alias_with_2(alias .. suf, canon .. suf)
 		end
 	end
 
-	return process_params(cloned_args, params), alias_map, other_controls
+	return process_params(cloned_args, params), alias_map, other_controls, deprecated
 end
 
 local function get_origtext_params(args)
@@ -3316,7 +3336,7 @@ local function get_origtext_params(args)
 		origsc = args.origsc
 		orignormsc = args.orignormsc
 	else
-		for _, noparam in ipairs{"origtr", "origts", "origsc", "orignorm", "orignormsc", "origsubst", "origll"} do
+		for _, noparam in ipairs {"origtr", "origts", "origsc", "orignorm", "orignormsc", "origsubst", "origll"} do
 			if args[noparam] then
 				error(("Cannot specify %s= without origtext="):format(noparam))
 			end
@@ -3402,18 +3422,7 @@ local function get_quote(args, is_cite)
 	return text
 end
 
--- External interface, meant to be called from a template. Replaces {{quote-meta}} and meant to be the primary
--- interface for {{quote-*}} templates.
-function export.quote_t(frame)
-	local args, alias_map, other_controls = get_args(frame.args, frame:getParent().args, "require_lang")
-	if args.ascite then
-		return export.cite_t(frame)
-	end
-
-	return show_quote(args, alias_map, other_controls)
-end
-
-function show_quote(args, alias_map, other_controls)
+local function show_quote(frame, args, alias_map, other_controls, deprecated)
 	local parts = {}
 
 	insert(parts, '<div class="citation-whole"><span class="cited-source">')
@@ -3426,33 +3435,24 @@ function show_quote(args, alias_map, other_controls)
 	local retval = concat(parts)
 	return deprecated and frame:expandTemplate({
 			title = "check deprecated lang param usage",
-			args = {retval, lang = args.lang},
+			args = {retval, lang = frame:getParent().args.lang},
 		}) or retval
 end
 
--- External interface, meant to be called from a template. Replaces {{cite-meta}} and meant to be the primary
--- interface for {{cite-*}} templates.
-function export.cite_t(frame)
-	local parent_args = {}
-	for k, v in pairs(frame:getParent().args) do
-		parent_args[k] = v
+--[==[
+External interface, meant to be called from a template. Replaces {{tl|quote-meta}} and meant to be the primary
+interface for {{tl|quote-*}} templates.
+]==]
+function export.quote_t(frame)
+	local args, alias_map, other_controls, deprecated = get_args(frame.args, frame:getParent().args, "require_lang")
+	if args.ascite then
+		return export.cite_t(frame)
 	end
 
-	-- use "und" as lang if none provided
-	if parent_args[1] == nil then
-		parent_args[1] = "und"
-	end
-
-	local args, alias_map, other_controls = get_args(frame.args, parent_args)
-	if args.asquote then
-		return show_quote(args, alias_map, other_controls)
-	end
-
-	return show_cite(args, alias_map, other_controls)
+	return show_quote(frame, args, alias_map, other_controls, deprecated)
 end
 
-function show_cite(args, alias_map, other_controls)
-
+local function show_cite(args, alias_map, other_controls)
 	local parts = {}
 
 	-- don't nag for translations
@@ -3469,7 +3469,7 @@ function show_cite(args, alias_map, other_controls)
 		args.inline = not (
 			args.block_text
 			or len_visible > 300
-			or (args.t and not args.t == "-" and len_visible < 80)
+			or (args.t and args.t ~= "-" and len_visible < 80)
 			or string.match(args.text, "<br>")
 		)
 	end
@@ -3480,21 +3480,60 @@ function show_cite(args, alias_map, other_controls)
 	insert(parts, get_quote(args, "is_cite"))
 	insert(parts, "</span>")
 
-	local retval = concat(parts)
-	return deprecated
-			and frame:expandTemplate({
-				title = "check deprecated lang param usage",
-				args = {retval, lang = args.lang},
-			})
-		or retval
+	return concat(parts)
 end
 
--- External interface, meant to be called from a template.
-function export.call_quote_template(frame)
-    return export.call_template(frame)
+--[==[
+External interface, meant to be called from a template. Replaces {{tl|cite-meta}} and meant to be the primary
+interface for {{tl|cite-*}} templates.
+]==]
+function export.cite_t(frame)
+	local parent_args = {}
+	for k, v in pairs(frame:getParent().args) do
+		parent_args[k] = v
+	end
+
+	-- use "und" as lang if none provided
+	if parent_args[1] == nil then
+		parent_args[1] = "und"
+	end
+
+	local args, alias_map, other_controls, deprecated = get_args(frame.args, parent_args)
+	if args.asquote then
+		return show_quote(frame, args, alias_map, other_controls, deprecated)
+	end
+
+	return show_cite(args, alias_map, other_controls)
 end
 
--- External interface, for calling a template with overloaded parameters.
+--[==[
+This is a method to call a specified quote or citation template while combining the arguments from the parent template with additional arguments provided directly plus arguments passed by the user. This is useful for dynamically reusing templates with modified or additional parameters.
+* The {{para|1}} '''(required)''' the template to overload.
+* All other named or numbered parameters will be passed directly to the parent template.
+* All user-specified parameters used when calling this template will also be passed through to the parent template and will override any values declared in this template.
+
+====Example 1====
+
+To create a {{tl|R:Cite}} citation formatted equivalent from an existing {{tl|RQ:Quote}} quotation template:
+<pre>{{#invoke:quote|overload
+    |RQ:Quote
+    |ascite=1
+}}</pre>
+
+Calling {{tl|R:Cite|page=123}} will display the output of {{tl|RQ:Quote|ascite=1|page=123}}
+
+====Example 2====
+
+To create a {{tl|RQ:Author Work}} "specific work" template from an "all in one" {{tl|RQ:Author}} author template that handles user provided {{para|book}}, {{para|year}}, {{para|chapter}}, and {{para|page}} values:<pre>
+{{#invoke:quote|overload
+    |RQ:Author
+    |book=Storytime
+    |year=2010
+    |chapter={{{chapter|{{#ifexpr:{{{page|}}}<10 | 1 | 2 }}}}}
+}}
+</pre>
+Calling {{tl|RQ:Author Work|page=20}} would then be the same as calling {{tl|RQ:Author|book=Storytime|year=2010|chapter=2|page=20}}.
+]==]
 function export.overload(frame)
 	local iargs, overloaded_args = process_params(frame.args, {
 		[1] = {required = true}
@@ -3505,54 +3544,156 @@ function export.overload(frame)
 		overloaded_args[k] = v
 	end
 
-	return frame:expandTemplate{title = iargs[1], args = overloaded_args}
+	return frame:expandTemplate {title = iargs[1], args = overloaded_args}
 end
 
--- External interface, meant to be called from a template.
-function export.call_template(frame, direct_args)
+--[==[
+This is an interface onto `quote-*` templates such as {{tl|quote-book}} and `cite-*` templates such as {{tl|cite-book}}.
+See {{ltl|RQ:Ascham Scholemaster}} for an example. If you write the code the way of this example, it automatically
+handles parameters such a {{para|text}}, {{para|passage}}, {{para|footer}}, {{para|brackets}}, {{para|authorlink}} and
+several others, and optionally {{para|page}}, {{para|pages}}, {{para|t}}, {{para|tr}}, etc. This means you don't have to
+copy them explicitly. In general, any arguments given directly to {{tl|#invoke:quote|call_template}} are passed directly
+to the underlying template (usually {{tl|quote-book}}), except for certain ''control parameters'', as detailed below,
+and certain other arguments are automatically copied from the outer template (e.g. the call to
+{{tl|RQ:Ascham Scholemaster}}) to the implementing template (e.g. {{tl|quote-book}}).
+
+To better understand the workflow of this function, it's important to understand the different sets of parameters
+involved. Specifically:
+# The parameters specified directly in the {{tl|#invoke:quote|call_template}} call are termed ''direct parameters'' (or
+  ''direct arguments''; in general ''parameter'' and ''argument'' are synonymous). These correspond to the `frame.args`
+  arguments in Lua.
+# The parameters specified in the outer template whose implementation involves invoking `##call_template` are termed the
+  ''template parameters'' (or ''parent arguments'', because they correspond to the `frame:getParent().args` arguments in
+  Lua).
+# The direct and template parameters are combined to form the ''destination parameters'', which are sent to the
+  template that implements the quotation or citation (e.g. {{tl|quote-book}} or {{tl|cite-book}}). Conceptually, it is
+  exactly as if the Wikicode of the page in question made a direct call to {{tl|quote-book}}, {{tl|cite-book}}, etc.,
+  giving the destination parameters as the parameters of that template (and in fact this is effectively how it's
+  implemented).
+# Among the direct parameters specified in the invocation call, there are two types. The ''control parameters'' are
+  those that have a special meaning to the parameter construction process itself. They are intercepted, used in the
+  parameter construction process, and not passed on. All remaining parameters are ''pass-through parameters'', which are
+  passed directly through to the destination parameters of the implementing template.
+
+The process of constructing the destination parameters involves combining the direct pass-through parameters with the
+template parameters to be copied. Only certain template parameters are copied; which ones get copied is controlled by
+the control parameters. Any remaining parameters cause an error to be thrown unless the {{para|allowparams}} control
+parameter specifically allows them. (These are typically parameters that have a special meaning in constructing the
+pass-through parameters, such as a {{para|verse}} parameter for a Bible translation.)
+
+If both a template and direct parameter specify a value for a given destination parameter, the template parameter takes
+precedence. Note, however, that blank parameters (both template and direct parameters) are treated as missing, i.e. as
+if not given at all, rather than as empty. To cancel out the value of a direct parameter, specify a hyphen (`-`) as its
+value in the template.
+
+The control parameters work as follows:
+* The following parameters are always copied as-is: {{para|brackets}}, {{para|usenodot}}, {{para|nodot}},
+  {{para|ascite}}, {{para|asquote}}, {{para|norm}}~{{para|normalization}}, {{para|normurl}}~{{para|normalizationurl}}
+  and {{para|ll}}~{{para|lb}}.
+* The {{para|footer}} parameter is automatically copied and surrounded by a call to {{tl|small}}.
+* The {{para|template}} control parameter specifies the name of the implementing template to call, defaulting to
+  `quote-book`.
+* The {{para|textparam}} control parameter controls the copying of the {{para|text}} and {{para|passage}} parameters
+  and any synonyms. If not given, {{para|text}} and {{para|passage}} (preferring the former) are passed to the
+  {{para|text}} destination parameter. If given, it should be a comma-separated list of parameters that are synonyms for
+  {{para|text}}/{{para|passage}}; if neither of these is seen, the specified parameters are copied to the {{para|text}}
+  destination parameter (processed from left to right if multiple synonyms are given). Specifying {{para|textparam|-}}
+  disables copying of {{para|text}} and {{para|passage}}.
+* The {{para|pageparam}} control parameter controls the copying of the {{para|page}} and {{para|pages}} parameters and
+  any synonyms. If not given, neither parameter is copied. If given, {{para|page}} and any synonymous parameters
+  specified by {{para|pageparam}} (a comma-separated list of parameters) are copied to the {{para|page}} destination
+  parameter, and {{para|pages}} is copied to the {{para|pages}} destination parameter. If there are no synonyms for
+  {{para|page}}, but the copying behavior is still desired, just specify {{para|pageparam|page}}.
+* If the boolean {{para|copyt}} control parameter is true, or if it's unspecified and the language of the quote template
+  (from direct argument {{para|1}}) is not English, the following additional translation-related parameters are copied:
+  {{para|t}}~{{para|translation}}, {{para|turl}}~{{para|translationurl}}, {{para|lit}} and {{para|liturl}}.
+* If the boolean {{para|copytr}} control parameter is true, or if it's unspecified and the text of the quote or cite is
+  given and in a script other than Latin, the following transliteration-related parameters are copied:
+  {{para|tr}}~{{para|transliteration}} and {{para|subst}}.
+* If the boolean {{para|copyts}} control parameter is true, the following transcription-related parameters are
+  copied: {{para|ts}}~{{para|transcription}}. Specify this only for languages where {{para|ts}} is used in headwords and
+  links (see {{tl|link}}).
+* If the boolean {{para|copysc}} control parameter is true, the following script-related parameters are copied:
+  {{para|sc}} and {{para|normsc}}. This can be given if the language supports multiple scripts (although note that the
+  script is autodetected, which almost always gets it right).
+* If the boolean {{para|copyorig}} control parameter is true, the following original-text-related parameters are
+  copied: {{para|origtext}}, {{para|origurl}}, {{para|orignorm}}, {{para|orignormurl}} and
+  {{para|origll}}~{{para|origlb}}; also {{para|origtr}} and {{para|origsubst}} if {{para|copytr}} is true or the text
+  is in a non-Latin script; also {{para|origts}} if {{para|copyts}} is true; and also {{para|origsc}} and
+  {{para|orignormsc}} if {{para|copysc}} is true.
+* If a value for {{para|author}} is given as a direct parameter, and no value for {{para|authorlink}} is given, and the
+  value given for {{para|author}} does not have any links or HTML in it, it is copied to the {{para|authorlink}}
+  destination parameter.
+* The {{para|copyparams}} control parameter is a comma-separated list of any additional parameters to copy. For example,
+  {{para|copyparams|column,volume}} is approximately equivalent to writing
+  `<nowiki>|column={{{column|}}}|volume={{{volume|}}}</nowiki>` in the invocation call. Note that you can specify a
+  parameter to be copied using {{para|copyparams}} and also specify a direct pass-through value for this parameter. In
+  this case, if the user gives a value for that parameter, it is used, otherwise the directly-specified value is used.
+  If a parameter value in {{para|copyparams}} contains a `*` in it, it is treated as a wildcard, matching any number of
+  characters. For example, {{para|copyparams|chapter*}} will copy `chapter`, `chapters`, `chapter_plain`,
+  `chapter_number`, etc., and {{para|copyparams|*sc}} will copy `sc`, `origsc`, `normsc`, etc.
+* The {{para|allowparams}} control parameter is a comma-separated list of any additional parameters to allow but not
+  copy. This does not need to mention any parameter that is mentioned elsewhere or is copied by any of the mechanisms
+  described above. In general you should only use it for parameters that are used to construct direct parameters but not
+  themselves copied. An example, from the {{tl|RQ:ang:Aldred Kemble Skeat Lindisfarne}} template:
+  * {{para|allowparams|verse,manuscript,book}}
+  This is because the template specifies the following among its direct parameters:
+  * {{para|chapter_plain|<nowiki>{{#if:{{{verse<includeonly>|</includeonly>}}}|{{{book}}} {{{verse}}} {{#if:{{{manuscript|}}}|({{{manuscript}}})}}}}</nowiki>}}
+
+If you call `##call_template` from Lua code, you should still pass in the invocation frame as the first argument;
+use `mw.getCurrentFrame()` if necessary to fetch it. In addition, you can override the direct arguments (which default
+to `frame.args`) using the second argument, and override the template (parent) arguments (which default to
+`frame:getParent().args`) using the third argument.
+]==]
+function export.call_template(frame, direct_args, parent_args)
 	local parent = frame:getParent()
-	local parent_args = parent.args
+	parent_args = parent_args or parent.args
 
 	local parameter_sublist = {type = "parameter", sublist = true}
+	local boolean_param = {type = "boolean"}
 	local iargs, other_direct_args = process_params(direct_args or frame.args, {
-		["template"] = true,
-		["textparam"] = parameter_sublist,
-		["pageparam"] = parameter_sublist,
-		["propagateparams"] = parameter_sublist,
-		["allowparams"] = {sublist = true}, -- Doesn't use type = "parameter", because any that end in :list get processed differently.
+		template = true,
+		textparam = parameter_sublist,
+		pageparam = parameter_sublist,
+		copyparams = parameter_sublist,
+		propagateparams = {alias_of = "copyparams"},
+		allowparams = {sublist = true}, -- Doesn't use type = "parameter", because any that end in :list get processed differently.
+		copyt = boolean_param,
+		copyorig = boolean_param,
+		copysc = boolean_param,
+		copytr = boolean_param,
+		copyts = boolean_param,
 	}, true)
 
-	local function fetch_param(source, params)
+	local function fetch_param(source, params, with_ine)
 		for _, param in ipairs(params) do
-			if source[param] then
-				return source[param]
+			local val = source[param]
+			if with_ine then
+				val = ine(val)
+			end
+			if val then
+				return val
 			end
 		end
 		return nil
 	end
 
+	-- Allowed and copied params. The ones listed here directly have special handling.
 	local params = {
 		["text"] = true,
 		["passage"] = true,
-		["footer"] = true, -- always propagates, but gets special formatting
+		["footer"] = true, -- always copied, but gets special formatting
 	}
-
-	-- paramaters that can be used during template declaration or included in template calls
-	-- if the template is called with param=- it will set any declared value to nil
-	local always_propagate = {
-		["brackets"] = true,
-		["usenodot"] = true,
-		["nodot"] = true,
-		["ascite"] = true,
-		["asquote"] = true,
-	}
-	for k,v in pairs(always_propagate) do
-		params[k] = v
-	end
 
 	local textparam = iargs.textparam or {}
 	for _, param in ipairs(textparam) do
 		params[param] = true
+	end
+
+	local text = ine(parent_args.text) or ine(parent_args.passage)
+	if textparam[1] ~= "-" then
+		text = text or fetch_param(parent_args, textparam, "with_ine")
+		other_direct_args.text = text
 	end
 
 	local pageparam = iargs.pageparam or {}
@@ -3564,7 +3705,68 @@ function export.call_template(frame, direct_args)
 		end
 	end
 
-	local allowparams, allow_all, list = iargs.allowparams, false
+	-- Parameters that can be used during template declaration or included in template calls.
+	-- If the template is called with param=- it will set any declared value to nil.
+	local params_to_copy = {"brackets", "usenodot", "nodot", "ascite", "asquote",
+		"norm", "normalization", "normurl", "normalizationurl", "ll", "lb",
+	}
+	local langparam
+	local langcode = ine(other_direct_args[1])
+	if langcode then
+		langparam = 1
+	end
+	if not langcode then
+		langparam = true
+		langcode = "und"
+	end
+	langcode = langcode:gsub("%s*,.*", "")
+	local lang = get_lang(langcode, langparam, "allow etym")
+	local copyt = iargs.copyt
+	if copyt == nil and not ine(other_direct_args.t) and not ine(other_direct_args.translation) then
+		-- Don't default copyt to true if t= or translation= given in direct args to avoid alias errors.
+		copyt = langcode ~= "en"
+	end
+	if copyt then
+		require(table_module).extend(params_to_copy, {"t", "translation", "turl", "translationurl", "lit", "liturl"})
+	end
+	local copytr = iargs.copytr
+	if copytr == nil and text and not ine(other_direct_args.tr) and not ine(other_direct_args.transliteration) then
+		-- Don't default copytr to true if tr= or transliteration= given in direct args to avoid alias errors.
+		copytr = lang:findBestScript(text):getCode() ~= "Latn"
+	end
+	if copytr then
+		require(table_module).extend(params_to_copy, {"tr", "transliteration", "subst"})
+	end
+	if iargs.copyts then
+		require(table_module).extend(params_to_copy, {"ts", "transcription"})
+	end
+	if iargs.copysc then
+		require(table_module).extend(params_to_copy, {"sc", "normsc"})
+	end
+	if iargs.copyorig then
+		require(table_module).extend(params_to_copy, {"origtext", "origurl", "orignorm", "orignormurl", "origll", "origlb"})
+		if copytr then
+			require(table_module).extend(params_to_copy, {"origtr", "origsubst"})
+		end
+		if iargs.copyts then
+			require(table_module).extend(params_to_copy, {"origts"})
+		end
+		if iargs.copysc then
+			require(table_module).extend(params_to_copy, {"origsc", "orignormsc"})
+		end
+	end
+	for _, param in ipairs(params_to_copy) do
+		params[param] = true
+	end
+
+	local function param_pattern_to_lua_pattern(pattern)
+		-- Hyphen should match a literal hyphen. `*` should match any number of characters.
+		return "^" .. (pattern:gsub("%-", "%%-"):gsub("%*", ".*")) .. "$"
+	end
+
+	local allowparams, allow_all = iargs.allowparams, false
+	local list
+	local allow_patterns = {}
 	if allowparams ~= nil then
 		for _, allow in ipairs(allowparams) do
 			local param = allow:match("^(.*):list$")
@@ -3576,6 +3778,8 @@ function export.call_template(frame, direct_args)
 			elseif allow == "*" then
 				track("no parameter checking")
 				allow_all = true
+			elseif allow:find("%*") then
+				insert(allow_patterns, param_pattern_to_lua_pattern(allow))
 			else
 				params[scribunto_parameter_key(allow)] = true
 			end
@@ -3602,16 +3806,47 @@ function export.call_template(frame, direct_args)
 		end
 	end
 
-	local propagateparams = iargs.propagateparams or {}
-	for _, param in ipairs(propagateparams) do
-		params[param] = true
+	local copy_patterns = {}
+	local copyparams = iargs.copyparams or {}
+	for _, param in ipairs(copyparams) do
+		if type(param) == "string" and param:find("%*") then
+			insert(copy_patterns, param_pattern_to_lua_pattern(param))
+		else
+			params[param] = true
+		end
 	end
 
-	local args = process_params(parent_args, params, allow_all)
-
-	if textparam[1] ~= "-" then
-		other_direct_args.passage = args.text or args.passage or fetch_param(args, textparam)
+	local function param_matches_patterns(name, patterns)
+		for _, pattern in ipairs(patterns) do
+			if type(name) == "string" and name:find(pattern) then
+				return true
+			end
+		end
+		return nil
 	end
+
+	local allow_params = nil
+	if allow_patterns[1] or copy_patterns[1] then
+		allow_params = function(name)
+			if allow_patterns[1] then
+				if param_matches_patterns(name, allow_patterns) then
+					return true
+				end
+			end
+			if copy_patterns[1] then
+				if param_matches_patterns(name, copy_patterns) then
+					return true
+				end
+			end
+			return nil
+		end
+	end
+
+	local args = process_params(parent_args, params, {
+		return_unknown = allow_all,
+		allow_params = allow_params,
+	})
+
 	if not (pageparam1 == nil or pageparam1 == "-") then
 		other_direct_args.page = fetch_param(args, pageparam) or args.page or other_direct_args.page or nil
 		other_direct_args.pages = args.pages or other_direct_args.pages or nil
@@ -3623,9 +3858,9 @@ function export.call_template(frame, direct_args)
 		end
 	end
 	if args.footer then
-		other_direct_args.footer = frame:expandTemplate{title = "small", args = {args.footer}}
+		other_direct_args.footer = frame:expandTemplate {title = "small", args = {args.footer}}
 	end
-	for param, _ in pairs(always_propagate) do
+	for _, param in ipairs(params_to_copy) do
 		if args[param] == "-" then
 			other_direct_args[param] = nil
 		else
@@ -3634,18 +3869,31 @@ function export.call_template(frame, direct_args)
 	end
 
 
-	-- authorlink=- can be used to prevent copying of author= to authorlink= but we don't want to propagate this to
+	-- authorlink=- can be used to prevent copying of author= to authorlink= but we don't want to copy this to
 	-- the actual {{quote-*}} code.
 	if other_direct_args.authorlink == "-" then
 		other_direct_args.authorlink = nil
 	end
-	for _, param in ipairs(propagateparams) do
+	for _, param in ipairs(copyparams) do
 		if args[param] then
 			other_direct_args[param] = args[param]
 		end
 	end
+	for param, value in pairs(args) do
+		if param_matches_patterns(param, copy_patterns) then
+			other_direct_args[param] = value
+		end
+	end
 
-	return frame:expandTemplate{title = iargs.template or "quote-book", args = other_direct_args}
+	return frame:expandTemplate {title = iargs.template or "quote-book", args = other_direct_args}
+end
+
+--[==[
+Older entry point for call_quote_template; FIXME: convert callers.
+]==]
+function export.call_quote_template(frame)
+	track("call_quote_template")
+    return export.call_template(frame)
 end
 
 local paramdoc_param_replacements = {
